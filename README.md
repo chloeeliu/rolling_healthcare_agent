@@ -5,8 +5,8 @@ This repo contains a minimal end-to-end benchmark pipeline for the design doc:
 - offline trajectory loading/building
 - time-gated concept-layer tools
 - a rolling surveillance environment
-- a Qwen 3.5-compatible agent adapter
-- a heuristic baseline and sample data
+- a local Qwen 3.5 agent adapter
+- a heuristic smoke-test baseline and sample data
 
 ## What is implemented
 
@@ -54,7 +54,7 @@ Important fields:
 
 ## Quick start
 
-Build trajectories from the real rolling CSV:
+Main path: build trajectories from the real rolling CSV:
 
 ```bash
 PYTHONPATH=src python3 -m sepsis_mvp.cli build-dataset \
@@ -64,15 +64,31 @@ PYTHONPATH=src python3 -m sepsis_mvp.cli build-dataset \
 
 By default, `build-dataset` stays strict to the 3-action MVP contract and drops out-of-scope trajectories such as rows with `organ_dysfunction_suspect`.
 
-Build trajectories from sample concept tables:
+Run this once before evaluation:
 
 ```bash
 PYTHONPATH=src python3 -m sepsis_mvp.cli build-dataset \
-  --concepts data/sample_concepts.json \
-  --output data/sample_trajectories.json
+  --rolling-csv /Users/chloe/Desktop/healthcare/dataset/rolling_sepsis/rolling_sepsis.csv \
+  --output data/rolling_sepsis_trajectories.json
 ```
 
-Run the heuristic baseline against DuckDB-backed tools:
+Run the local Qwen model:
+
+```bash
+export QWEN_MODEL="Qwen/Qwen3.5-9B"
+export QWEN_OFFLINE=0
+
+PYTHONPATH=src python3 -m sepsis_mvp.cli run \
+  --db-path /Users/chloe/Desktop/healthcare/mimic-iv-3.1/buildmimic/duckdb/mimic4_dk.db \
+  --dataset data/rolling_sepsis_trajectories.json \
+  --agent qwen \
+  --model Qwen/Qwen3.5-9B \
+  --temperature 0.0 \
+  --max-new-tokens 250 \
+  --rollouts-output data/qwen_rollouts.json
+```
+
+Optional smoke test without loading the model:
 
 ```bash
 PYTHONPATH=src python3 -m sepsis_mvp.cli run \
@@ -81,26 +97,13 @@ PYTHONPATH=src python3 -m sepsis_mvp.cli run \
   --agent heuristic
 ```
 
-Run with a Qwen 3.5-compatible chat endpoint:
-
-```bash
-export QWEN_API_KEY="your-key"
-export QWEN_BASE_URL="https://your-openai-compatible-endpoint/v1/chat/completions"
-export QWEN_MODEL="qwen3.5"
-
-PYTHONPATH=src python3 -m sepsis_mvp.cli run \
-  --db-path /Users/chloe/Desktop/healthcare/mimic-iv-3.1/buildmimic/duckdb/mimic4_dk.db \
-  --dataset data/rolling_sepsis_trajectories.json \
-  --agent qwen
-```
-
 Or install the package once and then use the `sepsis-mvp` console command:
 
 ```bash
 python3 -m pip install -e .
 ```
 
-The Qwen adapter assumes an OpenAI-compatible chat-completions API and expects the model to return either:
+The local Qwen adapter expects the model to return either:
 
 ```json
 {"tool_name":"query_sofa","arguments":{"stay_id":300001,"t_hour":12}}
@@ -119,3 +122,5 @@ or:
 - Transition labels are snapped to the first checkpoint at or after the hidden event time.
 - Early SOFA hours are exposed as-is; no leakage beyond the current checkpoint is allowed.
 - If your DuckDB already contains `mimiciv_derived.sofa` and `mimiciv_derived.suspicion_of_infection`, the runtime queries those directly.
+- `--agent qwen` is the real experiment path.
+- `--agent heuristic` is only there for fast CPU-only smoke tests and regression checks.

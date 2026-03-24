@@ -60,7 +60,12 @@ def run_command(args: argparse.Namespace) -> int:
     if args.agent == "heuristic":
         agent = HeuristicAgent(sofa_alert_threshold=args.sofa_alert_threshold)
     else:
-        agent = QwenChatAgent(model=args.model)
+        agent = QwenChatAgent(
+            model=args.model,
+            temperature=args.temperature,
+            top_p=args.top_p,
+            max_new_tokens=args.max_new_tokens,
+        )
     rollouts = environment.run_all(agent)
     evaluation = evaluate_rollouts(trajectories, rollouts)
 
@@ -95,7 +100,10 @@ def build_parser() -> argparse.ArgumentParser:
     run_parser.add_argument("--db-path", help="Path to MIMIC DuckDB for live concept-tool queries.")
     run_parser.add_argument("--dataset", required=True, help="Path to trajectory dataset JSON.")
     run_parser.add_argument("--agent", choices=["heuristic", "qwen"], default="heuristic")
-    run_parser.add_argument("--model", default="qwen3.5", help="Model name for the Qwen agent.")
+    run_parser.add_argument("--model", default="Qwen/Qwen3.5-9B", help="Local HF model name/path for Qwen.")
+    run_parser.add_argument("--temperature", type=float, default=0.0)
+    run_parser.add_argument("--top-p", type=float, default=0.95)
+    run_parser.add_argument("--max-new-tokens", type=int, default=250)
     run_parser.add_argument("--sofa-alert-threshold", type=int, default=2)
     run_parser.add_argument("--rollouts-output", help="Optional path to save rollout logs.")
     run_parser.set_defaults(func=run_command)
