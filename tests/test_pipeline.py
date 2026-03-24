@@ -1,0 +1,86 @@
+import json
+import sys
+import tempfile
+import unittest
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / "src"))
+
+from sepsis_mvp.agent import HeuristicAgent
+from sepsis_mvp.dataset import build_dataset, load_concept_tables, load_rolling_csv_dataset, save_trajectories
+from sepsis_mvp.environment import BenchmarkEnvironment, evaluate_rollouts
+from sepsis_mvp.tools import ConceptToolRuntime
+
+
+SAMPLE = ROOT / "data" / "sample_concepts.json"
+
+
+class PipelineTest(unittest.TestCase):
+    def test_dataset_builder_snaps_transitions_to_checkpoints(self):
+        concepts = load_concept_tables(SAMPLE)
+        trajectories = build_dataset(concepts)
+        first = next(trajectory for trajectory in trajectories if trajectory.stay_id == 300001)
+        self.assertEqual(first.transitions["infection_start_hour"], 8)
+        self.assertEqual(first.transitions["sepsis_start_hour"], 16)
+        labels = [checkpoint.state_label for checkpoint in first.checkpoints]
+        self.assertEqual(
+            labels,
+            [
+                "keep_monitoring",
+                "keep_monitoring",
+                "infection_suspect",
+                "infection_suspect",
+                "trigger_sepsis_alert",
+                "trigger_sepsis_alert",
+                "trigger_sepsis_alert",
+            ],
+        )
+
+    def test_tools_are_time_gated(self):
+        concepts = load_concept_tables(SAMPLE)
+        runtime = ConceptToolRuntime(concepts)
+        early = runtime.query_suspicion_of_infection(300001, 4)
+        late = runtime.query_suspicion_of_infection(300001, 8)
+        self.assertFalse(early["has_suspected_infection"])
+        self.assertTrue(late["has_suspected_infection"])
+        self.assertAlmostEqual(late["first_visible_suspected_infection_hour"], 6.7, places=1)
+
+    def test_end_to_end_run(self):
+        concepts = load_concept_tables(SAMPLE)
+        trajectories = build_dataset(concepts)
+        runtime = ConceptToolRuntime(concepts)
+        environment = BenchmarkEnvironment(trajectories, runtime)
+        rollouts = environment.run_all(HeuristicAgent())
+        metrics = evaluate_rollouts(trajectories, rollouts)
+        self.assertIn("step_level", metrics)
+        self.assertIn("transition_timing", metrics)
+        self.assertEqual(len(rollouts), 2)
+
+    def test_dataset_can_be_saved(self):
+        concepts = load_concept_tables(SAMPLE)
+        trajectories = build_dataset(concepts)
+        with tempfile.TemporaryDirectory() as tmpdir:
+            output = Path(tmpdir) / "trajectories.json"
+            save_trajectories(trajectories, output)
+            payload = json.loads(output.read_text())
+            self.assertEqual(len(payload), 2)
+
+    def test_csv_loader_filters_out_of_scope_trajectory_in_strict_mode(self):
+        csv_text = """trajectory_id,subject_id,hadm_id,stay_id,icu_intime,icu_outtime,icu_los_hours,is_sepsis,infection_start_time,organ_dysfunction_start_time,sepsis_start_time,infection_start_hour,organ_dysfunction_start_hour,sepsis_start_hour,t_hour,checkpoint_time,state_label,terminal
+mimiciv_stay_1,10,20,30,2150-01-01T00:00:00,2150-01-02T00:00:00,24,1,2150-01-01T02:00:00,2150-01-01T08:00:00,2150-01-01T12:00:00,4,8,12,0,2150-01-01T00:00:00,keep_monitoring,false
+mimiciv_stay_1,10,20,30,2150-01-01T00:00:00,2150-01-02T00:00:00,24,1,2150-01-01T02:00:00,2150-01-01T08:00:00,2150-01-01T12:00:00,4,8,12,4,2150-01-01T04:00:00,infection_suspect,false
+mimiciv_stay_2,11,21,31,2150-01-01T00:00:00,2150-01-02T00:00:00,24,1,2150-01-03T00:00:00,2150-01-01T04:00:00,2150-01-01T12:00:00,48,4,12,0,2150-01-01T00:00:00,keep_monitoring,false
+mimiciv_stay_2,11,21,31,2150-01-01T00:00:00,2150-01-02T00:00:00,24,1,2150-01-03T00:00:00,2150-01-01T04:00:00,2150-01-01T12:00:00,48,4,12,4,2150-01-01T04:00:00,organ_dysfunction_suspect,false
+"""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            path = Path(tmpdir) / "rolling.csv"
+            path.write_text(csv_text)
+            result = load_rolling_csv_dataset(path, strict_mvp=True)
+            self.assertEqual(result.included_trajectories, 1)
+            self.assertEqual(result.skipped_trajectories, 1)
+            self.assertEqual(result.skipped_reasons["unsupported_labels"], 1)
+
+
+if __name__ == "__main__":
+    unittest.main()

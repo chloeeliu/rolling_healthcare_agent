@@ -1,0 +1,88 @@
+[
+  {
+    "trajectory_id": "mimiciv_stay_300001",
+    "stay_id": 300001,
+    "subject_id": 100001,
+    "hadm_id": 200001,
+    "anchor": "icu_intime",
+    "step_hours": 4,
+    "horizon_hours": 24,
+    "transitions": {
+      "infection_start_hour": 8,
+      "sepsis_start_hour": 16
+    },
+    "checkpoints": [
+      {
+        "t_hour": 0,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 4,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 8,
+        "state_label": "infection_suspect"
+      },
+      {
+        "t_hour": 12,
+        "state_label": "infection_suspect"
+      },
+      {
+        "t_hour": 16,
+        "state_label": "trigger_sepsis_alert"
+      },
+      {
+        "t_hour": 20,
+        "state_label": "trigger_sepsis_alert"
+      },
+      {
+        "t_hour": 24,
+        "state_label": "trigger_sepsis_alert"
+      }
+    ]
+  },
+  {
+    "trajectory_id": "mimiciv_stay_300002",
+    "stay_id": 300002,
+    "subject_id": 100002,
+    "hadm_id": 200002,
+    "anchor": "icu_intime",
+    "step_hours": 4,
+    "horizon_hours": 24,
+    "transitions": {
+      "infection_start_hour": null,
+      "sepsis_start_hour": null
+    },
+    "checkpoints": [
+      {
+        "t_hour": 0,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 4,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 8,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 12,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 16,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 20,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 24,
+        "state_label": "keep_monitoring"
+      }
+    ]
+  }
+]

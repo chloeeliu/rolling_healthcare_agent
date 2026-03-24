@@ -1,0 +1,190 @@
+{
+  "icustays": [
+    {
+      "stay_id": 300001,
+      "subject_id": 100001,
+      "hadm_id": 200001,
+      "icu_intime": "2150-03-01T09:00:00"
+    },
+    {
+      "stay_id": 300002,
+      "subject_id": 100002,
+      "hadm_id": 200002,
+      "icu_intime": "2150-03-02T10:00:00"
+    }
+  ],
+  "suspicion_of_infection": [
+    {
+      "stay_id": 300001,
+      "suspected_infection_time": "2150-03-01T15:42:00",
+      "antibiotic": "vancomycin",
+      "antibiotic_time": "2150-03-01T15:42:00",
+      "culture_time": "2150-03-01T14:18:00",
+      "specimen": "BLOOD CULTURE",
+      "positive_culture": 0
+    }
+  ],
+  "sepsis3": [
+    {
+      "stay_id": 300001,
+      "sepsis_time": "2150-03-02T00:30:00"
+    }
+  ],
+  "sofa": [
+    {
+      "stay_id": 300001,
+      "hr": 0,
+      "sofa_24hours": 0,
+      "respiration_24hours": 0,
+      "coagulation_24hours": 0,
+      "liver_24hours": 0,
+      "cardiovascular_24hours": 0,
+      "cns_24hours": 0,
+      "renal_24hours": 0
+    },
+    {
+      "stay_id": 300001,
+      "hr": 4,
+      "sofa_24hours": 1,
+      "respiration_24hours": 1,
+      "coagulation_24hours": 0,
+      "liver_24hours": 0,
+      "cardiovascular_24hours": 0,
+      "cns_24hours": 0,
+      "renal_24hours": 0
+    },
+    {
+      "stay_id": 300001,
+      "hr": 8,
+      "sofa_24hours": 1,
+      "respiration_24hours": 1,
+      "coagulation_24hours": 0,
+      "liver_24hours": 0,
+      "cardiovascular_24hours": 0,
+      "cns_24hours": 0,
+      "renal_24hours": 0
+    },
+    {
+      "stay_id": 300001,
+      "hr": 12,
+      "sofa_24hours": 2,
+      "respiration_24hours": 1,
+      "coagulation_24hours": 0,
+      "liver_24hours": 0,
+      "cardiovascular_24hours": 1,
+      "cns_24hours": 0,
+      "renal_24hours": 0
+    },
+    {
+      "stay_id": 300001,
+      "hr": 16,
+      "sofa_24hours": 3,
+      "respiration_24hours": 1,
+      "coagulation_24hours": 0,
+      "liver_24hours": 0,
+      "cardiovascular_24hours": 1,
+      "cns_24hours": 0,
+      "renal_24hours": 1
+    },
+    {
+      "stay_id": 300001,
+      "hr": 20,
+      "sofa_24hours": 3,
+      "respiration_24hours": 1,
+      "coagulation_24hours": 0,
+      "liver_24hours": 0,
+      "cardiovascular_24hours": 1,
+      "cns_24hours": 0,
+      "renal_24hours": 1
+    },
+    {
+      "stay_id": 300001,
+      "hr": 24,
+      "sofa_24hours": 4,
+      "respiration_24hours": 1,
+      "coagulation_24hours": 0,
+      "liver_24hours": 0,
+      "cardiovascular_24hours": 1,
+      "cns_24hours": 1,
+      "renal_24hours": 1
+    },
+    {
+      "stay_id": 300002,
+      "hr": 0,
+      "sofa_24hours": 0,
+      "respiration_24hours": 0,
+      "coagulation_24hours": 0,
+      "liver_24hours": 0,
+      "cardiovascular_24hours": 0,
+      "cns_24hours": 0,
+      "renal_24hours": 0
+    },
+    {
+      "stay_id": 300002,
+      "hr": 4,
+      "sofa_24hours": 0,
+      "respiration_24hours": 0,
+      "coagulation_24hours": 0,
+      "liver_24hours": 0,
+      "cardiovascular_24hours": 0,
+      "cns_24hours": 0,
+      "renal_24hours": 0
+    },
+    {
+      "stay_id": 300002,
+      "hr": 8,
+      "sofa_24hours": 1,
+      "respiration_24hours": 1,
+      "coagulation_24hours": 0,
+      "liver_24hours": 0,
+      "cardiovascular_24hours": 0,
+      "cns_24hours": 0,
+      "renal_24hours": 0
+    },
+    {
+      "stay_id": 300002,
+      "hr": 12,
+      "sofa_24hours": 1,
+      "respiration_24hours": 1,
+      "coagulation_24hours": 0,
+      "liver_24hours": 0,
+      "cardiovascular_24hours": 0,
+      "cns_24hours": 0,
+      "renal_24hours": 0
+    },
+    {
+      "stay_id": 300002,
+      "hr": 16,
+      "sofa_24hours": 1,
+      "respiration_24hours": 1,
+      "coagulation_24hours": 0,
+      "liver_24hours": 0,
+      "cardiovascular_24hours": 0,
+      "cns_24hours": 0,
+      "renal_24hours": 0
+    },
+    {
+      "stay_id": 300002,
+      "hr": 20,
+      "sofa_24hours": 0,
+      "respiration_24hours": 0,
+      "coagulation_24hours": 0,
+      "liver_24hours": 0,
+      "cardiovascular_24hours": 0,
+      "cns_24hours": 0,
+      "renal_24hours": 0
+    },
+    {
+      "stay_id": 300002,
+      "hr": 24,
+      "sofa_24hours": 0,
+      "respiration_24hours": 0,
+      "coagulation_24hours": 0,
+      "liver_24hours": 0,
+      "cardiovascular_24hours": 0,
+      "cns_24hours": 0,
+      "renal_24hours": 0
+    }
+  ]
+}
+

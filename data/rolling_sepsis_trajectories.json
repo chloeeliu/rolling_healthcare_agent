@@ -1,0 +1,5000 @@
+[
+  {
+    "trajectory_id": "mimiciv_stay_30058012",
+    "stay_id": 30058012,
+    "subject_id": 18042666,
+    "hadm_id": 25865945,
+    "anchor": "icu_intime",
+    "step_hours": 4,
+    "horizon_hours": 24,
+    "transitions": {
+      "infection_start_hour": null,
+      "organ_dysfunction_start_hour": 4,
+      "sepsis_start_hour": null,
+      "infection_start_time": null,
+      "organ_dysfunction_start_time": "2174-12-15T01:00:00",
+      "sepsis_start_time": null
+    },
+    "checkpoints": [
+      {
+        "t_hour": 0,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 4,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 8,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 12,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 16,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 20,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 24,
+        "state_label": "keep_monitoring"
+      }
+    ],
+    "icu_intime": "2174-12-14T23:30:16",
+    "icu_outtime": "2174-12-16T14:17:30",
+    "icu_los_hours": 39.0,
+    "is_sepsis": false
+  },
+  {
+    "trajectory_id": "mimiciv_stay_30135840",
+    "stay_id": 30135840,
+    "subject_id": 10253057,
+    "hadm_id": 22594503,
+    "anchor": "icu_intime",
+    "step_hours": 4,
+    "horizon_hours": 24,
+    "transitions": {
+      "infection_start_hour": -8,
+      "organ_dysfunction_start_hour": 4,
+      "sepsis_start_hour": 4,
+      "infection_start_time": "2185-09-10T12:30:00",
+      "organ_dysfunction_start_time": "2185-09-11T00:00:00",
+      "sepsis_start_time": "2185-09-11T00:00:00"
+    },
+    "checkpoints": [
+      {
+        "t_hour": 0,
+        "state_label": "infection_suspect"
+      },
+      {
+        "t_hour": 4,
+        "state_label": "trigger_sepsis_alert"
+      },
+      {
+        "t_hour": 8,
+        "state_label": "trigger_sepsis_alert"
+      },
+      {
+        "t_hour": 12,
+        "state_label": "trigger_sepsis_alert"
+      },
+      {
+        "t_hour": 16,
+        "state_label": "trigger_sepsis_alert"
+      },
+      {
+        "t_hour": 20,
+        "state_label": "trigger_sepsis_alert"
+      },
+      {
+        "t_hour": 24,
+        "state_label": "trigger_sepsis_alert"
+      }
+    ],
+    "icu_intime": "2185-09-10T21:27:47",
+    "icu_outtime": "2185-09-12T21:18:11",
+    "icu_los_hours": 48.0,
+    "is_sepsis": true
+  },
+  {
+    "trajectory_id": "mimiciv_stay_30192858",
+    "stay_id": 30192858,
+    "subject_id": 13351275,
+    "hadm_id": 22023084,
+    "anchor": "icu_intime",
+    "step_hours": 4,
+    "horizon_hours": 24,
+    "transitions": {
+      "infection_start_hour": null,
+      "organ_dysfunction_start_hour": null,
+      "sepsis_start_hour": null,
+      "infection_start_time": null,
+      "organ_dysfunction_start_time": null,
+      "sepsis_start_time": null
+    },
+    "checkpoints": [
+      {
+        "t_hour": 0,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 4,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 8,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 12,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 16,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 20,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 24,
+        "state_label": "keep_monitoring"
+      }
+    ],
+    "icu_intime": "2136-04-17T15:59:03",
+    "icu_outtime": "2136-04-19T15:58:01",
+    "icu_los_hours": 48.0,
+    "is_sepsis": false
+  },
+  {
+    "trajectory_id": "mimiciv_stay_30246991",
+    "stay_id": 30246991,
+    "subject_id": 11551014,
+    "hadm_id": 20452055,
+    "anchor": "icu_intime",
+    "step_hours": 4,
+    "horizon_hours": 24,
+    "transitions": {
+      "infection_start_hour": 4,
+      "organ_dysfunction_start_hour": 20,
+      "sepsis_start_hour": 20,
+      "infection_start_time": "2158-11-28T19:00:00",
+      "organ_dysfunction_start_time": "2158-11-29T12:00:00",
+      "sepsis_start_time": "2158-11-29T12:00:00"
+    },
+    "checkpoints": [
+      {
+        "t_hour": 0,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 4,
+        "state_label": "infection_suspect"
+      },
+      {
+        "t_hour": 8,
+        "state_label": "infection_suspect"
+      },
+      {
+        "t_hour": 12,
+        "state_label": "infection_suspect"
+      },
+      {
+        "t_hour": 16,
+        "state_label": "infection_suspect"
+      },
+      {
+        "t_hour": 20,
+        "state_label": "trigger_sepsis_alert"
+      },
+      {
+        "t_hour": 24,
+        "state_label": "trigger_sepsis_alert"
+      }
+    ],
+    "icu_intime": "2158-11-28T17:41:14",
+    "icu_outtime": "2158-11-29T18:46:23",
+    "icu_los_hours": 25.0,
+    "is_sepsis": true
+  },
+  {
+    "trajectory_id": "mimiciv_stay_30366834",
+    "stay_id": 30366834,
+    "subject_id": 11336664,
+    "hadm_id": 22302466,
+    "anchor": "icu_intime",
+    "step_hours": 4,
+    "horizon_hours": 24,
+    "transitions": {
+      "infection_start_hour": -20,
+      "organ_dysfunction_start_hour": 4,
+      "sepsis_start_hour": 4,
+      "infection_start_time": "2119-01-16T02:44:00",
+      "organ_dysfunction_start_time": "2119-01-17T04:00:00",
+      "sepsis_start_time": "2119-01-17T04:00:00"
+    },
+    "checkpoints": [
+      {
+        "t_hour": 0,
+        "state_label": "infection_suspect"
+      },
+      {
+        "t_hour": 4,
+        "state_label": "trigger_sepsis_alert"
+      },
+      {
+        "t_hour": 8,
+        "state_label": "trigger_sepsis_alert"
+      },
+      {
+        "t_hour": 12,
+        "state_label": "trigger_sepsis_alert"
+      },
+      {
+        "t_hour": 16,
+        "state_label": "trigger_sepsis_alert"
+      },
+      {
+        "t_hour": 20,
+        "state_label": "trigger_sepsis_alert"
+      },
+      {
+        "t_hour": 24,
+        "state_label": "trigger_sepsis_alert"
+      }
+    ],
+    "icu_intime": "2119-01-17T02:38:33",
+    "icu_outtime": "2119-01-23T11:32:18",
+    "icu_los_hours": 153.0,
+    "is_sepsis": true
+  },
+  {
+    "trajectory_id": "mimiciv_stay_30382114",
+    "stay_id": 30382114,
+    "subject_id": 14806591,
+    "hadm_id": 29358185,
+    "anchor": "icu_intime",
+    "step_hours": 4,
+    "horizon_hours": 24,
+    "transitions": {
+      "infection_start_hour": -4,
+      "organ_dysfunction_start_hour": 24,
+      "sepsis_start_hour": 24,
+      "infection_start_time": "2113-03-17T14:20:00",
+      "organ_dysfunction_start_time": "2113-03-18T18:00:00",
+      "sepsis_start_time": "2113-03-18T18:00:00"
+    },
+    "checkpoints": [
+      {
+        "t_hour": 0,
+        "state_label": "infection_suspect"
+      },
+      {
+        "t_hour": 4,
+        "state_label": "infection_suspect"
+      },
+      {
+        "t_hour": 8,
+        "state_label": "infection_suspect"
+      },
+      {
+        "t_hour": 12,
+        "state_label": "infection_suspect"
+      },
+      {
+        "t_hour": 16,
+        "state_label": "infection_suspect"
+      },
+      {
+        "t_hour": 20,
+        "state_label": "infection_suspect"
+      },
+      {
+        "t_hour": 24,
+        "state_label": "trigger_sepsis_alert"
+      }
+    ],
+    "icu_intime": "2113-03-17T21:00:00",
+    "icu_outtime": "2113-03-21T21:50:11",
+    "icu_los_hours": 96.0,
+    "is_sepsis": true
+  },
+  {
+    "trajectory_id": "mimiciv_stay_30634429",
+    "stay_id": 30634429,
+    "subject_id": 14683878,
+    "hadm_id": 27651602,
+    "anchor": "icu_intime",
+    "step_hours": 4,
+    "horizon_hours": 24,
+    "transitions": {
+      "infection_start_hour": null,
+      "organ_dysfunction_start_hour": null,
+      "sepsis_start_hour": null,
+      "infection_start_time": null,
+      "organ_dysfunction_start_time": null,
+      "sepsis_start_time": null
+    },
+    "checkpoints": [
+      {
+        "t_hour": 0,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 4,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 8,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 12,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 16,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 20,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 24,
+        "state_label": "keep_monitoring"
+      }
+    ],
+    "icu_intime": "2110-12-25T04:52:57",
+    "icu_outtime": "2110-12-26T18:37:03",
+    "icu_los_hours": 38.0,
+    "is_sepsis": false
+  },
+  {
+    "trajectory_id": "mimiciv_stay_30924053",
+    "stay_id": 30924053,
+    "subject_id": 13600325,
+    "hadm_id": 28338812,
+    "anchor": "icu_intime",
+    "step_hours": 4,
+    "horizon_hours": 24,
+    "transitions": {
+      "infection_start_hour": null,
+      "organ_dysfunction_start_hour": 4,
+      "sepsis_start_hour": null,
+      "infection_start_time": null,
+      "organ_dysfunction_start_time": "2190-12-23T17:00:00",
+      "sepsis_start_time": null
+    },
+    "checkpoints": [
+      {
+        "t_hour": 0,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 4,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 8,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 12,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 16,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 20,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 24,
+        "state_label": "keep_monitoring"
+      }
+    ],
+    "icu_intime": "2190-12-23T15:23:29",
+    "icu_outtime": "2190-12-25T18:50:55",
+    "icu_los_hours": 51.0,
+    "is_sepsis": false
+  },
+  {
+    "trajectory_id": "mimiciv_stay_31054046",
+    "stay_id": 31054046,
+    "subject_id": 12095120,
+    "hadm_id": 23462611,
+    "anchor": "icu_intime",
+    "step_hours": 4,
+    "horizon_hours": 24,
+    "transitions": {
+      "infection_start_hour": -24,
+      "organ_dysfunction_start_hour": 4,
+      "sepsis_start_hour": null,
+      "infection_start_time": "2115-05-15T05:55:00",
+      "organ_dysfunction_start_time": "2115-05-16T08:00:00",
+      "sepsis_start_time": null
+    },
+    "checkpoints": [
+      {
+        "t_hour": 0,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 4,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 8,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 12,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 16,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 20,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 24,
+        "state_label": "keep_monitoring"
+      }
+    ],
+    "icu_intime": "2115-05-16T07:45:26",
+    "icu_outtime": "2115-05-17T21:52:38",
+    "icu_los_hours": 38.0,
+    "is_sepsis": false
+  },
+  {
+    "trajectory_id": "mimiciv_stay_31331617",
+    "stay_id": 31331617,
+    "subject_id": 14566045,
+    "hadm_id": 24801717,
+    "anchor": "icu_intime",
+    "step_hours": 4,
+    "horizon_hours": 24,
+    "transitions": {
+      "infection_start_hour": null,
+      "organ_dysfunction_start_hour": 8,
+      "sepsis_start_hour": null,
+      "infection_start_time": null,
+      "organ_dysfunction_start_time": "2137-07-31T09:00:00",
+      "sepsis_start_time": null
+    },
+    "checkpoints": [
+      {
+        "t_hour": 0,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 4,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 8,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 12,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 16,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 20,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 24,
+        "state_label": "keep_monitoring"
+      }
+    ],
+    "icu_intime": "2137-07-31T04:22:14",
+    "icu_outtime": "2137-08-01T16:50:13",
+    "icu_los_hours": 36.0,
+    "is_sepsis": false
+  },
+  {
+    "trajectory_id": "mimiciv_stay_31417783",
+    "stay_id": 31417783,
+    "subject_id": 19998330,
+    "hadm_id": 21135114,
+    "anchor": "icu_intime",
+    "step_hours": 4,
+    "horizon_hours": 24,
+    "transitions": {
+      "infection_start_hour": 0,
+      "organ_dysfunction_start_hour": 4,
+      "sepsis_start_hour": 4,
+      "infection_start_time": "2178-10-21T15:10:00",
+      "organ_dysfunction_start_time": "2178-10-21T19:00:00",
+      "sepsis_start_time": "2178-10-21T19:00:00"
+    },
+    "checkpoints": [
+      {
+        "t_hour": 0,
+        "state_label": "infection_suspect"
+      },
+      {
+        "t_hour": 4,
+        "state_label": "trigger_sepsis_alert"
+      },
+      {
+        "t_hour": 8,
+        "state_label": "trigger_sepsis_alert"
+      },
+      {
+        "t_hour": 12,
+        "state_label": "trigger_sepsis_alert"
+      },
+      {
+        "t_hour": 16,
+        "state_label": "trigger_sepsis_alert"
+      },
+      {
+        "t_hour": 20,
+        "state_label": "trigger_sepsis_alert"
+      },
+      {
+        "t_hour": 24,
+        "state_label": "trigger_sepsis_alert"
+      }
+    ],
+    "icu_intime": "2178-10-21T17:20:00",
+    "icu_outtime": "2178-10-23T17:43:28",
+    "icu_los_hours": 48.0,
+    "is_sepsis": true
+  },
+  {
+    "trajectory_id": "mimiciv_stay_31483710",
+    "stay_id": 31483710,
+    "subject_id": 16257968,
+    "hadm_id": 26796133,
+    "anchor": "icu_intime",
+    "step_hours": 4,
+    "horizon_hours": 24,
+    "transitions": {
+      "infection_start_hour": 4,
+      "organ_dysfunction_start_hour": 4,
+      "sepsis_start_hour": 4,
+      "infection_start_time": "2189-11-11T22:24:00",
+      "organ_dysfunction_start_time": "2189-11-11T23:00:00",
+      "sepsis_start_time": "2189-11-11T23:00:00"
+    },
+    "checkpoints": [
+      {
+        "t_hour": 0,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 4,
+        "state_label": "trigger_sepsis_alert"
+      },
+      {
+        "t_hour": 8,
+        "state_label": "trigger_sepsis_alert"
+      },
+      {
+        "t_hour": 12,
+        "state_label": "trigger_sepsis_alert"
+      },
+      {
+        "t_hour": 16,
+        "state_label": "trigger_sepsis_alert"
+      },
+      {
+        "t_hour": 20,
+        "state_label": "trigger_sepsis_alert"
+      },
+      {
+        "t_hour": 24,
+        "state_label": "trigger_sepsis_alert"
+      }
+    ],
+    "icu_intime": "2189-11-11T21:05:31",
+    "icu_outtime": "2189-11-16T18:27:20",
+    "icu_los_hours": 117.0,
+    "is_sepsis": true
+  },
+  {
+    "trajectory_id": "mimiciv_stay_31585193",
+    "stay_id": 31585193,
+    "subject_id": 10352831,
+    "hadm_id": 25430132,
+    "anchor": "icu_intime",
+    "step_hours": 4,
+    "horizon_hours": 24,
+    "transitions": {
+      "infection_start_hour": null,
+      "organ_dysfunction_start_hour": 8,
+      "sepsis_start_hour": null,
+      "infection_start_time": null,
+      "organ_dysfunction_start_time": "2131-12-16T14:00:00",
+      "sepsis_start_time": null
+    },
+    "checkpoints": [
+      {
+        "t_hour": 0,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 4,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 8,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 12,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 16,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 20,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 24,
+        "state_label": "keep_monitoring"
+      }
+    ],
+    "icu_intime": "2131-12-16T08:55:03",
+    "icu_outtime": "2131-12-17T15:05:22",
+    "icu_los_hours": 31.0,
+    "is_sepsis": false
+  },
+  {
+    "trajectory_id": "mimiciv_stay_31624506",
+    "stay_id": 31624506,
+    "subject_id": 16199860,
+    "hadm_id": 22921131,
+    "anchor": "icu_intime",
+    "step_hours": 4,
+    "horizon_hours": 24,
+    "transitions": {
+      "infection_start_hour": 4,
+      "organ_dysfunction_start_hour": 8,
+      "sepsis_start_hour": 8,
+      "infection_start_time": "2137-09-22T12:00:00",
+      "organ_dysfunction_start_time": "2137-09-22T16:00:00",
+      "sepsis_start_time": "2137-09-22T16:00:00"
+    },
+    "checkpoints": [
+      {
+        "t_hour": 0,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 4,
+        "state_label": "infection_suspect"
+      },
+      {
+        "t_hour": 8,
+        "state_label": "trigger_sepsis_alert"
+      },
+      {
+        "t_hour": 12,
+        "state_label": "trigger_sepsis_alert"
+      },
+      {
+        "t_hour": 16,
+        "state_label": "trigger_sepsis_alert"
+      },
+      {
+        "t_hour": 20,
+        "state_label": "trigger_sepsis_alert"
+      },
+      {
+        "t_hour": 24,
+        "state_label": "trigger_sepsis_alert"
+      }
+    ],
+    "icu_intime": "2137-09-22T10:33:45",
+    "icu_outtime": "2137-09-28T11:32:10",
+    "icu_los_hours": 145.0,
+    "is_sepsis": true
+  },
+  {
+    "trajectory_id": "mimiciv_stay_31725846",
+    "stay_id": 31725846,
+    "subject_id": 11485043,
+    "hadm_id": 24702723,
+    "anchor": "icu_intime",
+    "step_hours": 4,
+    "horizon_hours": 24,
+    "transitions": {
+      "infection_start_hour": 4,
+      "organ_dysfunction_start_hour": 4,
+      "sepsis_start_hour": 4,
+      "infection_start_time": "2121-08-21T16:50:00",
+      "organ_dysfunction_start_time": "2121-08-21T17:00:00",
+      "sepsis_start_time": "2121-08-21T17:00:00"
+    },
+    "checkpoints": [
+      {
+        "t_hour": 0,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 4,
+        "state_label": "trigger_sepsis_alert"
+      },
+      {
+        "t_hour": 8,
+        "state_label": "trigger_sepsis_alert"
+      },
+      {
+        "t_hour": 12,
+        "state_label": "trigger_sepsis_alert"
+      },
+      {
+        "t_hour": 16,
+        "state_label": "trigger_sepsis_alert"
+      },
+      {
+        "t_hour": 20,
+        "state_label": "trigger_sepsis_alert"
+      },
+      {
+        "t_hour": 24,
+        "state_label": "trigger_sepsis_alert"
+      }
+    ],
+    "icu_intime": "2121-08-21T16:29:52",
+    "icu_outtime": "2121-08-24T22:38:08",
+    "icu_los_hours": 78.0,
+    "is_sepsis": true
+  },
+  {
+    "trajectory_id": "mimiciv_stay_31823085",
+    "stay_id": 31823085,
+    "subject_id": 11547638,
+    "hadm_id": 20084622,
+    "anchor": "icu_intime",
+    "step_hours": 4,
+    "horizon_hours": 24,
+    "transitions": {
+      "infection_start_hour": -4,
+      "organ_dysfunction_start_hour": null,
+      "sepsis_start_hour": null,
+      "infection_start_time": "2135-09-24T11:00:00",
+      "organ_dysfunction_start_time": null,
+      "sepsis_start_time": null
+    },
+    "checkpoints": [
+      {
+        "t_hour": 0,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 4,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 8,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 12,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 16,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 20,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 24,
+        "state_label": "keep_monitoring"
+      }
+    ],
+    "icu_intime": "2135-09-24T16:20:56",
+    "icu_outtime": "2135-09-25T16:14:53",
+    "icu_los_hours": 24.0,
+    "is_sepsis": false
+  },
+  {
+    "trajectory_id": "mimiciv_stay_31979375",
+    "stay_id": 31979375,
+    "subject_id": 15695059,
+    "hadm_id": 27697783,
+    "anchor": "icu_intime",
+    "step_hours": 4,
+    "horizon_hours": 24,
+    "transitions": {
+      "infection_start_hour": null,
+      "organ_dysfunction_start_hour": null,
+      "sepsis_start_hour": null,
+      "infection_start_time": null,
+      "organ_dysfunction_start_time": null,
+      "sepsis_start_time": null
+    },
+    "checkpoints": [
+      {
+        "t_hour": 0,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 4,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 8,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 12,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 16,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 20,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 24,
+        "state_label": "keep_monitoring"
+      }
+    ],
+    "icu_intime": "2140-12-27T02:00:00",
+    "icu_outtime": "2140-12-28T17:13:11",
+    "icu_los_hours": 39.0,
+    "is_sepsis": false
+  },
+  {
+    "trajectory_id": "mimiciv_stay_32140854",
+    "stay_id": 32140854,
+    "subject_id": 16791324,
+    "hadm_id": 22128399,
+    "anchor": "icu_intime",
+    "step_hours": 4,
+    "horizon_hours": 24,
+    "transitions": {
+      "infection_start_hour": null,
+      "organ_dysfunction_start_hour": 4,
+      "sepsis_start_hour": null,
+      "infection_start_time": null,
+      "organ_dysfunction_start_time": "2122-11-14T20:00:00",
+      "sepsis_start_time": null
+    },
+    "checkpoints": [
+      {
+        "t_hour": 0,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 4,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 8,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 12,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 16,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 20,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 24,
+        "state_label": "keep_monitoring"
+      }
+    ],
+    "icu_intime": "2122-11-14T18:08:00",
+    "icu_outtime": "2122-11-16T17:53:44",
+    "icu_los_hours": 47.0,
+    "is_sepsis": false
+  },
+  {
+    "trajectory_id": "mimiciv_stay_32159718",
+    "stay_id": 32159718,
+    "subject_id": 12893944,
+    "hadm_id": 23258782,
+    "anchor": "icu_intime",
+    "step_hours": 4,
+    "horizon_hours": 24,
+    "transitions": {
+      "infection_start_hour": null,
+      "organ_dysfunction_start_hour": 16,
+      "sepsis_start_hour": null,
+      "infection_start_time": null,
+      "organ_dysfunction_start_time": "2189-03-05T00:00:00",
+      "sepsis_start_time": null
+    },
+    "checkpoints": [
+      {
+        "t_hour": 0,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 4,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 8,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 12,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 16,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 20,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 24,
+        "state_label": "keep_monitoring"
+      }
+    ],
+    "icu_intime": "2189-03-04T09:23:00",
+    "icu_outtime": "2189-03-05T15:43:04",
+    "icu_los_hours": 30.0,
+    "is_sepsis": false
+  },
+  {
+    "trajectory_id": "mimiciv_stay_32212446",
+    "stay_id": 32212446,
+    "subject_id": 13364829,
+    "hadm_id": 23785450,
+    "anchor": "icu_intime",
+    "step_hours": 4,
+    "horizon_hours": 24,
+    "transitions": {
+      "infection_start_hour": -8,
+      "organ_dysfunction_start_hour": 4,
+      "sepsis_start_hour": 4,
+      "infection_start_time": "2202-08-26T13:43:00",
+      "organ_dysfunction_start_time": "2202-08-27T00:00:00",
+      "sepsis_start_time": "2202-08-27T00:00:00"
+    },
+    "checkpoints": [
+      {
+        "t_hour": 0,
+        "state_label": "infection_suspect"
+      },
+      {
+        "t_hour": 4,
+        "state_label": "trigger_sepsis_alert"
+      },
+      {
+        "t_hour": 8,
+        "state_label": "trigger_sepsis_alert"
+      },
+      {
+        "t_hour": 12,
+        "state_label": "trigger_sepsis_alert"
+      },
+      {
+        "t_hour": 16,
+        "state_label": "trigger_sepsis_alert"
+      },
+      {
+        "t_hour": 20,
+        "state_label": "trigger_sepsis_alert"
+      },
+      {
+        "t_hour": 24,
+        "state_label": "trigger_sepsis_alert"
+      }
+    ],
+    "icu_intime": "2202-08-26T22:22:00",
+    "icu_outtime": "2202-08-29T17:00:41",
+    "icu_los_hours": 67.0,
+    "is_sepsis": true
+  },
+  {
+    "trajectory_id": "mimiciv_stay_32333312",
+    "stay_id": 32333312,
+    "subject_id": 19450100,
+    "hadm_id": 28907249,
+    "anchor": "icu_intime",
+    "step_hours": 4,
+    "horizon_hours": 24,
+    "transitions": {
+      "infection_start_hour": -44,
+      "organ_dysfunction_start_hour": 4,
+      "sepsis_start_hour": 4,
+      "infection_start_time": "2117-08-16T13:00:00",
+      "organ_dysfunction_start_time": "2117-08-18T13:00:00",
+      "sepsis_start_time": "2117-08-18T13:00:00"
+    },
+    "checkpoints": [
+      {
+        "t_hour": 0,
+        "state_label": "infection_suspect"
+      },
+      {
+        "t_hour": 4,
+        "state_label": "trigger_sepsis_alert"
+      },
+      {
+        "t_hour": 8,
+        "state_label": "trigger_sepsis_alert"
+      },
+      {
+        "t_hour": 12,
+        "state_label": "trigger_sepsis_alert"
+      },
+      {
+        "t_hour": 16,
+        "state_label": "trigger_sepsis_alert"
+      },
+      {
+        "t_hour": 20,
+        "state_label": "trigger_sepsis_alert"
+      },
+      {
+        "t_hour": 24,
+        "state_label": "trigger_sepsis_alert"
+      }
+    ],
+    "icu_intime": "2117-08-18T12:35:14",
+    "icu_outtime": "2117-08-21T17:21:48",
+    "icu_los_hours": 77.0,
+    "is_sepsis": true
+  },
+  {
+    "trajectory_id": "mimiciv_stay_32485344",
+    "stay_id": 32485344,
+    "subject_id": 18739233,
+    "hadm_id": 23869589,
+    "anchor": "icu_intime",
+    "step_hours": 4,
+    "horizon_hours": 24,
+    "transitions": {
+      "infection_start_hour": null,
+      "organ_dysfunction_start_hour": 4,
+      "sepsis_start_hour": null,
+      "infection_start_time": null,
+      "organ_dysfunction_start_time": "2153-05-26T14:00:00",
+      "sepsis_start_time": null
+    },
+    "checkpoints": [
+      {
+        "t_hour": 0,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 4,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 8,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 12,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 16,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 20,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 24,
+        "state_label": "keep_monitoring"
+      }
+    ],
+    "icu_intime": "2153-05-26T11:18:13",
+    "icu_outtime": "2153-06-03T21:28:02",
+    "icu_los_hours": 202.0,
+    "is_sepsis": false
+  },
+  {
+    "trajectory_id": "mimiciv_stay_32502978",
+    "stay_id": 32502978,
+    "subject_id": 13859181,
+    "hadm_id": 24283528,
+    "anchor": "icu_intime",
+    "step_hours": 4,
+    "horizon_hours": 24,
+    "transitions": {
+      "infection_start_hour": -4,
+      "organ_dysfunction_start_hour": 4,
+      "sepsis_start_hour": 4,
+      "infection_start_time": "2124-12-27T21:19:00",
+      "organ_dysfunction_start_time": "2124-12-28T03:00:00",
+      "sepsis_start_time": "2124-12-28T03:00:00"
+    },
+    "checkpoints": [
+      {
+        "t_hour": 0,
+        "state_label": "infection_suspect"
+      },
+      {
+        "t_hour": 4,
+        "state_label": "trigger_sepsis_alert"
+      },
+      {
+        "t_hour": 8,
+        "state_label": "trigger_sepsis_alert"
+      },
+      {
+        "t_hour": 12,
+        "state_label": "trigger_sepsis_alert"
+      },
+      {
+        "t_hour": 16,
+        "state_label": "trigger_sepsis_alert"
+      },
+      {
+        "t_hour": 20,
+        "state_label": "trigger_sepsis_alert"
+      },
+      {
+        "t_hour": 24,
+        "state_label": "trigger_sepsis_alert"
+      }
+    ],
+    "icu_intime": "2124-12-28T01:35:08",
+    "icu_outtime": "2124-12-29T14:02:10",
+    "icu_los_hours": 37.0,
+    "is_sepsis": true
+  },
+  {
+    "trajectory_id": "mimiciv_stay_32586453",
+    "stay_id": 32586453,
+    "subject_id": 14788739,
+    "hadm_id": 22831892,
+    "anchor": "icu_intime",
+    "step_hours": 4,
+    "horizon_hours": 24,
+    "transitions": {
+      "infection_start_hour": 4,
+      "organ_dysfunction_start_hour": 4,
+      "sepsis_start_hour": null,
+      "infection_start_time": "2162-06-11T17:50:00",
+      "organ_dysfunction_start_time": "2162-06-11T18:00:00",
+      "sepsis_start_time": null
+    },
+    "checkpoints": [
+      {
+        "t_hour": 0,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 4,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 8,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 12,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 16,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 20,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 24,
+        "state_label": "keep_monitoring"
+      }
+    ],
+    "icu_intime": "2162-06-11T17:17:49",
+    "icu_outtime": "2162-06-25T21:42:26",
+    "icu_los_hours": 340.0,
+    "is_sepsis": false
+  },
+  {
+    "trajectory_id": "mimiciv_stay_32736530",
+    "stay_id": 32736530,
+    "subject_id": 10437879,
+    "hadm_id": 22346378,
+    "anchor": "icu_intime",
+    "step_hours": 4,
+    "horizon_hours": 24,
+    "transitions": {
+      "infection_start_hour": 0,
+      "organ_dysfunction_start_hour": 4,
+      "sepsis_start_hour": null,
+      "infection_start_time": "2194-01-11T20:38:00",
+      "organ_dysfunction_start_time": "2194-01-12T01:00:00",
+      "sepsis_start_time": null
+    },
+    "checkpoints": [
+      {
+        "t_hour": 0,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 4,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 8,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 12,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 16,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 20,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 24,
+        "state_label": "keep_monitoring"
+      }
+    ],
+    "icu_intime": "2194-01-11T23:29:00",
+    "icu_outtime": "2194-01-18T15:08:58",
+    "icu_los_hours": 160.0,
+    "is_sepsis": false
+  },
+  {
+    "trajectory_id": "mimiciv_stay_32746229",
+    "stay_id": 32746229,
+    "subject_id": 13864559,
+    "hadm_id": 26783527,
+    "anchor": "icu_intime",
+    "step_hours": 4,
+    "horizon_hours": 24,
+    "transitions": {
+      "infection_start_hour": null,
+      "organ_dysfunction_start_hour": null,
+      "sepsis_start_hour": null,
+      "infection_start_time": null,
+      "organ_dysfunction_start_time": null,
+      "sepsis_start_time": null
+    },
+    "checkpoints": [
+      {
+        "t_hour": 0,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 4,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 8,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 12,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 16,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 20,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 24,
+        "state_label": "keep_monitoring"
+      }
+    ],
+    "icu_intime": "2156-01-27T06:27:00",
+    "icu_outtime": "2156-01-28T20:17:05",
+    "icu_los_hours": 38.0,
+    "is_sepsis": false
+  },
+  {
+    "trajectory_id": "mimiciv_stay_33073214",
+    "stay_id": 33073214,
+    "subject_id": 15219352,
+    "hadm_id": 23126169,
+    "anchor": "icu_intime",
+    "step_hours": 4,
+    "horizon_hours": 24,
+    "transitions": {
+      "infection_start_hour": -36,
+      "organ_dysfunction_start_hour": 16,
+      "sepsis_start_hour": 16,
+      "infection_start_time": "2146-04-09T19:01:00",
+      "organ_dysfunction_start_time": "2146-04-12T00:00:00",
+      "sepsis_start_time": "2146-04-12T00:00:00"
+    },
+    "checkpoints": [
+      {
+        "t_hour": 0,
+        "state_label": "infection_suspect"
+      },
+      {
+        "t_hour": 4,
+        "state_label": "infection_suspect"
+      },
+      {
+        "t_hour": 8,
+        "state_label": "infection_suspect"
+      },
+      {
+        "t_hour": 12,
+        "state_label": "infection_suspect"
+      },
+      {
+        "t_hour": 16,
+        "state_label": "trigger_sepsis_alert"
+      },
+      {
+        "t_hour": 20,
+        "state_label": "trigger_sepsis_alert"
+      },
+      {
+        "t_hour": 24,
+        "state_label": "trigger_sepsis_alert"
+      }
+    ],
+    "icu_intime": "2146-04-11T09:12:15",
+    "icu_outtime": "2146-04-19T22:17:57",
+    "icu_los_hours": 205.0,
+    "is_sepsis": true
+  },
+  {
+    "trajectory_id": "mimiciv_stay_33409364",
+    "stay_id": 33409364,
+    "subject_id": 15910113,
+    "hadm_id": 20133409,
+    "anchor": "icu_intime",
+    "step_hours": 4,
+    "horizon_hours": 24,
+    "transitions": {
+      "infection_start_hour": 0,
+      "organ_dysfunction_start_hour": 24,
+      "sepsis_start_hour": 24,
+      "infection_start_time": "2122-03-28T01:30:00",
+      "organ_dysfunction_start_time": "2122-03-29T03:00:00",
+      "sepsis_start_time": "2122-03-29T03:00:00"
+    },
+    "checkpoints": [
+      {
+        "t_hour": 0,
+        "state_label": "infection_suspect"
+      },
+      {
+        "t_hour": 4,
+        "state_label": "infection_suspect"
+      },
+      {
+        "t_hour": 8,
+        "state_label": "infection_suspect"
+      },
+      {
+        "t_hour": 12,
+        "state_label": "infection_suspect"
+      },
+      {
+        "t_hour": 16,
+        "state_label": "infection_suspect"
+      },
+      {
+        "t_hour": 20,
+        "state_label": "infection_suspect"
+      },
+      {
+        "t_hour": 24,
+        "state_label": "trigger_sepsis_alert"
+      }
+    ],
+    "icu_intime": "2122-03-28T03:53:00",
+    "icu_outtime": "2122-04-12T00:27:03",
+    "icu_los_hours": 357.0,
+    "is_sepsis": true
+  },
+  {
+    "trajectory_id": "mimiciv_stay_33564001",
+    "stay_id": 33564001,
+    "subject_id": 10224171,
+    "hadm_id": 25597906,
+    "anchor": "icu_intime",
+    "step_hours": 4,
+    "horizon_hours": 24,
+    "transitions": {
+      "infection_start_hour": null,
+      "organ_dysfunction_start_hour": 4,
+      "sepsis_start_hour": null,
+      "infection_start_time": null,
+      "organ_dysfunction_start_time": "2189-06-09T16:00:00",
+      "sepsis_start_time": null
+    },
+    "checkpoints": [
+      {
+        "t_hour": 0,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 4,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 8,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 12,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 16,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 20,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 24,
+        "state_label": "keep_monitoring"
+      }
+    ],
+    "icu_intime": "2189-06-09T14:16:30",
+    "icu_outtime": "2189-06-11T22:12:39",
+    "icu_los_hours": 56.0,
+    "is_sepsis": false
+  },
+  {
+    "trajectory_id": "mimiciv_stay_33601567",
+    "stay_id": 33601567,
+    "subject_id": 15108590,
+    "hadm_id": 25597947,
+    "anchor": "icu_intime",
+    "step_hours": 4,
+    "horizon_hours": 24,
+    "transitions": {
+      "infection_start_hour": 0,
+      "organ_dysfunction_start_hour": null,
+      "sepsis_start_hour": null,
+      "infection_start_time": "2184-02-22T20:45:00",
+      "organ_dysfunction_start_time": null,
+      "sepsis_start_time": null
+    },
+    "checkpoints": [
+      {
+        "t_hour": 0,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 4,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 8,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 12,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 16,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 20,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 24,
+        "state_label": "keep_monitoring"
+      }
+    ],
+    "icu_intime": "2184-02-23T00:30:00",
+    "icu_outtime": "2184-02-24T18:07:57",
+    "icu_los_hours": 42.0,
+    "is_sepsis": false
+  },
+  {
+    "trajectory_id": "mimiciv_stay_33707499",
+    "stay_id": 33707499,
+    "subject_id": 11475003,
+    "hadm_id": 25734878,
+    "anchor": "icu_intime",
+    "step_hours": 4,
+    "horizon_hours": 24,
+    "transitions": {
+      "infection_start_hour": -8,
+      "organ_dysfunction_start_hour": 4,
+      "sepsis_start_hour": 4,
+      "infection_start_time": "2131-03-10T19:30:00",
+      "organ_dysfunction_start_time": "2131-03-11T05:00:00",
+      "sepsis_start_time": "2131-03-11T05:00:00"
+    },
+    "checkpoints": [
+      {
+        "t_hour": 0,
+        "state_label": "infection_suspect"
+      },
+      {
+        "t_hour": 4,
+        "state_label": "trigger_sepsis_alert"
+      },
+      {
+        "t_hour": 8,
+        "state_label": "trigger_sepsis_alert"
+      },
+      {
+        "t_hour": 12,
+        "state_label": "trigger_sepsis_alert"
+      },
+      {
+        "t_hour": 16,
+        "state_label": "trigger_sepsis_alert"
+      },
+      {
+        "t_hour": 20,
+        "state_label": "trigger_sepsis_alert"
+      },
+      {
+        "t_hour": 24,
+        "state_label": "trigger_sepsis_alert"
+      }
+    ],
+    "icu_intime": "2131-03-11T04:21:00",
+    "icu_outtime": "2131-03-14T21:29:12",
+    "icu_los_hours": 89.0,
+    "is_sepsis": true
+  },
+  {
+    "trajectory_id": "mimiciv_stay_33738964",
+    "stay_id": 33738964,
+    "subject_id": 19231238,
+    "hadm_id": 29176939,
+    "anchor": "icu_intime",
+    "step_hours": 4,
+    "horizon_hours": 24,
+    "transitions": {
+      "infection_start_hour": null,
+      "organ_dysfunction_start_hour": 28,
+      "sepsis_start_hour": null,
+      "infection_start_time": null,
+      "organ_dysfunction_start_time": "2182-09-14T18:00:00",
+      "sepsis_start_time": null
+    },
+    "checkpoints": [
+      {
+        "t_hour": 0,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 4,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 8,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 12,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 16,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 20,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 24,
+        "state_label": "keep_monitoring"
+      }
+    ],
+    "icu_intime": "2182-09-13T17:34:56",
+    "icu_outtime": "2182-09-14T18:47:30",
+    "icu_los_hours": 25.0,
+    "is_sepsis": false
+  },
+  {
+    "trajectory_id": "mimiciv_stay_33840497",
+    "stay_id": 33840497,
+    "subject_id": 11144164,
+    "hadm_id": 29697309,
+    "anchor": "icu_intime",
+    "step_hours": 4,
+    "horizon_hours": 24,
+    "transitions": {
+      "infection_start_hour": null,
+      "organ_dysfunction_start_hour": 8,
+      "sepsis_start_hour": null,
+      "infection_start_time": null,
+      "organ_dysfunction_start_time": "2129-10-22T00:00:00",
+      "sepsis_start_time": null
+    },
+    "checkpoints": [
+      {
+        "t_hour": 0,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 4,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 8,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 12,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 16,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 20,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 24,
+        "state_label": "keep_monitoring"
+      }
+    ],
+    "icu_intime": "2129-10-21T18:40:00",
+    "icu_outtime": "2129-10-22T21:48:01",
+    "icu_los_hours": 27.0,
+    "is_sepsis": false
+  },
+  {
+    "trajectory_id": "mimiciv_stay_33865129",
+    "stay_id": 33865129,
+    "subject_id": 15285832,
+    "hadm_id": 26204715,
+    "anchor": "icu_intime",
+    "step_hours": 4,
+    "horizon_hours": 24,
+    "transitions": {
+      "infection_start_hour": 0,
+      "organ_dysfunction_start_hour": 8,
+      "sepsis_start_hour": 8,
+      "infection_start_time": "2118-11-24T19:40:00",
+      "organ_dysfunction_start_time": "2118-11-25T04:00:00",
+      "sepsis_start_time": "2118-11-25T04:00:00"
+    },
+    "checkpoints": [
+      {
+        "t_hour": 0,
+        "state_label": "infection_suspect"
+      },
+      {
+        "t_hour": 4,
+        "state_label": "infection_suspect"
+      },
+      {
+        "t_hour": 8,
+        "state_label": "trigger_sepsis_alert"
+      },
+      {
+        "t_hour": 12,
+        "state_label": "trigger_sepsis_alert"
+      },
+      {
+        "t_hour": 16,
+        "state_label": "trigger_sepsis_alert"
+      },
+      {
+        "t_hour": 20,
+        "state_label": "trigger_sepsis_alert"
+      },
+      {
+        "t_hour": 24,
+        "state_label": "trigger_sepsis_alert"
+      }
+    ],
+    "icu_intime": "2118-11-24T22:28:00",
+    "icu_outtime": "2118-11-28T15:45:45",
+    "icu_los_hours": 89.0,
+    "is_sepsis": true
+  },
+  {
+    "trajectory_id": "mimiciv_stay_33886280",
+    "stay_id": 33886280,
+    "subject_id": 18205234,
+    "hadm_id": 21281344,
+    "anchor": "icu_intime",
+    "step_hours": 4,
+    "horizon_hours": 24,
+    "transitions": {
+      "infection_start_hour": null,
+      "organ_dysfunction_start_hour": 12,
+      "sepsis_start_hour": null,
+      "infection_start_time": null,
+      "organ_dysfunction_start_time": "2164-11-14T11:00:00",
+      "sepsis_start_time": null
+    },
+    "checkpoints": [
+      {
+        "t_hour": 0,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 4,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 8,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 12,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 16,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 20,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 24,
+        "state_label": "keep_monitoring"
+      }
+    ],
+    "icu_intime": "2164-11-13T23:05:00",
+    "icu_outtime": "2164-11-15T13:23:25",
+    "icu_los_hours": 38.0,
+    "is_sepsis": false
+  },
+  {
+    "trajectory_id": "mimiciv_stay_33886486",
+    "stay_id": 33886486,
+    "subject_id": 13276258,
+    "hadm_id": 20941994,
+    "anchor": "icu_intime",
+    "step_hours": 4,
+    "horizon_hours": 24,
+    "transitions": {
+      "infection_start_hour": 0,
+      "organ_dysfunction_start_hour": 4,
+      "sepsis_start_hour": 4,
+      "infection_start_time": "2169-11-29T17:30:00",
+      "organ_dysfunction_start_time": "2169-11-29T22:00:00",
+      "sepsis_start_time": "2169-11-29T22:00:00"
+    },
+    "checkpoints": [
+      {
+        "t_hour": 0,
+        "state_label": "infection_suspect"
+      },
+      {
+        "t_hour": 4,
+        "state_label": "trigger_sepsis_alert"
+      },
+      {
+        "t_hour": 8,
+        "state_label": "trigger_sepsis_alert"
+      },
+      {
+        "t_hour": 12,
+        "state_label": "trigger_sepsis_alert"
+      },
+      {
+        "t_hour": 16,
+        "state_label": "trigger_sepsis_alert"
+      },
+      {
+        "t_hour": 20,
+        "state_label": "trigger_sepsis_alert"
+      },
+      {
+        "t_hour": 24,
+        "state_label": "trigger_sepsis_alert"
+      }
+    ],
+    "icu_intime": "2169-11-29T21:28:00",
+    "icu_outtime": "2169-12-03T22:11:44",
+    "icu_los_hours": 97.0,
+    "is_sepsis": true
+  },
+  {
+    "trajectory_id": "mimiciv_stay_33979090",
+    "stay_id": 33979090,
+    "subject_id": 11168491,
+    "hadm_id": 24741052,
+    "anchor": "icu_intime",
+    "step_hours": 4,
+    "horizon_hours": 24,
+    "transitions": {
+      "infection_start_hour": -8,
+      "organ_dysfunction_start_hour": 4,
+      "sepsis_start_hour": 4,
+      "infection_start_time": "2154-09-25T02:02:00",
+      "organ_dysfunction_start_time": "2154-09-25T14:00:00",
+      "sepsis_start_time": "2154-09-25T14:00:00"
+    },
+    "checkpoints": [
+      {
+        "t_hour": 0,
+        "state_label": "infection_suspect"
+      },
+      {
+        "t_hour": 4,
+        "state_label": "trigger_sepsis_alert"
+      },
+      {
+        "t_hour": 8,
+        "state_label": "trigger_sepsis_alert"
+      },
+      {
+        "t_hour": 12,
+        "state_label": "trigger_sepsis_alert"
+      },
+      {
+        "t_hour": 16,
+        "state_label": "trigger_sepsis_alert"
+      },
+      {
+        "t_hour": 20,
+        "state_label": "trigger_sepsis_alert"
+      },
+      {
+        "t_hour": 24,
+        "state_label": "trigger_sepsis_alert"
+      }
+    ],
+    "icu_intime": "2154-09-25T13:12:24",
+    "icu_outtime": "2154-10-03T17:05:32",
+    "icu_los_hours": 196.0,
+    "is_sepsis": true
+  },
+  {
+    "trajectory_id": "mimiciv_stay_34105158",
+    "stay_id": 34105158,
+    "subject_id": 16652205,
+    "hadm_id": 27945127,
+    "anchor": "icu_intime",
+    "step_hours": 4,
+    "horizon_hours": 24,
+    "transitions": {
+      "infection_start_hour": 0,
+      "organ_dysfunction_start_hour": 4,
+      "sepsis_start_hour": 4,
+      "infection_start_time": "2169-04-22T21:00:00",
+      "organ_dysfunction_start_time": "2169-04-23T01:00:00",
+      "sepsis_start_time": "2169-04-23T01:00:00"
+    },
+    "checkpoints": [
+      {
+        "t_hour": 0,
+        "state_label": "infection_suspect"
+      },
+      {
+        "t_hour": 4,
+        "state_label": "trigger_sepsis_alert"
+      },
+      {
+        "t_hour": 8,
+        "state_label": "trigger_sepsis_alert"
+      },
+      {
+        "t_hour": 12,
+        "state_label": "trigger_sepsis_alert"
+      },
+      {
+        "t_hour": 16,
+        "state_label": "trigger_sepsis_alert"
+      },
+      {
+        "t_hour": 20,
+        "state_label": "trigger_sepsis_alert"
+      },
+      {
+        "t_hour": 24,
+        "state_label": "trigger_sepsis_alert"
+      }
+    ],
+    "icu_intime": "2169-04-22T23:35:00",
+    "icu_outtime": "2169-04-24T18:06:13",
+    "icu_los_hours": 43.0,
+    "is_sepsis": true
+  },
+  {
+    "trajectory_id": "mimiciv_stay_34114070",
+    "stay_id": 34114070,
+    "subject_id": 14912212,
+    "hadm_id": 28029195,
+    "anchor": "icu_intime",
+    "step_hours": 4,
+    "horizon_hours": 24,
+    "transitions": {
+      "infection_start_hour": -52,
+      "organ_dysfunction_start_hour": 4,
+      "sepsis_start_hour": null,
+      "infection_start_time": "2121-11-26T21:50:00",
+      "organ_dysfunction_start_time": "2121-11-29T04:00:00",
+      "sepsis_start_time": null
+    },
+    "checkpoints": [
+      {
+        "t_hour": 0,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 4,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 8,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 12,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 16,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 20,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 24,
+        "state_label": "keep_monitoring"
+      }
+    ],
+    "icu_intime": "2121-11-29T03:35:46",
+    "icu_outtime": "2121-12-02T05:37:12",
+    "icu_los_hours": 74.0,
+    "is_sepsis": false
+  },
+  {
+    "trajectory_id": "mimiciv_stay_34161800",
+    "stay_id": 34161800,
+    "subject_id": 17280245,
+    "hadm_id": 28812527,
+    "anchor": "icu_intime",
+    "step_hours": 4,
+    "horizon_hours": 24,
+    "transitions": {
+      "infection_start_hour": -40,
+      "organ_dysfunction_start_hour": 4,
+      "sepsis_start_hour": null,
+      "infection_start_time": "2147-08-04T00:00:00",
+      "organ_dysfunction_start_time": "2147-08-05T19:00:00",
+      "sepsis_start_time": null
+    },
+    "checkpoints": [
+      {
+        "t_hour": 0,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 4,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 8,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 12,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 16,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 20,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 24,
+        "state_label": "keep_monitoring"
+      }
+    ],
+    "icu_intime": "2147-08-05T17:22:46",
+    "icu_outtime": "2147-08-10T13:19:04",
+    "icu_los_hours": 116.0,
+    "is_sepsis": false
+  },
+  {
+    "trajectory_id": "mimiciv_stay_34163892",
+    "stay_id": 34163892,
+    "subject_id": 15541773,
+    "hadm_id": 28923622,
+    "anchor": "icu_intime",
+    "step_hours": 4,
+    "horizon_hours": 24,
+    "transitions": {
+      "infection_start_hour": 16,
+      "organ_dysfunction_start_hour": 4,
+      "sepsis_start_hour": null,
+      "infection_start_time": "2146-07-19T18:00:00",
+      "organ_dysfunction_start_time": "2146-07-19T03:00:00",
+      "sepsis_start_time": null
+    },
+    "checkpoints": [
+      {
+        "t_hour": 0,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 4,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 8,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 12,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 16,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 20,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 24,
+        "state_label": "keep_monitoring"
+      }
+    ],
+    "icu_intime": "2146-07-19T02:24:00",
+    "icu_outtime": "2146-07-23T22:33:59",
+    "icu_los_hours": 116.0,
+    "is_sepsis": false
+  },
+  {
+    "trajectory_id": "mimiciv_stay_34177012",
+    "stay_id": 34177012,
+    "subject_id": 15657605,
+    "hadm_id": 28299962,
+    "anchor": "icu_intime",
+    "step_hours": 4,
+    "horizon_hours": 24,
+    "transitions": {
+      "infection_start_hour": null,
+      "organ_dysfunction_start_hour": null,
+      "sepsis_start_hour": null,
+      "infection_start_time": null,
+      "organ_dysfunction_start_time": null,
+      "sepsis_start_time": null
+    },
+    "checkpoints": [
+      {
+        "t_hour": 0,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 4,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 8,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 12,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 16,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 20,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 24,
+        "state_label": "keep_monitoring"
+      }
+    ],
+    "icu_intime": "2164-11-23T20:21:18",
+    "icu_outtime": "2164-11-25T16:47:05",
+    "icu_los_hours": 44.0,
+    "is_sepsis": false
+  },
+  {
+    "trajectory_id": "mimiciv_stay_34200062",
+    "stay_id": 34200062,
+    "subject_id": 12133540,
+    "hadm_id": 28203970,
+    "anchor": "icu_intime",
+    "step_hours": 4,
+    "horizon_hours": 24,
+    "transitions": {
+      "infection_start_hour": 4,
+      "organ_dysfunction_start_hour": 4,
+      "sepsis_start_hour": 4,
+      "infection_start_time": "2122-06-27T00:00:00",
+      "organ_dysfunction_start_time": "2122-06-27T01:00:00",
+      "sepsis_start_time": "2122-06-27T01:00:00"
+    },
+    "checkpoints": [
+      {
+        "t_hour": 0,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 4,
+        "state_label": "trigger_sepsis_alert"
+      },
+      {
+        "t_hour": 8,
+        "state_label": "trigger_sepsis_alert"
+      },
+      {
+        "t_hour": 12,
+        "state_label": "trigger_sepsis_alert"
+      },
+      {
+        "t_hour": 16,
+        "state_label": "trigger_sepsis_alert"
+      },
+      {
+        "t_hour": 20,
+        "state_label": "trigger_sepsis_alert"
+      },
+      {
+        "t_hour": 24,
+        "state_label": "trigger_sepsis_alert"
+      }
+    ],
+    "icu_intime": "2122-06-26T21:51:28",
+    "icu_outtime": "2122-07-05T23:28:10",
+    "icu_los_hours": 218.0,
+    "is_sepsis": true
+  },
+  {
+    "trajectory_id": "mimiciv_stay_34202534",
+    "stay_id": 34202534,
+    "subject_id": 10783672,
+    "hadm_id": 25057958,
+    "anchor": "icu_intime",
+    "step_hours": 4,
+    "horizon_hours": 24,
+    "transitions": {
+      "infection_start_hour": -4,
+      "organ_dysfunction_start_hour": 4,
+      "sepsis_start_hour": null,
+      "infection_start_time": "2133-10-01T15:55:00",
+      "organ_dysfunction_start_time": "2133-10-01T21:00:00",
+      "sepsis_start_time": null
+    },
+    "checkpoints": [
+      {
+        "t_hour": 0,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 4,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 8,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 12,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 16,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 20,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 24,
+        "state_label": "keep_monitoring"
+      }
+    ],
+    "icu_intime": "2133-10-01T20:15:00",
+    "icu_outtime": "2133-11-07T20:02:44",
+    "icu_los_hours": 888.0,
+    "is_sepsis": false
+  },
+  {
+    "trajectory_id": "mimiciv_stay_34428643",
+    "stay_id": 34428643,
+    "subject_id": 15116019,
+    "hadm_id": 29138413,
+    "anchor": "icu_intime",
+    "step_hours": 4,
+    "horizon_hours": 24,
+    "transitions": {
+      "infection_start_hour": 4,
+      "organ_dysfunction_start_hour": 4,
+      "sepsis_start_hour": 4,
+      "infection_start_time": "2146-06-18T18:03:00",
+      "organ_dysfunction_start_time": "2146-06-18T18:00:00",
+      "sepsis_start_time": "2146-06-18T18:00:00"
+    },
+    "checkpoints": [
+      {
+        "t_hour": 0,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 4,
+        "state_label": "trigger_sepsis_alert"
+      },
+      {
+        "t_hour": 8,
+        "state_label": "trigger_sepsis_alert"
+      },
+      {
+        "t_hour": 12,
+        "state_label": "trigger_sepsis_alert"
+      },
+      {
+        "t_hour": 16,
+        "state_label": "trigger_sepsis_alert"
+      },
+      {
+        "t_hour": 20,
+        "state_label": "trigger_sepsis_alert"
+      },
+      {
+        "t_hour": 24,
+        "state_label": "trigger_sepsis_alert"
+      }
+    ],
+    "icu_intime": "2146-06-18T17:40:39",
+    "icu_outtime": "2146-06-21T15:48:01",
+    "icu_los_hours": 70.0,
+    "is_sepsis": true
+  },
+  {
+    "trajectory_id": "mimiciv_stay_34466274",
+    "stay_id": 34466274,
+    "subject_id": 12796402,
+    "hadm_id": 29219603,
+    "anchor": "icu_intime",
+    "step_hours": 4,
+    "horizon_hours": 24,
+    "transitions": {
+      "infection_start_hour": null,
+      "organ_dysfunction_start_hour": 36,
+      "sepsis_start_hour": null,
+      "infection_start_time": null,
+      "organ_dysfunction_start_time": "2154-05-20T00:00:00",
+      "sepsis_start_time": null
+    },
+    "checkpoints": [
+      {
+        "t_hour": 0,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 4,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 8,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 12,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 16,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 20,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 24,
+        "state_label": "keep_monitoring"
+      }
+    ],
+    "icu_intime": "2154-05-18T14:34:20",
+    "icu_outtime": "2154-05-21T15:45:31",
+    "icu_los_hours": 73.0,
+    "is_sepsis": false
+  },
+  {
+    "trajectory_id": "mimiciv_stay_34499356",
+    "stay_id": 34499356,
+    "subject_id": 17321313,
+    "hadm_id": 24423952,
+    "anchor": "icu_intime",
+    "step_hours": 4,
+    "horizon_hours": 24,
+    "transitions": {
+      "infection_start_hour": null,
+      "organ_dysfunction_start_hour": 8,
+      "sepsis_start_hour": null,
+      "infection_start_time": null,
+      "organ_dysfunction_start_time": "2176-12-27T11:00:00",
+      "sepsis_start_time": null
+    },
+    "checkpoints": [
+      {
+        "t_hour": 0,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 4,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 8,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 12,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 16,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 20,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 24,
+        "state_label": "keep_monitoring"
+      }
+    ],
+    "icu_intime": "2176-12-27T06:44:28",
+    "icu_outtime": "2176-12-28T18:46:09",
+    "icu_los_hours": 36.0,
+    "is_sepsis": false
+  },
+  {
+    "trajectory_id": "mimiciv_stay_34733962",
+    "stay_id": 34733962,
+    "subject_id": 12885370,
+    "hadm_id": 29877482,
+    "anchor": "icu_intime",
+    "step_hours": 4,
+    "horizon_hours": 24,
+    "transitions": {
+      "infection_start_hour": null,
+      "organ_dysfunction_start_hour": 4,
+      "sepsis_start_hour": null,
+      "infection_start_time": null,
+      "organ_dysfunction_start_time": "2140-05-08T15:00:00",
+      "sepsis_start_time": null
+    },
+    "checkpoints": [
+      {
+        "t_hour": 0,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 4,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 8,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 12,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 16,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 20,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 24,
+        "state_label": "keep_monitoring"
+      }
+    ],
+    "icu_intime": "2140-05-08T11:18:44",
+    "icu_outtime": "2140-05-09T12:53:14",
+    "icu_los_hours": 25.0,
+    "is_sepsis": false
+  },
+  {
+    "trajectory_id": "mimiciv_stay_34790758",
+    "stay_id": 34790758,
+    "subject_id": 12669453,
+    "hadm_id": 20964043,
+    "anchor": "icu_intime",
+    "step_hours": 4,
+    "horizon_hours": 24,
+    "transitions": {
+      "infection_start_hour": 4,
+      "organ_dysfunction_start_hour": 8,
+      "sepsis_start_hour": 8,
+      "infection_start_time": "2172-07-07T11:00:00",
+      "organ_dysfunction_start_time": "2172-07-07T15:00:00",
+      "sepsis_start_time": "2172-07-07T15:00:00"
+    },
+    "checkpoints": [
+      {
+        "t_hour": 0,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 4,
+        "state_label": "infection_suspect"
+      },
+      {
+        "t_hour": 8,
+        "state_label": "trigger_sepsis_alert"
+      },
+      {
+        "t_hour": 12,
+        "state_label": "trigger_sepsis_alert"
+      },
+      {
+        "t_hour": 16,
+        "state_label": "trigger_sepsis_alert"
+      },
+      {
+        "t_hour": 20,
+        "state_label": "trigger_sepsis_alert"
+      },
+      {
+        "t_hour": 24,
+        "state_label": "trigger_sepsis_alert"
+      }
+    ],
+    "icu_intime": "2172-07-07T10:11:55",
+    "icu_outtime": "2172-07-08T15:01:39",
+    "icu_los_hours": 29.0,
+    "is_sepsis": true
+  },
+  {
+    "trajectory_id": "mimiciv_stay_34861717",
+    "stay_id": 34861717,
+    "subject_id": 14849280,
+    "hadm_id": 28285622,
+    "anchor": "icu_intime",
+    "step_hours": 4,
+    "horizon_hours": 24,
+    "transitions": {
+      "infection_start_hour": 0,
+      "organ_dysfunction_start_hour": 4,
+      "sepsis_start_hour": 4,
+      "infection_start_time": "2154-06-04T08:30:00",
+      "organ_dysfunction_start_time": "2154-06-04T15:00:00",
+      "sepsis_start_time": "2154-06-04T15:00:00"
+    },
+    "checkpoints": [
+      {
+        "t_hour": 0,
+        "state_label": "infection_suspect"
+      },
+      {
+        "t_hour": 4,
+        "state_label": "trigger_sepsis_alert"
+      },
+      {
+        "t_hour": 8,
+        "state_label": "trigger_sepsis_alert"
+      },
+      {
+        "t_hour": 12,
+        "state_label": "trigger_sepsis_alert"
+      },
+      {
+        "t_hour": 16,
+        "state_label": "trigger_sepsis_alert"
+      },
+      {
+        "t_hour": 20,
+        "state_label": "trigger_sepsis_alert"
+      },
+      {
+        "t_hour": 24,
+        "state_label": "trigger_sepsis_alert"
+      }
+    ],
+    "icu_intime": "2154-06-04T12:16:31",
+    "icu_outtime": "2154-06-09T15:10:21",
+    "icu_los_hours": 123.0,
+    "is_sepsis": true
+  },
+  {
+    "trajectory_id": "mimiciv_stay_34962172",
+    "stay_id": 34962172,
+    "subject_id": 12558806,
+    "hadm_id": 21587540,
+    "anchor": "icu_intime",
+    "step_hours": 4,
+    "horizon_hours": 24,
+    "transitions": {
+      "infection_start_hour": 4,
+      "organ_dysfunction_start_hour": 4,
+      "sepsis_start_hour": 4,
+      "infection_start_time": "2159-02-17T14:00:00",
+      "organ_dysfunction_start_time": "2159-02-17T15:00:00",
+      "sepsis_start_time": "2159-02-17T15:00:00"
+    },
+    "checkpoints": [
+      {
+        "t_hour": 0,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 4,
+        "state_label": "trigger_sepsis_alert"
+      },
+      {
+        "t_hour": 8,
+        "state_label": "trigger_sepsis_alert"
+      },
+      {
+        "t_hour": 12,
+        "state_label": "trigger_sepsis_alert"
+      },
+      {
+        "t_hour": 16,
+        "state_label": "trigger_sepsis_alert"
+      },
+      {
+        "t_hour": 20,
+        "state_label": "trigger_sepsis_alert"
+      },
+      {
+        "t_hour": 24,
+        "state_label": "trigger_sepsis_alert"
+      }
+    ],
+    "icu_intime": "2159-02-17T11:05:20",
+    "icu_outtime": "2159-02-19T11:10:28",
+    "icu_los_hours": 48.0,
+    "is_sepsis": true
+  },
+  {
+    "trajectory_id": "mimiciv_stay_35090797",
+    "stay_id": 35090797,
+    "subject_id": 19674244,
+    "hadm_id": 22341740,
+    "anchor": "icu_intime",
+    "step_hours": 4,
+    "horizon_hours": 24,
+    "transitions": {
+      "infection_start_hour": 4,
+      "organ_dysfunction_start_hour": 4,
+      "sepsis_start_hour": 4,
+      "infection_start_time": "2196-03-27T11:50:00",
+      "organ_dysfunction_start_time": "2196-03-27T10:00:00",
+      "sepsis_start_time": "2196-03-27T10:00:00"
+    },
+    "checkpoints": [
+      {
+        "t_hour": 0,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 4,
+        "state_label": "trigger_sepsis_alert"
+      },
+      {
+        "t_hour": 8,
+        "state_label": "trigger_sepsis_alert"
+      },
+      {
+        "t_hour": 12,
+        "state_label": "trigger_sepsis_alert"
+      },
+      {
+        "t_hour": 16,
+        "state_label": "trigger_sepsis_alert"
+      },
+      {
+        "t_hour": 20,
+        "state_label": "trigger_sepsis_alert"
+      },
+      {
+        "t_hour": 24,
+        "state_label": "trigger_sepsis_alert"
+      }
+    ],
+    "icu_intime": "2196-03-27T09:04:31",
+    "icu_outtime": "2196-04-30T16:00:06",
+    "icu_los_hours": 823.0,
+    "is_sepsis": true
+  },
+  {
+    "trajectory_id": "mimiciv_stay_35235760",
+    "stay_id": 35235760,
+    "subject_id": 19607985,
+    "hadm_id": 27811194,
+    "anchor": "icu_intime",
+    "step_hours": 4,
+    "horizon_hours": 24,
+    "transitions": {
+      "infection_start_hour": 0,
+      "organ_dysfunction_start_hour": 52,
+      "sepsis_start_hour": null,
+      "infection_start_time": "2124-12-03T14:20:00",
+      "organ_dysfunction_start_time": "2124-12-05T19:00:00",
+      "sepsis_start_time": null
+    },
+    "checkpoints": [
+      {
+        "t_hour": 0,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 4,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 8,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 12,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 16,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 20,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 24,
+        "state_label": "keep_monitoring"
+      }
+    ],
+    "icu_intime": "2124-12-03T17:30:00",
+    "icu_outtime": "2125-01-11T18:44:04",
+    "icu_los_hours": 937.0,
+    "is_sepsis": false
+  },
+  {
+    "trajectory_id": "mimiciv_stay_35335361",
+    "stay_id": 35335361,
+    "subject_id": 10282939,
+    "hadm_id": 20216757,
+    "anchor": "icu_intime",
+    "step_hours": 4,
+    "horizon_hours": 24,
+    "transitions": {
+      "infection_start_hour": null,
+      "organ_dysfunction_start_hour": null,
+      "sepsis_start_hour": null,
+      "infection_start_time": null,
+      "organ_dysfunction_start_time": null,
+      "sepsis_start_time": null
+    },
+    "checkpoints": [
+      {
+        "t_hour": 0,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 4,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 8,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 12,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 16,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 20,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 24,
+        "state_label": "keep_monitoring"
+      }
+    ],
+    "icu_intime": "2174-05-28T15:43:00",
+    "icu_outtime": "2174-06-02T15:19:24",
+    "icu_los_hours": 120.0,
+    "is_sepsis": false
+  },
+  {
+    "trajectory_id": "mimiciv_stay_35428725",
+    "stay_id": 35428725,
+    "subject_id": 13925940,
+    "hadm_id": 26895044,
+    "anchor": "icu_intime",
+    "step_hours": 4,
+    "horizon_hours": 24,
+    "transitions": {
+      "infection_start_hour": null,
+      "organ_dysfunction_start_hour": 4,
+      "sepsis_start_hour": null,
+      "infection_start_time": null,
+      "organ_dysfunction_start_time": "2139-09-15T00:00:00",
+      "sepsis_start_time": null
+    },
+    "checkpoints": [
+      {
+        "t_hour": 0,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 4,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 8,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 12,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 16,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 20,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 24,
+        "state_label": "keep_monitoring"
+      }
+    ],
+    "icu_intime": "2139-09-14T23:19:43",
+    "icu_outtime": "2139-09-19T21:07:25",
+    "icu_los_hours": 118.0,
+    "is_sepsis": false
+  },
+  {
+    "trajectory_id": "mimiciv_stay_35450449",
+    "stay_id": 35450449,
+    "subject_id": 15573773,
+    "hadm_id": 26314301,
+    "anchor": "icu_intime",
+    "step_hours": 4,
+    "horizon_hours": 24,
+    "transitions": {
+      "infection_start_hour": -4,
+      "organ_dysfunction_start_hour": 4,
+      "sepsis_start_hour": 4,
+      "infection_start_time": "2173-02-09T09:41:00",
+      "organ_dysfunction_start_time": "2173-02-09T19:00:00",
+      "sepsis_start_time": "2173-02-09T19:00:00"
+    },
+    "checkpoints": [
+      {
+        "t_hour": 0,
+        "state_label": "infection_suspect"
+      },
+      {
+        "t_hour": 4,
+        "state_label": "trigger_sepsis_alert"
+      },
+      {
+        "t_hour": 8,
+        "state_label": "trigger_sepsis_alert"
+      },
+      {
+        "t_hour": 12,
+        "state_label": "trigger_sepsis_alert"
+      },
+      {
+        "t_hour": 16,
+        "state_label": "trigger_sepsis_alert"
+      },
+      {
+        "t_hour": 20,
+        "state_label": "trigger_sepsis_alert"
+      },
+      {
+        "t_hour": 24,
+        "state_label": "trigger_sepsis_alert"
+      }
+    ],
+    "icu_intime": "2173-02-09T16:27:48",
+    "icu_outtime": "2173-02-10T22:02:17",
+    "icu_los_hours": 30.0,
+    "is_sepsis": true
+  },
+  {
+    "trajectory_id": "mimiciv_stay_35470963",
+    "stay_id": 35470963,
+    "subject_id": 19113842,
+    "hadm_id": 25311758,
+    "anchor": "icu_intime",
+    "step_hours": 4,
+    "horizon_hours": 24,
+    "transitions": {
+      "infection_start_hour": null,
+      "organ_dysfunction_start_hour": 4,
+      "sepsis_start_hour": null,
+      "infection_start_time": null,
+      "organ_dysfunction_start_time": "2184-09-21T15:00:00",
+      "sepsis_start_time": null
+    },
+    "checkpoints": [
+      {
+        "t_hour": 0,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 4,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 8,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 12,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 16,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 20,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 24,
+        "state_label": "keep_monitoring"
+      }
+    ],
+    "icu_intime": "2184-09-21T11:50:19",
+    "icu_outtime": "2184-09-22T21:35:37",
+    "icu_los_hours": 34.0,
+    "is_sepsis": false
+  },
+  {
+    "trajectory_id": "mimiciv_stay_35474258",
+    "stay_id": 35474258,
+    "subject_id": 11505655,
+    "hadm_id": 20690234,
+    "anchor": "icu_intime",
+    "step_hours": 4,
+    "horizon_hours": 24,
+    "transitions": {
+      "infection_start_hour": null,
+      "organ_dysfunction_start_hour": 4,
+      "sepsis_start_hour": null,
+      "infection_start_time": null,
+      "organ_dysfunction_start_time": "2119-08-10T16:00:00",
+      "sepsis_start_time": null
+    },
+    "checkpoints": [
+      {
+        "t_hour": 0,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 4,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 8,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 12,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 16,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 20,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 24,
+        "state_label": "keep_monitoring"
+      }
+    ],
+    "icu_intime": "2119-08-10T15:03:30",
+    "icu_outtime": "2119-08-15T17:06:52",
+    "icu_los_hours": 122.0,
+    "is_sepsis": false
+  },
+  {
+    "trajectory_id": "mimiciv_stay_35683352",
+    "stay_id": 35683352,
+    "subject_id": 17245713,
+    "hadm_id": 24468966,
+    "anchor": "icu_intime",
+    "step_hours": 4,
+    "horizon_hours": 24,
+    "transitions": {
+      "infection_start_hour": null,
+      "organ_dysfunction_start_hour": 4,
+      "sepsis_start_hour": null,
+      "infection_start_time": null,
+      "organ_dysfunction_start_time": "2121-01-18T17:00:00",
+      "sepsis_start_time": null
+    },
+    "checkpoints": [
+      {
+        "t_hour": 0,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 4,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 8,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 12,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 16,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 20,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 24,
+        "state_label": "keep_monitoring"
+      }
+    ],
+    "icu_intime": "2121-01-18T16:20:45",
+    "icu_outtime": "2121-01-20T00:20:15",
+    "icu_los_hours": 32.0,
+    "is_sepsis": false
+  },
+  {
+    "trajectory_id": "mimiciv_stay_35768007",
+    "stay_id": 35768007,
+    "subject_id": 11384398,
+    "hadm_id": 21919966,
+    "anchor": "icu_intime",
+    "step_hours": 4,
+    "horizon_hours": 24,
+    "transitions": {
+      "infection_start_hour": -12,
+      "organ_dysfunction_start_hour": 4,
+      "sepsis_start_hour": 4,
+      "infection_start_time": "2149-09-26T09:10:00",
+      "organ_dysfunction_start_time": "2149-09-27T02:00:00",
+      "sepsis_start_time": "2149-09-27T02:00:00"
+    },
+    "checkpoints": [
+      {
+        "t_hour": 0,
+        "state_label": "infection_suspect"
+      },
+      {
+        "t_hour": 4,
+        "state_label": "trigger_sepsis_alert"
+      },
+      {
+        "t_hour": 8,
+        "state_label": "trigger_sepsis_alert"
+      },
+      {
+        "t_hour": 12,
+        "state_label": "trigger_sepsis_alert"
+      },
+      {
+        "t_hour": 16,
+        "state_label": "trigger_sepsis_alert"
+      },
+      {
+        "t_hour": 20,
+        "state_label": "trigger_sepsis_alert"
+      },
+      {
+        "t_hour": 24,
+        "state_label": "trigger_sepsis_alert"
+      }
+    ],
+    "icu_intime": "2149-09-26T22:22:52",
+    "icu_outtime": "2149-09-29T18:58:38",
+    "icu_los_hours": 68.0,
+    "is_sepsis": true
+  },
+  {
+    "trajectory_id": "mimiciv_stay_35859388",
+    "stay_id": 35859388,
+    "subject_id": 16504173,
+    "hadm_id": 25082363,
+    "anchor": "icu_intime",
+    "step_hours": 4,
+    "horizon_hours": 24,
+    "transitions": {
+      "infection_start_hour": 4,
+      "organ_dysfunction_start_hour": 4,
+      "sepsis_start_hour": 4,
+      "infection_start_time": "2110-06-15T15:00:00",
+      "organ_dysfunction_start_time": "2110-06-15T15:00:00",
+      "sepsis_start_time": "2110-06-15T15:00:00"
+    },
+    "checkpoints": [
+      {
+        "t_hour": 0,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 4,
+        "state_label": "trigger_sepsis_alert"
+      },
+      {
+        "t_hour": 8,
+        "state_label": "trigger_sepsis_alert"
+      },
+      {
+        "t_hour": 12,
+        "state_label": "trigger_sepsis_alert"
+      },
+      {
+        "t_hour": 16,
+        "state_label": "trigger_sepsis_alert"
+      },
+      {
+        "t_hour": 20,
+        "state_label": "trigger_sepsis_alert"
+      },
+      {
+        "t_hour": 24,
+        "state_label": "trigger_sepsis_alert"
+      }
+    ],
+    "icu_intime": "2110-06-15T14:06:39",
+    "icu_outtime": "2110-07-12T12:39:19",
+    "icu_los_hours": 646.0,
+    "is_sepsis": true
+  },
+  {
+    "trajectory_id": "mimiciv_stay_35916663",
+    "stay_id": 35916663,
+    "subject_id": 19552718,
+    "hadm_id": 22845997,
+    "anchor": "icu_intime",
+    "step_hours": 4,
+    "horizon_hours": 24,
+    "transitions": {
+      "infection_start_hour": -8,
+      "organ_dysfunction_start_hour": 12,
+      "sepsis_start_hour": 12,
+      "infection_start_time": "2132-04-05T07:47:00",
+      "organ_dysfunction_start_time": "2132-04-06T02:00:00",
+      "sepsis_start_time": "2132-04-06T02:00:00"
+    },
+    "checkpoints": [
+      {
+        "t_hour": 0,
+        "state_label": "infection_suspect"
+      },
+      {
+        "t_hour": 4,
+        "state_label": "infection_suspect"
+      },
+      {
+        "t_hour": 8,
+        "state_label": "infection_suspect"
+      },
+      {
+        "t_hour": 12,
+        "state_label": "trigger_sepsis_alert"
+      },
+      {
+        "t_hour": 16,
+        "state_label": "trigger_sepsis_alert"
+      },
+      {
+        "t_hour": 20,
+        "state_label": "trigger_sepsis_alert"
+      },
+      {
+        "t_hour": 24,
+        "state_label": "trigger_sepsis_alert"
+      }
+    ],
+    "icu_intime": "2132-04-05T17:19:40",
+    "icu_outtime": "2132-04-09T17:15:33",
+    "icu_los_hours": 96.0,
+    "is_sepsis": true
+  },
+  {
+    "trajectory_id": "mimiciv_stay_36124235",
+    "stay_id": 36124235,
+    "subject_id": 13184298,
+    "hadm_id": 28603789,
+    "anchor": "icu_intime",
+    "step_hours": 4,
+    "horizon_hours": 24,
+    "transitions": {
+      "infection_start_hour": 4,
+      "organ_dysfunction_start_hour": 4,
+      "sepsis_start_hour": 4,
+      "infection_start_time": "2127-07-08T23:42:00",
+      "organ_dysfunction_start_time": "2127-07-09T00:00:00",
+      "sepsis_start_time": "2127-07-09T00:00:00"
+    },
+    "checkpoints": [
+      {
+        "t_hour": 0,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 4,
+        "state_label": "trigger_sepsis_alert"
+      },
+      {
+        "t_hour": 8,
+        "state_label": "trigger_sepsis_alert"
+      },
+      {
+        "t_hour": 12,
+        "state_label": "trigger_sepsis_alert"
+      },
+      {
+        "t_hour": 16,
+        "state_label": "trigger_sepsis_alert"
+      },
+      {
+        "t_hour": 20,
+        "state_label": "trigger_sepsis_alert"
+      },
+      {
+        "t_hour": 24,
+        "state_label": "trigger_sepsis_alert"
+      }
+    ],
+    "icu_intime": "2127-07-08T23:34:34",
+    "icu_outtime": "2127-07-10T13:20:21",
+    "icu_los_hours": 38.0,
+    "is_sepsis": true
+  },
+  {
+    "trajectory_id": "mimiciv_stay_36333332",
+    "stay_id": 36333332,
+    "subject_id": 12361541,
+    "hadm_id": 27633892,
+    "anchor": "icu_intime",
+    "step_hours": 4,
+    "horizon_hours": 24,
+    "transitions": {
+      "infection_start_hour": 0,
+      "organ_dysfunction_start_hour": 16,
+      "sepsis_start_hour": 16,
+      "infection_start_time": "2148-05-12T07:10:00",
+      "organ_dysfunction_start_time": "2148-05-13T02:00:00",
+      "sepsis_start_time": "2148-05-13T02:00:00"
+    },
+    "checkpoints": [
+      {
+        "t_hour": 0,
+        "state_label": "infection_suspect"
+      },
+      {
+        "t_hour": 4,
+        "state_label": "infection_suspect"
+      },
+      {
+        "t_hour": 8,
+        "state_label": "infection_suspect"
+      },
+      {
+        "t_hour": 12,
+        "state_label": "infection_suspect"
+      },
+      {
+        "t_hour": 16,
+        "state_label": "trigger_sepsis_alert"
+      },
+      {
+        "t_hour": 20,
+        "state_label": "trigger_sepsis_alert"
+      },
+      {
+        "t_hour": 24,
+        "state_label": "trigger_sepsis_alert"
+      }
+    ],
+    "icu_intime": "2148-05-12T10:52:58",
+    "icu_outtime": "2148-05-16T18:36:33",
+    "icu_los_hours": 104.0,
+    "is_sepsis": true
+  },
+  {
+    "trajectory_id": "mimiciv_stay_36538512",
+    "stay_id": 36538512,
+    "subject_id": 10914484,
+    "hadm_id": 27888639,
+    "anchor": "icu_intime",
+    "step_hours": 4,
+    "horizon_hours": 24,
+    "transitions": {
+      "infection_start_hour": null,
+      "organ_dysfunction_start_hour": null,
+      "sepsis_start_hour": null,
+      "infection_start_time": null,
+      "organ_dysfunction_start_time": null,
+      "sepsis_start_time": null
+    },
+    "checkpoints": [
+      {
+        "t_hour": 0,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 4,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 8,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 12,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 16,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 20,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 24,
+        "state_label": "keep_monitoring"
+      }
+    ],
+    "icu_intime": "2146-11-06T15:44:52",
+    "icu_outtime": "2146-11-09T15:23:41",
+    "icu_los_hours": 72.0,
+    "is_sepsis": false
+  },
+  {
+    "trajectory_id": "mimiciv_stay_36591645",
+    "stay_id": 36591645,
+    "subject_id": 13930889,
+    "hadm_id": 25107900,
+    "anchor": "icu_intime",
+    "step_hours": 4,
+    "horizon_hours": 24,
+    "transitions": {
+      "infection_start_hour": -16,
+      "organ_dysfunction_start_hour": 8,
+      "sepsis_start_hour": null,
+      "infection_start_time": "2152-06-13T15:58:00",
+      "organ_dysfunction_start_time": "2152-06-14T16:00:00",
+      "sepsis_start_time": null
+    },
+    "checkpoints": [
+      {
+        "t_hour": 0,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 4,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 8,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 12,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 16,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 20,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 24,
+        "state_label": "keep_monitoring"
+      }
+    ],
+    "icu_intime": "2152-06-14T08:19:26",
+    "icu_outtime": "2152-06-17T16:23:15",
+    "icu_los_hours": 80.0,
+    "is_sepsis": false
+  },
+  {
+    "trajectory_id": "mimiciv_stay_36682364",
+    "stay_id": 36682364,
+    "subject_id": 19797153,
+    "hadm_id": 26873025,
+    "anchor": "icu_intime",
+    "step_hours": 4,
+    "horizon_hours": 24,
+    "transitions": {
+      "infection_start_hour": 0,
+      "organ_dysfunction_start_hour": 16,
+      "sepsis_start_hour": 16,
+      "infection_start_time": "2154-04-06T12:20:00",
+      "organ_dysfunction_start_time": "2154-04-07T05:00:00",
+      "sepsis_start_time": "2154-04-07T05:00:00"
+    },
+    "checkpoints": [
+      {
+        "t_hour": 0,
+        "state_label": "infection_suspect"
+      },
+      {
+        "t_hour": 4,
+        "state_label": "infection_suspect"
+      },
+      {
+        "t_hour": 8,
+        "state_label": "infection_suspect"
+      },
+      {
+        "t_hour": 12,
+        "state_label": "infection_suspect"
+      },
+      {
+        "t_hour": 16,
+        "state_label": "trigger_sepsis_alert"
+      },
+      {
+        "t_hour": 20,
+        "state_label": "trigger_sepsis_alert"
+      },
+      {
+        "t_hour": 24,
+        "state_label": "trigger_sepsis_alert"
+      }
+    ],
+    "icu_intime": "2154-04-06T16:00:00",
+    "icu_outtime": "2154-04-07T22:21:39",
+    "icu_los_hours": 30.0,
+    "is_sepsis": true
+  },
+  {
+    "trajectory_id": "mimiciv_stay_36722371",
+    "stay_id": 36722371,
+    "subject_id": 18547829,
+    "hadm_id": 25749087,
+    "anchor": "icu_intime",
+    "step_hours": 4,
+    "horizon_hours": 24,
+    "transitions": {
+      "infection_start_hour": -4,
+      "organ_dysfunction_start_hour": 4,
+      "sepsis_start_hour": 4,
+      "infection_start_time": "2150-02-01T05:15:00",
+      "organ_dysfunction_start_time": "2150-02-01T15:00:00",
+      "sepsis_start_time": "2150-02-01T15:00:00"
+    },
+    "checkpoints": [
+      {
+        "t_hour": 0,
+        "state_label": "infection_suspect"
+      },
+      {
+        "t_hour": 4,
+        "state_label": "trigger_sepsis_alert"
+      },
+      {
+        "t_hour": 8,
+        "state_label": "trigger_sepsis_alert"
+      },
+      {
+        "t_hour": 12,
+        "state_label": "trigger_sepsis_alert"
+      },
+      {
+        "t_hour": 16,
+        "state_label": "trigger_sepsis_alert"
+      },
+      {
+        "t_hour": 20,
+        "state_label": "trigger_sepsis_alert"
+      },
+      {
+        "t_hour": 24,
+        "state_label": "trigger_sepsis_alert"
+      }
+    ],
+    "icu_intime": "2150-02-01T11:09:00",
+    "icu_outtime": "2150-02-03T02:32:11",
+    "icu_los_hours": 39.0,
+    "is_sepsis": true
+  },
+  {
+    "trajectory_id": "mimiciv_stay_36767923",
+    "stay_id": 36767923,
+    "subject_id": 13687936,
+    "hadm_id": 27747664,
+    "anchor": "icu_intime",
+    "step_hours": 4,
+    "horizon_hours": 24,
+    "transitions": {
+      "infection_start_hour": 0,
+      "organ_dysfunction_start_hour": 4,
+      "sepsis_start_hour": 4,
+      "infection_start_time": "2195-09-05T03:35:00",
+      "organ_dysfunction_start_time": "2195-09-05T06:00:00",
+      "sepsis_start_time": "2195-09-05T06:00:00"
+    },
+    "checkpoints": [
+      {
+        "t_hour": 0,
+        "state_label": "infection_suspect"
+      },
+      {
+        "t_hour": 4,
+        "state_label": "trigger_sepsis_alert"
+      },
+      {
+        "t_hour": 8,
+        "state_label": "trigger_sepsis_alert"
+      },
+      {
+        "t_hour": 12,
+        "state_label": "trigger_sepsis_alert"
+      },
+      {
+        "t_hour": 16,
+        "state_label": "trigger_sepsis_alert"
+      },
+      {
+        "t_hour": 20,
+        "state_label": "trigger_sepsis_alert"
+      },
+      {
+        "t_hour": 24,
+        "state_label": "trigger_sepsis_alert"
+      }
+    ],
+    "icu_intime": "2195-09-05T05:37:06",
+    "icu_outtime": "2195-09-08T21:12:14",
+    "icu_los_hours": 88.0,
+    "is_sepsis": true
+  },
+  {
+    "trajectory_id": "mimiciv_stay_36885586",
+    "stay_id": 36885586,
+    "subject_id": 10768342,
+    "hadm_id": 28213986,
+    "anchor": "icu_intime",
+    "step_hours": 4,
+    "horizon_hours": 24,
+    "transitions": {
+      "infection_start_hour": -4,
+      "organ_dysfunction_start_hour": 8,
+      "sepsis_start_hour": 8,
+      "infection_start_time": "2132-11-23T00:00:00",
+      "organ_dysfunction_start_time": "2132-11-23T13:00:00",
+      "sepsis_start_time": "2132-11-23T13:00:00"
+    },
+    "checkpoints": [
+      {
+        "t_hour": 0,
+        "state_label": "infection_suspect"
+      },
+      {
+        "t_hour": 4,
+        "state_label": "infection_suspect"
+      },
+      {
+        "t_hour": 8,
+        "state_label": "trigger_sepsis_alert"
+      },
+      {
+        "t_hour": 12,
+        "state_label": "trigger_sepsis_alert"
+      },
+      {
+        "t_hour": 16,
+        "state_label": "trigger_sepsis_alert"
+      },
+      {
+        "t_hour": 20,
+        "state_label": "trigger_sepsis_alert"
+      },
+      {
+        "t_hour": 24,
+        "state_label": "trigger_sepsis_alert"
+      }
+    ],
+    "icu_intime": "2132-11-23T05:45:49",
+    "icu_outtime": "2132-11-25T16:27:36",
+    "icu_los_hours": 59.0,
+    "is_sepsis": true
+  },
+  {
+    "trajectory_id": "mimiciv_stay_36889291",
+    "stay_id": 36889291,
+    "subject_id": 12734371,
+    "hadm_id": 28392695,
+    "anchor": "icu_intime",
+    "step_hours": 4,
+    "horizon_hours": 24,
+    "transitions": {
+      "infection_start_hour": -68,
+      "organ_dysfunction_start_hour": 8,
+      "sepsis_start_hour": 8,
+      "infection_start_time": "2185-07-25T12:26:00",
+      "organ_dysfunction_start_time": "2185-07-28T14:00:00",
+      "sepsis_start_time": "2185-07-28T14:00:00"
+    },
+    "checkpoints": [
+      {
+        "t_hour": 0,
+        "state_label": "infection_suspect"
+      },
+      {
+        "t_hour": 4,
+        "state_label": "infection_suspect"
+      },
+      {
+        "t_hour": 8,
+        "state_label": "trigger_sepsis_alert"
+      },
+      {
+        "t_hour": 12,
+        "state_label": "trigger_sepsis_alert"
+      },
+      {
+        "t_hour": 16,
+        "state_label": "trigger_sepsis_alert"
+      },
+      {
+        "t_hour": 20,
+        "state_label": "trigger_sepsis_alert"
+      },
+      {
+        "t_hour": 24,
+        "state_label": "trigger_sepsis_alert"
+      }
+    ],
+    "icu_intime": "2185-07-28T09:25:03",
+    "icu_outtime": "2185-07-31T18:40:29",
+    "icu_los_hours": 81.0,
+    "is_sepsis": true
+  },
+  {
+    "trajectory_id": "mimiciv_stay_36914338",
+    "stay_id": 36914338,
+    "subject_id": 12097450,
+    "hadm_id": 25638143,
+    "anchor": "icu_intime",
+    "step_hours": 4,
+    "horizon_hours": 24,
+    "transitions": {
+      "infection_start_hour": 4,
+      "organ_dysfunction_start_hour": 4,
+      "sepsis_start_hour": 4,
+      "infection_start_time": "2155-04-13T11:53:00",
+      "organ_dysfunction_start_time": "2155-04-13T12:00:00",
+      "sepsis_start_time": "2155-04-13T12:00:00"
+    },
+    "checkpoints": [
+      {
+        "t_hour": 0,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 4,
+        "state_label": "trigger_sepsis_alert"
+      },
+      {
+        "t_hour": 8,
+        "state_label": "trigger_sepsis_alert"
+      },
+      {
+        "t_hour": 12,
+        "state_label": "trigger_sepsis_alert"
+      },
+      {
+        "t_hour": 16,
+        "state_label": "trigger_sepsis_alert"
+      },
+      {
+        "t_hour": 20,
+        "state_label": "trigger_sepsis_alert"
+      },
+      {
+        "t_hour": 24,
+        "state_label": "trigger_sepsis_alert"
+      }
+    ],
+    "icu_intime": "2155-04-13T10:08:44",
+    "icu_outtime": "2155-04-14T10:53:36",
+    "icu_los_hours": 24.0,
+    "is_sepsis": true
+  },
+  {
+    "trajectory_id": "mimiciv_stay_36924907",
+    "stay_id": 36924907,
+    "subject_id": 12862808,
+    "hadm_id": 22581320,
+    "anchor": "icu_intime",
+    "step_hours": 4,
+    "horizon_hours": 24,
+    "transitions": {
+      "infection_start_hour": -4,
+      "organ_dysfunction_start_hour": null,
+      "sepsis_start_hour": null,
+      "infection_start_time": "2159-09-22T09:05:00",
+      "organ_dysfunction_start_time": null,
+      "sepsis_start_time": null
+    },
+    "checkpoints": [
+      {
+        "t_hour": 0,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 4,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 8,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 12,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 16,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 20,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 24,
+        "state_label": "keep_monitoring"
+      }
+    ],
+    "icu_intime": "2159-09-22T15:58:00",
+    "icu_outtime": "2159-09-23T21:52:00",
+    "icu_los_hours": 30.0,
+    "is_sepsis": false
+  },
+  {
+    "trajectory_id": "mimiciv_stay_37133871",
+    "stay_id": 37133871,
+    "subject_id": 14175516,
+    "hadm_id": 21673286,
+    "anchor": "icu_intime",
+    "step_hours": 4,
+    "horizon_hours": 24,
+    "transitions": {
+      "infection_start_hour": -8,
+      "organ_dysfunction_start_hour": 12,
+      "sepsis_start_hour": 12,
+      "infection_start_time": "2124-10-19T00:00:00",
+      "organ_dysfunction_start_time": "2124-10-19T21:00:00",
+      "sepsis_start_time": "2124-10-19T21:00:00"
+    },
+    "checkpoints": [
+      {
+        "t_hour": 0,
+        "state_label": "infection_suspect"
+      },
+      {
+        "t_hour": 4,
+        "state_label": "infection_suspect"
+      },
+      {
+        "t_hour": 8,
+        "state_label": "infection_suspect"
+      },
+      {
+        "t_hour": 12,
+        "state_label": "trigger_sepsis_alert"
+      },
+      {
+        "t_hour": 16,
+        "state_label": "trigger_sepsis_alert"
+      },
+      {
+        "t_hour": 20,
+        "state_label": "trigger_sepsis_alert"
+      },
+      {
+        "t_hour": 24,
+        "state_label": "trigger_sepsis_alert"
+      }
+    ],
+    "icu_intime": "2124-10-19T10:46:04",
+    "icu_outtime": "2124-10-20T11:47:31",
+    "icu_los_hours": 25.0,
+    "is_sepsis": true
+  },
+  {
+    "trajectory_id": "mimiciv_stay_37181251",
+    "stay_id": 37181251,
+    "subject_id": 10806849,
+    "hadm_id": 22248278,
+    "anchor": "icu_intime",
+    "step_hours": 4,
+    "horizon_hours": 24,
+    "transitions": {
+      "infection_start_hour": 4,
+      "organ_dysfunction_start_hour": 4,
+      "sepsis_start_hour": 4,
+      "infection_start_time": "2119-08-05T20:05:00",
+      "organ_dysfunction_start_time": "2119-08-05T21:00:00",
+      "sepsis_start_time": "2119-08-05T21:00:00"
+    },
+    "checkpoints": [
+      {
+        "t_hour": 0,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 4,
+        "state_label": "trigger_sepsis_alert"
+      },
+      {
+        "t_hour": 8,
+        "state_label": "trigger_sepsis_alert"
+      },
+      {
+        "t_hour": 12,
+        "state_label": "trigger_sepsis_alert"
+      },
+      {
+        "t_hour": 16,
+        "state_label": "trigger_sepsis_alert"
+      },
+      {
+        "t_hour": 20,
+        "state_label": "trigger_sepsis_alert"
+      },
+      {
+        "t_hour": 24,
+        "state_label": "trigger_sepsis_alert"
+      }
+    ],
+    "icu_intime": "2119-08-05T17:01:00",
+    "icu_outtime": "2119-08-09T03:46:31",
+    "icu_los_hours": 82.0,
+    "is_sepsis": true
+  },
+  {
+    "trajectory_id": "mimiciv_stay_37215803",
+    "stay_id": 37215803,
+    "subject_id": 11962875,
+    "hadm_id": 27864671,
+    "anchor": "icu_intime",
+    "step_hours": 4,
+    "horizon_hours": 24,
+    "transitions": {
+      "infection_start_hour": null,
+      "organ_dysfunction_start_hour": 32,
+      "sepsis_start_hour": null,
+      "infection_start_time": null,
+      "organ_dysfunction_start_time": "2141-07-29T01:00:00",
+      "sepsis_start_time": null
+    },
+    "checkpoints": [
+      {
+        "t_hour": 0,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 4,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 8,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 12,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 16,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 20,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 24,
+        "state_label": "keep_monitoring"
+      }
+    ],
+    "icu_intime": "2141-07-27T18:37:37",
+    "icu_outtime": "2141-07-29T17:46:43",
+    "icu_los_hours": 47.0,
+    "is_sepsis": false
+  },
+  {
+    "trajectory_id": "mimiciv_stay_37257738",
+    "stay_id": 37257738,
+    "subject_id": 10839295,
+    "hadm_id": 29902771,
+    "anchor": "icu_intime",
+    "step_hours": 4,
+    "horizon_hours": 24,
+    "transitions": {
+      "infection_start_hour": 0,
+      "organ_dysfunction_start_hour": 4,
+      "sepsis_start_hour": 4,
+      "infection_start_time": "2195-01-23T00:25:00",
+      "organ_dysfunction_start_time": "2195-01-23T04:00:00",
+      "sepsis_start_time": "2195-01-23T04:00:00"
+    },
+    "checkpoints": [
+      {
+        "t_hour": 0,
+        "state_label": "infection_suspect"
+      },
+      {
+        "t_hour": 4,
+        "state_label": "trigger_sepsis_alert"
+      },
+      {
+        "t_hour": 8,
+        "state_label": "trigger_sepsis_alert"
+      },
+      {
+        "t_hour": 12,
+        "state_label": "trigger_sepsis_alert"
+      },
+      {
+        "t_hour": 16,
+        "state_label": "trigger_sepsis_alert"
+      },
+      {
+        "t_hour": 20,
+        "state_label": "trigger_sepsis_alert"
+      },
+      {
+        "t_hour": 24,
+        "state_label": "trigger_sepsis_alert"
+      }
+    ],
+    "icu_intime": "2195-01-23T00:56:43",
+    "icu_outtime": "2195-01-25T06:34:41",
+    "icu_los_hours": 54.0,
+    "is_sepsis": true
+  },
+  {
+    "trajectory_id": "mimiciv_stay_37504422",
+    "stay_id": 37504422,
+    "subject_id": 18858728,
+    "hadm_id": 20379294,
+    "anchor": "icu_intime",
+    "step_hours": 4,
+    "horizon_hours": 24,
+    "transitions": {
+      "infection_start_hour": 0,
+      "organ_dysfunction_start_hour": 8,
+      "sepsis_start_hour": 8,
+      "infection_start_time": "2167-09-26T11:51:00",
+      "organ_dysfunction_start_time": "2167-09-26T17:00:00",
+      "sepsis_start_time": "2167-09-26T17:00:00"
+    },
+    "checkpoints": [
+      {
+        "t_hour": 0,
+        "state_label": "infection_suspect"
+      },
+      {
+        "t_hour": 4,
+        "state_label": "infection_suspect"
+      },
+      {
+        "t_hour": 8,
+        "state_label": "trigger_sepsis_alert"
+      },
+      {
+        "t_hour": 12,
+        "state_label": "trigger_sepsis_alert"
+      },
+      {
+        "t_hour": 16,
+        "state_label": "trigger_sepsis_alert"
+      },
+      {
+        "t_hour": 20,
+        "state_label": "trigger_sepsis_alert"
+      },
+      {
+        "t_hour": 24,
+        "state_label": "trigger_sepsis_alert"
+      }
+    ],
+    "icu_intime": "2167-09-26T12:44:45",
+    "icu_outtime": "2167-09-27T16:30:00",
+    "icu_los_hours": 28.0,
+    "is_sepsis": true
+  },
+  {
+    "trajectory_id": "mimiciv_stay_37646858",
+    "stay_id": 37646858,
+    "subject_id": 18860797,
+    "hadm_id": 27194442,
+    "anchor": "icu_intime",
+    "step_hours": 4,
+    "horizon_hours": 24,
+    "transitions": {
+      "infection_start_hour": -4,
+      "organ_dysfunction_start_hour": 20,
+      "sepsis_start_hour": null,
+      "infection_start_time": "2129-08-01T17:46:00",
+      "organ_dysfunction_start_time": "2129-08-02T18:00:00",
+      "sepsis_start_time": null
+    },
+    "checkpoints": [
+      {
+        "t_hour": 0,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 4,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 8,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 12,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 16,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 20,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 24,
+        "state_label": "keep_monitoring"
+      }
+    ],
+    "icu_intime": "2129-08-01T22:50:00",
+    "icu_outtime": "2129-08-03T15:47:35",
+    "icu_los_hours": 41.0,
+    "is_sepsis": false
+  },
+  {
+    "trajectory_id": "mimiciv_stay_37867167",
+    "stay_id": 37867167,
+    "subject_id": 16162522,
+    "hadm_id": 26530589,
+    "anchor": "icu_intime",
+    "step_hours": 4,
+    "horizon_hours": 24,
+    "transitions": {
+      "infection_start_hour": null,
+      "organ_dysfunction_start_hour": null,
+      "sepsis_start_hour": null,
+      "infection_start_time": null,
+      "organ_dysfunction_start_time": null,
+      "sepsis_start_time": null
+    },
+    "checkpoints": [
+      {
+        "t_hour": 0,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 4,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 8,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 12,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 16,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 20,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 24,
+        "state_label": "keep_monitoring"
+      }
+    ],
+    "icu_intime": "2170-01-06T00:08:00",
+    "icu_outtime": "2170-01-07T13:34:30",
+    "icu_los_hours": 37.0,
+    "is_sepsis": false
+  },
+  {
+    "trajectory_id": "mimiciv_stay_37991054",
+    "stay_id": 37991054,
+    "subject_id": 15108928,
+    "hadm_id": 29524657,
+    "anchor": "icu_intime",
+    "step_hours": 4,
+    "horizon_hours": 24,
+    "transitions": {
+      "infection_start_hour": 4,
+      "organ_dysfunction_start_hour": 4,
+      "sepsis_start_hour": 4,
+      "infection_start_time": "2148-05-20T13:56:00",
+      "organ_dysfunction_start_time": "2148-05-20T14:00:00",
+      "sepsis_start_time": "2148-05-20T14:00:00"
+    },
+    "checkpoints": [
+      {
+        "t_hour": 0,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 4,
+        "state_label": "trigger_sepsis_alert"
+      },
+      {
+        "t_hour": 8,
+        "state_label": "trigger_sepsis_alert"
+      },
+      {
+        "t_hour": 12,
+        "state_label": "trigger_sepsis_alert"
+      },
+      {
+        "t_hour": 16,
+        "state_label": "trigger_sepsis_alert"
+      },
+      {
+        "t_hour": 20,
+        "state_label": "trigger_sepsis_alert"
+      },
+      {
+        "t_hour": 24,
+        "state_label": "trigger_sepsis_alert"
+      }
+    ],
+    "icu_intime": "2148-05-20T10:35:24",
+    "icu_outtime": "2148-05-24T11:36:26",
+    "icu_los_hours": 97.0,
+    "is_sepsis": true
+  },
+  {
+    "trajectory_id": "mimiciv_stay_38054101",
+    "stay_id": 38054101,
+    "subject_id": 14781154,
+    "hadm_id": 29304125,
+    "anchor": "icu_intime",
+    "step_hours": 4,
+    "horizon_hours": 24,
+    "transitions": {
+      "infection_start_hour": null,
+      "organ_dysfunction_start_hour": 4,
+      "sepsis_start_hour": null,
+      "infection_start_time": null,
+      "organ_dysfunction_start_time": "2176-01-09T12:00:00",
+      "sepsis_start_time": null
+    },
+    "checkpoints": [
+      {
+        "t_hour": 0,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 4,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 8,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 12,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 16,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 20,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 24,
+        "state_label": "keep_monitoring"
+      }
+    ],
+    "icu_intime": "2176-01-09T11:15:52",
+    "icu_outtime": "2176-01-10T17:44:06",
+    "icu_los_hours": 30.0,
+    "is_sepsis": false
+  },
+  {
+    "trajectory_id": "mimiciv_stay_38372516",
+    "stay_id": 38372516,
+    "subject_id": 13366046,
+    "hadm_id": 20700991,
+    "anchor": "icu_intime",
+    "step_hours": 4,
+    "horizon_hours": 24,
+    "transitions": {
+      "infection_start_hour": 4,
+      "organ_dysfunction_start_hour": 4,
+      "sepsis_start_hour": 4,
+      "infection_start_time": "2184-09-30T14:00:00",
+      "organ_dysfunction_start_time": "2184-09-30T15:00:00",
+      "sepsis_start_time": "2184-09-30T15:00:00"
+    },
+    "checkpoints": [
+      {
+        "t_hour": 0,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 4,
+        "state_label": "trigger_sepsis_alert"
+      },
+      {
+        "t_hour": 8,
+        "state_label": "trigger_sepsis_alert"
+      },
+      {
+        "t_hour": 12,
+        "state_label": "trigger_sepsis_alert"
+      },
+      {
+        "t_hour": 16,
+        "state_label": "trigger_sepsis_alert"
+      },
+      {
+        "t_hour": 20,
+        "state_label": "trigger_sepsis_alert"
+      },
+      {
+        "t_hour": 24,
+        "state_label": "trigger_sepsis_alert"
+      }
+    ],
+    "icu_intime": "2184-09-30T13:05:55",
+    "icu_outtime": "2184-10-02T16:22:36",
+    "icu_los_hours": 51.0,
+    "is_sepsis": true
+  },
+  {
+    "trajectory_id": "mimiciv_stay_38430656",
+    "stay_id": 38430656,
+    "subject_id": 11566993,
+    "hadm_id": 21058511,
+    "anchor": "icu_intime",
+    "step_hours": 4,
+    "horizon_hours": 24,
+    "transitions": {
+      "infection_start_hour": null,
+      "organ_dysfunction_start_hour": 8,
+      "sepsis_start_hour": null,
+      "infection_start_time": null,
+      "organ_dysfunction_start_time": "2168-05-02T16:00:00",
+      "sepsis_start_time": null
+    },
+    "checkpoints": [
+      {
+        "t_hour": 0,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 4,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 8,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 12,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 16,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 20,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 24,
+        "state_label": "keep_monitoring"
+      }
+    ],
+    "icu_intime": "2168-05-02T08:38:00",
+    "icu_outtime": "2168-05-04T17:15:16",
+    "icu_los_hours": 57.0,
+    "is_sepsis": false
+  },
+  {
+    "trajectory_id": "mimiciv_stay_38458521",
+    "stay_id": 38458521,
+    "subject_id": 16562428,
+    "hadm_id": 28925374,
+    "anchor": "icu_intime",
+    "step_hours": 4,
+    "horizon_hours": 24,
+    "transitions": {
+      "infection_start_hour": null,
+      "organ_dysfunction_start_hour": 4,
+      "sepsis_start_hour": null,
+      "infection_start_time": null,
+      "organ_dysfunction_start_time": "2114-12-15T09:00:00",
+      "sepsis_start_time": null
+    },
+    "checkpoints": [
+      {
+        "t_hour": 0,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 4,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 8,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 12,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 16,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 20,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 24,
+        "state_label": "keep_monitoring"
+      }
+    ],
+    "icu_intime": "2114-12-15T05:09:23",
+    "icu_outtime": "2114-12-17T04:51:45",
+    "icu_los_hours": 47.0,
+    "is_sepsis": false
+  },
+  {
+    "trajectory_id": "mimiciv_stay_38520687",
+    "stay_id": 38520687,
+    "subject_id": 18165294,
+    "hadm_id": 24820607,
+    "anchor": "icu_intime",
+    "step_hours": 4,
+    "horizon_hours": 24,
+    "transitions": {
+      "infection_start_hour": -8,
+      "organ_dysfunction_start_hour": -12,
+      "sepsis_start_hour": null,
+      "infection_start_time": "2147-07-25T06:13:00",
+      "organ_dysfunction_start_time": "2147-07-25T04:00:00",
+      "sepsis_start_time": null
+    },
+    "checkpoints": [
+      {
+        "t_hour": 0,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 4,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 8,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 12,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 16,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 20,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 24,
+        "state_label": "keep_monitoring"
+      }
+    ],
+    "icu_intime": "2147-07-25T18:05:17",
+    "icu_outtime": "2147-07-31T16:47:04",
+    "icu_los_hours": 142.0,
+    "is_sepsis": false
+  },
+  {
+    "trajectory_id": "mimiciv_stay_38554097",
+    "stay_id": 38554097,
+    "subject_id": 18834133,
+    "hadm_id": 23341208,
+    "anchor": "icu_intime",
+    "step_hours": 4,
+    "horizon_hours": 24,
+    "transitions": {
+      "infection_start_hour": -16,
+      "organ_dysfunction_start_hour": 4,
+      "sepsis_start_hour": 4,
+      "infection_start_time": "2184-08-26T13:10:00",
+      "organ_dysfunction_start_time": "2184-08-27T10:00:00",
+      "sepsis_start_time": "2184-08-27T10:00:00"
+    },
+    "checkpoints": [
+      {
+        "t_hour": 0,
+        "state_label": "infection_suspect"
+      },
+      {
+        "t_hour": 4,
+        "state_label": "trigger_sepsis_alert"
+      },
+      {
+        "t_hour": 8,
+        "state_label": "trigger_sepsis_alert"
+      },
+      {
+        "t_hour": 12,
+        "state_label": "trigger_sepsis_alert"
+      },
+      {
+        "t_hour": 16,
+        "state_label": "trigger_sepsis_alert"
+      },
+      {
+        "t_hour": 20,
+        "state_label": "trigger_sepsis_alert"
+      },
+      {
+        "t_hour": 24,
+        "state_label": "trigger_sepsis_alert"
+      }
+    ],
+    "icu_intime": "2184-08-27T08:33:32",
+    "icu_outtime": "2184-09-01T13:35:08",
+    "icu_los_hours": 125.0,
+    "is_sepsis": true
+  },
+  {
+    "trajectory_id": "mimiciv_stay_39103890",
+    "stay_id": 39103890,
+    "subject_id": 11641642,
+    "hadm_id": 21216871,
+    "anchor": "icu_intime",
+    "step_hours": 4,
+    "horizon_hours": 24,
+    "transitions": {
+      "infection_start_hour": 4,
+      "organ_dysfunction_start_hour": 4,
+      "sepsis_start_hour": 4,
+      "infection_start_time": "2132-09-05T03:47:00",
+      "organ_dysfunction_start_time": "2132-09-05T03:00:00",
+      "sepsis_start_time": "2132-09-05T03:00:00"
+    },
+    "checkpoints": [
+      {
+        "t_hour": 0,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 4,
+        "state_label": "trigger_sepsis_alert"
+      },
+      {
+        "t_hour": 8,
+        "state_label": "trigger_sepsis_alert"
+      },
+      {
+        "t_hour": 12,
+        "state_label": "trigger_sepsis_alert"
+      },
+      {
+        "t_hour": 16,
+        "state_label": "trigger_sepsis_alert"
+      },
+      {
+        "t_hour": 20,
+        "state_label": "trigger_sepsis_alert"
+      },
+      {
+        "t_hour": 24,
+        "state_label": "trigger_sepsis_alert"
+      }
+    ],
+    "icu_intime": "2132-09-05T02:34:11",
+    "icu_outtime": "2132-09-08T20:53:22",
+    "icu_los_hours": 90.0,
+    "is_sepsis": true
+  },
+  {
+    "trajectory_id": "mimiciv_stay_39148324",
+    "stay_id": 39148324,
+    "subject_id": 12437740,
+    "hadm_id": 20695375,
+    "anchor": "icu_intime",
+    "step_hours": 4,
+    "horizon_hours": 24,
+    "transitions": {
+      "infection_start_hour": -4,
+      "organ_dysfunction_start_hour": 8,
+      "sepsis_start_hour": 8,
+      "infection_start_time": "2123-10-12T08:00:00",
+      "organ_dysfunction_start_time": "2123-10-12T19:00:00",
+      "sepsis_start_time": "2123-10-12T19:00:00"
+    },
+    "checkpoints": [
+      {
+        "t_hour": 0,
+        "state_label": "infection_suspect"
+      },
+      {
+        "t_hour": 4,
+        "state_label": "infection_suspect"
+      },
+      {
+        "t_hour": 8,
+        "state_label": "trigger_sepsis_alert"
+      },
+      {
+        "t_hour": 12,
+        "state_label": "trigger_sepsis_alert"
+      },
+      {
+        "t_hour": 16,
+        "state_label": "trigger_sepsis_alert"
+      },
+      {
+        "t_hour": 20,
+        "state_label": "trigger_sepsis_alert"
+      },
+      {
+        "t_hour": 24,
+        "state_label": "trigger_sepsis_alert"
+      }
+    ],
+    "icu_intime": "2123-10-12T13:31:39",
+    "icu_outtime": "2123-10-14T17:05:08",
+    "icu_los_hours": 52.0,
+    "is_sepsis": true
+  },
+  {
+    "trajectory_id": "mimiciv_stay_39157915",
+    "stay_id": 39157915,
+    "subject_id": 15792506,
+    "hadm_id": 26317934,
+    "anchor": "icu_intime",
+    "step_hours": 4,
+    "horizon_hours": 24,
+    "transitions": {
+      "infection_start_hour": 4,
+      "organ_dysfunction_start_hour": 8,
+      "sepsis_start_hour": null,
+      "infection_start_time": "2171-11-27T23:01:00",
+      "organ_dysfunction_start_time": "2171-11-28T03:00:00",
+      "sepsis_start_time": null
+    },
+    "checkpoints": [
+      {
+        "t_hour": 0,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 4,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 8,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 12,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 16,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 20,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 24,
+        "state_label": "keep_monitoring"
+      }
+    ],
+    "icu_intime": "2171-11-27T22:00:00",
+    "icu_outtime": "2171-12-11T17:25:52",
+    "icu_los_hours": 331.0,
+    "is_sepsis": false
+  },
+  {
+    "trajectory_id": "mimiciv_stay_39162383",
+    "stay_id": 39162383,
+    "subject_id": 16440000,
+    "hadm_id": 29800278,
+    "anchor": "icu_intime",
+    "step_hours": 4,
+    "horizon_hours": 24,
+    "transitions": {
+      "infection_start_hour": 4,
+      "organ_dysfunction_start_hour": 8,
+      "sepsis_start_hour": 8,
+      "infection_start_time": "2172-07-02T12:00:00",
+      "organ_dysfunction_start_time": "2172-07-02T16:00:00",
+      "sepsis_start_time": "2172-07-02T16:00:00"
+    },
+    "checkpoints": [
+      {
+        "t_hour": 0,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 4,
+        "state_label": "infection_suspect"
+      },
+      {
+        "t_hour": 8,
+        "state_label": "trigger_sepsis_alert"
+      },
+      {
+        "t_hour": 12,
+        "state_label": "trigger_sepsis_alert"
+      },
+      {
+        "t_hour": 16,
+        "state_label": "trigger_sepsis_alert"
+      },
+      {
+        "t_hour": 20,
+        "state_label": "trigger_sepsis_alert"
+      },
+      {
+        "t_hour": 24,
+        "state_label": "trigger_sepsis_alert"
+      }
+    ],
+    "icu_intime": "2172-07-02T10:18:56",
+    "icu_outtime": "2172-07-05T12:26:56",
+    "icu_los_hours": 74.0,
+    "is_sepsis": true
+  },
+  {
+    "trajectory_id": "mimiciv_stay_39195957",
+    "stay_id": 39195957,
+    "subject_id": 19978718,
+    "hadm_id": 25890344,
+    "anchor": "icu_intime",
+    "step_hours": 4,
+    "horizon_hours": 24,
+    "transitions": {
+      "infection_start_hour": null,
+      "organ_dysfunction_start_hour": 12,
+      "sepsis_start_hour": null,
+      "infection_start_time": null,
+      "organ_dysfunction_start_time": "2157-08-18T13:00:00",
+      "sepsis_start_time": null
+    },
+    "checkpoints": [
+      {
+        "t_hour": 0,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 4,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 8,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 12,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 16,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 20,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 24,
+        "state_label": "keep_monitoring"
+      }
+    ],
+    "icu_intime": "2157-08-18T02:20:29",
+    "icu_outtime": "2157-08-19T15:38:23",
+    "icu_los_hours": 37.0,
+    "is_sepsis": false
+  },
+  {
+    "trajectory_id": "mimiciv_stay_39458698",
+    "stay_id": 39458698,
+    "subject_id": 13766119,
+    "hadm_id": 23380819,
+    "anchor": "icu_intime",
+    "step_hours": 4,
+    "horizon_hours": 24,
+    "transitions": {
+      "infection_start_hour": null,
+      "organ_dysfunction_start_hour": 8,
+      "sepsis_start_hour": null,
+      "infection_start_time": null,
+      "organ_dysfunction_start_time": "2172-10-19T14:00:00",
+      "sepsis_start_time": null
+    },
+    "checkpoints": [
+      {
+        "t_hour": 0,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 4,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 8,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 12,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 16,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 20,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 24,
+        "state_label": "keep_monitoring"
+      }
+    ],
+    "icu_intime": "2172-10-19T06:43:00",
+    "icu_outtime": "2172-10-20T16:45:41",
+    "icu_los_hours": 34.0,
+    "is_sepsis": false
+  },
+  {
+    "trajectory_id": "mimiciv_stay_39495418",
+    "stay_id": 39495418,
+    "subject_id": 18201044,
+    "hadm_id": 20666137,
+    "anchor": "icu_intime",
+    "step_hours": 4,
+    "horizon_hours": 24,
+    "transitions": {
+      "infection_start_hour": null,
+      "organ_dysfunction_start_hour": 8,
+      "sepsis_start_hour": null,
+      "infection_start_time": null,
+      "organ_dysfunction_start_time": "2135-11-19T21:00:00",
+      "sepsis_start_time": null
+    },
+    "checkpoints": [
+      {
+        "t_hour": 0,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 4,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 8,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 12,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 16,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 20,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 24,
+        "state_label": "keep_monitoring"
+      }
+    ],
+    "icu_intime": "2135-11-19T13:07:19",
+    "icu_outtime": "2135-11-20T13:59:08",
+    "icu_los_hours": 24.0,
+    "is_sepsis": false
+  },
+  {
+    "trajectory_id": "mimiciv_stay_39601211",
+    "stay_id": 39601211,
+    "subject_id": 18862100,
+    "hadm_id": 21518422,
+    "anchor": "icu_intime",
+    "step_hours": 4,
+    "horizon_hours": 24,
+    "transitions": {
+      "infection_start_hour": 0,
+      "organ_dysfunction_start_hour": 4,
+      "sepsis_start_hour": 4,
+      "infection_start_time": "2137-01-16T22:15:00",
+      "organ_dysfunction_start_time": "2137-01-17T01:00:00",
+      "sepsis_start_time": "2137-01-17T01:00:00"
+    },
+    "checkpoints": [
+      {
+        "t_hour": 0,
+        "state_label": "infection_suspect"
+      },
+      {
+        "t_hour": 4,
+        "state_label": "trigger_sepsis_alert"
+      },
+      {
+        "t_hour": 8,
+        "state_label": "trigger_sepsis_alert"
+      },
+      {
+        "t_hour": 12,
+        "state_label": "trigger_sepsis_alert"
+      },
+      {
+        "t_hour": 16,
+        "state_label": "trigger_sepsis_alert"
+      },
+      {
+        "t_hour": 20,
+        "state_label": "trigger_sepsis_alert"
+      },
+      {
+        "t_hour": 24,
+        "state_label": "trigger_sepsis_alert"
+      }
+    ],
+    "icu_intime": "2137-01-17T00:54:02",
+    "icu_outtime": "2137-01-21T00:07:43",
+    "icu_los_hours": 96.0,
+    "is_sepsis": true
+  },
+  {
+    "trajectory_id": "mimiciv_stay_39800661",
+    "stay_id": 39800661,
+    "subject_id": 18190098,
+    "hadm_id": 20034658,
+    "anchor": "icu_intime",
+    "step_hours": 4,
+    "horizon_hours": 24,
+    "transitions": {
+      "infection_start_hour": -4,
+      "organ_dysfunction_start_hour": 16,
+      "sepsis_start_hour": 16,
+      "infection_start_time": "2145-06-19T12:50:00",
+      "organ_dysfunction_start_time": "2145-06-20T06:00:00",
+      "sepsis_start_time": "2145-06-20T06:00:00"
+    },
+    "checkpoints": [
+      {
+        "t_hour": 0,
+        "state_label": "infection_suspect"
+      },
+      {
+        "t_hour": 4,
+        "state_label": "infection_suspect"
+      },
+      {
+        "t_hour": 8,
+        "state_label": "infection_suspect"
+      },
+      {
+        "t_hour": 12,
+        "state_label": "infection_suspect"
+      },
+      {
+        "t_hour": 16,
+        "state_label": "trigger_sepsis_alert"
+      },
+      {
+        "t_hour": 20,
+        "state_label": "trigger_sepsis_alert"
+      },
+      {
+        "t_hour": 24,
+        "state_label": "trigger_sepsis_alert"
+      }
+    ],
+    "icu_intime": "2145-06-19T17:25:00",
+    "icu_outtime": "2145-06-21T04:01:25",
+    "icu_los_hours": 35.0,
+    "is_sepsis": true
+  },
+  {
+    "trajectory_id": "mimiciv_stay_39948705",
+    "stay_id": 39948705,
+    "subject_id": 15221763,
+    "hadm_id": 24943264,
+    "anchor": "icu_intime",
+    "step_hours": 4,
+    "horizon_hours": 24,
+    "transitions": {
+      "infection_start_hour": -4,
+      "organ_dysfunction_start_hour": 40,
+      "sepsis_start_hour": null,
+      "infection_start_time": "2172-08-23T05:40:00",
+      "organ_dysfunction_start_time": "2172-08-25T02:00:00",
+      "sepsis_start_time": null
+    },
+    "checkpoints": [
+      {
+        "t_hour": 0,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 4,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 8,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 12,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 16,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 20,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 24,
+        "state_label": "keep_monitoring"
+      }
+    ],
+    "icu_intime": "2172-08-23T11:07:31",
+    "icu_outtime": "2172-08-25T17:26:46",
+    "icu_los_hours": 54.0,
+    "is_sepsis": false
+  },
+  {
+    "trajectory_id": "mimiciv_stay_39962257",
+    "stay_id": 39962257,
+    "subject_id": 15617050,
+    "hadm_id": 28899436,
+    "anchor": "icu_intime",
+    "step_hours": 4,
+    "horizon_hours": 24,
+    "transitions": {
+      "infection_start_hour": null,
+      "organ_dysfunction_start_hour": null,
+      "sepsis_start_hour": null,
+      "infection_start_time": null,
+      "organ_dysfunction_start_time": null,
+      "sepsis_start_time": null
+    },
+    "checkpoints": [
+      {
+        "t_hour": 0,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 4,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 8,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 12,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 16,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 20,
+        "state_label": "keep_monitoring"
+      },
+      {
+        "t_hour": 24,
+        "state_label": "keep_monitoring"
+      }
+    ],
+    "icu_intime": "2186-05-30T20:43:00",
+    "icu_outtime": "2186-05-31T21:06:57",
+    "icu_los_hours": 25.0,
+    "is_sepsis": false
+  }
+]
