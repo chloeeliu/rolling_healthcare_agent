@@ -115,6 +115,20 @@ def load_trajectories(path: str | Path) -> list[Trajectory]:
     return trajectories
 
 
+def load_dataset_auto(
+    path: str | Path,
+    *,
+    strict_mvp: bool = True,
+) -> list[Trajectory]:
+    dataset_path = Path(path)
+    suffix = dataset_path.suffix.lower()
+    if suffix == ".csv":
+        return load_rolling_csv_dataset(dataset_path, strict_mvp=strict_mvp).trajectories
+    if suffix == ".json":
+        return load_trajectories(dataset_path)
+    raise ValueError(f"Unsupported dataset format for {dataset_path}. Expected .csv or .json.")
+
+
 def _parse_optional_int(value: str | None) -> int | None:
     if value in (None, ""):
         return None

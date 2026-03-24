@@ -8,8 +8,8 @@ from .agent import HeuristicAgent, QwenChatAgent
 from .dataset import (
     build_dataset,
     load_concept_tables,
+    load_dataset_auto,
     load_rolling_csv_dataset,
-    load_trajectories,
     save_trajectories,
 )
 from .environment import BenchmarkEnvironment, evaluate_rollouts, rollout_to_dicts
@@ -48,7 +48,7 @@ def build_dataset_command(args: argparse.Namespace) -> int:
 
 
 def run_command(args: argparse.Namespace) -> int:
-    trajectories = load_trajectories(args.dataset)
+    trajectories = load_dataset_auto(args.dataset, strict_mvp=not args.include_out_of_scope)
     if args.db_path:
         runtime = DuckDBConceptToolRuntime(args.db_path)
     else:
@@ -99,6 +99,11 @@ def build_parser() -> argparse.ArgumentParser:
     run_parser.add_argument("--concepts", help="Path to concept-table JSON.")
     run_parser.add_argument("--db-path", help="Path to MIMIC DuckDB for live concept-tool queries.")
     run_parser.add_argument("--dataset", required=True, help="Path to trajectory dataset JSON.")
+    run_parser.add_argument(
+        "--include-out-of-scope",
+        action="store_true",
+        help="Keep trajectories that fall outside the strict 3-action MVP contract when using CSV input.",
+    )
     run_parser.add_argument("--agent", choices=["heuristic", "qwen"], default="heuristic")
     run_parser.add_argument("--model", default="Qwen/Qwen3.5-9B", help="Local HF model name/path for Qwen.")
     run_parser.add_argument("--temperature", type=float, default=0.0)

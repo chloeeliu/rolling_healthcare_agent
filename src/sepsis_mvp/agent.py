@@ -130,15 +130,37 @@ class LocalQwenChat:
     def __post_init__(self) -> None:
         try:
             import torch
-            from transformers import AutoModelForCausalLM, AutoTokenizer
         except ImportError as exc:
             raise RuntimeError(
-                "Running the local Qwen agent requires 'torch' and 'transformers' to be installed."
+                "Running the local Qwen agent requires 'torch' to be installed."
             ) from exc
 
         self.model_ref = os.environ.get("QWEN_MODEL", self.model_ref)
         offline = os.environ.get("QWEN_OFFLINE", "0") == "1"
         revision = os.environ.get("QWEN_REVISION")
+
+        allow_cpu = os.environ.get("QWEN_ALLOW_CPU", "0") == "1"
+        if torch.cuda.is_available():
+            device_map = "auto"
+            dtype = torch.float16
+        elif getattr(torch.backends, "mps", None) and torch.backends.mps.is_available():
+            device_map = {"": "mps"}
+            dtype = torch.float16
+        elif allow_cpu:
+            device_map = {"": "cpu"}
+            dtype = torch.float32
+        else:
+            raise RuntimeError(
+                "No CUDA or MPS accelerator found for local Qwen inference. "
+                "Use a GPU-enabled environment, or set QWEN_ALLOW_CPU=1 to force CPU loading."
+            )
+
+        try:
+            from transformers import AutoModelForCausalLM, AutoTokenizer
+        except ImportError as exc:
+            raise RuntimeError(
+                "Running the local Qwen agent requires 'transformers' to be installed."
+            ) from exc
 
         self.tokenizer = AutoTokenizer.from_pretrained(
             self.model_ref,
@@ -147,16 +169,6 @@ class LocalQwenChat:
             revision=revision,
             local_files_only=offline,
         )
-
-        if torch.cuda.is_available():
-            device_map = "auto"
-            dtype = torch.float16
-        elif getattr(torch.backends, "mps", None) and torch.backends.mps.is_available():
-            device_map = {"": "mps"}
-            dtype = torch.float16
-        else:
-            device_map = {"": "cpu"}
-            dtype = torch.float32
 
         self.torch = torch
         self.model = AutoModelForCausalLM.from_pretrained(
