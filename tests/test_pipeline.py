@@ -57,6 +57,21 @@ class PipelineTest(unittest.TestCase):
         self.assertIn("transition_timing", metrics)
         self.assertEqual(len(rollouts), 2)
 
+    def test_environment_emits_incremental_events(self):
+        concepts = load_concept_tables(SAMPLE)
+        trajectories = build_dataset(concepts)
+        runtime = ConceptToolRuntime(concepts)
+        events = []
+        environment = BenchmarkEnvironment(trajectories[:1], runtime, event_callback=events.append)
+        rollouts = environment.run_all(HeuristicAgent())
+        self.assertEqual(len(rollouts), 1)
+        event_types = {event["event_type"] for event in events}
+        self.assertIn("trajectory_start", event_types)
+        self.assertIn("tool_call", event_types)
+        self.assertIn("tool_output", event_types)
+        self.assertIn("action", event_types)
+        self.assertIn("trajectory_complete", event_types)
+
     def test_dataset_can_be_saved(self):
         concepts = load_concept_tables(SAMPLE)
         trajectories = build_dataset(concepts)

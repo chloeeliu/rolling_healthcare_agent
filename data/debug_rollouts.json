@@ -1,0 +1,335 @@
+[
+  {
+    "trajectory_id": "mimiciv_stay_300001",
+    "stay_id": 300001,
+    "steps": [
+      {
+        "step_index": 0,
+        "t_hour": 0,
+        "gt_action": "keep_monitoring",
+        "predicted_action": "keep_monitoring",
+        "tool_calls": [
+          {
+            "tool_name": "query_suspicion_of_infection",
+            "arguments": {
+              "stay_id": 300001,
+              "t_hour": 0
+            }
+          }
+        ],
+        "tool_outputs": [
+          {
+            "stay_id": 300001,
+            "t_hour": 0,
+            "has_suspected_infection": false,
+            "first_visible_suspected_infection_hour": null,
+            "first_visible_suspected_infection_time": null,
+            "evidence": []
+          }
+        ]
+      },
+      {
+        "step_index": 1,
+        "t_hour": 4,
+        "gt_action": "keep_monitoring",
+        "predicted_action": "keep_monitoring",
+        "tool_calls": [
+          {
+            "tool_name": "query_suspicion_of_infection",
+            "arguments": {
+              "stay_id": 300001,
+              "t_hour": 4
+            }
+          }
+        ],
+        "tool_outputs": [
+          {
+            "stay_id": 300001,
+            "t_hour": 4,
+            "has_suspected_infection": false,
+            "first_visible_suspected_infection_hour": null,
+            "first_visible_suspected_infection_time": null,
+            "evidence": []
+          }
+        ]
+      },
+      {
+        "step_index": 2,
+        "t_hour": 8,
+        "gt_action": "infection_suspect",
+        "predicted_action": "infection_suspect",
+        "tool_calls": [
+          {
+            "tool_name": "query_suspicion_of_infection",
+            "arguments": {
+              "stay_id": 300001,
+              "t_hour": 8
+            }
+          },
+          {
+            "tool_name": "query_sofa",
+            "arguments": {
+              "stay_id": 300001,
+              "t_hour": 8
+            }
+          }
+        ],
+        "tool_outputs": [
+          {
+            "stay_id": 300001,
+            "t_hour": 8,
+            "has_suspected_infection": true,
+            "first_visible_suspected_infection_hour": 6.7,
+            "first_visible_suspected_infection_time": "2150-03-01T15:42:00",
+            "evidence": [
+              {
+                "antibiotic": "vancomycin",
+                "antibiotic_time": "2150-03-01T15:42:00",
+                "culture_time": "2150-03-01T14:18:00",
+                "specimen": "BLOOD CULTURE",
+                "positive_culture": 0
+              }
+            ]
+          },
+          {
+            "stay_id": 300001,
+            "t_hour": 8,
+            "latest_visible_hr": 8,
+            "latest_sofa_24hours": 1,
+            "max_sofa_24hours_so_far": 1,
+            "latest_components": {
+              "respiration_24hours": 1,
+              "coagulation_24hours": 0,
+              "liver_24hours": 0,
+              "cardiovascular_24hours": 0,
+              "cns_24hours": 0,
+              "renal_24hours": 0
+            }
+          }
+        ]
+      },
+      {
+        "step_index": 3,
+        "t_hour": 12,
+        "gt_action": "infection_suspect",
+        "predicted_action": "trigger_sepsis_alert",
+        "tool_calls": [
+          {
+            "tool_name": "query_suspicion_of_infection",
+            "arguments": {
+              "stay_id": 300001,
+              "t_hour": 12
+            }
+          },
+          {
+            "tool_name": "query_sofa",
+            "arguments": {
+              "stay_id": 300001,
+              "t_hour": 12
+            }
+          }
+        ],
+        "tool_outputs": [
+          {
+            "stay_id": 300001,
+            "t_hour": 12,
+            "has_suspected_infection": true,
+            "first_visible_suspected_infection_hour": 6.7,
+            "first_visible_suspected_infection_time": "2150-03-01T15:42:00",
+            "evidence": [
+              {
+                "antibiotic": "vancomycin",
+                "antibiotic_time": "2150-03-01T15:42:00",
+                "culture_time": "2150-03-01T14:18:00",
+                "specimen": "BLOOD CULTURE",
+                "positive_culture": 0
+              }
+            ]
+          },
+          {
+            "stay_id": 300001,
+            "t_hour": 12,
+            "latest_visible_hr": 12,
+            "latest_sofa_24hours": 2,
+            "max_sofa_24hours_so_far": 2,
+            "latest_components": {
+              "respiration_24hours": 1,
+              "coagulation_24hours": 0,
+              "liver_24hours": 0,
+              "cardiovascular_24hours": 1,
+              "cns_24hours": 0,
+              "renal_24hours": 0
+            }
+          }
+        ]
+      },
+      {
+        "step_index": 4,
+        "t_hour": 16,
+        "gt_action": "trigger_sepsis_alert",
+        "predicted_action": "trigger_sepsis_alert",
+        "tool_calls": [
+          {
+            "tool_name": "query_suspicion_of_infection",
+            "arguments": {
+              "stay_id": 300001,
+              "t_hour": 16
+            }
+          },
+          {
+            "tool_name": "query_sofa",
+            "arguments": {
+              "stay_id": 300001,
+              "t_hour": 16
+            }
+          }
+        ],
+        "tool_outputs": [
+          {
+            "stay_id": 300001,
+            "t_hour": 16,
+            "has_suspected_infection": true,
+            "first_visible_suspected_infection_hour": 6.7,
+            "first_visible_suspected_infection_time": "2150-03-01T15:42:00",
+            "evidence": [
+              {
+                "antibiotic": "vancomycin",
+                "antibiotic_time": "2150-03-01T15:42:00",
+                "culture_time": "2150-03-01T14:18:00",
+                "specimen": "BLOOD CULTURE",
+                "positive_culture": 0
+              }
+            ]
+          },
+          {
+            "stay_id": 300001,
+            "t_hour": 16,
+            "latest_visible_hr": 16,
+            "latest_sofa_24hours": 3,
+            "max_sofa_24hours_so_far": 3,
+            "latest_components": {
+              "respiration_24hours": 1,
+              "coagulation_24hours": 0,
+              "liver_24hours": 0,
+              "cardiovascular_24hours": 1,
+              "cns_24hours": 0,
+              "renal_24hours": 1
+            }
+          }
+        ]
+      },
+      {
+        "step_index": 5,
+        "t_hour": 20,
+        "gt_action": "trigger_sepsis_alert",
+        "predicted_action": "trigger_sepsis_alert",
+        "tool_calls": [
+          {
+            "tool_name": "query_suspicion_of_infection",
+            "arguments": {
+              "stay_id": 300001,
+              "t_hour": 20
+            }
+          },
+          {
+            "tool_name": "query_sofa",
+            "arguments": {
+              "stay_id": 300001,
+              "t_hour": 20
+            }
+          }
+        ],
+        "tool_outputs": [
+          {
+            "stay_id": 300001,
+            "t_hour": 20,
+            "has_suspected_infection": true,
+            "first_visible_suspected_infection_hour": 6.7,
+            "first_visible_suspected_infection_time": "2150-03-01T15:42:00",
+            "evidence": [
+              {
+                "antibiotic": "vancomycin",
+                "antibiotic_time": "2150-03-01T15:42:00",
+                "culture_time": "2150-03-01T14:18:00",
+                "specimen": "BLOOD CULTURE",
+                "positive_culture": 0
+              }
+            ]
+          },
+          {
+            "stay_id": 300001,
+            "t_hour": 20,
+            "latest_visible_hr": 20,
+            "latest_sofa_24hours": 3,
+            "max_sofa_24hours_so_far": 3,
+            "latest_components": {
+              "respiration_24hours": 1,
+              "coagulation_24hours": 0,
+              "liver_24hours": 0,
+              "cardiovascular_24hours": 1,
+              "cns_24hours": 0,
+              "renal_24hours": 1
+            }
+          }
+        ]
+      },
+      {
+        "step_index": 6,
+        "t_hour": 24,
+        "gt_action": "trigger_sepsis_alert",
+        "predicted_action": "trigger_sepsis_alert",
+        "tool_calls": [
+          {
+            "tool_name": "query_suspicion_of_infection",
+            "arguments": {
+              "stay_id": 300001,
+              "t_hour": 24
+            }
+          },
+          {
+            "tool_name": "query_sofa",
+            "arguments": {
+              "stay_id": 300001,
+              "t_hour": 24
+            }
+          }
+        ],
+        "tool_outputs": [
+          {
+            "stay_id": 300001,
+            "t_hour": 24,
+            "has_suspected_infection": true,
+            "first_visible_suspected_infection_hour": 6.7,
+            "first_visible_suspected_infection_time": "2150-03-01T15:42:00",
+            "evidence": [
+              {
+                "antibiotic": "vancomycin",
+                "antibiotic_time": "2150-03-01T15:42:00",
+                "culture_time": "2150-03-01T14:18:00",
+                "specimen": "BLOOD CULTURE",
+                "positive_culture": 0
+              }
+            ]
+          },
+          {
+            "stay_id": 300001,
+            "t_hour": 24,
+            "latest_visible_hr": 24,
+            "latest_sofa_24hours": 4,
+            "max_sofa_24hours_so_far": 4,
+            "latest_components": {
+              "respiration_24hours": 1,
+              "coagulation_24hours": 0,
+              "liver_24hours": 0,
+              "cardiovascular_24hours": 1,
+              "cns_24hours": 1,
+              "renal_24hours": 1
+            }
+          }
+        ]
+      }
+    ],
+    "first_predicted_infection_hour": 8,
+    "first_predicted_alert_hour": 12
+  }
+]

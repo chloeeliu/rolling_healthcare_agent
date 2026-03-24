@@ -85,6 +85,9 @@ PYTHONPATH=src python3 -m sepsis_mvp.cli run \
   --model Qwen/Qwen3.5-9B \
   --temperature 0.0 \
   --max-new-tokens 250 \
+  --sample-size 5 \
+  --events-output data/qwen_events.jsonl \
+  --trajectory-output data/qwen_trajectories.jsonl \
   --rollouts-output data/qwen_rollouts.json
 ```
 
@@ -96,6 +99,13 @@ PYTHONPATH=src python3 -m sepsis_mvp.cli run \
   --dataset data/rolling_sepsis_trajectories.json \
   --agent heuristic
 ```
+
+Useful debug flags:
+
+- `--sample-size N`: run only the first `N` trajectories
+- `--events-output path.jsonl`: append every tool call, tool output, step start, action, and trajectory completion
+- `--trajectory-output path.jsonl`: append each completed stay rollout immediately
+- `--rollouts-output path.json`: write the final full in-memory run at the end
 
 Or install the package once and then use the `sepsis-mvp` console command:
 

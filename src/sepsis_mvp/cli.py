@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import time
 from pathlib import Path
 
 from .agent import HeuristicAgent, QwenChatAgent
@@ -14,6 +15,20 @@ from .dataset import (
 )
 from .environment import BenchmarkEnvironment, evaluate_rollouts, rollout_to_dicts
 from .tools import ConceptToolRuntime, DuckDBConceptToolRuntime
+
+
+class JsonlSink:
+    def __init__(self, path: str | None):
+        self.path = Path(path) if path else None
+        if self.path is not None:
+            self.path.parent.mkdir(parents=True, exist_ok=True)
+
+    def write(self, payload: dict) -> None:
+        if self.path is None:
+            return
+        with self.path.open("a") as handle:
+            handle.write(json.dumps(payload) + "\n")
+            handle.flush()
 
 
 def build_dataset_command(args: argparse.Namespace) -> int:
@@ -42,6 +57,8 @@ def build_dataset_command(args: argparse.Namespace) -> int:
             sample_non_sepsis=args.sample_non_sepsis,
             seed=args.seed,
         )
+    if args.sample_size is not None:
+        trajectories = trajectories[: args.sample_size]
     save_trajectories(trajectories, args.output)
     print(f"Wrote {len(trajectories)} trajectories to {args.output}")
     return 0
@@ -49,6 +66,8 @@ def build_dataset_command(args: argparse.Namespace) -> int:
 
 def run_command(args: argparse.Namespace) -> int:
     trajectories = load_dataset_auto(args.dataset, strict_mvp=not args.include_out_of_scope)
+    if args.sample_size is not None:
+        trajectories = trajectories[: args.sample_size]
     if args.db_path:
         runtime = DuckDBConceptToolRuntime(args.db_path)
     else:
@@ -56,7 +75,10 @@ def run_command(args: argparse.Namespace) -> int:
             raise SystemExit("run requires either --db-path or --concepts")
         concept_tables = load_concept_tables(args.concepts)
         runtime = ConceptToolRuntime(concept_tables)
-    environment = BenchmarkEnvironment(trajectories, runtime)
+
+    events_sink = JsonlSink(args.events_output)
+    trajectories_sink = JsonlSink(args.trajectory_output)
+    environment = BenchmarkEnvironment(trajectories, runtime, event_callback=events_sink.write)
     if args.agent == "heuristic":
         agent = HeuristicAgent(sofa_alert_threshold=args.sofa_alert_threshold)
     else:
@@ -66,7 +88,28 @@ def run_command(args: argparse.Namespace) -> int:
             top_p=args.top_p,
             max_new_tokens=args.max_new_tokens,
         )
-    rollouts = environment.run_all(agent)
+
+    total = len(trajectories)
+    rollouts = []
+    start_time = time.time()
+    print(f"Starting run on {total} trajectories", flush=True)
+    for index, trajectory in enumerate(trajectories, start=1):
+        print(
+            f"[{index}/{total}] stay_id={trajectory.stay_id} trajectory_id={trajectory.trajectory_id} start",
+            flush=True,
+        )
+        rollout = environment.run_trajectory(trajectory, agent)
+        rollouts.append(rollout)
+        trajectories_sink.write(rollout.to_dict())
+        elapsed = time.time() - start_time
+        print(
+            f"[{index}/{total}] stay_id={trajectory.stay_id} done "
+            f"first_infection={rollout.first_predicted_infection_hour} "
+            f"first_alert={rollout.first_predicted_alert_hour} "
+            f"elapsed_sec={elapsed:.1f}",
+            flush=True,
+        )
+
     evaluation = evaluate_rollouts(trajectories, rollouts)
 
     if args.rollouts_output:
@@ -92,6 +135,7 @@ def build_parser() -> argparse.ArgumentParser:
     build_parser.add_argument("--horizon-hours", type=int, default=24)
     build_parser.add_argument("--sample-sepsis", type=int)
     build_parser.add_argument("--sample-non-sepsis", type=int)
+    build_parser.add_argument("--sample-size", type=int, help="Keep only the first N trajectories.")
     build_parser.add_argument("--seed", type=int, default=7)
     build_parser.set_defaults(func=build_dataset_command)
 
@@ -109,8 +153,11 @@ def build_parser() -> argparse.ArgumentParser:
     run_parser.add_argument("--temperature", type=float, default=0.0)
     run_parser.add_argument("--top-p", type=float, default=0.95)
     run_parser.add_argument("--max-new-tokens", type=int, default=250)
+    run_parser.add_argument("--sample-size", type=int, help="Run only the first N trajectories.")
     run_parser.add_argument("--sofa-alert-threshold", type=int, default=2)
     run_parser.add_argument("--rollouts-output", help="Optional path to save rollout logs.")
+    run_parser.add_argument("--events-output", help="Optional JSONL file for per-tool-call/per-step events.")
+    run_parser.add_argument("--trajectory-output", help="Optional JSONL file for per-stay completed rollouts.")
     run_parser.set_defaults(func=run_command)
 
     return parser

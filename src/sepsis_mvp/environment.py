@@ -16,15 +16,29 @@ class BenchmarkEnvironment:
         tool_runtime: ConceptToolRuntime,
         *,
         max_tool_calls_per_step: int = 4,
+        event_callback: Any | None = None,
     ) -> None:
         self.trajectories = trajectories
         self.tool_runtime = tool_runtime
         self.max_tool_calls_per_step = max_tool_calls_per_step
+        self.event_callback = event_callback
+
+    def _emit(self, event: dict[str, Any]) -> None:
+        if self.event_callback is not None:
+            self.event_callback(event)
 
     def run_trajectory(self, trajectory: Trajectory, agent: Agent) -> TrajectoryRollout:
         steps: list[StepRecord] = []
         first_predicted_infection_hour = None
         first_predicted_alert_hour = None
+
+        self._emit(
+            {
+                "event_type": "trajectory_start",
+                "trajectory_id": trajectory.trajectory_id,
+                "stay_id": trajectory.stay_id,
+            }
+        )
 
         for step_index, checkpoint in enumerate(trajectory.checkpoints):
             step_input = AgentStepInput(
@@ -43,6 +57,17 @@ class BenchmarkEnvironment:
             tool_outputs: list[dict[str, Any]] = []
             predicted_action = "keep_monitoring"
 
+            self._emit(
+                {
+                    "event_type": "step_start",
+                    "trajectory_id": trajectory.trajectory_id,
+                    "stay_id": trajectory.stay_id,
+                    "step_index": step_index,
+                    "t_hour": checkpoint.t_hour,
+                    "gt_action": checkpoint.state_label,
+                }
+            )
+
             for _ in range(self.max_tool_calls_per_step + 1):
                 response = agent.next_response(
                     step_input=step_input.to_dict(),
@@ -52,13 +77,46 @@ class BenchmarkEnvironment:
                 if isinstance(response, ToolCall):
                     output = self.tool_runtime.execute(response.tool_name, response.arguments)
                     call_payload = {"tool_name": response.tool_name, "arguments": response.arguments}
+                    self._emit(
+                        {
+                            "event_type": "tool_call",
+                            "trajectory_id": trajectory.trajectory_id,
+                            "stay_id": trajectory.stay_id,
+                            "step_index": step_index,
+                            "t_hour": checkpoint.t_hour,
+                            "tool_name": response.tool_name,
+                            "arguments": response.arguments,
+                        }
+                    )
                     history.append({"type": "tool_call", "tool_name": response.tool_name, "payload": call_payload})
                     history.append({"type": "tool_output", "tool_name": response.tool_name, "payload": output})
                     tool_calls.append(call_payload)
                     tool_outputs.append(output)
+                    self._emit(
+                        {
+                            "event_type": "tool_output",
+                            "trajectory_id": trajectory.trajectory_id,
+                            "stay_id": trajectory.stay_id,
+                            "step_index": step_index,
+                            "t_hour": checkpoint.t_hour,
+                            "tool_name": response.tool_name,
+                            "output": output,
+                        }
+                    )
                     continue
                 if isinstance(response, ActionDecision):
                     predicted_action = response.action
+                    self._emit(
+                        {
+                            "event_type": "action",
+                            "trajectory_id": trajectory.trajectory_id,
+                            "stay_id": trajectory.stay_id,
+                            "step_index": step_index,
+                            "t_hour": checkpoint.t_hour,
+                            "gt_action": checkpoint.state_label,
+                            "predicted_action": predicted_action,
+                        }
+                    )
                     break
                 raise TypeError(f"Unsupported agent response: {response}")
 
@@ -81,13 +139,24 @@ class BenchmarkEnvironment:
                 )
             )
 
-        return TrajectoryRollout(
+        rollout = TrajectoryRollout(
             trajectory_id=trajectory.trajectory_id,
             stay_id=trajectory.stay_id,
             steps=steps,
             first_predicted_infection_hour=first_predicted_infection_hour,
             first_predicted_alert_hour=first_predicted_alert_hour,
         )
+        self._emit(
+            {
+                "event_type": "trajectory_complete",
+                "trajectory_id": trajectory.trajectory_id,
+                "stay_id": trajectory.stay_id,
+                "first_predicted_infection_hour": first_predicted_infection_hour,
+                "first_predicted_alert_hour": first_predicted_alert_hour,
+                "num_steps": len(steps),
+            }
+        )
+        return rollout
 
     def run_all(self, agent: Agent) -> list[TrajectoryRollout]:
         return [self.run_trajectory(trajectory, agent) for trajectory in self.trajectories]
@@ -215,4 +284,3 @@ def _timing_metrics(gt_hours: list[int | None], pred_hours: list[int | None]) ->
 
 def rollout_to_dicts(rollouts: list[TrajectoryRollout]) -> list[dict[str, Any]]:
     return [asdict(rollout) for rollout in rollouts]
-
