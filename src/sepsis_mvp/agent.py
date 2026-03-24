@@ -27,7 +27,8 @@ def _build_messages(
     system_prompt = (
         "You are a sepsis surveillance agent. "
         "Use tools only from the allowed list. "
-        "Return exactly one JSON object. "
+        "Do not output reasoning, analysis, or <think> tags. "
+        "Return exactly one JSON object and nothing else. "
         "If you need a tool, return "
         '{"tool_name":"query_sofa","arguments":{"stay_id":123,"t_hour":4}}. '
         "If you are ready to decide, return "
@@ -49,7 +50,7 @@ def _build_messages(
 
 
 def _extract_json_object(text: str) -> dict[str, Any]:
-    text = text.strip()
+    text = re.sub(r"<think>.*?</think>", "", text, flags=re.DOTALL | re.IGNORECASE).strip()
     try:
         return json.loads(text)
     except json.JSONDecodeError:
@@ -57,6 +58,28 @@ def _extract_json_object(text: str) -> dict[str, Any]:
         if not match:
             raise ValueError(f"Model did not return JSON: {text}")
         return json.loads(match.group(0))
+
+
+def _build_repair_messages(
+    step_input: dict[str, Any],
+    history: list[dict[str, Any]],
+    available_tools: list[str],
+    bad_output: str,
+) -> list[dict[str, str]]:
+    messages = _build_messages(step_input, history, available_tools)
+    messages.append({"role": "assistant", "content": bad_output})
+    messages.append(
+        {
+            "role": "user",
+            "content": (
+                "Your previous reply was invalid because it was not exactly one JSON object. "
+                "Respond again with JSON only and no extra text. "
+                'Use either {"tool_name":"query_suspicion_of_infection","arguments":{"stay_id":123,"t_hour":0}} '
+                'or {"action":"keep_monitoring"}.'
+            ),
+        }
+    )
+    return messages
 
 
 def _coerce_agent_output(payload: dict[str, Any]) -> ToolCall | ActionDecision:
@@ -226,6 +249,7 @@ class QwenChatAgent:
     temperature: float = 0.0
     top_p: float = 0.95
     max_new_tokens: int = 250
+    repair_max_new_tokens: int = 120
     client: LocalQwenChat = field(init=False, repr=False)
 
     def __post_init__(self) -> None:
@@ -244,4 +268,14 @@ class QwenChatAgent:
     ) -> ToolCall | ActionDecision:
         messages = _build_messages(step_input, history, available_tools)
         content = self.client.generate(messages)
-        return _coerce_agent_output(_extract_json_object(content))
+        try:
+            return _coerce_agent_output(_extract_json_object(content))
+        except (ValueError, json.JSONDecodeError):
+            original_max_tokens = self.client.max_new_tokens
+            repair_messages = _build_repair_messages(step_input, history, available_tools, content)
+            self.client.max_new_tokens = self.repair_max_new_tokens
+            try:
+                repaired = self.client.generate(repair_messages)
+            finally:
+                self.client.max_new_tokens = original_max_tokens
+            return _coerce_agent_output(_extract_json_object(repaired))
