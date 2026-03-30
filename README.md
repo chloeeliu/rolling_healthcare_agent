@@ -129,6 +129,7 @@ Useful flags:
 
 - `--sample-size N`: run only the first `N` trajectories
 - `--events-output path.jsonl`: append every step start, tool call, tool output, action, and trajectory completion
+- `--events-output path.jsonl` also captures raw Qwen outputs, repair outputs, and any controller-forced tool corrections
 - `--trajectory-output path.jsonl`: append each completed stay rollout immediately
 - `--rollouts-output path.json`: write the final full in-memory rollout list at the end
 
@@ -142,6 +143,9 @@ The local Qwen path is prompt-tuned for strict JSON output:
 - no `<think>` tags
 - fixed-key `task_actions` object in multitask mode
 - one-shot repair retry if the first generation is not valid JSON
+- deterministic tool-order guard in multitask mode:
+  `query_suspicion_of_infection` -> `query_sofa` -> `query_kdigo_stage` -> `query_ventilation_status`
+- if Qwen skips a required tool, repeats a previous tool, or keeps calling tools after all four are done, the controller repairs or corrects the step instead of silently falling back to baseline labels
 
 ## Query checks
 

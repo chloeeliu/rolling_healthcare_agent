@@ -76,6 +76,7 @@ def run_command(args: argparse.Namespace) -> int:
             temperature=args.temperature,
             top_p=args.top_p,
             max_new_tokens=args.max_new_tokens,
+            trace_callback=events_sink.write,
         )
 
     total = len(trajectories)

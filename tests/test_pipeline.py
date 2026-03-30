@@ -7,7 +7,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
-from sepsis_mvp.agent import HeuristicAgent
+from sepsis_mvp.agent import QwenChatAgent, _coerce_agent_output, HeuristicAgent
 from sepsis_mvp.dataset import (
     build_dataset,
     load_concept_tables,
@@ -24,6 +24,186 @@ SAMPLE = ROOT / "data" / "sample_concepts.json"
 
 
 class PipelineTest(unittest.TestCase):
+    def _multitask_step_input(self):
+        return {
+            "trajectory_id": "mimiciv_stay_1",
+            "stay_id": 30,
+            "step_index": 0,
+            "t_hour": 4,
+            "available_tools": [
+                "query_suspicion_of_infection",
+                "query_sofa",
+                "query_kdigo_stage",
+                "query_ventilation_status",
+            ],
+            "instruction": "Use tools if needed. Then output one decision for each monitored task.",
+            "task_names": ["sepsis", "aki", "respiratory_support"],
+            "label_spaces": {
+                "sepsis": ["keep_monitoring", "infection_suspect", "trigger_sepsis_alert"],
+                "aki": ["keep_monitoring", "suspect_aki", "trigger_aki_alert"],
+                "respiratory_support": [
+                    "room_air_or_low_support",
+                    "high_flow_or_noninvasive_support",
+                    "invasive_vent_required",
+                ],
+            },
+        }
+
+    def test_multitask_task_action_alias_is_normalized(self):
+        response = _coerce_agent_output(
+            {
+                "task_actions": {
+                    "sepsis": "keep_monitoring",
+                    "aki": "keep_monitoring",
+                    "resp_support": "room_air_or_low_support",
+                }
+            }
+        )
+        self.assertEqual(
+            response.task_actions,
+            {
+                "sepsis": "keep_monitoring",
+                "aki": "keep_monitoring",
+                "respiratory_support": "room_air_or_low_support",
+            },
+        )
+
+    def test_qwen_agent_forces_next_required_tool_when_model_skips_tool_use(self):
+        class FakeClient:
+            def __init__(self):
+                self.max_new_tokens = 250
+
+            def generate(self, messages):
+                return '{"task_actions":{"sepsis":"keep_monitoring","aki":"keep_monitoring","respiratory_support":"room_air_or_low_support"}}'
+
+        trace_events = []
+        agent = object.__new__(QwenChatAgent)
+        agent.model = "fake"
+        agent.temperature = 0.0
+        agent.top_p = 0.95
+        agent.max_new_tokens = 250
+        agent.repair_max_new_tokens = 120
+        agent.trace_callback = trace_events.append
+        agent.client = FakeClient()
+
+        response = agent.next_response(
+            self._multitask_step_input(),
+            history=[],
+            available_tools=[
+                "query_suspicion_of_infection",
+                "query_sofa",
+                "query_kdigo_stage",
+                "query_ventilation_status",
+            ],
+        )
+        self.assertEqual(response.tool_name, "query_suspicion_of_infection")
+        self.assertEqual(response.arguments, {"stay_id": 30, "t_hour": 4})
+        self.assertTrue(any(event["event_type"] == "model_output_forced_tool" for event in trace_events))
+
+    def test_qwen_agent_forces_next_required_tool_when_model_repeats_prior_tool(self):
+        class FakeClient:
+            def __init__(self):
+                self.max_new_tokens = 250
+
+            def generate(self, messages):
+                return '{"tool_name":"query_suspicion_of_infection","arguments":{"stay_id":30,"t_hour":4}}'
+
+        agent = object.__new__(QwenChatAgent)
+        agent.model = "fake"
+        agent.temperature = 0.0
+        agent.top_p = 0.95
+        agent.max_new_tokens = 250
+        agent.repair_max_new_tokens = 120
+        agent.trace_callback = None
+        agent.client = FakeClient()
+
+        history = [
+            {
+                "type": "tool_call",
+                "tool_name": "query_suspicion_of_infection",
+                "payload": {"tool_name": "query_suspicion_of_infection", "arguments": {"stay_id": 30, "t_hour": 4}},
+            },
+            {
+                "type": "tool_output",
+                "tool_name": "query_suspicion_of_infection",
+                "payload": {"stay_id": 30, "t_hour": 4, "has_suspected_infection": True},
+            },
+        ]
+
+        response = agent.next_response(
+            self._multitask_step_input(),
+            history=history,
+            available_tools=[
+                "query_suspicion_of_infection",
+                "query_sofa",
+                "query_kdigo_stage",
+                "query_ventilation_status",
+            ],
+        )
+        self.assertEqual(response.tool_name, "query_sofa")
+        self.assertEqual(response.arguments, {"stay_id": 30, "t_hour": 4})
+
+    def test_qwen_agent_repairs_to_final_decision_after_all_tools_are_done(self):
+        class FakeClient:
+            def __init__(self):
+                self.max_new_tokens = 250
+                self.outputs = [
+                    '{"tool_name":"query_ventilation_status","arguments":{"stay_id":30,"t_hour":4}}',
+                    '{"task_actions":{"sepsis":"infection_suspect","aki":"suspect_aki","respiratory_support":"high_flow_or_noninvasive_support"}}',
+                ]
+
+            def generate(self, messages):
+                return self.outputs.pop(0)
+
+        agent = object.__new__(QwenChatAgent)
+        agent.model = "fake"
+        agent.temperature = 0.0
+        agent.top_p = 0.95
+        agent.max_new_tokens = 250
+        agent.repair_max_new_tokens = 120
+        agent.trace_callback = None
+        agent.client = FakeClient()
+
+        history = []
+        for tool_name, payload in [
+            (
+                "query_suspicion_of_infection",
+                {"stay_id": 30, "t_hour": 4, "has_suspected_infection": True},
+            ),
+            ("query_sofa", {"stay_id": 30, "t_hour": 4, "latest_sofa_24hours": 1}),
+            ("query_kdigo_stage", {"stay_id": 30, "t_hour": 4, "latest_aki_stage_smoothed": 1}),
+            (
+                "query_ventilation_status",
+                {
+                    "stay_id": 30,
+                    "t_hour": 4,
+                    "current_support_level": "high_flow_or_noninvasive_support",
+                    "highest_support_level_so_far": "high_flow_or_noninvasive_support",
+                },
+            ),
+        ]:
+            history.append({"type": "tool_call", "tool_name": tool_name, "payload": {"tool_name": tool_name}})
+            history.append({"type": "tool_output", "tool_name": tool_name, "payload": payload})
+
+        response = agent.next_response(
+            self._multitask_step_input(),
+            history=history,
+            available_tools=[
+                "query_suspicion_of_infection",
+                "query_sofa",
+                "query_kdigo_stage",
+                "query_ventilation_status",
+            ],
+        )
+        self.assertEqual(
+            response.task_actions,
+            {
+                "sepsis": "infection_suspect",
+                "aki": "suspect_aki",
+                "respiratory_support": "high_flow_or_noninvasive_support",
+            },
+        )
+
     def test_dataset_builder_snaps_transitions_to_checkpoints(self):
         concepts = load_concept_tables(SAMPLE)
         trajectories = build_dataset(concepts)
