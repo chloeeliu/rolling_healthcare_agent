@@ -1,78 +1,109 @@
-# Rolling Sepsis Surveillance MVP
+# Rolling ICU Surveillance MVP
 
-This repo contains a minimal end-to-end benchmark pipeline for the design doc:
+This repo contains a rolling monitoring benchmark pipeline on MIMIC-IV concept-layer data.
 
-- offline trajectory loading/building
-- time-gated concept-layer tools
-- a rolling surveillance environment
-- a local Qwen 3.5 agent adapter
-- a heuristic smoke-test baseline and sample data
+Implemented task modes:
 
-## What is implemented
+- single-task sepsis escalation
+- multi-task escalation for:
+  - sepsis
+  - AKI
+  - respiratory support
 
-The benchmark uses one ICU stay per trajectory and evaluates actions at fixed 4-hour checkpoints:
+The agent never sees raw vitals, labs, meds, or procedures directly. It only interacts with derived concept tools.
 
-- `keep_monitoring`
-- `infection_suspect`
-- `trigger_sepsis_alert`
+## Current datasets
 
-The agent can only call concept-layer tools:
+Packaged datasets live under [/Users/chloe/Documents/New project/rolling_monitor_dataset](/Users/chloe/Documents/New project/rolling_monitor_dataset):
+
+- [/Users/chloe/Documents/New project/rolling_monitor_dataset/sepsis](/Users/chloe/Documents/New project/rolling_monitor_dataset/sepsis)
+- [/Users/chloe/Documents/New project/rolling_monitor_dataset/aki](/Users/chloe/Documents/New project/rolling_monitor_dataset/aki)
+- [/Users/chloe/Documents/New project/rolling_monitor_dataset/respiratory_support](/Users/chloe/Documents/New project/rolling_monitor_dataset/respiratory_support)
+- [/Users/chloe/Documents/New project/rolling_monitor_dataset/multitask](/Users/chloe/Documents/New project/rolling_monitor_dataset/multitask)
+
+The main shared multi-task cohort is:
+
+- [/Users/chloe/Documents/New project/rolling_monitor_dataset/multitask/rolling_multitask.csv](/Users/chloe/Documents/New project/rolling_monitor_dataset/multitask/rolling_multitask.csv)
+- [/Users/chloe/Documents/New project/rolling_monitor_dataset/multitask/trajectory_schema.json](/Users/chloe/Documents/New project/rolling_monitor_dataset/multitask/trajectory_schema.json)
+
+## Tool layer
+
+The live DuckDB runtime queries these derived concepts:
 
 - `query_suspicion_of_infection`
 - `query_sofa`
+- `query_kdigo_stage`
+- `query_ventilation_status`
 
-Ground truth is built offline from:
+These are backed by:
 
-- `suspicion_of_infection` for infection transition
-- `sepsis3` for sepsis transition
-- `sofa` for agent-visible evidence
+- `mimiciv_derived.suspicion_of_infection`
+- `mimiciv_derived.sofa`
+- `mimiciv_derived.kdigo_stages`
+- `mimiciv_derived.ventilation`
 
-## Input formats
+## Agent contract
 
-The repo supports both:
+Single-task sepsis mode returns:
 
-- a prebuilt rolling checkpoint CSV, such as `/Users/chloe/Desktop/healthcare/dataset/rolling_sepsis/rolling_sepsis.csv`
-- a concept-table JSON file for toy or synthetic experiments
+```json
+{"action":"infection_suspect"}
+```
 
-The sample JSON format uses four top-level arrays:
+Multi-task mode returns:
 
 ```json
 {
-  "icustays": [],
-  "suspicion_of_infection": [],
-  "sepsis3": [],
-  "sofa": []
+  "task_actions": {
+    "sepsis": "infection_suspect",
+    "aki": "suspect_aki",
+    "respiratory_support": "room_air_or_low_support"
+  }
 }
 ```
 
-Important fields:
+Tool calls always use:
 
-- `icustays`: `stay_id`, `subject_id`, `hadm_id`, `icu_intime`
-- `suspicion_of_infection`: `stay_id`, `suspected_infection_time`, plus optional evidence fields
-- `sepsis3`: `stay_id`, `sepsis_time`
-- `sofa`: `stay_id`, `hr`, `sofa_24hours`, optional component fields
+```json
+{"tool_name":"query_kdigo_stage","arguments":{"stay_id":123,"t_hour":8}}
+```
 
 ## Quick start
 
-Main path: build trajectories from the real rolling CSV:
+### 1. Build trajectories from a CSV package
+
+Single-task sepsis:
 
 ```bash
 PYTHONPATH=src python3 -m sepsis_mvp.cli build-dataset \
-  --rolling-csv /Users/chloe/Desktop/healthcare/dataset/rolling_sepsis/rolling_sepsis.csv \
+  --rolling-csv /Users/chloe/Documents/New\ project/rolling_monitor_dataset/sepsis/rolling_sepsis.csv \
   --output data/rolling_sepsis_trajectories.json
 ```
 
-By default, `build-dataset` stays strict to the 3-action MVP contract and drops out-of-scope trajectories such as rows with `organ_dysfunction_suspect`.
-
-Run this once before evaluation:
+Shared multi-task:
 
 ```bash
 PYTHONPATH=src python3 -m sepsis_mvp.cli build-dataset \
-  --rolling-csv /Users/chloe/Desktop/healthcare/dataset/rolling_sepsis/rolling_sepsis.csv \
-  --output data/rolling_sepsis_trajectories.json
+  --rolling-csv /Users/chloe/Documents/New\ project/rolling_monitor_dataset/multitask/rolling_multitask.csv \
+  --output data/rolling_multitask_trajectories.json
 ```
 
-Run the local Qwen model:
+### 2. Smoke test with the heuristic agent
+
+This is the recommended pre-GPU check.
+
+```bash
+PYTHONPATH=src python3 -m sepsis_mvp.cli run \
+  --db-path /Users/chloe/Desktop/healthcare/mimic-iv-3.1/buildmimic/duckdb/mimic4_dk.db \
+  --dataset /Users/chloe/Documents/New\ project/rolling_monitor_dataset/multitask/rolling_multitask.csv \
+  --agent heuristic \
+  --sample-size 5 \
+  --events-output data/multitask_events.jsonl \
+  --trajectory-output data/multitask_trajectories.jsonl \
+  --rollouts-output data/multitask_rollouts.json
+```
+
+### 3. Run the local Qwen model
 
 ```bash
 export QWEN_MODEL="Qwen/Qwen3.5-9B"
@@ -80,57 +111,57 @@ export QWEN_OFFLINE=0
 
 PYTHONPATH=src python3 -m sepsis_mvp.cli run \
   --db-path /Users/chloe/Desktop/healthcare/mimic-iv-3.1/buildmimic/duckdb/mimic4_dk.db \
-  --dataset data/rolling_sepsis_trajectories.json \
+  --dataset /Users/chloe/Documents/New\ project/rolling_monitor_dataset/multitask/rolling_multitask.csv \
   --agent qwen \
   --model Qwen/Qwen3.5-9B \
   --temperature 0.0 \
+  --top-p 0.95 \
   --max-new-tokens 250 \
-  --sample-size 5 \
-  --events-output data/qwen_events.jsonl \
-  --trajectory-output data/qwen_trajectories.jsonl \
-  --rollouts-output data/qwen_rollouts.json
+  --sample-size 10 \
+  --events-output data/qwen_multitask_events.jsonl \
+  --trajectory-output data/qwen_multitask_trajectories.jsonl \
+  --rollouts-output data/qwen_multitask_rollouts.json
 ```
 
-Optional smoke test without loading the model:
+## Debug outputs
 
-```bash
-PYTHONPATH=src python3 -m sepsis_mvp.cli run \
-  --db-path /Users/chloe/Desktop/healthcare/mimic-iv-3.1/buildmimic/duckdb/mimic4_dk.db \
-  --dataset data/rolling_sepsis_trajectories.json \
-  --agent heuristic
-```
-
-Useful debug flags:
+Useful flags:
 
 - `--sample-size N`: run only the first `N` trajectories
-- `--events-output path.jsonl`: append every tool call, tool output, step start, action, and trajectory completion
+- `--events-output path.jsonl`: append every step start, tool call, tool output, action, and trajectory completion
 - `--trajectory-output path.jsonl`: append each completed stay rollout immediately
-- `--rollouts-output path.json`: write the final full in-memory run at the end
+- `--rollouts-output path.json`: write the final full in-memory rollout list at the end
 
-Or install the package once and then use the `sepsis-mvp` console command:
+This means partial progress survives long runs and crashes.
+
+## Prompting notes
+
+The local Qwen path is prompt-tuned for strict JSON output:
+
+- no free-text reasoning
+- no `<think>` tags
+- fixed-key `task_actions` object in multitask mode
+- one-shot repair retry if the first generation is not valid JSON
+
+## Query checks
+
+Live query checks were run successfully against the DuckDB for:
+
+- one stay positive for all three tasks: `30294009`
+- one stay negative for all three tasks: `30009797`
+
+Observed behavior matched expectations:
+
+- pre-ICU infection can already be visible at `t_hour=0`
+- SOFA, KDIGO, and ventilation are properly time-gated by checkpoint
+- the respiratory wrapper reports both current and highest support seen so far
+
+## Verification
+
+Local verification completed with:
 
 ```bash
-python3 -m pip install -e .
+PYTHONPATH=src python3 -m unittest discover -s tests -v
 ```
 
-The local Qwen adapter expects the model to return either:
-
-```json
-{"tool_name":"query_sofa","arguments":{"stay_id":300001,"t_hour":12}}
-```
-
-or:
-
-```json
-{"action":"infection_suspect"}
-```
-
-## Notes
-
-- The environment time-gates tool access using `icu_intime + t_hour`.
-- `sepsis3` is never exposed to the agent.
-- Transition labels are snapped to the first checkpoint at or after the hidden event time.
-- Early SOFA hours are exposed as-is; no leakage beyond the current checkpoint is allowed.
-- If your DuckDB already contains `mimiciv_derived.sofa` and `mimiciv_derived.suspicion_of_infection`, the runtime queries those directly.
-- `--agent qwen` is the real experiment path.
-- `--agent heuristic` is only there for fast CPU-only smoke tests and regression checks.
+and a real DuckDB-backed multitask smoke run using the heuristic agent.

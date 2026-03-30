@@ -31,31 +31,54 @@ def _build_messages(
 ) -> list[dict[str, str]]:
     if _is_multitask_step(step_input):
         system_prompt = (
-            "You are an ICU rolling multi-task surveillance agent. "
-            "Tasks: sepsis, aki, respiratory_support. "
-            "Use tools only from the allowed list. "
-            "Do not output reasoning, analysis, or <think> tags. "
-            "Return exactly one JSON object and nothing else. "
-            "You may return a tool call like "
-            '{"tool_name":"query_kdigo_stage","arguments":{"stay_id":123,"t_hour":4}}. '
-            "If you are ready to decide, return "
-            '{"task_actions":{"sepsis":"keep_monitoring","aki":"keep_monitoring","respiratory_support":"room_air_or_low_support"}}. '
-            "Valid sepsis actions: keep_monitoring, infection_suspect, trigger_sepsis_alert. "
-            "Valid aki actions: keep_monitoring, suspect_aki, trigger_aki_alert. "
-            "Valid respiratory_support actions: room_air_or_low_support, "
-            "high_flow_or_noninvasive_support, invasive_vent_required."
+            "You are an ICU rolling multi-task surveillance agent.\n"
+            "Monitored tasks: sepsis, aki, respiratory_support.\n"
+            "At each checkpoint, you may either call exactly one tool or return final task decisions.\n"
+            "Use only the allowed tools.\n"
+            "Do not output reasoning, analysis, markdown, or <think> tags.\n"
+            "Return exactly one JSON object and nothing else.\n\n"
+            "Task semantics:\n"
+            "- sepsis: keep_monitoring | infection_suspect | trigger_sepsis_alert\n"
+            "- aki: keep_monitoring | suspect_aki | trigger_aki_alert\n"
+            "- respiratory_support: room_air_or_low_support | "
+            "high_flow_or_noninvasive_support | invasive_vent_required\n\n"
+            "Tool semantics:\n"
+            "- query_suspicion_of_infection: infection evidence visible by this checkpoint\n"
+            "- query_sofa: current visible SOFA summary up to this checkpoint\n"
+            "- query_kdigo_stage: current visible AKI stage summary up to this checkpoint\n"
+            "- query_ventilation_status: current and highest visible respiratory support up to this checkpoint\n\n"
+            "Recommended decision pattern:\n"
+            "1. Check infection and sofa for sepsis.\n"
+            "2. Check kdigo for AKI.\n"
+            "3. Check ventilation for respiratory support.\n"
+            "4. Return one decision for every task in a fixed key order.\n\n"
+            "Important:\n"
+            "- Evidence may already be visible at t_hour=0 because some events can happen before ICU admission.\n"
+            "- Do not assume keep_monitoring just because t_hour is small.\n"
+            "- Do not omit any task.\n"
+            "- The final JSON must contain exactly these keys in task_actions: "
+            "sepsis, aki, respiratory_support.\n\n"
+            "Tool call format:\n"
+            '{"tool_name":"query_kdigo_stage","arguments":{"stay_id":123,"t_hour":4}}\n\n'
+            "Final decision format:\n"
+            '{"task_actions":{"sepsis":"keep_monitoring","aki":"keep_monitoring","respiratory_support":"room_air_or_low_support"}}'
         )
     else:
         system_prompt = (
-            "You are an ICU rolling sepsis surveillance agent. "
-            "Use tools only from the allowed list. "
-            "Do not output reasoning, analysis, or <think> tags. "
-            "Return exactly one JSON object and nothing else. "
-            "If you need a tool, return "
-            '{"tool_name":"query_suspicion_of_infection","arguments":{"stay_id":123,"t_hour":4}}. '
-            "If you are ready to decide, return "
-            '{"action":"keep_monitoring"} with one of: '
-            "keep_monitoring, infection_suspect, trigger_sepsis_alert."
+            "You are an ICU rolling sepsis surveillance agent.\n"
+            "Use only the allowed tools.\n"
+            "Do not output reasoning, analysis, markdown, or <think> tags.\n"
+            "Return exactly one JSON object and nothing else.\n"
+            "Check infection first, then sofa if infection is present.\n"
+            "Evidence may already be visible at t_hour=0.\n\n"
+            "Tool call format:\n"
+            '{"tool_name":"query_suspicion_of_infection","arguments":{"stay_id":123,"t_hour":4}}\n\n'
+            "Final action format:\n"
+            '{"action":"keep_monitoring"}\n\n'
+            "Valid final actions:\n"
+            "- keep_monitoring\n"
+            "- infection_suspect\n"
+            "- trigger_sepsis_alert"
         )
     user_prompt = json.dumps(
         {
