@@ -5,17 +5,53 @@ from datetime import datetime
 from typing import Any
 
 
-ACTIONS = (
+SEPSIS_ACTIONS = (
     "keep_monitoring",
     "infection_suspect",
     "trigger_sepsis_alert",
 )
 
+AKI_ACTIONS = (
+    "keep_monitoring",
+    "suspect_aki",
+    "trigger_aki_alert",
+)
+
+RESP_SUPPORT_ACTIONS = (
+    "room_air_or_low_support",
+    "high_flow_or_noninvasive_support",
+    "invasive_vent_required",
+)
+
+ACTIONS = tuple(dict.fromkeys(SEPSIS_ACTIONS + AKI_ACTIONS + RESP_SUPPORT_ACTIONS))
+
+DEFAULT_TOOL_NAMES = [
+    "query_suspicion_of_infection",
+    "query_sofa",
+]
+
+MULTITASK_TOOL_NAMES = [
+    "query_suspicion_of_infection",
+    "query_sofa",
+    "query_kdigo_stage",
+    "query_ventilation_status",
+]
+
+TASK_LABEL_SPACES: dict[str, list[str]] = {
+    "sepsis": list(SEPSIS_ACTIONS),
+    "aki": list(AKI_ACTIONS),
+    "respiratory_support": list(RESP_SUPPORT_ACTIONS),
+}
+
 
 @dataclass(slots=True)
 class Checkpoint:
     t_hour: int
-    state_label: str
+    state_label: str | None = None
+    task_labels: dict[str, str] | None = None
+    checkpoint_time: str | None = None
+    terminal: bool | None = None
+    terminal_by_task: dict[str, bool] | None = None
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
@@ -30,17 +66,24 @@ class Trajectory:
     anchor: str
     step_hours: int
     horizon_hours: int
-    transitions: dict[str, int | None]
+    transitions: dict[str, Any]
     checkpoints: list[Checkpoint]
     icu_intime: str | None = None
     icu_outtime: str | None = None
     icu_los_hours: float | None = None
     is_sepsis: bool | None = None
+    task_name: str | None = None
+    task_names: list[str] | None = None
+    tool_names: list[str] | None = None
+    label_spaces: dict[str, list[str]] | None = None
 
     def to_dict(self) -> dict[str, Any]:
         payload = asdict(self)
         payload["checkpoints"] = [checkpoint.to_dict() for checkpoint in self.checkpoints]
         return payload
+
+    def is_multitask(self) -> bool:
+        return bool(self.task_names and len(self.task_names) > 1)
 
 
 @dataclass(slots=True)
@@ -99,6 +142,8 @@ class AgentStepInput:
     t_hour: int
     available_tools: list[str]
     instruction: str
+    task_names: list[str] | None = None
+    label_spaces: dict[str, list[str]] | None = None
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
@@ -112,15 +157,18 @@ class ToolCall:
 
 @dataclass(slots=True)
 class ActionDecision:
-    action: str
+    action: str | None = None
+    task_actions: dict[str, str] | None = None
 
 
 @dataclass(slots=True)
 class StepRecord:
     step_index: int
     t_hour: int
-    gt_action: str
-    predicted_action: str
+    gt_action: str | None = None
+    predicted_action: str | None = None
+    gt_task_actions: dict[str, str] | None = None
+    predicted_task_actions: dict[str, str] | None = None
     tool_calls: list[dict[str, Any]] = field(default_factory=list)
     tool_outputs: list[dict[str, Any]] = field(default_factory=list)
 
@@ -133,8 +181,9 @@ class TrajectoryRollout:
     trajectory_id: str
     stay_id: int
     steps: list[StepRecord]
-    first_predicted_infection_hour: int | None
-    first_predicted_alert_hour: int | None
+    first_predicted_infection_hour: int | None = None
+    first_predicted_alert_hour: int | None = None
+    first_predicted_task_hours: dict[str, dict[str, int | None]] | None = None
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)

@@ -19,57 +19,44 @@ class Agent(Protocol):
         ...
 
 
+def _is_multitask_step(step_input: dict[str, Any]) -> bool:
+    task_names = step_input.get("task_names") or []
+    return len(task_names) > 1
+
+
 def _build_messages(
     step_input: dict[str, Any],
     history: list[dict[str, Any]],
     available_tools: list[str],
 ) -> list[dict[str, str]]:
-    system_prompt = (
-"""        You are an ICU rolling sepsis surveillance agent.
-
-Task setting:
-- This is a longitudinal monitoring task for one ICU stay.
-- Monitoring happens once every 4 hours.
-- The current checkpoint is given by t_hour, where t_hour is ICU-relative time such as 0, 4, 8, 12, 16, 20, 24.
-- At each checkpoint, you may call tool then output one final action.
-- Check infection first then check sofa. Sofa threshold for sepsis is 2. If both infection and sofa, then trigger sepsis. 
-
-Available actions:
-- keep_monitoring
-- infection_suspect
-- trigger_sepsis_alert
-
-Action meanings:
-- keep_monitoring: do not escalate yet.
-- infection_suspect: suspected infection is already visible, but sepsis alert is not yet justified.
-- trigger_sepsis_alert: suspected infection is visible and the visible SOFA evidence is sufficient to justify a sepsis alert.
-
-Tool semantics:
-1. query_suspicion_of_infection(stay_id, t_hour)
-   - Returns whether suspected infection is visible by the current checkpoint.
-   - Returns the first visible suspected infection time/hour and compact supporting evidence.
-   - This is an infection event summary, not an hourly trend table.
-
-2. query_sofa(stay_id, t_hour)
-   - Returns the visible SOFA trajectory summary up to the current checkpoint.
-   - Returns the latest visible SOFA, max SOFA so far, and recent trend/components.
-   - This is support for organ dysfunction severity.
-
-   
-Output rules:
-- Return exactly one JSON object.
-- Return either a tool call OR a final action, not both.
-
-Tool call format example:
-{"tool_name":"query_suspicion_of_infection","arguments":{"stay_id":123,"t_hour":4}}
-
-
-Final action format:
-{"action":"keep_monitoring"}
-
-Do not output any extra text before or after the JSON.
-"""
-    )
+    if _is_multitask_step(step_input):
+        system_prompt = (
+            "You are an ICU rolling multi-task surveillance agent. "
+            "Tasks: sepsis, aki, respiratory_support. "
+            "Use tools only from the allowed list. "
+            "Do not output reasoning, analysis, or <think> tags. "
+            "Return exactly one JSON object and nothing else. "
+            "You may return a tool call like "
+            '{"tool_name":"query_kdigo_stage","arguments":{"stay_id":123,"t_hour":4}}. '
+            "If you are ready to decide, return "
+            '{"task_actions":{"sepsis":"keep_monitoring","aki":"keep_monitoring","respiratory_support":"room_air_or_low_support"}}. '
+            "Valid sepsis actions: keep_monitoring, infection_suspect, trigger_sepsis_alert. "
+            "Valid aki actions: keep_monitoring, suspect_aki, trigger_aki_alert. "
+            "Valid respiratory_support actions: room_air_or_low_support, "
+            "high_flow_or_noninvasive_support, invasive_vent_required."
+        )
+    else:
+        system_prompt = (
+            "You are an ICU rolling sepsis surveillance agent. "
+            "Use tools only from the allowed list. "
+            "Do not output reasoning, analysis, or <think> tags. "
+            "Return exactly one JSON object and nothing else. "
+            "If you need a tool, return "
+            '{"tool_name":"query_suspicion_of_infection","arguments":{"stay_id":123,"t_hour":4}}. '
+            "If you are ready to decide, return "
+            '{"action":"keep_monitoring"} with one of: '
+            "keep_monitoring, infection_suspect, trigger_sepsis_alert."
+        )
     user_prompt = json.dumps(
         {
             "step_input": step_input,
@@ -103,21 +90,33 @@ def _build_repair_messages(
 ) -> list[dict[str, str]]:
     messages = _build_messages(step_input, history, available_tools)
     messages.append({"role": "assistant", "content": bad_output})
-    messages.append(
-        {
-            "role": "user",
-            "content": (
-                "Your previous reply was invalid because it was not exactly one JSON object. "
-                "Respond again with JSON only and no extra text. "
-                'Use either {"tool_name":"query_suspicion_of_infection","arguments":{"stay_id":123,"t_hour":0}} '
-                'or {"action":"keep_monitoring"}.'
-            ),
-        }
-    )
+    if _is_multitask_step(step_input):
+        repair_hint = (
+            "Your previous reply was invalid because it was not exactly one JSON object. "
+            "Respond again with JSON only and no extra text. "
+            'Use either {"tool_name":"query_kdigo_stage","arguments":{"stay_id":123,"t_hour":0}} '
+            'or {"task_actions":{"sepsis":"keep_monitoring","aki":"keep_monitoring","respiratory_support":"room_air_or_low_support"}}.'
+        )
+    else:
+        repair_hint = (
+            "Your previous reply was invalid because it was not exactly one JSON object. "
+            "Respond again with JSON only and no extra text. "
+            'Use either {"tool_name":"query_suspicion_of_infection","arguments":{"stay_id":123,"t_hour":0}} '
+            'or {"action":"keep_monitoring"}.'
+        )
+    messages.append({"role": "user", "content": repair_hint})
     return messages
 
 
 def _coerce_agent_output(payload: dict[str, Any]) -> ToolCall | ActionDecision:
+    if "task_actions" in payload:
+        task_actions = payload["task_actions"]
+        if not isinstance(task_actions, dict):
+            raise ValueError(f"Invalid task_actions payload: {task_actions}")
+        for action in task_actions.values():
+            if action not in ACTIONS:
+                raise ValueError(f"Invalid task action: {action}")
+        return ActionDecision(task_actions=task_actions)
     if "action" in payload:
         action = payload["action"]
         if action not in ACTIONS:
@@ -131,8 +130,26 @@ def _coerce_agent_output(payload: dict[str, Any]) -> ToolCall | ActionDecision:
 @dataclass(slots=True)
 class HeuristicAgent:
     sofa_alert_threshold: int = 2
+    aki_alert_threshold: int = 2
 
     def next_response(
+        self,
+        step_input: dict[str, Any],
+        history: list[dict[str, Any]],
+        available_tools: list[str],
+    ) -> ToolCall | ActionDecision:
+        if _is_multitask_step(step_input):
+            return self._next_multitask_response(step_input, history, available_tools)
+        return self._next_sepsis_response(step_input, history, available_tools)
+
+    def _latest_tool_output(self, history: list[dict[str, Any]], stay_id: int, key: str) -> dict[str, Any] | None:
+        tool_outputs = [item["payload"] for item in history if item["type"] == "tool_output"]
+        return next(
+            (item for item in reversed(tool_outputs) if item.get("stay_id") == stay_id and key in item),
+            None,
+        )
+
+    def _next_sepsis_response(
         self,
         step_input: dict[str, Any],
         history: list[dict[str, Any]],
@@ -141,24 +158,9 @@ class HeuristicAgent:
         t_hour = int(step_input["t_hour"])
         stay_id = int(step_input["stay_id"])
         seen_tools = {item["tool_name"] for item in history if item["type"] == "tool_call"}
-        tool_outputs = [item["payload"] for item in history if item["type"] == "tool_output"]
 
-        infection_output = next(
-            (
-                item
-                for item in reversed(tool_outputs)
-                if item.get("stay_id") == stay_id and "has_suspected_infection" in item
-            ),
-            None,
-        )
-        sofa_output = next(
-            (
-                item
-                for item in reversed(tool_outputs)
-                if item.get("stay_id") == stay_id and "latest_sofa_24hours" in item
-            ),
-            None,
-        )
+        infection_output = self._latest_tool_output(history, stay_id, "has_suspected_infection")
+        sofa_output = self._latest_tool_output(history, stay_id, "latest_sofa_24hours")
 
         if "query_suspicion_of_infection" in available_tools and "query_suspicion_of_infection" not in seen_tools:
             return ToolCall(
@@ -173,6 +175,57 @@ class HeuristicAgent:
                 return ActionDecision(action="trigger_sepsis_alert")
             return ActionDecision(action="infection_suspect")
         return ActionDecision(action="keep_monitoring")
+
+    def _next_multitask_response(
+        self,
+        step_input: dict[str, Any],
+        history: list[dict[str, Any]],
+        available_tools: list[str],
+    ) -> ToolCall | ActionDecision:
+        t_hour = int(step_input["t_hour"])
+        stay_id = int(step_input["stay_id"])
+        seen_tools = {item["tool_name"] for item in history if item["type"] == "tool_call"}
+
+        tool_order = [
+            "query_suspicion_of_infection",
+            "query_sofa",
+            "query_kdigo_stage",
+            "query_ventilation_status",
+        ]
+        for tool_name in tool_order:
+            if tool_name in available_tools and tool_name not in seen_tools:
+                return ToolCall(tool_name=tool_name, arguments={"stay_id": stay_id, "t_hour": t_hour})
+
+        infection_output = self._latest_tool_output(history, stay_id, "has_suspected_infection") or {}
+        sofa_output = self._latest_tool_output(history, stay_id, "latest_sofa_24hours") or {}
+        kdigo_output = self._latest_tool_output(history, stay_id, "latest_aki_stage_smoothed") or {}
+        vent_output = self._latest_tool_output(history, stay_id, "current_support_level") or {}
+
+        if infection_output.get("has_suspected_infection"):
+            latest_sofa = sofa_output.get("latest_sofa_24hours")
+            if latest_sofa is not None and latest_sofa >= self.sofa_alert_threshold:
+                sepsis_action = "trigger_sepsis_alert"
+            else:
+                sepsis_action = "infection_suspect"
+        else:
+            sepsis_action = "keep_monitoring"
+
+        latest_aki = kdigo_output.get("latest_aki_stage_smoothed")
+        if latest_aki is not None and latest_aki >= self.aki_alert_threshold:
+            aki_action = "trigger_aki_alert"
+        elif latest_aki is not None and latest_aki >= 1:
+            aki_action = "suspect_aki"
+        else:
+            aki_action = "keep_monitoring"
+
+        resp_action = vent_output.get("highest_support_level_so_far", "room_air_or_low_support")
+        return ActionDecision(
+            task_actions={
+                "sepsis": sepsis_action,
+                "aki": aki_action,
+                "respiratory_support": resp_action,
+            }
+        )
 
 
 @dataclass(slots=True)
@@ -189,9 +242,7 @@ class LocalQwenChat:
         try:
             import torch
         except ImportError as exc:
-            raise RuntimeError(
-                "Running the local Qwen agent requires 'torch' to be installed."
-            ) from exc
+            raise RuntimeError("Running the local Qwen agent requires 'torch' to be installed.") from exc
 
         self.model_ref = os.environ.get("QWEN_MODEL", self.model_ref)
         offline = os.environ.get("QWEN_OFFLINE", "0") == "1"
@@ -216,9 +267,7 @@ class LocalQwenChat:
         try:
             from transformers import AutoModelForCausalLM, AutoTokenizer
         except ImportError as exc:
-            raise RuntimeError(
-                "Running the local Qwen agent requires 'transformers' to be installed."
-            ) from exc
+            raise RuntimeError("Running the local Qwen agent requires 'transformers' to be installed.") from exc
 
         self.tokenizer = AutoTokenizer.from_pretrained(
             self.model_ref,
@@ -247,11 +296,7 @@ class LocalQwenChat:
 
     def generate(self, messages: list[dict[str, str]]) -> str:
         if hasattr(self.tokenizer, "apply_chat_template"):
-            prompt = self.tokenizer.apply_chat_template(
-                messages,
-                tokenize=False,
-                add_generation_prompt=True,
-            )
+            prompt = self.tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
             inputs = self.tokenizer(prompt, return_tensors="pt")
         else:
             prompt = ""

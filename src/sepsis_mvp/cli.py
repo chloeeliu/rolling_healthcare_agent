@@ -10,7 +10,6 @@ from .dataset import (
     build_dataset,
     load_concept_tables,
     load_dataset_auto,
-    load_rolling_csv_dataset,
     save_trajectories,
 )
 from .environment import BenchmarkEnvironment, evaluate_rollouts, rollout_to_dicts
@@ -33,18 +32,8 @@ class JsonlSink:
 
 def build_dataset_command(args: argparse.Namespace) -> int:
     if args.rolling_csv:
-        result = load_rolling_csv_dataset(args.rolling_csv, strict_mvp=not args.include_out_of_scope)
-        trajectories = result.trajectories
-        print(
-            json.dumps(
-                {
-                    "included_trajectories": result.included_trajectories,
-                    "skipped_trajectories": result.skipped_trajectories,
-                    "skipped_reasons": result.skipped_reasons,
-                },
-                indent=2,
-            )
-        )
+        trajectories = load_dataset_auto(args.rolling_csv, strict_mvp=not args.include_out_of_scope)
+        print(json.dumps({"included_trajectories": len(trajectories)}, indent=2))
     else:
         if not args.concepts:
             raise SystemExit("build-dataset requires either --rolling-csv or --concepts")
@@ -102,13 +91,21 @@ def run_command(args: argparse.Namespace) -> int:
         rollouts.append(rollout)
         trajectories_sink.write(rollout.to_dict())
         elapsed = time.time() - start_time
-        print(
-            f"[{index}/{total}] stay_id={trajectory.stay_id} done "
-            f"first_infection={rollout.first_predicted_infection_hour} "
-            f"first_alert={rollout.first_predicted_alert_hour} "
-            f"elapsed_sec={elapsed:.1f}",
-            flush=True,
-        )
+        if trajectory.is_multitask():
+            print(
+                f"[{index}/{total}] stay_id={trajectory.stay_id} done "
+                f"task_firsts={rollout.first_predicted_task_hours} "
+                f"elapsed_sec={elapsed:.1f}",
+                flush=True,
+            )
+        else:
+            print(
+                f"[{index}/{total}] stay_id={trajectory.stay_id} done "
+                f"first_infection={rollout.first_predicted_infection_hour} "
+                f"first_alert={rollout.first_predicted_alert_hour} "
+                f"elapsed_sec={elapsed:.1f}",
+                flush=True,
+            )
 
     evaluation = evaluate_rollouts(trajectories, rollouts)
 

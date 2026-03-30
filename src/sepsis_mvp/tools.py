@@ -4,9 +4,23 @@ from collections import defaultdict
 from datetime import timedelta
 from typing import Any
 
-import duckdb
-
 from .schemas import ICUStay, SofaRow, SuspicionOfInfectionRow
+
+
+RESP_SUPPORT_RANK = {
+    "None": 0,
+    "SupplementalOxygen": 0,
+    "HFNC": 1,
+    "NonInvasiveVent": 1,
+    "InvasiveVent": 2,
+    "Tracheostomy": 2,
+}
+
+RESP_SUPPORT_LABELS = {
+    0: "room_air_or_low_support",
+    1: "high_flow_or_noninvasive_support",
+    2: "invasive_vent_required",
+}
 
 
 class ConceptToolRuntime:
@@ -100,6 +114,10 @@ class ConceptToolRuntime:
 
 class DuckDBConceptToolRuntime:
     def __init__(self, db_path: str):
+        try:
+            import duckdb
+        except ImportError as exc:
+            raise RuntimeError("DuckDB runtime requires the 'duckdb' package to be installed.") from exc
         self.db_path = db_path
         self.connection = duckdb.connect(db_path, read_only=True)
         self._validate_required_tables()
@@ -109,6 +127,8 @@ class DuckDBConceptToolRuntime:
             "mimiciv_icu.icustays",
             "mimiciv_derived.suspicion_of_infection",
             "mimiciv_derived.sofa",
+            "mimiciv_derived.kdigo_stages",
+            "mimiciv_derived.ventilation",
         }
         rows = self.connection.execute(
             """
@@ -120,11 +140,10 @@ class DuckDBConceptToolRuntime:
         missing = sorted(required - available)
         if missing:
             raise RuntimeError(
-                "Missing required DuckDB relations for the MVP tool layer: "
-                + ", ".join(missing)
+                "Missing required DuckDB relations for the MVP tool layer: " + ", ".join(missing)
             )
 
-    def _visible_until(self, stay_id: int, t_hour: int):
+    def _intime(self, stay_id: int):
         row = self.connection.execute(
             """
             SELECT intime
@@ -135,7 +154,10 @@ class DuckDBConceptToolRuntime:
         ).fetchone()
         if row is None:
             raise ValueError(f"stay_id {stay_id} not found in mimiciv_icu.icustays")
-        return row[0] + timedelta(hours=t_hour)
+        return row[0]
+
+    def _visible_until(self, stay_id: int, t_hour: int):
+        return self._intime(stay_id) + timedelta(hours=t_hour)
 
     def query_suspicion_of_infection(self, stay_id: int, t_hour: int) -> dict[str, Any]:
         visible_until = self._visible_until(stay_id, t_hour)
@@ -168,7 +190,7 @@ class DuckDBConceptToolRuntime:
             }
 
         first = rows[0]
-        intime = self._visible_until(stay_id, 0)
+        intime = self._intime(stay_id)
         first_hour = round((first[2] - intime).total_seconds() / 3600.0, 2)
         evidence = [
             {
@@ -244,9 +266,117 @@ class DuckDBConceptToolRuntime:
             },
         }
 
+    def query_kdigo_stage(self, stay_id: int, t_hour: int) -> dict[str, Any]:
+        visible_until = self._visible_until(stay_id, t_hour)
+        latest = self.connection.execute(
+            """
+            SELECT
+                charttime,
+                aki_stage,
+                aki_stage_smoothed,
+                aki_stage_creat,
+                aki_stage_uo,
+                aki_stage_crrt
+            FROM mimiciv_derived.kdigo_stages
+            WHERE stay_id = ?
+              AND charttime <= ?
+            ORDER BY charttime DESC
+            LIMIT 1
+            """,
+            [stay_id, visible_until],
+        ).fetchone()
+        if latest is None:
+            return {
+                "stay_id": stay_id,
+                "t_hour": t_hour,
+                "latest_charttime": None,
+                "latest_aki_stage": None,
+                "latest_aki_stage_smoothed": None,
+                "max_aki_stage_so_far": None,
+                "max_aki_stage_smoothed_so_far": None,
+                "has_stage1_or_higher": False,
+                "has_stage2_or_higher": False,
+                "has_stage3_or_crrt": False,
+            }
+
+        max_stage, max_stage_smoothed = self.connection.execute(
+            """
+            SELECT
+                MAX(aki_stage),
+                MAX(aki_stage_smoothed)
+            FROM mimiciv_derived.kdigo_stages
+            WHERE stay_id = ?
+              AND charttime <= ?
+            """,
+            [stay_id, visible_until],
+        ).fetchone()
+        latest_smoothed = latest[2] or 0
+        return {
+            "stay_id": stay_id,
+            "t_hour": t_hour,
+            "latest_charttime": latest[0].isoformat() if latest[0] else None,
+            "latest_aki_stage": latest[1],
+            "latest_aki_stage_smoothed": latest[2],
+            "latest_components": {
+                "aki_stage_creat": latest[3],
+                "aki_stage_uo": latest[4],
+                "aki_stage_crrt": latest[5],
+            },
+            "max_aki_stage_so_far": max_stage,
+            "max_aki_stage_smoothed_so_far": max_stage_smoothed,
+            "has_stage1_or_higher": bool(latest_smoothed >= 1),
+            "has_stage2_or_higher": bool(latest_smoothed >= 2),
+            "has_stage3_or_crrt": bool((max_stage_smoothed or 0) >= 3 or (latest[5] or 0) >= 3),
+        }
+
+    def query_ventilation_status(self, stay_id: int, t_hour: int) -> dict[str, Any]:
+        visible_until = self._visible_until(stay_id, t_hour)
+        rows = self.connection.execute(
+            """
+            SELECT starttime, endtime, ventilation_status
+            FROM mimiciv_derived.ventilation
+            WHERE stay_id = ?
+              AND starttime <= ?
+            ORDER BY starttime
+            """,
+            [stay_id, visible_until],
+        ).fetchall()
+        current_rank = 0
+        current_status = "SupplementalOxygen"
+        highest_rank = 0
+        first_medium_time = None
+        first_invasive_time = None
+
+        for starttime, endtime, status in rows:
+            rank = RESP_SUPPORT_RANK.get(status, 0)
+            highest_rank = max(highest_rank, rank)
+            if rank >= 1 and first_medium_time is None:
+                first_medium_time = starttime
+            if rank >= 2 and first_invasive_time is None:
+                first_invasive_time = starttime
+            if starttime <= visible_until and (endtime is None or endtime >= visible_until):
+                current_rank = rank
+                current_status = status
+
+        return {
+            "stay_id": stay_id,
+            "t_hour": t_hour,
+            "current_status_raw": current_status,
+            "current_support_level": RESP_SUPPORT_LABELS[current_rank],
+            "highest_support_level_so_far": RESP_SUPPORT_LABELS[highest_rank],
+            "first_medium_support_time": first_medium_time.isoformat() if first_medium_time else None,
+            "first_invasive_support_time": first_invasive_time.isoformat() if first_invasive_time else None,
+            "has_medium_support": bool(first_medium_time is not None),
+            "has_invasive_support": bool(first_invasive_time is not None),
+        }
+
     def execute(self, tool_name: str, arguments: dict[str, Any]) -> dict[str, Any]:
         if tool_name == "query_suspicion_of_infection":
             return self.query_suspicion_of_infection(**arguments)
         if tool_name == "query_sofa":
             return self.query_sofa(**arguments)
+        if tool_name == "query_kdigo_stage":
+            return self.query_kdigo_stage(**arguments)
+        if tool_name == "query_ventilation_status":
+            return self.query_ventilation_status(**arguments)
         raise ValueError(f"Unknown tool: {tool_name}")
