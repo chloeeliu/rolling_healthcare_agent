@@ -25,6 +25,23 @@ RESP_SUPPORT_ACTIONS = (
 
 ACTIONS = tuple(dict.fromkeys(SEPSIS_ACTIONS + AKI_ACTIONS + RESP_SUPPORT_ACTIONS))
 
+TASK_NAMES = (
+    "sepsis",
+    "aki",
+    "respiratory_support",
+)
+
+TASK_MODES = (
+    "auto",
+    "single",
+    "multitask",
+)
+
+TOOL_BACKENDS = (
+    "official",
+    "autoformalized",
+)
+
 DEFAULT_TOOL_NAMES = [
     "query_suspicion_of_infection",
     "query_sofa",
@@ -41,6 +58,33 @@ TASK_LABEL_SPACES: dict[str, list[str]] = {
     "sepsis": list(SEPSIS_ACTIONS),
     "aki": list(AKI_ACTIONS),
     "respiratory_support": list(RESP_SUPPORT_ACTIONS),
+}
+
+TASK_TOOL_NAMES: dict[str, list[str]] = {
+    "sepsis": ["query_suspicion_of_infection", "query_sofa"],
+    "aki": ["query_kdigo_stage"],
+    "respiratory_support": ["query_ventilation_status"],
+}
+
+TASK_TRANSITION_FIELDS: dict[str, dict[str, str]] = {
+    "sepsis": {
+        "infection_suspect": "infection_start_hour",
+        "trigger_sepsis_alert": "sepsis_start_hour",
+    },
+    "aki": {
+        "suspect_aki": "aki_stage1_start_hour",
+        "trigger_aki_alert": "aki_stage23_start_hour",
+    },
+    "respiratory_support": {
+        "high_flow_or_noninvasive_support": "medium_support_start_hour",
+        "invasive_vent_required": "invasive_support_start_hour",
+    },
+}
+
+TASK_BASELINE_ACTION: dict[str, str] = {
+    "sepsis": SEPSIS_ACTIONS[0],
+    "aki": AKI_ACTIONS[0],
+    "respiratory_support": RESP_SUPPORT_ACTIONS[0],
 }
 
 
@@ -84,6 +128,26 @@ class Trajectory:
 
     def is_multitask(self) -> bool:
         return bool(self.task_names and len(self.task_names) > 1)
+
+    def is_single_task(self) -> bool:
+        return not self.is_multitask()
+
+    def resolved_task_names(self) -> list[str]:
+        if self.task_names:
+            return self.task_names
+        if self.task_name:
+            return [self.task_name]
+        return ["sepsis"]
+
+    def primary_task_name(self) -> str:
+        return self.resolved_task_names()[0]
+
+    def resolved_tool_names(self) -> list[str]:
+        if self.tool_names:
+            return self.tool_names
+        if self.is_multitask():
+            return list(MULTITASK_TOOL_NAMES)
+        return list(TASK_TOOL_NAMES.get(self.primary_task_name(), DEFAULT_TOOL_NAMES))
 
 
 @dataclass(slots=True)
@@ -144,6 +208,8 @@ class AgentStepInput:
     instruction: str
     task_names: list[str] | None = None
     label_spaces: dict[str, list[str]] | None = None
+    task_mode: str | None = None
+    tool_backend: str | None = None
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)

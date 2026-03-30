@@ -14,8 +14,11 @@ from .schemas import (
     AKI_ACTIONS,
     DEFAULT_TOOL_NAMES,
     MULTITASK_TOOL_NAMES,
+    RESP_SUPPORT_ACTIONS,
     SEPSIS_ACTIONS,
+    TASK_BASELINE_ACTION,
     TASK_LABEL_SPACES,
+    TASK_TOOL_NAMES,
     Checkpoint,
     ICUStay,
     Sepsis3Row,
@@ -140,6 +143,10 @@ def load_dataset_auto(
             first_row = next(reader)
         if "sepsis_label" in first_row:
             return load_multitask_csv_dataset(dataset_path).trajectories
+        if "aki_stage1_start_hour" in first_row:
+            return load_single_task_csv_dataset(dataset_path, task_name="aki").trajectories
+        if "medium_support_start_hour" in first_row or "invasive_support_start_hour" in first_row:
+            return load_single_task_csv_dataset(dataset_path, task_name="respiratory_support").trajectories
         return load_rolling_csv_dataset(dataset_path, strict_mvp=strict_mvp).trajectories
     if suffix == ".json":
         return load_trajectories(dataset_path)
@@ -328,6 +335,82 @@ def load_multitask_csv_dataset(path: str | Path) -> CSVLoadResult:
                 task_names=["sepsis", "aki", "respiratory_support"],
                 tool_names=list(MULTITASK_TOOL_NAMES),
                 label_spaces={task: labels[:] for task, labels in TASK_LABEL_SPACES.items()},
+            )
+        )
+
+    return CSVLoadResult(
+        trajectories=trajectories,
+        included_trajectories=len(trajectories),
+        skipped_trajectories=0,
+        skipped_reasons={},
+    )
+
+
+def load_single_task_csv_dataset(path: str | Path, *, task_name: str) -> CSVLoadResult:
+    grouped_rows: dict[str, list[dict[str, str]]] = defaultdict(list)
+    with Path(path).open() as handle:
+        reader = csv.DictReader(handle)
+        for row in reader:
+            grouped_rows[row["trajectory_id"]].append(row)
+
+    if task_name == "aki":
+        transition_keys = {
+            "aki_stage1_start_hour": "aki_stage1_start_hour",
+            "aki_stage23_start_hour": "aki_stage23_start_hour",
+            "aki_stage1_start_time": "aki_stage1_start_time",
+            "aki_stage23_start_time": "aki_stage23_start_time",
+        }
+    elif task_name == "respiratory_support":
+        transition_keys = {
+            "medium_support_start_hour": "medium_support_start_hour",
+            "invasive_support_start_hour": "invasive_support_start_hour",
+            "medium_support_start_time": "medium_support_start_time",
+            "invasive_start_time": "invasive_support_start_time",
+            "invasive_support_start_time": "invasive_support_start_time",
+        }
+    else:
+        raise ValueError(f"Unsupported single-task CSV type: {task_name}")
+
+    trajectories: list[Trajectory] = []
+    for trajectory_id, rows in sorted(grouped_rows.items()):
+        rows.sort(key=lambda row: int(row["t_hour"]))
+        first = rows[0]
+        checkpoints = [
+            Checkpoint(
+                t_hour=int(row["t_hour"]),
+                state_label=row["state_label"],
+                checkpoint_time=row.get("checkpoint_time") or None,
+                terminal=_parse_bool(row.get("terminal")),
+            )
+            for row in rows
+        ]
+        step_hours = checkpoints[1].t_hour - checkpoints[0].t_hour if len(checkpoints) > 1 else 4
+        horizon_hours = checkpoints[-1].t_hour
+        transitions = {}
+        for source_key, target_key in transition_keys.items():
+            if source_key.endswith("_hour"):
+                transitions[target_key] = _parse_optional_int(first.get(source_key))
+            else:
+                transitions[target_key] = first.get(source_key) or None
+
+        trajectories.append(
+            Trajectory(
+                trajectory_id=trajectory_id,
+                stay_id=int(first["stay_id"]),
+                subject_id=int(first["subject_id"]),
+                hadm_id=int(first["hadm_id"]),
+                anchor="icu_intime",
+                step_hours=step_hours,
+                horizon_hours=horizon_hours,
+                transitions=transitions,
+                checkpoints=checkpoints,
+                icu_intime=first.get("icu_intime") or None,
+                icu_outtime=first.get("icu_outtime") or None,
+                icu_los_hours=_parse_optional_float(first.get("icu_los_hours")),
+                task_name=task_name,
+                task_names=[task_name],
+                tool_names=list(TASK_TOOL_NAMES[task_name]),
+                label_spaces={task_name: list(TASK_LABEL_SPACES[task_name])},
             )
         )
 

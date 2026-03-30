@@ -13,6 +13,7 @@ from sepsis_mvp.dataset import (
     load_concept_tables,
     load_multitask_csv_dataset,
     load_rolling_csv_dataset,
+    load_single_task_csv_dataset,
     save_trajectories,
 )
 from sepsis_mvp.environment import BenchmarkEnvironment, evaluate_rollouts
@@ -304,6 +305,34 @@ mimiciv_stay_1,10,20,30,2150-01-01T00:00:00,2150-01-02T00:00:00,24,1,1,1,2150-01
                 },
             )
 
+    def test_single_task_csv_loader_parses_aki_dataset(self):
+        csv_text = """trajectory_id,subject_id,hadm_id,stay_id,icu_intime,icu_outtime,icu_los_hours,aki_bucket,aki_stage1_start_time,aki_stage23_start_time,aki_stage1_start_hour,aki_stage23_start_hour,t_hour,checkpoint_time,state_label,terminal
+mimiciv_stay_1,10,20,30,2150-01-01T00:00:00,2150-01-02T00:00:00,24,stage23,2150-01-01T04:00:00,2150-01-01T08:00:00,4,8,0,2150-01-01T00:00:00,keep_monitoring,false
+mimiciv_stay_1,10,20,30,2150-01-01T00:00:00,2150-01-02T00:00:00,24,stage23,2150-01-01T04:00:00,2150-01-01T08:00:00,4,8,4,2150-01-01T04:00:00,suspect_aki,false
+"""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            path = Path(tmpdir) / "aki.csv"
+            path.write_text(csv_text)
+            result = load_single_task_csv_dataset(path, task_name="aki")
+            trajectory = result.trajectories[0]
+            self.assertEqual(trajectory.task_names, ["aki"])
+            self.assertEqual(trajectory.tool_names, ["query_kdigo_stage"])
+            self.assertEqual(trajectory.transitions["aki_stage23_start_hour"], 8)
+
+    def test_single_task_csv_loader_parses_respiratory_dataset(self):
+        csv_text = """trajectory_id,subject_id,hadm_id,stay_id,icu_intime,icu_outtime,icu_los_hours,resp_bucket,medium_support_start_time,invasive_start_time,medium_support_start_hour,invasive_support_start_hour,t_hour,checkpoint_time,state_label,terminal
+mimiciv_stay_1,10,20,30,2150-01-01T00:00:00,2150-01-02T00:00:00,24,high,2150-01-01T04:00:00,2150-01-01T08:00:00,4,8,0,2150-01-01T00:00:00,room_air_or_low_support,false
+mimiciv_stay_1,10,20,30,2150-01-01T00:00:00,2150-01-02T00:00:00,24,high,2150-01-01T04:00:00,2150-01-01T08:00:00,4,8,4,2150-01-01T04:00:00,high_flow_or_noninvasive_support,false
+"""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            path = Path(tmpdir) / "resp.csv"
+            path.write_text(csv_text)
+            result = load_single_task_csv_dataset(path, task_name="respiratory_support")
+            trajectory = result.trajectories[0]
+            self.assertEqual(trajectory.task_names, ["respiratory_support"])
+            self.assertEqual(trajectory.tool_names, ["query_ventilation_status"])
+            self.assertEqual(trajectory.transitions["invasive_support_start_hour"], 8)
+
     def test_multitask_heuristic_run(self):
         class StubRuntime:
             def execute(self, tool_name, arguments):
@@ -389,6 +418,55 @@ mimiciv_stay_1,10,20,30,2150-01-01T00:00:00,2150-01-02T00:00:00,24,1,1,1,2150-01
         metrics = evaluate_rollouts([trajectory], rollouts)
         self.assertIn("joint_step_accuracy", metrics)
         self.assertEqual(metrics["joint_step_accuracy"], 1.0)
+
+    def test_single_task_aki_heuristic_run(self):
+        class StubRuntime:
+            def execute(self, tool_name, arguments):
+                t = arguments["t_hour"]
+                if tool_name == "query_kdigo_stage":
+                    return {
+                        "stay_id": 30,
+                        "t_hour": t,
+                        "latest_aki_stage_smoothed": 2 if t >= 8 else (1 if t >= 4 else 0),
+                    }
+                raise ValueError(tool_name)
+
+        trajectory = Trajectory(
+            trajectory_id="mimiciv_stay_1",
+            stay_id=30,
+            subject_id=10,
+            hadm_id=20,
+            anchor="icu_intime",
+            step_hours=4,
+            horizon_hours=8,
+            transitions={"aki_stage1_start_hour": 4, "aki_stage23_start_hour": 8},
+            checkpoints=[
+                Checkpoint(t_hour=0, state_label="keep_monitoring"),
+                Checkpoint(t_hour=4, state_label="suspect_aki"),
+                Checkpoint(t_hour=8, state_label="trigger_aki_alert"),
+            ],
+            task_name="aki",
+            task_names=["aki"],
+            tool_names=["query_kdigo_stage"],
+            label_spaces={"aki": ["keep_monitoring", "suspect_aki", "trigger_aki_alert"]},
+        )
+        environment = BenchmarkEnvironment([trajectory], StubRuntime(), task_mode="single")
+        rollout = environment.run_all(HeuristicAgent())[0]
+        self.assertEqual(
+            [step.predicted_action for step in rollout.steps],
+            ["keep_monitoring", "suspect_aki", "trigger_aki_alert"],
+        )
+        metrics = evaluate_rollouts([trajectory], [rollout])
+        self.assertEqual(metrics["task_name"], "aki")
+        self.assertIn("suspect_aki", metrics["transition_timing"])
+
+    def test_environment_rejects_task_mode_mismatch(self):
+        concepts = load_concept_tables(SAMPLE)
+        trajectory = build_dataset(concepts)[0]
+        runtime = ConceptToolRuntime(concepts)
+        environment = BenchmarkEnvironment([trajectory], runtime, task_mode="multitask")
+        with self.assertRaises(ValueError):
+            environment.run_all(HeuristicAgent())
 
 
 if __name__ == "__main__":

@@ -6,7 +6,7 @@ import re
 from dataclasses import dataclass, field
 from typing import Any, Callable, Protocol
 
-from .schemas import ACTIONS, ActionDecision, ToolCall
+from .schemas import ACTIONS, TASK_BASELINE_ACTION, TASK_LABEL_SPACES, TASK_TOOL_NAMES, ActionDecision, ToolCall
 
 
 class Agent(Protocol):
@@ -24,18 +24,48 @@ def _is_multitask_step(step_input: dict[str, Any]) -> bool:
     return len(task_names) > 1
 
 
-MULTITASK_TOOL_ORDER = [
-    "query_suspicion_of_infection",
-    "query_sofa",
-    "query_kdigo_stage",
-    "query_ventilation_status",
-]
+TASK_DESCRIPTIONS = {
+    "sepsis": "keep_monitoring | infection_suspect | trigger_sepsis_alert",
+    "aki": "keep_monitoring | suspect_aki | trigger_aki_alert",
+    "respiratory_support": (
+        "room_air_or_low_support | high_flow_or_noninvasive_support | invasive_vent_required"
+    ),
+}
+
+TOOL_DESCRIPTIONS = {
+    "query_suspicion_of_infection": "infection evidence visible by this checkpoint",
+    "query_sofa": "current visible SOFA summary up to this checkpoint",
+    "query_kdigo_stage": "current visible AKI stage summary up to this checkpoint",
+    "query_ventilation_status": "current and highest visible respiratory support up to this checkpoint",
+}
+
+
+def _resolved_task_names(step_input: dict[str, Any]) -> list[str]:
+    task_names = step_input.get("task_names") or []
+    return task_names or ["sepsis"]
+
+
+def _required_tool_order(step_input: dict[str, Any], available_tools: list[str]) -> list[str]:
+    ordered: list[str] = []
+    for task_name in _resolved_task_names(step_input):
+        for tool_name in TASK_TOOL_NAMES.get(task_name, []):
+            if tool_name in available_tools and tool_name not in ordered:
+                ordered.append(tool_name)
+    return ordered
 
 
 def _next_missing_tool(history: list[dict[str, Any]], available_tools: list[str]) -> str | None:
+    return _next_missing_tool_for_step({}, history, available_tools)
+
+
+def _next_missing_tool_for_step(
+    step_input: dict[str, Any],
+    history: list[dict[str, Any]],
+    available_tools: list[str],
+) -> str | None:
     seen_tools = [item["tool_name"] for item in history if item["type"] == "tool_call"]
     seen_set = set(seen_tools)
-    for tool_name in MULTITASK_TOOL_ORDER:
+    for tool_name in _required_tool_order(step_input, available_tools):
         if tool_name in available_tools and tool_name not in seen_set:
             return tool_name
     return None
@@ -72,58 +102,56 @@ def _build_messages(
     history: list[dict[str, Any]],
     available_tools: list[str],
 ) -> list[dict[str, str]]:
+    task_names = _resolved_task_names(step_input)
+    next_tool = _next_missing_tool_for_step(step_input, history, available_tools)
+    required_tool_order = _required_tool_order(step_input, available_tools)
     if _is_multitask_step(step_input):
-        next_tool = _next_missing_tool(history, available_tools)
         seen_tools = {item["tool_name"] for item in history if item["type"] == "tool_call"}
-        remaining_tools = [
-            tool_name for tool_name in MULTITASK_TOOL_ORDER if tool_name in available_tools and tool_name not in seen_tools
-        ]
+        remaining_tools = [tool_name for tool_name in required_tool_order if tool_name not in seen_tools]
         executed = _summarize_history(history)
         stay_id = int(step_input["stay_id"])
         t_hour = int(step_input["t_hour"])
         system_prompt = (
             "You are an ICU rolling multi-task surveillance agent.\n"
-            "Monitored tasks: sepsis, aki, respiratory_support.\n"
+            f"Monitored tasks: {', '.join(task_names)}.\n"
+            f"Tool backend: {step_input.get('tool_backend', 'official')}.\n"
             "At each checkpoint, you may either call exactly one tool or return final task decisions.\n"
             "Use only the allowed tools and use them in the required order.\n"
             "Do not output reasoning, analysis, markdown, or <think> tags.\n"
             "Return exactly one JSON object and nothing else.\n\n"
             "Task semantics:\n"
-            "- sepsis: keep_monitoring | infection_suspect | trigger_sepsis_alert\n"
-            "- aki: keep_monitoring | suspect_aki | trigger_aki_alert\n"
-            "- respiratory_support: room_air_or_low_support | "
-            "high_flow_or_noninvasive_support | invasive_vent_required\n\n"
-            "Tool semantics:\n"
-            "- query_suspicion_of_infection: infection evidence visible by this checkpoint\n"
-            "- query_sofa: current visible SOFA summary up to this checkpoint\n"
-            "- query_kdigo_stage: current visible AKI stage summary up to this checkpoint\n"
-            "- query_ventilation_status: current and highest visible respiratory support up to this checkpoint\n\n"
-            "Recommended decision pattern:\n"
-            "1. Check infection and sofa for sepsis.\n"
-            "2. Check kdigo for AKI.\n"
-            "3. Check ventilation for respiratory support.\n"
-            "4. Return one decision for every task in a fixed key order.\n\n"
+        )
+        for task_name in task_names:
+            system_prompt += f"- {task_name}: {TASK_DESCRIPTIONS[task_name]}\n"
+        system_prompt += "\nTool semantics:\n"
+        for tool_name in required_tool_order:
+            system_prompt += f"- {tool_name}: {TOOL_DESCRIPTIONS[tool_name]}\n"
+        system_prompt += (
+            "\nRecommended decision pattern:\n"
+            "1. Collect all required tool outputs for the current checkpoint.\n"
+            "2. Use the visible evidence to assign one decision per task.\n"
+            "3. Return one decision for every task in a fixed key order.\n\n"
             "Important:\n"
             "- Evidence may already be visible at t_hour=0 because some events can happen before ICU admission.\n"
             "- Do not assume keep_monitoring just because t_hour is small.\n"
             "- Do not omit any task.\n"
             "- The final JSON must contain exactly these keys in task_actions: "
             "sepsis, aki, respiratory_support.\n"
-            "- Before returning task_actions, collect all four tool outputs for the current checkpoint.\n"
+            f"- Before returning task_actions, collect all required tool outputs for this checkpoint: {required_tool_order}.\n"
             "- If any required tool is still missing, your next response must be a tool call for the first missing tool.\n"
             "- Never repeat a completed tool call.\n"
-            "- Never guess a final decision before all four tool outputs are visible.\n\n"
+            "- Never guess a final decision before all required tool outputs are visible.\n\n"
             "Tool call format:\n"
             f'{{"tool_name":"query_kdigo_stage","arguments":{{"stay_id":{stay_id},"t_hour":{t_hour}}}}}\n\n'
             "Final decision format:\n"
             '{"task_actions":{"sepsis":"keep_monitoring","aki":"keep_monitoring","respiratory_support":"room_air_or_low_support"}}'
         )
         if next_tool is not None:
-            system_prompt += (
-                f"\n\nCurrent requirement: the next response must be a tool call for `{next_tool}`."
-            )
+            system_prompt += f"\n\nCurrent requirement: the next response must be a tool call for `{next_tool}`."
         else:
-            system_prompt += "\n\nCurrent requirement: all tool outputs are available, so the next response must be final task_actions."
+            system_prompt += (
+                "\n\nCurrent requirement: all required tool outputs are available, so the next response must be final task_actions."
+            )
         user_payload = {
             "step_input": {
                 "trajectory_id": step_input["trajectory_id"],
@@ -131,6 +159,8 @@ def _build_messages(
                 "step_index": step_input["step_index"],
                 "t_hour": t_hour,
             },
+            "task_mode": step_input.get("task_mode"),
+            "tool_backend": step_input.get("tool_backend"),
             "available_tools": available_tools,
             "required_tool_order": remaining_tools,
             "already_called_tools": executed["tool_calls"],
@@ -140,24 +170,46 @@ def _build_messages(
     else:
         stay_id = int(step_input["stay_id"])
         t_hour = int(step_input["t_hour"])
+        task_name = task_names[0]
+        label_space = step_input.get("label_spaces", {}).get(task_name, TASK_LABEL_SPACES[task_name])
+        seen_tools = {item["tool_name"] for item in history if item["type"] == "tool_call"}
+        remaining_tools = [tool_name for tool_name in required_tool_order if tool_name not in seen_tools]
         system_prompt = (
-            "You are an ICU rolling sepsis surveillance agent.\n"
-            "Use only the allowed tools.\n"
+            f"You are an ICU rolling surveillance agent for task: {task_name}.\n"
+            f"Tool backend: {step_input.get('tool_backend', 'official')}.\n"
+            "Use only the allowed tools and use them in the required order.\n"
             "Do not output reasoning, analysis, markdown, or <think> tags.\n"
             "Return exactly one JSON object and nothing else.\n"
-            "Check infection first, then sofa if infection is present.\n"
             "Evidence may already be visible at t_hour=0.\n\n"
-            "Tool call format:\n"
-            f'{{"tool_name":"query_suspicion_of_infection","arguments":{{"stay_id":{stay_id},"t_hour":{t_hour}}}}}\n\n'
+            f"Task semantics: {TASK_DESCRIPTIONS[task_name]}\n\n"
+            "Tool semantics:\n"
+        )
+        for tool_name in required_tool_order:
+            system_prompt += f"- {tool_name}: {TOOL_DESCRIPTIONS[tool_name]}\n"
+        system_prompt += (
+            "\nTool call format:\n"
+            f'{{"tool_name":"{required_tool_order[0]}","arguments":{{"stay_id":{stay_id},"t_hour":{t_hour}}}}}\n\n'
             "Final action format:\n"
             '{"action":"keep_monitoring"}\n\n'
             "Valid final actions:\n"
-            "- keep_monitoring\n"
-            "- infection_suspect\n"
-            "- trigger_sepsis_alert"
         )
+        for action in label_space:
+            system_prompt += f"- {action}\n"
+        if next_tool is not None:
+            system_prompt += f"\nCurrent requirement: the next response must be a tool call for `{next_tool}`."
+        else:
+            system_prompt += "\nCurrent requirement: all required tools are complete, so the next response must be a final action."
         user_payload = {
-            "step_input": step_input,
+            "step_input": {
+                "trajectory_id": step_input["trajectory_id"],
+                "stay_id": stay_id,
+                "step_index": step_input["step_index"],
+                "t_hour": t_hour,
+                "task_name": task_name,
+            },
+            "task_mode": step_input.get("task_mode"),
+            "tool_backend": step_input.get("tool_backend"),
+            "required_tool_order": remaining_tools,
             "history": history,
             "available_tools": available_tools,
         }
@@ -189,8 +241,8 @@ def _build_repair_messages(
     messages.append({"role": "assistant", "content": bad_output})
     stay_id = int(step_input["stay_id"])
     t_hour = int(step_input["t_hour"])
+    next_tool = _next_missing_tool_for_step(step_input, history, available_tools)
     if _is_multitask_step(step_input):
-        next_tool = _next_missing_tool(history, available_tools)
         if next_tool is not None:
             repair_hint = (
                 "Your previous reply was invalid. Respond again with JSON only and no extra text. "
@@ -202,12 +254,17 @@ def _build_repair_messages(
                 'Return final task actions now as {"task_actions":{"sepsis":"keep_monitoring","aki":"keep_monitoring","respiratory_support":"room_air_or_low_support"}}.'
             )
     else:
-        repair_hint = (
-            "Your previous reply was invalid because it was not exactly one JSON object. "
-            "Respond again with JSON only and no extra text. "
-            f'Use either {{"tool_name":"query_suspicion_of_infection","arguments":{{"stay_id":{stay_id},"t_hour":{t_hour}}}}} '
-            'or {"action":"keep_monitoring"}.'
-        )
+        if next_tool is not None:
+            repair_hint = (
+                "Your previous reply was invalid because it was not exactly one JSON object. "
+                "Respond again with JSON only and no extra text. "
+                f'Call the required next tool now: {{"tool_name":"{next_tool}","arguments":{{"stay_id":{stay_id},"t_hour":{t_hour}}}}}.'
+            )
+        else:
+            repair_hint = (
+                "Your previous reply was invalid because it was not exactly one JSON object. "
+                'Respond again with JSON only and no extra text. Use {"action":"keep_monitoring"} style.'
+            )
     messages.append({"role": "user", "content": repair_hint})
     return messages
 
@@ -246,9 +303,17 @@ class HeuristicAgent:
         history: list[dict[str, Any]],
         available_tools: list[str],
     ) -> ToolCall | ActionDecision:
-        if _is_multitask_step(step_input):
+        task_names = _resolved_task_names(step_input)
+        if len(task_names) > 1:
             return self._next_multitask_response(step_input, history, available_tools)
-        return self._next_sepsis_response(step_input, history, available_tools)
+        task_name = task_names[0]
+        if task_name == "sepsis":
+            return self._next_sepsis_response(step_input, history, available_tools)
+        if task_name == "aki":
+            return self._next_aki_response(step_input, history, available_tools)
+        if task_name == "respiratory_support":
+            return self._next_respiratory_response(step_input, history, available_tools)
+        raise ValueError(f"Unsupported single-task mode: {task_name}")
 
     def _latest_tool_output(self, history: list[dict[str, Any]], stay_id: int, key: str) -> dict[str, Any] | None:
         tool_outputs = [item["payload"] for item in history if item["type"] == "tool_output"]
@@ -334,6 +399,42 @@ class HeuristicAgent:
                 "respiratory_support": resp_action,
             }
         )
+
+    def _next_aki_response(
+        self,
+        step_input: dict[str, Any],
+        history: list[dict[str, Any]],
+        available_tools: list[str],
+    ) -> ToolCall | ActionDecision:
+        t_hour = int(step_input["t_hour"])
+        stay_id = int(step_input["stay_id"])
+        seen_tools = {item["tool_name"] for item in history if item["type"] == "tool_call"}
+        if "query_kdigo_stage" in available_tools and "query_kdigo_stage" not in seen_tools:
+            return ToolCall(tool_name="query_kdigo_stage", arguments={"stay_id": stay_id, "t_hour": t_hour})
+        kdigo_output = self._latest_tool_output(history, stay_id, "latest_aki_stage_smoothed") or {}
+        latest_aki = kdigo_output.get("latest_aki_stage_smoothed")
+        if latest_aki is not None and latest_aki >= self.aki_alert_threshold:
+            return ActionDecision(action="trigger_aki_alert")
+        if latest_aki is not None and latest_aki >= 1:
+            return ActionDecision(action="suspect_aki")
+        return ActionDecision(action="keep_monitoring")
+
+    def _next_respiratory_response(
+        self,
+        step_input: dict[str, Any],
+        history: list[dict[str, Any]],
+        available_tools: list[str],
+    ) -> ToolCall | ActionDecision:
+        t_hour = int(step_input["t_hour"])
+        stay_id = int(step_input["stay_id"])
+        seen_tools = {item["tool_name"] for item in history if item["type"] == "tool_call"}
+        if "query_ventilation_status" in available_tools and "query_ventilation_status" not in seen_tools:
+            return ToolCall(
+                tool_name="query_ventilation_status",
+                arguments={"stay_id": stay_id, "t_hour": t_hour},
+            )
+        vent_output = self._latest_tool_output(history, stay_id, "current_support_level") or {}
+        return ActionDecision(action=vent_output.get("highest_support_level_so_far", "room_air_or_low_support"))
 
 
 @dataclass(slots=True)
@@ -461,7 +562,7 @@ class QwenChatAgent:
             "step_index": int(step_input["step_index"]),
             "t_hour": int(step_input["t_hour"]),
         }
-        next_tool = _next_missing_tool(history, available_tools) if _is_multitask_step(step_input) else None
+        next_tool = _next_missing_tool_for_step(step_input, history, available_tools)
         messages = _build_messages(step_input, history, available_tools)
         content = self.client.generate(messages)
         if self.trace_callback is not None:
@@ -480,7 +581,7 @@ class QwenChatAgent:
                 self.trace_callback({"event_type": "model_output_repair", **context, "output": repaired})
             response = _coerce_agent_output(_extract_json_object(repaired))
 
-        if next_tool is None and _is_multitask_step(step_input) and isinstance(response, ToolCall):
+        if next_tool is None and isinstance(response, ToolCall):
             original_max_tokens = self.client.max_new_tokens
             repair_messages = _build_repair_messages(step_input, history, available_tools, content)
             self.client.max_new_tokens = self.repair_max_new_tokens

@@ -2,7 +2,8 @@ from __future__ import annotations
 
 from collections import defaultdict
 from datetime import timedelta
-from typing import Any
+from pathlib import Path
+from typing import Any, Protocol
 
 from .schemas import ICUStay, SofaRow, SuspicionOfInfectionRow
 
@@ -21,6 +22,11 @@ RESP_SUPPORT_LABELS = {
     1: "high_flow_or_noninvasive_support",
     2: "invasive_vent_required",
 }
+
+
+class ToolRuntime(Protocol):
+    def execute(self, tool_name: str, arguments: dict[str, Any]) -> dict[str, Any]:
+        ...
 
 
 class ConceptToolRuntime:
@@ -380,3 +386,32 @@ class DuckDBConceptToolRuntime:
         if tool_name == "query_ventilation_status":
             return self.query_ventilation_status(**arguments)
         raise ValueError(f"Unknown tool: {tool_name}")
+
+
+def build_tool_runtime(
+    *,
+    tool_backend: str,
+    db_path: str | None = None,
+    concepts: str | Path | None = None,
+    autoformalized_library: str | Path | None = None,
+) -> ToolRuntime:
+    if tool_backend == "official":
+        if db_path:
+            return DuckDBConceptToolRuntime(db_path)
+        if concepts is None:
+            raise SystemExit("Official backend requires either --db-path or --concepts")
+        from .dataset import load_concept_tables
+
+        return ConceptToolRuntime(load_concept_tables(concepts))
+
+    if tool_backend == "autoformalized":
+        if not db_path:
+            raise SystemExit("Autoformalized backend requires --db-path")
+        library_root = Path(autoformalized_library or "autoformalized_library")
+        if not library_root.is_absolute():
+            library_root = Path.cwd() / library_root
+        from .autoformalized import AutoformalizedDuckDBToolRuntime
+
+        return AutoformalizedDuckDBToolRuntime(db_path=db_path, library_path=library_root)
+
+    raise SystemExit(f"Unsupported tool backend: {tool_backend}")

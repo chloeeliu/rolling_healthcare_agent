@@ -28,14 +28,19 @@ The main shared multi-task cohort is:
 
 ## Tool layer
 
-The live DuckDB runtime queries these derived concepts:
+The pipeline now supports two tool backends:
+
+- `official`: current DuckDB wrappers over MIMIC derived concepts
+- `autoformalized`: generated Python concept functions from [/Users/chloe/Documents/New project/autoformalized_library](/Users/chloe/Documents/New project/autoformalized_library)
+
+Both backends expose the same tool names:
 
 - `query_suspicion_of_infection`
 - `query_sofa`
 - `query_kdigo_stage`
 - `query_ventilation_status`
 
-These are backed by:
+For the `official` backend, these are backed by:
 
 - `mimiciv_derived.suspicion_of_infection`
 - `mimiciv_derived.sofa`
@@ -97,10 +102,24 @@ PYTHONPATH=src python3 -m sepsis_mvp.cli run \
   --db-path /Users/chloe/Desktop/healthcare/mimic-iv-3.1/buildmimic/duckdb/mimic4_dk.db \
   --dataset /Users/chloe/Documents/New\ project/rolling_monitor_dataset/multitask/rolling_multitask.csv \
   --agent heuristic \
+  --task-mode multitask \
+  --tool-backend official \
   --sample-size 5 \
   --events-output data/multitask_events.jsonl \
   --trajectory-output data/multitask_trajectories.jsonl \
   --rollouts-output data/multitask_rollouts.json
+```
+
+Single-task sepsis smoke test:
+
+```bash
+PYTHONPATH=src python3 -m sepsis_mvp.cli run \
+  --concepts data/sample_concepts.json \
+  --dataset data/sample_trajectories.json \
+  --agent heuristic \
+  --task-mode single \
+  --tool-backend official \
+  --sample-size 1
 ```
 
 ### 3. Run the local Qwen model
@@ -113,6 +132,8 @@ PYTHONPATH=src python3 -m sepsis_mvp.cli run \
   --db-path /Users/chloe/Desktop/healthcare/mimic-iv-3.1/buildmimic/duckdb/mimic4_dk.db \
   --dataset /Users/chloe/Documents/New\ project/rolling_monitor_dataset/multitask/rolling_multitask.csv \
   --agent qwen \
+  --task-mode multitask \
+  --tool-backend official \
   --model Qwen/Qwen3.5-9B \
   --temperature 0.0 \
   --top-p 0.95 \
@@ -123,11 +144,31 @@ PYTHONPATH=src python3 -m sepsis_mvp.cli run \
   --rollouts-output data/qwen_multitask_rollouts.json
 ```
 
+To run the same benchmark with generated concept functions instead of official derived tables:
+
+```bash
+PYTHONPATH=src python3 -m sepsis_mvp.cli run \
+  --db-path /Users/chloe/Desktop/healthcare/mimic-iv-3.1/buildmimic/duckdb/mimic4_dk.db \
+  --dataset /Users/chloe/Documents/New\ project/rolling_monitor_dataset/multitask/rolling_multitask.csv \
+  --agent qwen \
+  --task-mode multitask \
+  --tool-backend autoformalized \
+  --autoformalized-library /Users/chloe/Documents/New\ project/autoformalized_library \
+  --model Qwen/Qwen3.5-9B \
+  --sample-size 10 \
+  --events-output data/qwen_multitask_autoform_events.jsonl \
+  --trajectory-output data/qwen_multitask_autoform_trajectories.jsonl \
+  --rollouts-output data/qwen_multitask_autoform_rollouts.json
+```
+
 ## Debug outputs
 
 Useful flags:
 
 - `--sample-size N`: run only the first `N` trajectories
+- `--task-mode auto|single|multitask`: validate the dataset against a requested task layout
+- `--tool-backend official|autoformalized`: choose the visible concept backend
+- `--autoformalized-library path`: root folder for generated functions when using the autoformalized backend
 - `--events-output path.jsonl`: append every step start, tool call, tool output, action, and trajectory completion
 - `--events-output path.jsonl` also captures raw Qwen outputs, repair outputs, and any controller-forced tool corrections
 - `--trajectory-output path.jsonl`: append each completed stay rollout immediately
@@ -141,11 +182,11 @@ The local Qwen path is prompt-tuned for strict JSON output:
 
 - no free-text reasoning
 - no `<think>` tags
+- single-task and multitask prompts are now generated separately
 - fixed-key `task_actions` object in multitask mode
 - one-shot repair retry if the first generation is not valid JSON
-- deterministic tool-order guard in multitask mode:
-  `query_suspicion_of_infection` -> `query_sofa` -> `query_kdigo_stage` -> `query_ventilation_status`
-- if Qwen skips a required tool, repeats a previous tool, or keeps calling tools after all four are done, the controller repairs or corrects the step instead of silently falling back to baseline labels
+- deterministic required-tool guard based on the monitored task set
+- if Qwen skips a required tool, repeats a previous tool, or keeps calling tools after all required tools are done, the controller repairs or corrects the step instead of silently falling back to baseline labels
 
 ## Query checks
 
@@ -168,4 +209,4 @@ Local verification completed with:
 PYTHONPATH=src python3 -m unittest discover -s tests -v
 ```
 
-and a real DuckDB-backed multitask smoke run using the heuristic agent.
+and a CLI smoke run on the refactored official single-task path.

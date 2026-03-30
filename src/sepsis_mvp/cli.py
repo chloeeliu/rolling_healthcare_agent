@@ -8,12 +8,11 @@ from pathlib import Path
 from .agent import HeuristicAgent, QwenChatAgent
 from .dataset import (
     build_dataset,
-    load_concept_tables,
     load_dataset_auto,
     save_trajectories,
 )
 from .environment import BenchmarkEnvironment, evaluate_rollouts, rollout_to_dicts
-from .tools import ConceptToolRuntime, DuckDBConceptToolRuntime
+from .tools import build_tool_runtime
 
 
 class JsonlSink:
@@ -37,6 +36,8 @@ def build_dataset_command(args: argparse.Namespace) -> int:
     else:
         if not args.concepts:
             raise SystemExit("build-dataset requires either --rolling-csv or --concepts")
+        from .dataset import load_concept_tables
+
         concept_tables = load_concept_tables(args.concepts)
         trajectories = build_dataset(
             concept_tables,
@@ -57,17 +58,22 @@ def run_command(args: argparse.Namespace) -> int:
     trajectories = load_dataset_auto(args.dataset, strict_mvp=not args.include_out_of_scope)
     if args.sample_size is not None:
         trajectories = trajectories[: args.sample_size]
-    if args.db_path:
-        runtime = DuckDBConceptToolRuntime(args.db_path)
-    else:
-        if not args.concepts:
-            raise SystemExit("run requires either --db-path or --concepts")
-        concept_tables = load_concept_tables(args.concepts)
-        runtime = ConceptToolRuntime(concept_tables)
+    runtime = build_tool_runtime(
+        tool_backend=args.tool_backend,
+        db_path=args.db_path,
+        concepts=args.concepts,
+        autoformalized_library=args.autoformalized_library,
+    )
 
     events_sink = JsonlSink(args.events_output)
     trajectories_sink = JsonlSink(args.trajectory_output)
-    environment = BenchmarkEnvironment(trajectories, runtime, event_callback=events_sink.write)
+    environment = BenchmarkEnvironment(
+        trajectories,
+        runtime,
+        event_callback=events_sink.write,
+        tool_backend=args.tool_backend,
+        task_mode=args.task_mode,
+    )
     if args.agent == "heuristic":
         agent = HeuristicAgent(sofa_alert_threshold=args.sofa_alert_threshold)
     else:
@@ -85,7 +91,8 @@ def run_command(args: argparse.Namespace) -> int:
     print(f"Starting run on {total} trajectories", flush=True)
     for index, trajectory in enumerate(trajectories, start=1):
         print(
-            f"[{index}/{total}] stay_id={trajectory.stay_id} trajectory_id={trajectory.trajectory_id} start",
+            f"[{index}/{total}] stay_id={trajectory.stay_id} trajectory_id={trajectory.trajectory_id} "
+            f"task_mode={args.task_mode} tool_backend={args.tool_backend} start",
             flush=True,
         )
         rollout = environment.run_trajectory(trajectory, agent)
@@ -117,7 +124,7 @@ def run_command(args: argparse.Namespace) -> int:
 
 
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description="Rolling sepsis surveillance MVP.")
+    parser = argparse.ArgumentParser(description="Rolling ICU surveillance benchmark pipeline.")
     subparsers = parser.add_subparsers(dest="command", required=True)
 
     build_parser = subparsers.add_parser("build-dataset", help="Build trajectory dataset from concept tables.")
@@ -141,6 +148,23 @@ def build_parser() -> argparse.ArgumentParser:
     run_parser.add_argument("--concepts", help="Path to concept-table JSON.")
     run_parser.add_argument("--db-path", help="Path to MIMIC DuckDB for live concept-tool queries.")
     run_parser.add_argument("--dataset", required=True, help="Path to trajectory dataset JSON.")
+    run_parser.add_argument(
+        "--task-mode",
+        choices=["auto", "single", "multitask"],
+        default="auto",
+        help="Validate the dataset against a requested task mode, or infer automatically.",
+    )
+    run_parser.add_argument(
+        "--tool-backend",
+        choices=["official", "autoformalized"],
+        default="official",
+        help="Choose whether visible tool outputs come from official derived concepts or generated functions.",
+    )
+    run_parser.add_argument(
+        "--autoformalized-library",
+        default="autoformalized_library",
+        help="Path to the autoformalized function library root when using --tool-backend autoformalized.",
+    )
     run_parser.add_argument(
         "--include-out-of-scope",
         action="store_true",
