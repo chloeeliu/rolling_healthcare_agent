@@ -1,0 +1,764 @@
+2026-03-26 14:03:37  INFO      Using database: /home/v-tiossowski/MIMIC-IV/mimic4.db
+2026-03-26 14:03:37  INFO      No --model_url provided; loading vLLM in-process …
+INFO 03-26 14:03:42 [utils.py:238] non-default args: {'trust_remote_code': True, 'max_model_len': 40000, 'disable_log_stats': True, 'model': 'Qwen/Qwen3.5-27B'}
+The argument `trust_remote_code` is to be used with Auto classes. It has no effect here and is ignored.
+The argument `trust_remote_code` is to be used with Auto classes. It has no effect here and is ignored.
+The argument `trust_remote_code` is to be used with Auto classes. It has no effect here and is ignored.
+INFO 03-26 14:03:42 [model.py:531] Resolved architecture: Qwen3_5ForConditionalGeneration
+INFO 03-26 14:03:42 [model.py:1554] Using max model len 40000
+INFO 03-26 14:03:43 [scheduler.py:231] Chunked prefill is enabled with max_num_batched_tokens=8192.
+INFO 03-26 14:03:44 [config.py:544] Setting attention block size to 784 tokens to ensure that attention page size is >= mamba page size.
+INFO 03-26 14:03:44 [config.py:575] Padding mamba page size by 0.13% to ensure that mamba page size and attention page size are exactly equal.
+INFO 03-26 14:03:44 [vllm.py:747] Asynchronous scheduling is enabled.
+WARNING 03-26 14:03:51 [system_utils.py:152] We must use the `spawn` multiprocessing start method. Overriding VLLM_WORKER_MULTIPROC_METHOD to 'spawn'. See https://docs.vllm.ai/en/latest/usage/troubleshooting.html#python-multiprocessing for more information. Reasons: CUDA is initialized
+(EngineCore_DP0 pid=1094570) INFO 03-26 14:03:56 [core.py:101] Initializing a V1 LLM engine (v0.17.1) with config: model='Qwen/Qwen3.5-27B', speculative_config=None, tokenizer='Qwen/Qwen3.5-27B', skip_tokenizer_init=False, tokenizer_mode=auto, revision=None, tokenizer_revision=None, trust_remote_code=True, dtype=torch.bfloat16, max_seq_len=40000, download_dir=None, load_format=auto, tensor_parallel_size=1, pipeline_parallel_size=1, data_parallel_size=1, disable_custom_all_reduce=False, quantization=None, enforce_eager=False, enable_return_routed_experts=False, kv_cache_dtype=auto, device_config=cuda, structured_outputs_config=StructuredOutputsConfig(backend='auto', disable_fallback=False, disable_any_whitespace=False, disable_additional_properties=False, reasoning_parser='', reasoning_parser_plugin='', enable_in_reasoning=False), observability_config=ObservabilityConfig(show_hidden_metrics_for_version=None, otlp_traces_endpoint=None, collect_detailed_traces=None, kv_cache_metrics=False, kv_cache_metrics_sample=0.01, cudagraph_metrics=False, enable_layerwise_nvtx_tracing=False, enable_mfu_metrics=False, enable_mm_processor_stats=False, enable_logging_iteration_details=False), seed=0, served_model_name=Qwen/Qwen3.5-27B, enable_prefix_caching=False, enable_chunked_prefill=True, pooler_config=None, compilation_config={'level': None, 'mode': <CompilationMode.VLLM_COMPILE: 3>, 'debug_dump_path': None, 'cache_dir': '', 'compile_cache_save_format': 'binary', 'backend': 'inductor', 'custom_ops': ['none'], 'splitting_ops': ['vllm::unified_attention', 'vllm::unified_attention_with_output', 'vllm::unified_mla_attention', 'vllm::unified_mla_attention_with_output', 'vllm::mamba_mixer2', 'vllm::mamba_mixer', 'vllm::short_conv', 'vllm::linear_attention', 'vllm::plamo2_mamba_mixer', 'vllm::gdn_attention_core', 'vllm::kda_attention', 'vllm::sparse_attn_indexer', 'vllm::rocm_aiter_sparse_attn_indexer', 'vllm::unified_kv_cache_update', 'vllm::unified_mla_kv_cache_update'], 'compile_mm_encoder': False, 'compile_sizes': [], 'compile_ranges_split_points': [8192], 'inductor_compile_config': {'enable_auto_functionalized_v2': False, 'combo_kernels': True, 'benchmark_combo_kernel': True}, 'inductor_passes': {}, 'cudagraph_mode': <CUDAGraphMode.FULL_AND_PIECEWISE: (2, 1)>, 'cudagraph_num_of_warmups': 1, 'cudagraph_capture_sizes': [1, 2, 4, 8, 16, 24, 32, 40, 48, 56, 64, 72, 80, 88, 96, 104, 112, 120, 128, 136, 144, 152, 160, 168, 176, 184, 192, 200, 208, 216, 224, 232, 240, 248, 256, 272, 288, 304, 320, 336, 352, 368, 384, 400, 416, 432, 448, 464, 480, 496, 512], 'cudagraph_copy_inputs': False, 'cudagraph_specialize_lora': True, 'use_inductor_graph_partition': False, 'pass_config': {'fuse_norm_quant': False, 'fuse_act_quant': False, 'fuse_attn_quant': False, 'enable_sp': False, 'fuse_gemm_comms': False, 'fuse_allreduce_rms': False}, 'max_cudagraph_capture_size': 512, 'dynamic_shapes_config': {'type': <DynamicShapesType.BACKED: 'backed'>, 'evaluate_guards': False, 'assume_32_bit_indexing': False}, 'local_cache_dir': None, 'fast_moe_cold_start': True, 'static_all_moe_layers': []}
+(EngineCore_DP0 pid=1094570) INFO 03-26 14:03:58 [parallel_state.py:1393] world_size=1 rank=0 local_rank=0 distributed_init_method=tcp://10.8.144.167:50027 backend=nccl
+(EngineCore_DP0 pid=1094570) INFO 03-26 14:03:58 [parallel_state.py:1715] rank 0 in world size 1 is assigned as DP rank 0, PP rank 0, PCP rank 0, TP rank 0, EP rank N/A, EPLB rank N/A
+(EngineCore_DP0 pid=1094570) INFO 03-26 14:04:05 [base.py:106] Offloader set to NoopOffloader
+(EngineCore_DP0 pid=1094570) INFO 03-26 14:04:05 [gpu_model_runner.py:4281] Starting to load model Qwen/Qwen3.5-27B...
+(EngineCore_DP0 pid=1094570) INFO 03-26 14:04:05 [cuda.py:453] Using backend AttentionBackendEnum.FLASH_ATTN for vit attention
+(EngineCore_DP0 pid=1094570) INFO 03-26 14:04:05 [mm_encoder_attention.py:215] Using AttentionBackendEnum.FLASH_ATTN for MMEncoderAttention.
+(EngineCore_DP0 pid=1094570) INFO 03-26 14:04:06 [cuda.py:405] Using FLASH_ATTN attention backend out of potential backends: ['FLASH_ATTN', 'FLASHINFER', 'TRITON_ATTN', 'FLEX_ATTENTION'].
+(EngineCore_DP0 pid=1094570) INFO 03-26 14:04:06 [flash_attn.py:587] Using FlashAttention version 2
+(EngineCore_DP0 pid=1094570) <frozen importlib._bootstrap_external>:1301: FutureWarning: The cuda.cudart module is deprecated and will be removed in a future release, please switch to use the cuda.bindings.runtime module instead.
+(EngineCore_DP0 pid=1094570) <frozen importlib._bootstrap_external>:1301: FutureWarning: The cuda.nvrtc module is deprecated and will be removed in a future release, please switch to use the cuda.bindings.nvrtc module instead.
+(EngineCore_DP0 pid=1094570) Loading safetensors checkpoint shards:   0% Completed | 0/11 [00:00<?, ?it/s]
+(EngineCore_DP0 pid=1094570) Loading safetensors checkpoint shards:   9% Completed | 1/11 [00:00<00:05,  1.88it/s]
+(EngineCore_DP0 pid=1094570) Loading safetensors checkpoint shards:  18% Completed | 2/11 [00:01<00:05,  1.67it/s]
+(EngineCore_DP0 pid=1094570) Loading safetensors checkpoint shards:  27% Completed | 3/11 [00:01<00:05,  1.57it/s]
+(EngineCore_DP0 pid=1094570) Loading safetensors checkpoint shards:  36% Completed | 4/11 [00:02<00:04,  1.51it/s]
+(EngineCore_DP0 pid=1094570) Loading safetensors checkpoint shards:  45% Completed | 5/11 [00:03<00:04,  1.48it/s]
+(EngineCore_DP0 pid=1094570) Loading safetensors checkpoint shards:  55% Completed | 6/11 [00:03<00:03,  1.46it/s]
+(EngineCore_DP0 pid=1094570) Loading safetensors checkpoint shards:  64% Completed | 7/11 [00:04<00:02,  1.44it/s]
+(EngineCore_DP0 pid=1094570) Loading safetensors checkpoint shards:  73% Completed | 8/11 [00:05<00:02,  1.44it/s]
+(EngineCore_DP0 pid=1094570) Loading safetensors checkpoint shards:  82% Completed | 9/11 [00:06<00:01,  1.44it/s]
+(EngineCore_DP0 pid=1094570) Loading safetensors checkpoint shards:  91% Completed | 10/11 [00:06<00:00,  1.44it/s]
+(EngineCore_DP0 pid=1094570) Loading safetensors checkpoint shards: 100% Completed | 11/11 [00:07<00:00,  1.61it/s]
+(EngineCore_DP0 pid=1094570) Loading safetensors checkpoint shards: 100% Completed | 11/11 [00:07<00:00,  1.52it/s]
+(EngineCore_DP0 pid=1094570) 
+(EngineCore_DP0 pid=1094570) INFO 03-26 14:04:14 [default_loader.py:293] Loading weights took 7.29 seconds
+(EngineCore_DP0 pid=1094570) INFO 03-26 14:04:14 [gpu_model_runner.py:4364] Model loading took 51.1 GiB memory and 8.358300 seconds
+(EngineCore_DP0 pid=1094570) INFO 03-26 14:04:14 [gpu_model_runner.py:5280] Encoder cache will be initialized with a budget of 16384 tokens, and profiled with 1 image items of the maximum feature size.
+(EngineCore_DP0 pid=1094570) INFO 03-26 14:04:23 [decorators.py:465] Directly load AOT compilation from path /home/v-tiossowski/.cache/vllm/torch_compile_cache/torch_aot_compile/0232891e22bd4d7db98ac2f43c441f0f81d0a431216053ca49fadeaff23e2af3/rank_0_0/model
+(EngineCore_DP0 pid=1094570) INFO 03-26 14:04:23 [backends.py:916] Using cache directory: /home/v-tiossowski/.cache/vllm/torch_compile_cache/feaf61af16/rank_0_0/backbone for vLLM's torch.compile
+(EngineCore_DP0 pid=1094570) INFO 03-26 14:04:23 [backends.py:976] Dynamo bytecode transform time: 3.56 s
+(EngineCore_DP0 pid=1094570) INFO 03-26 14:04:33 [backends.py:266] Directly load the compiled graph(s) for compile range (1, 8192) from the cache, took 9.500 s
+(EngineCore_DP0 pid=1094570) INFO 03-26 14:04:33 [monitor.py:35] torch.compile takes 13.93 s in total
+(EngineCore_DP0 pid=1094570) INFO 03-26 14:04:34 [gpu_worker.py:424] Available KV cache memory: 18.3 GiB
+(EngineCore_DP0 pid=1094570) INFO 03-26 14:04:34 [kv_cache_utils.py:1314] GPU KV cache size: 74,480 tokens
+(EngineCore_DP0 pid=1094570) INFO 03-26 14:04:34 [kv_cache_utils.py:1319] Maximum concurrency for 40,000 tokens per request: 6.95x
+(EngineCore_DP0 pid=1094570) Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):   0%|          | 0/51 [00:00<?, ?it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):   2%|▏         | 1/51 [00:00<00:08,  5.87it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):   4%|▍         | 2/51 [00:00<00:08,  6.08it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):   6%|▌         | 3/51 [00:00<00:07,  6.14it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):   8%|▊         | 4/51 [00:00<00:07,  6.17it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  10%|▉         | 5/51 [00:00<00:07,  6.22it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  12%|█▏        | 6/51 [00:00<00:07,  6.24it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  14%|█▎        | 7/51 [00:01<00:07,  6.25it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  16%|█▌        | 8/51 [00:01<00:06,  6.22it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  18%|█▊        | 9/51 [00:01<00:06,  6.54it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  20%|█▉        | 10/51 [00:01<00:06,  6.80it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  22%|██▏       | 11/51 [00:01<00:05,  6.82it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  24%|██▎       | 12/51 [00:01<00:05,  7.00it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  25%|██▌       | 13/51 [00:01<00:05,  7.07it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  27%|██▋       | 14/51 [00:02<00:05,  7.20it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  29%|██▉       | 15/51 [00:02<00:04,  7.28it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  31%|███▏      | 16/51 [00:02<00:04,  7.36it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  33%|███▎      | 17/51 [00:02<00:04,  7.69it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  35%|███▌      | 18/51 [00:02<00:04,  7.86it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  37%|███▋      | 19/51 [00:02<00:03,  8.10it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  39%|███▉      | 20/51 [00:02<00:03,  8.28it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  41%|████      | 21/51 [00:02<00:03,  8.42it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  43%|████▎     | 22/51 [00:03<00:03,  8.47it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  45%|████▌     | 23/51 [00:03<00:03,  8.50it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  47%|████▋     | 24/51 [00:03<00:03,  8.51it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  49%|████▉     | 25/51 [00:03<00:03,  8.55it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  51%|█████     | 26/51 [00:03<00:02,  8.62it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  53%|█████▎    | 27/51 [00:03<00:02,  8.66it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  55%|█████▍    | 28/51 [00:03<00:02,  8.69it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  57%|█████▋    | 29/51 [00:03<00:02,  8.71it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  59%|█████▉    | 30/51 [00:03<00:02,  8.70it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  61%|██████    | 31/51 [00:04<00:02,  8.74it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  63%|██████▎   | 32/51 [00:04<00:02,  8.74it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  65%|██████▍   | 33/51 [00:04<00:01,  9.07it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  69%|██████▊   | 35/51 [00:04<00:01,  9.52it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  73%|███████▎  | 37/51 [00:04<00:01,  9.64it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  75%|███████▍  | 38/51 [00:04<00:01,  9.67it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  78%|███████▊  | 40/51 [00:05<00:01,  9.80it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  82%|████████▏ | 42/51 [00:05<00:00,  9.95it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  86%|████████▋ | 44/51 [00:05<00:00, 10.15it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  90%|█████████ | 46/51 [00:05<00:00, 10.35it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  94%|█████████▍| 48/51 [00:05<00:00, 10.57it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  98%|█████████▊| 50/51 [00:05<00:00, 10.76it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE): 100%|██████████| 51/51 [00:06<00:00,  8.42it/s]
+(EngineCore_DP0 pid=1094570) Capturing CUDA graphs (decode, FULL):   0%|          | 0/35 [00:00<?, ?it/s]Capturing CUDA graphs (decode, FULL):   3%|▎         | 1/35 [00:00<00:05,  5.70it/s]Capturing CUDA graphs (decode, FULL):   6%|▌         | 2/35 [00:00<00:05,  6.22it/s]Capturing CUDA graphs (decode, FULL):   9%|▊         | 3/35 [00:00<00:04,  6.45it/s]Capturing CUDA graphs (decode, FULL):  11%|█▏        | 4/35 [00:00<00:04,  6.59it/s]Capturing CUDA graphs (decode, FULL):  14%|█▍        | 5/35 [00:00<00:04,  6.66it/s]Capturing CUDA graphs (decode, FULL):  17%|█▋        | 6/35 [00:00<00:04,  6.74it/s]Capturing CUDA graphs (decode, FULL):  20%|██        | 7/35 [00:01<00:04,  6.80it/s]Capturing CUDA graphs (decode, FULL):  23%|██▎       | 8/35 [00:01<00:03,  6.85it/s]Capturing CUDA graphs (decode, FULL):  26%|██▌       | 9/35 [00:01<00:03,  6.91it/s]Capturing CUDA graphs (decode, FULL):  29%|██▊       | 10/35 [00:01<00:03,  6.96it/s]Capturing CUDA graphs (decode, FULL):  31%|███▏      | 11/35 [00:01<00:03,  6.98it/s]Capturing CUDA graphs (decode, FULL):  34%|███▍      | 12/35 [00:01<00:03,  7.03it/s]Capturing CUDA graphs (decode, FULL):  37%|███▋      | 13/35 [00:01<00:03,  7.09it/s]Capturing CUDA graphs (decode, FULL):  40%|████      | 14/35 [00:02<00:02,  7.09it/s]Capturing CUDA graphs (decode, FULL):  43%|████▎     | 15/35 [00:02<00:02,  7.17it/s]Capturing CUDA graphs (decode, FULL):  46%|████▌     | 16/35 [00:02<00:02,  7.25it/s]Capturing CUDA graphs (decode, FULL):  49%|████▊     | 17/35 [00:02<00:02,  7.53it/s]Capturing CUDA graphs (decode, FULL):  51%|█████▏    | 18/35 [00:02<00:02,  7.80it/s]Capturing CUDA graphs (decode, FULL):  54%|█████▍    | 19/35 [00:02<00:01,  8.02it/s]Capturing CUDA graphs (decode, FULL):  57%|█████▋    | 20/35 [00:02<00:01,  8.18it/s]Capturing CUDA graphs (decode, FULL):  60%|██████    | 21/35 [00:02<00:01,  8.31it/s]Capturing CUDA graphs (decode, FULL):  63%|██████▎   | 22/35 [00:03<00:01,  8.38it/s]Capturing CUDA graphs (decode, FULL):  66%|██████▌   | 23/35 [00:03<00:01,  8.36it/s]Capturing CUDA graphs (decode, FULL):  69%|██████▊   | 24/35 [00:03<00:01,  8.41it/s]Capturing CUDA graphs (decode, FULL):  71%|███████▏  | 25/35 [00:03<00:01,  8.58it/s]Capturing CUDA graphs (decode, FULL):  74%|███████▍  | 26/35 [00:03<00:01,  8.64it/s]Capturing CUDA graphs (decode, FULL):  77%|███████▋  | 27/35 [00:03<00:00,  8.79it/s]Capturing CUDA graphs (decode, FULL):  80%|████████  | 28/35 [00:03<00:00,  8.83it/s]Capturing CUDA graphs (decode, FULL):  83%|████████▎ | 29/35 [00:03<00:00,  8.86it/s]Capturing CUDA graphs (decode, FULL):  86%|████████▌ | 30/35 [00:03<00:00,  8.87it/s]Capturing CUDA graphs (decode, FULL):  89%|████████▊ | 31/35 [00:04<00:00,  8.81it/s]Capturing CUDA graphs (decode, FULL):  91%|█████████▏| 32/35 [00:04<00:00,  8.65it/s]Capturing CUDA graphs (decode, FULL):  94%|█████████▍| 33/35 [00:04<00:00,  8.59it/s]Capturing CUDA graphs (decode, FULL):  97%|█████████▋| 34/35 [00:04<00:00,  8.52it/s]Capturing CUDA graphs (decode, FULL): 100%|██████████| 35/35 [00:04<00:00,  8.57it/s]Capturing CUDA graphs (decode, FULL): 100%|██████████| 35/35 [00:04<00:00,  7.75it/s]
+(EngineCore_DP0 pid=1094570) INFO 03-26 14:04:45 [gpu_model_runner.py:5386] Graph capturing finished in 11 secs, took 1.13 GiB
+(EngineCore_DP0 pid=1094570) INFO 03-26 14:04:46 [core.py:282] init engine (profile, create kv cache, warmup model) took 31.30 seconds
+(EngineCore_DP0 pid=1094570) INFO 03-26 14:04:46 [vllm.py:747] Asynchronous scheduling is enabled.
+INFO 03-26 14:04:46 [llm.py:388] Supported tasks: ['generate']
+2026-03-26 14:04:46  INFO      Loading QA dataset from /home/v-tiossowski/HealthcareAgent/mimic-code/data/MIMICIV_sepsis3_dataset/sepsis3.csv
+2026-03-26 14:04:46  INFO      Dataset: 1000 rows, columns: ['subject_id', 'hadm_id', 'stay_id', 'intime', 'outtime', 'first_careunit', 'last_careunit', 'gt_label', 'question', 'gt_answer_type', 'split', 'sepsis3_flag', 'sofa_at_infection', 'culture_obtained']
+2026-03-26 14:04:46  INFO      Filtered to train split: 100 rows
+2026-03-26 14:04:46  INFO      Auto-discovered ground-truth SQL: /home/v-tiossowski/HealthcareAgent/mimic-code/mimic-iv/concepts_duckdb/sepsis/sepsis3.sql
+2026-03-26 14:04:46  INFO      === Iteration 1/100  run=sepsis3  best_qa=0.0% ===
+INFO 03-26 14:04:48 [hf.py:318] Detected the chat template content format to be 'string'. You can set `--chat-template-content-format` to override this.
+2026-03-26 14:05:03  INFO      Exec block 1/1 …
+2026-03-26 14:05:03  INFO      Output: ['sepsis_guideline']
+
+2026-03-26 14:05:03  INFO      === Iteration 2/100  run=sepsis3  best_qa=0.0% ===
+2026-03-26 14:05:05  INFO      Exec block 1/1 …
+2026-03-26 14:05:05  INFO      Output: '# Sepsis — Clinical Guideline\n# Generated by generate_guidelines.py\n# Source articles: 10 (PMID38245889, PMID26903336, PMID26903335, PMID34612847, PMID38245897...)\n############################################################\n\n# Clinical Guideline: Sepsis — Identification, Scoring, and Classification\n\n**Scope:** This guideline covers adults (≥ 18 years) under the Sepsis-3 framework and children (< 18 years) under the 2024 Phoenix Sepsis criteria, based solely on the information provided i
+2026-03-26 14:05:05  INFO      === Iteration 3/100  run=sepsis3  best_qa=0.0% ===
+2026-03-26 14:05:08  INFO      Exec block 1/1 …
+2026-03-26 14:05:08  INFO      Output: ['qsofa_guideline', 'sofa_guideline']
+
+2026-03-26 14:05:08  INFO      === Iteration 4/100  run=sepsis3  best_qa=0.0% ===
+2026-03-26 14:05:11  INFO      Exec block 1/1 …
+2026-03-26 14:05:11  INFO      Output: '# SOFA — Clinical Guideline\n# Generated by generate_guidelines.py\n# Source articles: 10 (PMID39539863, PMID39553003, PMID40375069, PMID41159829, PMID26903338...)\n############################################################\n\n# Sequential Organ Failure Assessment (SOFA) Score — Clinical Guideline\n\n---\n\n## 1. Definition\n\nThe **Sequential Organ Failure Assessment (SOFA)** score is a composite organ-dysfunction scoring system designed to quantify the degree of dysfunction across six organ
+2026-03-26 14:05:11  INFO      === Iteration 5/100  run=sepsis3  best_qa=0.0% ===
+2026-03-26 14:05:15  INFO      Exec block 1/1 …
+2026-03-26 14:05:15  INFO      Output: ['acei', 'age', 'aki', 'antibiotic', 'apsiii', 'arb', 'bg', 'blood_differential', 'cardiac_marker', 'charlson', 'chemistry', 'coagulation', 'code_status', 'complete_blood_count', 'creatinine_baseline', 'crrt', 'dobutamine', 'dopamine', 'enzyme', 'epinephrine', '... (42 more; pass a keyword to filter)']
+
+2026-03-26 14:05:15  INFO      === Iteration 6/100  run=sepsis3  best_qa=0.0% ===
+2026-03-26 14:05:18  INFO      Exec block 1/1 …
+2026-03-26 14:05:18  INFO      Output: ['first_day_sofa', 'sofa']
+
+2026-03-26 14:05:18  INFO      === Iteration 7/100  run=sepsis3  best_qa=0.0% ===
+2026-03-26 14:05:22  INFO      Exec block 1/1 …
+2026-03-26 14:05:22  INFO      Output: 'def compute_sofa_score(stay_id):\n    """\n    Compute the SOFA (Sequential Organ Failure Assessment) score for an ICU stay.\n\n    The SOFA score assesses organ dysfunction across 6 systems:\n    - Respiration (PaO2/FiO2 ratio)\n    - Coagulation (Platelet count)\n    - Liver (Bilirubin)\n    - Cardiovascular (MAP and vasopressors)\n    - Brain (Glasgow Coma Scale)\n    - Kidney (Creatinine)\n\n    Parameters\n    ----------\n    stay_id : int\n        The ICU stay identifier\n    \n    Return
+2026-03-26 14:05:22  INFO      === Iteration 8/100  run=sepsis3  best_qa=0.0% ===
+2026-03-26 14:05:27  INFO      Exec block 1/1 …
+2026-03-26 14:05:27  INFO      Output: 'def first_day_sofa(stay_id):\n    """\n    Calculate the SOFA (Sequential Organ Failure Assessment) score for the first day of an ICU stay.\n\n    Parameters\n    ----------\n    stay_id : int\n        The ICU stay identifier.\n\n    Returns\n    -------\n    dict\n        A dictionary containing SOFA scores for each organ system and total score.\n    """'
+
+2026-03-26 14:05:27  INFO      === Iteration 9/100  run=sepsis3  best_qa=0.0% ===
+2026-03-26 14:05:31  INFO      Exec block 1/1 …
+2026-03-26 14:05:31  INFO      Output: "Functions from 'sofa' loaded successfully."
+
+2026-03-26 14:05:31  INFO      === Iteration 10/100  run=sepsis3  best_qa=0.0% ===
+2026-03-26 14:05:35  INFO      Exec block 1/1 …
+2026-03-26 14:05:35  INFO      Output: ['suspicion_of_infection']
+
+2026-03-26 14:05:35  INFO      === Iteration 11/100  run=sepsis3  best_qa=0.0% ===
+2026-03-26 14:05:39  INFO      Exec block 1/1 …
+2026-03-26 14:05:39  INFO      Output: 'def get_antibiotic_info(stay_id, hadm_id, subject_id):\n    """\n    Extract antibiotic administration information for a patient.\n\n    Parameters\n    ----------\n    stay_id : int, optional\n        ICU stay identifier. If provided, returns ICU-specific antibiotic data.\n    hadm_id : int, optional\n        Hospital admission identifier. If provided, returns hospital-wide antibiotic data.\n    subject_id : int, optional\n        Patient identifier. If provided with hadm_id, filters to that a
+2026-03-26 14:05:39  INFO      === Iteration 12/100  run=sepsis3  best_qa=0.0% ===
+2026-03-26 14:05:43  INFO      Exec block 1/1 …
+2026-03-26 14:05:43  INFO      Output: "Functions from 'suspicion_of_infection' loaded successfully."
+
+2026-03-26 14:05:43  INFO      === Iteration 13/100  run=sepsis3  best_qa=0.0% ===
+2026-03-26 14:05:50  INFO      Exec block 1/1 …
+2026-03-26 14:05:50  INFO      Output:     table_schema          table_name
+0   mimiciv_hosp          admissions
+1   mimiciv_hosp             d_hcpcs
+2   mimiciv_hosp     d_icd_diagnoses
+3   mimiciv_hosp    d_icd_procedures
+4   mimiciv_hosp          d_labitems
+5   mimiciv_hosp       diagnoses_icd
+6   mimiciv_hosp            drgcodes
+7   mimiciv_hosp                emar
+8   mimiciv_hosp         emar_detail
+9   mimiciv_hosp         hcpcsevents
+10  mimiciv_hosp           labevents
+11  mimiciv_hosp  microbiologyevents
+12  mimiciv_hosp   
+2026-03-26 14:05:50  INFO      === Iteration 14/100  run=sepsis3  best_qa=0.0% ===
+2026-03-26 14:05:58  INFO      Exec block 1/1 …
+2026-03-26 14:05:58  INFO      Output:    microevent_id  subject_id  hadm_id  micro_specimen_id order_provider_id  chartdate           charttime  spec_itemid  spec_type_desc  test_seq  storedate           storetime  test_itemid                        test_name  org_itemid org_name  isolate_num quantity  ab_itemid ab_name dilution_text dilution_comparison  dilution_value interpretation                                                                                                                                                        
+2026-03-26 14:05:58  INFO      === Iteration 15/100  run=sepsis3  best_qa=0.0% ===
+2026-03-26 14:06:04  INFO      Exec block 1/1 …
+2026-03-26 14:06:04  INFO      Output:                                               spec_type_desc
+0                                                    ABSCESS
+1                                             AMNIOTIC FLUID
+2                                          ANORECTAL/VAGINAL
+3                                                  ARTHROPOD
+4                                                   ASPIRATE
+5                                                       BILE
+6                                                     BIOPSY
+7           
+2026-03-26 14:06:04  INFO      === Iteration 16/100  run=sepsis3  best_qa=0.0% ===
+2026-03-26 14:06:09  INFO      Exec block 1/1 …
+2026-03-26 14:06:09  INFO      Output:    subject_id   hadm_id   stay_id                      first_careunit                       last_careunit              intime             outtime       los
+0    10000032  29079034  39553978  Medical Intensive Care Unit (MICU)  Medical Intensive Care Unit (MICU) 2180-07-23 14:00:00 2180-07-23 23:50:47  0.410266
+1    10000690  25860671  37081114  Medical Intensive Care Unit (MICU)  Medical Intensive Care Unit (MICU) 2150-11-02 19:37:00 2150-11-06 17:03:17  3.893252
+2    10000980  26913865  3976566
+2026-03-26 14:06:09  INFO      === Iteration 17/100  run=sepsis3  best_qa=0.0% ===
+2026-03-26 14:06:15  INFO      Exec block 1/1 …
+2026-03-26 14:06:16  INFO      Output: {'total_score': 1, 'respiration_score': 0, 'coagulation_score': 0, 'liver_score': 0, 'cardiovascular_score': 0, 'brain_score': 1, 'kidney_score': 0, 'subject_id': np.int32(10000032), 'hadm_id': np.int32(29079034), 'stay_id': 39553978, 'intime': '2180-07-23 14:00:00', 'outtime': '2180-07-23 23:50:47', 'details': {'pao2_fio2': None, 'on_ventilator': np.False_, 'platelets': None, 'bilirubin': None, 'min_map': None, 'vasopressors': {}, 'gcs_eye': np.float32(4.0), 'gcs_verbal': np.float32(4.0), 'gcs_
+2026-03-26 14:06:16  INFO      === Iteration 18/100  run=sepsis3  best_qa=0.0% ===
+2026-03-26 14:06:22  INFO      Exec block 1/1 …
+2026-03-26 14:06:22  INFO      Output: {'has_suspicion_of_infection': False, 'culture_orders': Empty DataFrame
+Columns: [subject_id, hadm_id, stay_id, spec_type_desc, culture_time, icu_intime, icu_outtime]
+Index: [], 'antibiotic_info': {'antibiotic_administrations': Empty DataFrame
+Columns: [source, stay_id, hadm_id, subject_id, antibiotic_name, admin_time]
+Index: [], 'received_antibiotics': False, 'distinct_antibiotics': [], 'distinct_antibiotic_count': 0, 'icu_intime': Timestamp('2180-07-23 14:00:00'), 'within_48hrs_icu': False, 'a
+2026-03-26 14:06:22  INFO      === Iteration 19/100  run=sepsis3  best_qa=0.0% ===
+2026-03-26 14:06:32  INFO      Exec block 1/1 …
+2026-03-26 14:06:32  INFO      Output:    subject_id   hadm_id spec_type_desc  chartdate
+0    10639500  28568915  BLOOD CULTURE 2117-04-03
+1    10639820  21646361  BLOOD CULTURE 2182-03-07
+2    10640054  29388046          URINE 2175-05-24
+3    10640054  29388046  BLOOD CULTURE 2175-05-25
+4    10641052  22025489  BLOOD CULTURE 2154-05-24
+5    10641795  22739609  BLOOD CULTURE 2146-04-29
+6    10641937  22804676  BLOOD CULTURE 2123-09-15
+7    10641937  22804676  BLOOD CULTURE 2123-11-07
+8    10641937  22804676  BLOOD CULTURE 2123-11-20
+
+2026-03-26 14:06:32  INFO      === Iteration 20/100  run=sepsis3  best_qa=0.0% ===
+2026-03-26 14:06:40  INFO      Exec block 1/1 …
+2026-03-26 14:06:40  INFO      Output:     stay_id  subject_id   hadm_id              intime             outtime
+0  31916205    10639500  28568915 2117-03-21 13:00:08 2117-03-27 07:31:57
+1  37669901    10639500  28568915 2117-03-27 08:13:10 2117-04-04 11:44:19
+
+2026-03-26 14:06:40  INFO      === Iteration 21/100  run=sepsis3  best_qa=0.0% ===
+2026-03-26 14:06:46  INFO      Exec block 1/1 …
+2026-03-26 14:06:46  INFO      Output: {'has_suspicion_of_infection': True, 'culture_orders':     subject_id   hadm_id  ...          icu_intime         icu_outtime
+0     10639500  28568915  ... 2117-03-27 08:13:10 2117-04-04 11:44:19
+1     10639500  28568915  ... 2117-03-27 08:13:10 2117-04-04 11:44:19
+2     10639500  28568915  ... 2117-03-27 08:13:10 2117-04-04 11:44:19
+3     10639500  28568915  ... 2117-03-27 08:13:10 2117-04-04 11:44:19
+4     10639500  28568915  ... 2117-03-27 08:13:10 2117-04-04 11:44:19
+5     10639500  28568915 
+2026-03-26 14:06:46  INFO      === Iteration 22/100  run=sepsis3  best_qa=0.0% ===
+2026-03-26 14:06:52  INFO      Exec block 1/1 …
+2026-03-26 14:06:53  INFO      Output: {'total_score': 14, 'respiration_score': 3, 'coagulation_score': 1, 'liver_score': 2, 'cardiovascular_score': 3, 'brain_score': 4, 'kidney_score': 1, 'subject_id': np.int32(10639500), 'hadm_id': np.int32(28568915), 'stay_id': 37669901, 'intime': '2117-03-27 08:13:10', 'outtime': '2117-04-04 11:44:19', 'details': {'pao2_fio2': np.float32(160.0), 'on_ventilator': np.True_, 'platelets': np.float64(146.0), 'bilirubin': np.float64(2.3), 'min_map': np.float32(54.0), 'vasopressors': {221906: 0.05002103
+2026-03-26 14:06:53  INFO      === Iteration 23/100  run=sepsis3  best_qa=0.0% ===
+2026-03-26 14:07:10  INFO      Exec block 1/1 …
+2026-03-26 14:07:10  INFO      Output: "Functions from 'first_day_sofa' loaded successfully."
+
+2026-03-26 14:07:10  INFO      === Iteration 24/100  run=sepsis3  best_qa=0.0% ===
+2026-03-26 14:07:25  INFO      Exec block 1/1 …
+2026-03-26 14:07:25  INFO      Output:        spec_type_desc  chartdate           charttime
+0     CATHETER TIP-IV 2117-03-22 2117-03-22 01:51:00
+1   Staph aureus swab 2117-03-25 2117-03-25 12:32:00
+2               URINE 2117-03-25 2117-03-25 13:00:00
+3       BLOOD CULTURE 2117-03-29 2117-03-29 10:36:00
+4       BLOOD CULTURE 2117-03-29 2117-03-29 10:56:00
+5               URINE 2117-03-29 2117-03-29 10:57:00
+6       BLOOD CULTURE 2117-04-01 2117-04-01 10:38:00
+7       BLOOD CULTURE 2117-04-01 2117-04-01 10:38:00
+8               URINE 2
+2026-03-26 14:07:25  INFO      === Iteration 25/100  run=sepsis3  best_qa=0.0% ===
+2026-03-26 14:07:40  INFO      Exec block 1/1 …
+2026-03-26 14:07:40  INFO      Output: {'stay_id': 37669901, 'subject_id': np.int32(10639500), 'hadm_id': np.int32(28568915), 'intime': '2117-03-27 08:13:10', 'first_day_end': '2117-03-28 08:13:10', 'respiration_score': 4, 'coagulation_score': 0, 'liver_score': 0, 'cardiovascular_score': 3, 'brain_score': 4, 'kidney_score': 1, 'total_sofa_score': 12, 'respiration_data': {'pao2_values': [283.0, 421.0, 457.0, 423.0, 400.0, 179.0, 171.0, 209.0, 200.0, 160.0, 41.0, 166.0, 144.0, 36.0], 'fio2_values': [50.0, 50.0, 50.0, 100.0, 50.0, 50.0,
+2026-03-26 14:07:40  INFO      === Iteration 26/100  run=sepsis3  best_qa=0.0% ===
+2026-03-26 14:07:57  INFO      Exec block 1/1 …
+2026-03-26 14:07:57  INFO      Output:    labevent_id  subject_id  hadm_id  specimen_id  itemid order_provider_id           charttime           storetime value  valuenum valueuom  ref_range_lower  ref_range_upper  flag priority                                                                                                           comments
+0            1    10000032     <NA>      2704548   50931            P69FQC 2180-03-23 11:51:00 2180-03-23 15:56:00   ___      95.0    mg/dL             70.0            100.0  None  ROUTINE        
+2026-03-26 14:07:57  INFO      === Iteration 27/100  run=sepsis3  best_qa=0.0% ===
+2026-03-26 14:08:16  INFO      Exec block 1/1 …
+2026-03-26 14:08:16  INFO      Output: Error:
+Traceback (most recent call last):
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 643, in execute
+    _run_with_timeout(_do_execute, timeout)
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 174, in _run_with_timeout
+    raise error[0]
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 156, in target
+    result[0] = func(*args, **kwargs)
+                ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/v-tiossowsk
+2026-03-26 14:08:16  INFO      === Iteration 28/100  run=sepsis3  best_qa=0.0% ===
+2026-03-26 14:08:23  INFO      Exec block 1/1 …
+2026-03-26 14:08:23  INFO      Output:    itemid                                label  fluid   category
+0   50801           Alveolar-arterial Gradient  Blood  Blood Gas
+1   50802                          Base Excess  Blood  Blood Gas
+2   50803  Calculated Bicarbonate, Whole Blood  Blood  Blood Gas
+3   50804                 Calculated Total CO2  Blood  Blood Gas
+4   50805                    Carboxyhemoglobin  Blood  Blood Gas
+
+2026-03-26 14:08:23  INFO      === Iteration 29/100  run=sepsis3  best_qa=0.0% ===
+2026-03-26 14:08:35  INFO      Exec block 1/1 …
+2026-03-26 14:08:35  INFO      Output: Error:
+Traceback (most recent call last):
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 643, in execute
+    _run_with_timeout(_do_execute, timeout)
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 174, in _run_with_timeout
+    raise error[0]
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 156, in target
+    result[0] = func(*args, **kwargs)
+                ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/v-tiossowsk
+2026-03-26 14:08:35  INFO      === Iteration 30/100  run=sepsis3  best_qa=0.0% ===
+2026-03-26 14:08:42  INFO      Exec block 1/1 …
+2026-03-26 14:08:42  INFO      Output:    itemid                    label        abbreviation         linksto             category unitname     param_type  lownormalvalue  highnormalvalue
+0  220001             Problem List        Problem List     chartevents              General      NaN           Text             NaN              NaN
+1  220003       ICU Admission date  ICU Admission date  datetimeevents                  ADT      NaN  Date and time             NaN              NaN
+2  220045               Heart Rate                  H
+2026-03-26 14:08:42  INFO      === Iteration 31/100  run=sepsis3  best_qa=0.0% ===
+2026-03-26 14:08:59  INFO      Exec block 1/1 …
+2026-03-26 14:08:59  INFO      Output: Error:
+Traceback (most recent call last):
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 643, in execute
+    _run_with_timeout(_do_execute, timeout)
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 174, in _run_with_timeout
+    raise error[0]
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 156, in target
+    result[0] = func(*args, **kwargs)
+                ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/v-tiossowsk
+2026-03-26 14:08:59  INFO      === Iteration 32/100  run=sepsis3  best_qa=0.0% ===
+2026-03-26 14:09:15  INFO      Exec block 1/1 …
+2026-03-26 14:09:15  INFO      Output: ['first_day_sofa', 'sofa']
+
+2026-03-26 14:09:15  INFO      === Iteration 33/100  run=sepsis3  best_qa=0.0% ===
+2026-03-26 14:09:34  INFO      Exec block 1/1 …
+2026-03-26 14:09:34  INFO      Output:    subject_id   hadm_id spec_type_desc  chartdate           charttime   stay_id              intime             outtime
+0    10639500  28568915          URINE 2117-03-25 2117-03-25 13:00:00  37669901 2117-03-27 08:13:10 2117-04-04 11:44:19
+1    10639500  28568915          URINE 2117-03-25 2117-03-25 13:00:00  31916205 2117-03-21 13:00:08 2117-03-27 07:31:57
+2    10639500  28568915  BLOOD CULTURE 2117-03-29 2117-03-29 10:36:00  37669901 2117-03-27 08:13:10 2117-04-04 11:44:19
+3    10639500  28568
+2026-03-26 14:09:34  INFO      === Iteration 34/100  run=sepsis3  best_qa=0.0% ===
+2026-03-26 14:09:57  INFO      Exec block 1/1 …
+2026-03-26 14:09:57  INFO      Output: Error:
+Traceback (most recent call last):
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 643, in execute
+    _run_with_timeout(_do_execute, timeout)
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 174, in _run_with_timeout
+    raise error[0]
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 156, in target
+    result[0] = func(*args, **kwargs)
+                ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/v-tiossowsk
+2026-03-26 14:09:57  INFO      === Iteration 35/100  run=sepsis3  best_qa=0.0% ===
+2026-03-26 14:10:12  INFO      Exec block 1/1 …
+2026-03-26 14:10:12  INFO      Output: Error:
+Traceback (most recent call last):
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 643, in execute
+    _run_with_timeout(_do_execute, timeout)
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 174, in _run_with_timeout
+    raise error[0]
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 156, in target
+    result[0] = func(*args, **kwargs)
+                ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/v-tiossowsk
+2026-03-26 14:10:12  INFO      === Iteration 36/100  run=sepsis3  best_qa=0.0% ===
+2026-03-26 14:10:23  INFO      Exec block 1/1 …
+2026-03-26 14:10:23  INFO      Output:    chartdate           charttime typeof(m.chartdate) typeof(m.charttime)
+0 2117-03-22 2117-03-22 01:51:00           TIMESTAMP           TIMESTAMP
+1 2117-03-25 2117-03-25 12:32:00           TIMESTAMP           TIMESTAMP
+2 2117-03-25 2117-03-25 13:00:00           TIMESTAMP           TIMESTAMP
+
+2026-03-26 14:10:23  INFO      === Iteration 37/100  run=sepsis3  best_qa=0.0% ===
+2026-03-26 14:10:38  INFO      Exec block 1/1 …
+2026-03-26 14:10:38  INFO      Output:    subject_id   hadm_id spec_type_desc culture_time   stay_id              intime             outtime
+0    10639500  28568915          URINE   2117-03-25  31916205 2117-03-21 13:00:08 2117-03-27 07:31:57
+1    10639500  28568915  BLOOD CULTURE   2117-03-29  37669901 2117-03-27 08:13:10 2117-04-04 11:44:19
+2    10639500  28568915          URINE   2117-03-29  37669901 2117-03-27 08:13:10 2117-04-04 11:44:19
+3    10639500  28568915  BLOOD CULTURE   2117-03-29  37669901 2117-03-27 08:13:10 2117-04-04
+2026-03-26 14:10:38  INFO      === Iteration 38/100  run=sepsis3  best_qa=0.0% ===
+2026-03-26 14:11:01  INFO      Exec block 1/1 …
+2026-03-26 14:11:01  INFO      Output:    itemid           charttime  valuenum             label
+0   51265 2117-03-19 20:34:00     227.0    Platelet Count
+1   50912 2117-03-19 20:34:00       1.5        Creatinine
+2   50885 2117-03-19 20:34:00       0.7  Bilirubin, Total
+3   50912 2117-03-20 11:10:00       1.3        Creatinine
+4   51265 2117-03-20 11:10:00     234.0    Platelet Count
+5   50912 2117-03-21 05:30:00       1.4        Creatinine
+6   51265 2117-03-21 05:30:00     215.0    Platelet Count
+7   50912 2117-03-21 15:19:00       
+2026-03-26 14:11:01  INFO      === Iteration 39/100  run=sepsis3  best_qa=0.0% ===
+2026-03-26 14:11:22  INFO      Exec block 1/1 …
+2026-03-26 14:11:22  INFO      Output:    itemid           charttime  valuenum              label
+0   50817 2117-03-21 17:11:00      56.0  Oxygen Saturation
+1   50817 2117-03-21 23:46:00      65.0  Oxygen Saturation
+2   50817 2117-03-22 05:14:00      60.0  Oxygen Saturation
+3   50817 2117-03-22 11:44:00      64.0  Oxygen Saturation
+4   50817 2117-03-22 22:36:00      64.0  Oxygen Saturation
+5   50817 2117-03-23 06:08:00      64.0  Oxygen Saturation
+6   50817 2117-03-23 11:22:00      59.0  Oxygen Saturation
+7   50817 2117-03-23 15:46:0
+2026-03-26 14:11:22  INFO      === Iteration 40/100  run=sepsis3  best_qa=0.0% ===
+2026-03-26 14:11:35  INFO      Exec block 1/1 …
+2026-03-26 14:11:35  INFO      Output: Empty DataFrame
+Columns: [itemid, charttime, valuenum, label]
+Index: []
+
+2026-03-26 14:11:35  INFO      === Iteration 41/100  run=sepsis3  best_qa=0.0% ===
+2026-03-26 14:11:45  INFO      Exec block 1/1 …
+2026-03-26 14:11:45  INFO      Output:    itemid                        label                 abbreviation
+0  226754            FiO2ApacheIIValue            FiO2ApacheIIValue
+1  227009            FiO2_ApacheIV_old            FiO2_ApacheIV_old
+2  227010                FiO2_ApacheIV                FiO2_ApacheIV
+3  229238               FiO2 Challenge               FiO2 Challenge
+4  229239        FiO2 Challenge Result        FiO2 Challenge Result
+5  229280                  FiO2 (ECMO)                  FiO2 (ECMO)
+6  229786  Preoxygenatio
+2026-03-26 14:11:45  INFO      === Iteration 42/100  run=sepsis3  best_qa=0.0% ===
+2026-03-26 14:11:56  INFO      Exec block 1/1 …
+2026-03-26 14:11:56  INFO      Output:    itemid                        label                 abbreviation
+0  226754            FiO2ApacheIIValue            FiO2ApacheIIValue
+1  227009            FiO2_ApacheIV_old            FiO2_ApacheIV_old
+2  227010                FiO2_ApacheIV                FiO2_ApacheIV
+3  229238               FiO2 Challenge               FiO2 Challenge
+4  229239        FiO2 Challenge Result        FiO2 Challenge Result
+5  229280                  FiO2 (ECMO)                  FiO2 (ECMO)
+6  229786  Preoxygenatio
+2026-03-26 14:11:56  INFO      === Iteration 43/100  run=sepsis3  best_qa=0.0% ===
+2026-03-26 14:12:06  INFO      Exec block 1/1 …
+2026-03-26 14:12:06  INFO      Output:     itemid                                                 label                       abbreviation
+0   220224                                  Arterial O2 pressure                     PO2 (Arterial)
+1   220339                                              PEEP set                           PEEP set
+2   220971  ESDEP (Solvent / Detergent Virus-Inactivated Plasma)                              ESDEP
+3   224700                                      Total PEEP Level                   Total PEEP Level
+
+2026-03-26 14:12:06  INFO      === Iteration 44/100  run=sepsis3  best_qa=0.0% ===
+2026-03-26 14:12:27  INFO      Exec block 1/1 …
+2026-03-26 14:12:27  INFO      Output:     stay_id  subject_id   hadm_id              intime             outtime
+0  37471848    12089662  23182270 2167-08-26 05:35:00 2167-09-02 23:40:22
+1  30660056    12095158  26561933 2189-10-10 19:45:28 2189-10-12 00:32:22
+2  30966963    12099971  25340006 2149-07-23 01:03:00 2149-07-27 15:20:54
+3  36021662    12104194  25746710 2146-08-10 18:52:26 2146-08-18 10:33:25
+4  35992413    12109177  20376837 2183-02-17 09:35:00 2183-02-20 15:37:16
+5  32001785    12118241  23078710 2123-10-28 18:58:45 21
+2026-03-26 14:12:27  INFO      === Iteration 45/100  run=sepsis3  best_qa=0.0% ===
+2026-03-26 14:12:44  INFO      Exec block 1/1 …
+2026-03-26 14:12:44  INFO      Output: {'has_suspicion_of_infection': True, 'culture_orders':     subject_id   hadm_id  ...          icu_intime         icu_outtime
+0     12089662  23182270  ... 2167-08-26 05:35:00 2167-09-02 23:40:22
+1     12089662  23182270  ... 2167-08-26 05:35:00 2167-09-02 23:40:22
+2     12089662  23182270  ... 2167-08-26 05:35:00 2167-09-02 23:40:22
+3     12089662  23182270  ... 2167-08-26 05:35:00 2167-09-02 23:40:22
+4     12089662  23182270  ... 2167-08-26 05:35:00 2167-09-02 23:40:22
+5     12089662  23182270 
+2026-03-26 14:12:44  INFO      === Iteration 46/100  run=sepsis3  best_qa=0.0% ===
+2026-03-26 14:12:44  INFO      Context approaching limit (20865 tokens, limit=25000) — forcing summarize + compress
+2026-03-26 14:14:41  INFO      Context compressed: 92 messages -> 2 messages
+2026-03-26 14:14:56  INFO      Exec block 1/1 …
+2026-03-26 14:14:56  INFO      Output: ['sepsis_guideline']
+
+2026-03-26 14:14:56  INFO      === Iteration 47/100  run=sepsis3  best_qa=0.0% ===
+2026-03-26 14:14:59  INFO      Exec block 1/1 …
+2026-03-26 14:14:59  INFO      Output: '# Sepsis — Clinical Guideline\n# Generated by generate_guidelines.py\n# Source articles: 10 (PMID38245889, PMID26903336, PMID26903335, PMID34612847, PMID38245897...)\n############################################################\n\n# Clinical Guideline: Sepsis — Identification, Scoring, and Classification\n\n**Scope:** This guideline covers adults (≥ 18 years) under the Sepsis-3 framework and children (< 18 years) under the 2024 Phoenix Sepsis criteria, based solely on the information provided i
+2026-03-26 14:14:59  INFO      === Iteration 48/100  run=sepsis3  best_qa=0.0% ===
+2026-03-26 14:15:09  INFO      Exec block 1/1 …
+2026-03-26 14:15:09  INFO      Output: "(no saved function found for 'has_cardiac_surgery')"
+
+2026-03-26 14:15:09  INFO      === Iteration 49/100  run=sepsis3  best_qa=0.0% ===
+2026-03-26 14:15:13  INFO      Exec block 1/1 …
+2026-03-26 14:15:13  INFO      Output: []
+
+2026-03-26 14:15:13  INFO      === Iteration 50/100  run=sepsis3  best_qa=0.0% ===
+2026-03-26 14:15:16  INFO      Exec block 1/1 …
+2026-03-26 14:15:16  INFO      Output: ['acei', 'age', 'aki', 'antibiotic', 'apsiii', 'arb', 'bg', 'blood_differential', 'cardiac_marker', 'charlson', 'chemistry', 'coagulation', 'code_status', 'complete_blood_count', 'creatinine_baseline', 'crrt', 'dobutamine', 'dopamine', 'enzyme', 'epinephrine', '... (42 more; pass a keyword to filter)']
+
+2026-03-26 14:15:16  INFO      === Iteration 51/100  run=sepsis3  best_qa=0.0% ===
+2026-03-26 14:15:21  INFO      Exec block 1/1 …
+2026-03-26 14:15:21  INFO      Output: ['suspicion_of_infection']
+
+2026-03-26 14:15:21  INFO      === Iteration 52/100  run=sepsis3  best_qa=0.0% ===
+2026-03-26 14:15:25  INFO      Exec block 1/1 …
+2026-03-26 14:15:25  INFO      Output: "Functions from 'suspicion_of_infection' loaded successfully."
+
+2026-03-26 14:15:25  INFO      === Iteration 53/100  run=sepsis3  best_qa=0.0% ===
+2026-03-26 14:15:33  INFO      Exec block 1/1 …
+2026-03-26 14:15:33  INFO      Output:    itemid                           label                fluid   category
+0   51795      Lactate Dehydrogenase, CSF  Cerebrospinal Fluid  Chemistry
+1   50843  Lactate Dehydrogenase, Ascites              Ascites  Chemistry
+2   50954      Lactate Dehydrogenase (LD)                Blood  Chemistry
+3   52442                         Lactate                Blood  Blood Gas
+4   51944    Lactate Dehydrogenase, Stool                Stool  Chemistry
+5   53154                         Lactate               
+2026-03-26 14:15:33  INFO      === Iteration 54/100  run=sepsis3  best_qa=0.0% ===
+2026-03-26 14:15:41  INFO      Exec block 1/1 …
+2026-03-26 14:15:41  INFO      Output:    itemid                          label                   abbreviation     category
+0  221662                       Dopamine                       Dopamine  Medications
+1  222315                    Vasopressin                    Vasopressin  Medications
+2  221906                 Norepinephrine                 Norepinephrine  Medications
+3  229632        Phenylephrine (200/250)        Phenylephrine (200/250)  Medications
+4  221749                  Phenylephrine                  Phenylephrine  Me
+2026-03-26 14:15:41  INFO      === Iteration 55/100  run=sepsis3  best_qa=0.0% ===
+2026-03-26 14:15:51  INFO      Exec block 1/1 …
+2026-03-26 14:15:51  INFO      Output:    itemid                   label            abbreviation                category
+0  226766        MapApacheIIValue        MapApacheIIValue      Scores - APACHE II
+1  227023            MAP_ApacheIV            MAP_ApacheIV  Scores - APACHE IV (2)
+2  226775     SodiumApacheIIScore     SodiumApacheIIScore      Scores - APACHE II
+3  226771  PotassiumApacheIIScore  PotassiumApacheIIScore      Scores - APACHE II
+4  226772  PotassiumApacheIIValue  PotassiumApacheIIValue      Scores - APACHE II
+5  22676
+2026-03-26 14:15:51  INFO      === Iteration 56/100  run=sepsis3  best_qa=0.0% ===
+2026-03-26 14:15:57  INFO      Exec block 1/1 …
+2026-03-26 14:15:57  INFO      Output:     itemid                                     label         abbreviation             category
+0   220180     Non Invasive Blood Pressure diastolic                 NBPd  Routine Vital Signs
+1   223751  Non-Invasive Blood Pressure Alarm - High     NBP Alarm - High               Alarms
+2   223752   Non-Invasive Blood Pressure Alarm - Low      NBP Alarm - Low               Alarms
+3   227242     Manual Blood Pressure Diastolic Right         Manual BPd R  Routine Vital Signs
+4   220181          Non I
+2026-03-26 14:15:57  INFO      === Iteration 57/100  run=sepsis3  best_qa=0.0% ===
+2026-03-26 14:16:09  INFO      Exec block 1/1 …
+2026-03-26 14:16:09  INFO      Output: 'def get_antibiotic_info(stay_id, hadm_id, subject_id):\n    """\n    Extract antibiotic administration information for a patient.\n\n    Parameters\n    ----------\n    stay_id : int, optional\n        ICU stay identifier. If provided, returns ICU-specific antibiotic data.\n    hadm_id : int, optional\n        Hospital admission identifier. If provided, returns hospital-wide antibiotic data.\n    subject_id : int, optional\n        Patient identifier. If provided with hadm_id, filters to that a
+2026-03-26 14:16:09  INFO      === Iteration 58/100  run=sepsis3  best_qa=0.0% ===
+2026-03-26 14:16:14  INFO      Exec block 1/1 …
+2026-03-26 14:16:14  INFO      Output: ['first_day_sofa', 'sofa']
+
+2026-03-26 14:16:14  INFO      === Iteration 59/100  run=sepsis3  best_qa=0.0% ===
+2026-03-26 14:16:19  INFO      Exec block 1/1 …
+2026-03-26 14:16:19  INFO      Output: 'def first_day_sofa(stay_id):\n    """\n    Calculate the SOFA (Sequential Organ Failure Assessment) score for the first day of an ICU stay.\n\n    Parameters\n    ----------\n    stay_id : int\n        The ICU stay identifier.\n\n    Returns\n    -------\n    dict\n        A dictionary containing SOFA scores for each organ system and total score.\n    """'
+
+2026-03-26 14:16:19  INFO      === Iteration 60/100  run=sepsis3  best_qa=0.0% ===
+2026-03-26 14:16:33  INFO      Exec block 1/1 …
+2026-03-26 14:16:33  INFO      Output: Error:
+Traceback (most recent call last):
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 643, in execute
+    _run_with_timeout(_do_execute, timeout)
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 174, in _run_with_timeout
+    raise error[0]
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 156, in target
+    result[0] = func(*args, **kwargs)
+                ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/v-tiossowsk
+2026-03-26 14:16:33  INFO      === Iteration 61/100  run=sepsis3  best_qa=0.0% ===
+2026-03-26 14:16:37  INFO      Exec block 1/1 …
+2026-03-26 14:16:37  INFO      Output: "Functions from 'sofa' loaded successfully."
+
+2026-03-26 14:16:37  INFO      === Iteration 62/100  run=sepsis3  best_qa=0.0% ===
+2026-03-26 14:16:45  INFO      Exec block 1/1 …
+2026-03-26 14:16:45  INFO      Output: Error:
+Traceback (most recent call last):
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 643, in execute
+    _run_with_timeout(_do_execute, timeout)
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 174, in _run_with_timeout
+    raise error[0]
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 156, in target
+    result[0] = func(*args, **kwargs)
+                ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/v-tiossowsk
+2026-03-26 14:16:45  INFO      === Iteration 63/100  run=sepsis3  best_qa=0.0% ===
+2026-03-26 14:16:50  INFO      Exec block 1/1 …
+2026-03-26 14:16:50  INFO      Output: ['Any', 'CARDIAC_SURGERY_ICD_CODES', 'DB_PATH', 'Dict', 'FINAL_FUNCTION', 'HADM_ID', 'List', 'Optional', 'PROPHYLAXIS_ANTIBIOTICS', 'SCREENING_CULTURES', 'SUBJECT_ID', 'Tuple', '_CUTOFF_DATE', '__builtins__', 'compute_sofa_score', 'datetime', 'duckdb', 'first_day_sofa', 'get_antibiotic_info', 'get_function_info', 'get_guideline', 'get_suspicion_of_infection', 'has_cardiac_surgery', 'inspect', 'load_function', 'np', 'pd', 'query_db', 'search_functions', 'search_guidelines', 'sys', 'timedelta']
+
+2026-03-26 14:16:50  INFO      === Iteration 64/100  run=sepsis3  best_qa=0.0% ===
+2026-03-26 14:16:59  INFO      Exec block 1/1 …
+2026-03-26 14:17:00  INFO      Output: SOFA result: {'total_score': 14, 'respiration_score': 3, 'coagulation_score': 1, 'liver_score': 2, 'cardiovascular_score': 3, 'brain_score': 4, 'kidney_score': 1, 'subject_id': np.int32(10639500), 'hadm_id': np.int32(28568915), 'stay_id': 37669901, 'intime': '2117-03-27 08:13:10', 'outtime': '2117-04-04 11:44:19', 'details': {'pao2_fio2': np.float32(160.0), 'on_ventilator': np.True_, 'platelets': np.float64(146.0), 'bilirubin': np.float64(2.3), 'min_map': np.float32(54.0), 'vasopressors': {22190
+2026-03-26 14:17:00  INFO      === Iteration 65/100  run=sepsis3  best_qa=0.0% ===
+2026-03-26 14:17:15  INFO      Exec block 1/1 …
+2026-03-26 14:17:15  INFO      Output:              charttime  valuenum valueuom
+0  2117-03-20 11:34:00       2.0   mmol/L
+1  2117-03-25 05:19:00       1.2   mmol/L
+2  2117-03-27 08:19:00       2.2   mmol/L
+3  2117-03-27 11:15:00       5.3   mmol/L
+4  2117-03-27 13:51:00       3.7   mmol/L
+5  2117-03-27 14:58:00       4.4   mmol/L
+6  2117-03-27 17:16:00       4.7   mmol/L
+7  2117-03-27 18:52:00       4.1   mmol/L
+8  2117-03-27 20:55:00       3.7   mmol/L
+9  2117-03-28 00:42:00       2.5   mmol/L
+10 2117-03-28 04:25:00       2.7   mmo
+2026-03-26 14:17:15  INFO      === Iteration 66/100  run=sepsis3  best_qa=0.0% ===
+2026-03-26 14:17:33  INFO      Exec block 1/1 …
+2026-03-26 14:17:33  INFO      Output:    subject_id   hadm_id           admittime           dischtime
+0    10639500  28568915 2117-03-19 16:38:00 2117-04-22 15:10:00
+
+2026-03-26 14:17:33  INFO      === Iteration 67/100  run=sepsis3  best_qa=0.0% ===
+2026-03-26 14:17:51  INFO      Exec block 1/1 …
+2026-03-26 14:17:51  INFO      Output: 'def creatinine_baseline(stay_id):\n    """\n    Calculate baseline serum creatinine for a patient\'s ICU stay.\n\n    Baseline creatinine is determined as:\n    1. Lowest creatinine value during current hospital admission BEFORE ICU admission\n    2. If none, first creatinine value during ICU stay\n    3. If none, lowest creatinine value in 3 months prior to ICU admission (excluding current admission)\n\n    Parameters\n    ----------\n    stay_id : int\n        The ICU stay identifier.\n\n    
+2026-03-26 14:17:51  INFO      === Iteration 68/100  run=sepsis3  best_qa=0.0% ===
+2026-03-26 14:18:10  INFO      Exec block 1/1 …
+2026-03-26 14:18:10  INFO      Output:     itemid           label           starttime     amount      rate     rateuom
+0   221289     Epinephrine 2117-03-27 12:12:00   0.509804  0.080393  mcg/kg/min
+1   221906  Norepinephrine 2117-03-27 12:12:00   0.078049  0.030000  mcg/kg/min
+2   222315     Vasopressin 2117-03-27 12:12:00   2.880000  2.400000  units/hour
+3   221906  Norepinephrine 2117-03-27 12:28:00   0.065067  0.050021  mcg/kg/min
+4   221289     Epinephrine 2117-03-27 12:51:00   0.254902  0.060295  mcg/kg/min
+5   221289     Epine
+2026-03-26 14:18:10  INFO      === Iteration 69/100  run=sepsis3  best_qa=0.0% ===
+2026-03-26 14:19:15  INFO      Exec block 1/1 …
+2026-03-26 14:19:16  INFO      Output: Sepsis3 result for stay 37669901:
+  Has suspicion of infection: True
+  Baseline SOFA: 12
+  Worst SOFA: 14
+  SOFA delta: 2
+  Has sepsis: True
+  Has vasopressors: True
+  Max lactate: 5.3
+  Has septic shock: True
+
+2026-03-26 14:19:16  INFO      === Iteration 70/100  run=sepsis3  best_qa=0.0% ===
+2026-03-26 14:19:29  INFO      Exec block 1/1 …
+2026-03-26 14:19:30  INFO      Output: Sepsis3 result for stay 39553978:
+  Has suspicion of infection: False
+  Baseline SOFA: 7
+  Worst SOFA: 1
+  SOFA delta: -6
+  Has sepsis: False
+  Has septic shock: False
+
+2026-03-26 14:19:30  INFO      === Iteration 71/100  run=sepsis3  best_qa=0.0% ===
+2026-03-26 14:19:51  INFO      Exec block 1/1 …
+2026-03-26 14:19:52  INFO      Output: Sepsis3 result for stay 37471848:
+  Has suspicion of infection: True
+  Baseline SOFA: 13
+  Worst SOFA: 12
+  SOFA delta: -1
+  Has sepsis: False
+  Has vasopressors: False
+  Max lactate: None
+  Has septic shock: False
+
+2026-03-26 14:19:52  INFO      === Iteration 72/100  run=sepsis3  best_qa=0.0% ===
+2026-03-26 14:20:12  INFO      Exec block 1/1 …
+2026-03-26 14:20:12  INFO      Output:              charttime  valuenum valueuom
+0  2117-03-20 11:34:00       2.0   mmol/L
+1  2117-03-25 05:19:00       1.2   mmol/L
+2  2117-03-27 08:19:00       2.2   mmol/L
+3  2117-03-27 11:15:00       5.3   mmol/L
+4  2117-03-27 13:51:00       3.7   mmol/L
+5  2117-03-27 14:58:00       4.4   mmol/L
+6  2117-03-27 17:16:00       4.7   mmol/L
+7  2117-03-27 18:52:00       4.1   mmol/L
+8  2117-03-27 20:55:00       3.7   mmol/L
+9  2117-03-28 00:42:00       2.5   mmol/L
+10 2117-03-28 04:25:00       2.7   mmo
+2026-03-26 14:20:12  INFO      === Iteration 73/100  run=sepsis3  best_qa=0.0% ===
+2026-03-26 14:20:27  INFO      Exec block 1/1 …
+2026-03-26 14:20:28  INFO      Output: Test with just stay_id:
+  Subject ID: 10639500
+  HADM ID: 28568915
+  Has sepsis: True
+  Has septic shock: True
+
+2026-03-26 14:20:28  INFO      === Iteration 74/100  run=sepsis3  best_qa=0.0% ===
+2026-03-26 14:20:39  INFO      Exec block 1/1 …
+2026-03-26 14:20:39  INFO      Output:     stay_id  subject_id   hadm_id
+0  39553978    10000032  29079034
+1  37202383    10639500  20794194
+2  33048944    10639500  24104993
+3  34448396    10639500  24163248
+4  31643878    10639500  26565321
+
+2026-03-26 14:20:39  INFO      === Iteration 75/100  run=sepsis3  best_qa=0.0% ===
+2026-03-26 14:20:52  INFO      Exec block 1/1 …
+2026-03-26 14:20:53  INFO      Output: Sepsis3 result for stay 37202383:
+  Has suspicion of infection: False
+  Baseline SOFA: 3
+  Worst SOFA: 3
+  SOFA delta: 0
+  Has sepsis: False
+  Has septic shock: False
+
+2026-03-26 14:20:53  INFO      === Iteration 76/100  run=sepsis3  best_qa=0.0% ===
+2026-03-26 14:21:54  INFO      Exec block 1/1 …
+2026-03-26 14:21:54  INFO      Output: Code executed successfully (no output).
+2026-03-26 14:21:54  INFO      Debug conversations will be saved to debug_logs
+2026-03-26 14:21:54  INFO      Using question from dataset column: Does this patient meet Sepsis-3 criteria (suspected infection + SOFA ≥ 2) during their ICU stay?
+2026-03-26 14:21:54  INFO      Answer type for 'sepsis3': numerical (per_row=True)
+2026-03-26 14:21:54  INFO      ReACT iteration 1/5 — 20 active patients
+Rendering conversations:   0%|          | 0/20 [00:00<?, ?it/s]Rendering conversations: 100%|██████████| 20/20 [00:00<00:00, 494.33it/s]
+Processed prompts:   0%|          | 0/20 [00:00<?, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s]Processed prompts:   5%|▌         | 1/20 [00:11<03:36, 11.42s/it, est. speed input: 69.02 toks/s, output: 14.28 toks/s]Processed prompts:  10%|█         | 2/20 [00:12<01:39,  5.51s/it, est. speed input: 124.44 toks/s, output: 27.77 toks/s]Processed prompts:  15%|█▌        | 3/20 [00:13<00:53,  3.14s/it, est. speed input: 182.70 toks/s, output: 42.36 toks/s]Processed prompts:  40%|████      | 8/20 [00:13<00:09,  1.22it/s, est. speed input: 467.88 toks/s, output: 114.99 toks/s]Processed prompts:  45%|████▌     | 9/20 [00:13<00:07,  1.44it/s, est. speed input: 520.83 toks/s, output: 129.63 toks/s]Processed prompts:  60%|██████    | 12/20 [00:13<00:03,  2.36it/s, est. speed input: 683.33 toks/s, output: 174.55 toks/s]Processed prompts:  65%|██████▌   | 13/20 [00:14<00:02,  2.69it/s, est. speed input: 733.92 toks/s, output: 188.94 toks/s]Processed prompts:  75%|███████▌  | 15/20 [00:16<00:03,  1.55it/s, est. speed input: 723.93 toks/s, output: 192.20 toks/s]Processed prompts:  90%|█████████ | 18/20 [00:16<00:00,  2.47it/s, est. speed input: 859.88 toks/s, output: 241.44 toks/s]Processed prompts: 100%|██████████| 20/20 [00:16<00:00,  3.27it/s, est. speed input: 947.93 toks/s, output: 274.52 toks/s]Processed prompts: 100%|██████████| 20/20 [00:16<00:00,  3.27it/s, est. speed input: 947.93 toks/s, output: 274.52 toks/s]Processed prompts: 100%|██████████| 20/20 [00:16<00:00,  1.19it/s, est. speed input: 947.93 toks/s, output: 274.52 toks/s]
+2026-03-26 14:22:11  INFO      ReACT iteration 2/5 — 20 active patients
+Rendering conversations:   0%|          | 0/20 [00:00<?, ?it/s]Rendering conversations: 100%|██████████| 20/20 [00:00<00:00, 392.35it/s]
+Processed prompts:   0%|          | 0/20 [00:00<?, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s]Processed prompts:   5%|▌         | 1/20 [00:09<03:01,  9.57s/it, est. speed input: 120.95 toks/s, output: 8.67 toks/s]Processed prompts:  10%|█         | 2/20 [00:09<01:12,  4.02s/it, est. speed input: 238.69 toks/s, output: 17.40 toks/s]Processed prompts:  25%|██▌       | 5/20 [00:09<00:17,  1.18s/it, est. speed input: 589.73 toks/s, output: 43.76 toks/s]Processed prompts:  40%|████      | 8/20 [00:10<00:07,  1.64it/s, est. speed input: 928.20 toks/s, output: 69.87 toks/s]Processed prompts:  50%|█████     | 10/20 [00:10<00:04,  2.31it/s, est. speed input: 1147.76 toks/s, output: 87.93 toks/s]Processed prompts:  60%|██████    | 12/20 [00:10<00:02,  3.18it/s, est. speed input: 1359.83 toks/s, output: 105.76 toks/s]Processed prompts:  85%|████████▌ | 17/20 [00:10<00:00,  6.08it/s, est. speed input: 1900.76 toks/s, output: 152.38 toks/s]Processed prompts: 100%|██████████| 20/20 [00:10<00:00,  8.01it/s, est. speed input: 2212.08 toks/s, output: 180.52 toks/s]Processed prompts: 100%|██████████| 20/20 [00:10<00:00,  8.01it/s, est. speed input: 2212.08 toks/s, output: 180.52 toks/s]Processed prompts: 100%|██████████| 20/20 [00:10<00:00,  1.90it/s, est. speed input: 2212.08 toks/s, output: 180.52 toks/s]
+2026-03-26 14:22:22  INFO      ReACT iteration 3/5 — 20 active patients
+Rendering conversations:   0%|          | 0/20 [00:00<?, ?it/s]Rendering conversations: 100%|██████████| 20/20 [00:00<00:00, 351.57it/s]
+Processed prompts:   0%|          | 0/20 [00:00<?, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s]Processed prompts:   5%|▌         | 1/20 [00:09<03:08,  9.90s/it, est. speed input: 125.72 toks/s, output: 7.98 toks/s]Processed prompts:  15%|█▌        | 3/20 [00:10<00:45,  2.68s/it, est. speed input: 375.71 toks/s, output: 24.28 toks/s]Processed prompts:  30%|███       | 6/20 [00:10<00:15,  1.07s/it, est. speed input: 730.07 toks/s, output: 49.56 toks/s]Processed prompts:  45%|████▌     | 9/20 [00:10<00:06,  1.69it/s, est. speed input: 1079.10 toks/s, output: 75.58 toks/s]Processed prompts:  60%|██████    | 12/20 [00:10<00:03,  2.58it/s, est. speed input: 1402.46 toks/s, output: 100.96 toks/s]Processed prompts:  70%|███████   | 14/20 [00:12<00:02,  2.21it/s, est. speed input: 1467.59 toks/s, output: 112.01 toks/s]Processed prompts:  75%|███████▌  | 15/20 [00:12<00:02,  2.48it/s, est. speed input: 1550.22 toks/s, output: 121.64 toks/s]Processed prompts:  80%|████████  | 16/20 [00:12<00:01,  2.24it/s, est. speed input: 1571.05 toks/s, output: 127.41 toks/s]Processed prompts:  85%|████████▌ | 17/20 [00:13<00:01,  1.78it/s, est. speed input: 1549.29 toks/s, output: 131.00 toks/s]Processed prompts:  90%|█████████ | 18/20 [00:15<00:01,  1.36it/s, est. speed input: 1500.25 toks/s, output: 133.81 toks/s]Processed prompts:  95%|█████████▌| 19/20 [00:20<00:01,  1.86s/it, est. speed input: 1179.24 toks/s, output: 116.63 toks/s]Processed prompts: 100%|██████████| 20/20 [00:20<00:00,  1.42s/it, est. speed input: 1229.69 toks/s, output: 132.94 toks/s]Processed prompts: 100%|██████████| 20/20 [00:20<00:00,  1.42s/it, est. speed input: 1229.69 toks/s, output: 132.94 toks/s]Processed prompts: 100%|██████████| 20/20 [00:20<00:00,  1.03s/it, est. speed input: 1229.69 toks/s, output: 132.94 toks/s]
+2026-03-26 14:22:43  INFO      ReACT iteration 4/5 — 20 active patients
+Rendering conversations:   0%|          | 0/20 [00:00<?, ?it/s]Rendering conversations: 100%|██████████| 20/20 [00:00<00:00, 309.81it/s]
+Processed prompts:   0%|          | 0/20 [00:00<?, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s]Processed prompts:   5%|▌         | 1/20 [00:09<03:06,  9.82s/it, est. speed input: 163.81 toks/s, output: 5.80 toks/s]Processed prompts:  25%|██▌       | 5/20 [00:10<00:22,  1.50s/it, est. speed input: 719.78 toks/s, output: 29.09 toks/s]Processed prompts:  35%|███▌      | 7/20 [00:10<00:14,  1.11s/it, est. speed input: 901.04 toks/s, output: 40.22 toks/s]Processed prompts:  40%|████      | 8/20 [00:11<00:11,  1.09it/s, est. speed input: 1002.74 toks/s, output: 47.34 toks/s]Processed prompts:  50%|█████     | 10/20 [00:11<00:06,  1.63it/s, est. speed input: 1273.63 toks/s, output: 62.22 toks/s]Processed prompts:  55%|█████▌    | 11/20 [00:11<00:04,  1.97it/s, est. speed input: 1376.82 toks/s, output: 69.90 toks/s]Processed prompts:  60%|██████    | 12/20 [00:12<00:04,  1.61it/s, est. speed input: 1383.08 toks/s, output: 74.07 toks/s]Processed prompts:  65%|██████▌   | 13/20 [00:14<00:06,  1.10it/s, est. speed input: 1305.47 toks/s, output: 76.32 toks/s]Processed prompts:  70%|███████   | 14/20 [00:14<00:04,  1.29it/s, est. speed input: 1363.17 toks/s, output: 86.18 toks/s]Processed prompts:  75%|███████▌  | 15/20 [00:14<00:02,  1.68it/s, est. speed input: 1443.70 toks/s, output: 97.41 toks/s]Processed prompts:  80%|████████  | 16/20 [00:15<00:02,  1.86it/s, est. speed input: 1494.61 toks/s, output: 107.30 toks/s]Processed prompts:  85%|████████▌ | 17/20 [00:16<00:02,  1.38it/s, est. speed input: 1468.79 toks/s, output: 112.90 toks/s]Processed prompts:  90%|█████████ | 18/20 [00:18<00:02,  1.21s/it, est. speed input: 1383.51 toks/s, output: 113.38 toks/s]Processed prompts:  95%|█████████▌| 19/20 [00:20<00:01,  1.44s/it, est. speed input: 1339.07 toks/s, output: 118.56 toks/s]Processed prompts: 100%|██████████| 20/20 [00:23<00:00,  1.94s/it, est. speed input: 1220.25 toks/s, output: 120.76 toks/s]Processed prompts: 100%|██████████| 20/20 [00:23<00:00,  1.94s/it, est. speed input: 1220.25 toks/s, output: 120.76 toks/s]Processed prompts: 100%|██████████| 20/20 [00:23<00:00,  1.19s/it, est. speed input: 1220.25 toks/s, output: 120.76 toks/s]
+2026-03-26 14:23:08  INFO      ReACT iteration 5/5 — 20 active patients
+Rendering conversations:   0%|          | 0/20 [00:00<?, ?it/s]Rendering conversations: 100%|██████████| 20/20 [00:00<00:00, 270.92it/s]
+Processed prompts:   0%|          | 0/20 [00:00<?, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s]Processed prompts:   5%|▌         | 1/20 [00:11<03:35, 11.36s/it, est. speed input: 156.23 toks/s, output: 6.25 toks/s]Processed prompts:  10%|█         | 2/20 [00:12<01:33,  5.20s/it, est. speed input: 284.88 toks/s, output: 13.07 toks/s]Processed prompts:  15%|█▌        | 3/20 [00:13<01:00,  3.56s/it, est. speed input: 362.23 toks/s, output: 20.63 toks/s]Processed prompts:  20%|██        | 4/20 [00:14<00:35,  2.23s/it, est. speed input: 526.25 toks/s, output: 29.41 toks/s]Processed prompts:  25%|██▌       | 5/20 [00:14<00:22,  1.47s/it, est. speed input: 621.78 toks/s, output: 38.44 toks/s]Processed prompts:  30%|███       | 6/20 [00:14<00:14,  1.03s/it, est. speed input: 782.96 toks/s, output: 47.53 toks/s]Processed prompts:  35%|███▌      | 7/20 [00:14<00:11,  1.11it/s, est. speed input: 851.91 toks/s, output: 55.51 toks/s]Processed prompts:  40%|████      | 8/20 [00:15<00:08,  1.44it/s, est. speed input: 930.00 toks/s, output: 64.88 toks/s]Processed prompts:  45%|████▌     | 9/20 [00:15<00:06,  1.64it/s, est. speed input: 1012.86 toks/s, output: 73.66 toks/s]Processed prompts:  50%|█████     | 10/20 [00:15<00:04,  2.17it/s, est. speed input: 1096.17 toks/s, output: 83.78 toks/s]Processed prompts:  60%|██████    | 12/20 [00:16<00:02,  3.10it/s, est. speed input: 1290.65 toks/s, output: 103.71 toks/s]Processed prompts:  65%|██████▌   | 13/20 [00:16<00:02,  3.01it/s, est. speed input: 1348.61 toks/s, output: 112.77 toks/s]Processed prompts:  80%|████████  | 16/20 [00:22<00:05,  1.27s/it, est. speed input: 1194.02 toks/s, output: 112.76 toks/s]Processed prompts:  85%|████████▌ | 17/20 [00:23<00:03,  1.12s/it, est. speed input: 1228.59 toks/s, output: 125.89 toks/s]Processed prompts:  95%|█████████▌| 19/20 [00:23<00:00,  1.34it/s, est. speed input: 1337.88 toks/s, output: 155.86 toks/s]Processed prompts: 100%|██████████| 20/20 [00:23<00:00,  1.52it/s, est. speed input: 1388.57 toks/s, output: 169.73 toks/s]Processed prompts: 100%|██████████| 20/20 [00:23<00:00,  1.52it/s, est. speed input: 1388.57 toks/s, output: 169.73 toks/s]Processed prompts: 100%|██████████| 20/20 [00:23<00:00,  1.20s/it, est. speed input: 1388.57 toks/s, output: 169.73 toks/s]
+2026-03-26 14:23:36  INFO      QA accuracy: 5.0%  (correct=1/20, parse_errors=17)
+2026-03-26 14:23:36  INFO      === Iteration 77/100  run=sepsis3  best_qa=5.0% ===
+2026-03-26 14:23:53  INFO      Exec block 1/1 …
+2026-03-26 14:23:53  INFO      Output:    subject_id   hadm_id   stay_id              intime             outtime
+0    18982070  23505956  37792009 2177-07-11 00:30:00 2177-07-14 09:00:29
+
+2026-03-26 14:23:53  INFO      === Iteration 78/100  run=sepsis3  best_qa=5.0% ===
+2026-03-26 14:24:04  INFO      Exec block 1/1 …
+2026-03-26 14:24:04  INFO      Output: Infection info: {'has_suspicion_of_infection': True, 'culture_orders':     subject_id   hadm_id  ...          icu_intime         icu_outtime
+0     18982070  23505956  ... 2177-07-11 00:30:00 2177-07-14 09:00:29
+1     18982070  23505956  ... 2177-07-11 00:30:00 2177-07-14 09:00:29
+2     18982070  23505956  ... 2177-07-11 00:30:00 2177-07-14 09:00:29
+3     18982070  23505956  ... 2177-07-11 00:30:00 2177-07-14 09:00:29
+4     18982070  23505956  ... 2177-07-11 00:30:00 2177-07-14 09:00:29
+5     189
+2026-03-26 14:24:04  INFO      === Iteration 79/100  run=sepsis3  best_qa=5.0% ===
+2026-03-26 14:24:15  INFO      Exec block 1/1 …
+2026-03-26 14:24:16  INFO      Output: First day SOFA: {'stay_id': 37792009, 'subject_id': np.int32(18982070), 'hadm_id': np.int32(23505956), 'intime': '2177-07-11 00:30:00', 'first_day_end': '2177-07-12 00:30:00', 'respiration_score': 4, 'coagulation_score': 1, 'liver_score': None, 'cardiovascular_score': 0, 'brain_score': 3, 'kidney_score': 1, 'total_sofa_score': 9, 'respiration_data': {'pao2_values': [36.0, 60.0, 57.0], 'fio2_values': [50.0, 50.0, 50.0, 50.0, 50.0, 50.0, 50.0, 50.0], 'pao2_fio2_ratio': 72.0}, 'coagulation_data': {
+2026-03-26 14:24:16  INFO      === Iteration 80/100  run=sepsis3  best_qa=5.0% ===
+2026-03-26 14:24:45  INFO      Exec block 1/1 …
+2026-03-26 14:24:45  INFO      Output: Empty DataFrame
+Columns: [charttime, itemid, label, valuenum]
+Index: []
+
+2026-03-26 14:24:45  INFO      === Iteration 81/100  run=sepsis3  best_qa=5.0% ===
+2026-03-26 14:25:12  INFO      Exec block 1/1 …
+2026-03-26 14:25:12  INFO      Output: Error:
+Traceback (most recent call last):
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 643, in execute
+    _run_with_timeout(_do_execute, timeout)
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 174, in _run_with_timeout
+    raise error[0]
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 156, in target
+    result[0] = func(*args, **kwargs)
+                ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/v-tiossowsk
+2026-03-26 14:25:12  INFO      === Iteration 82/100  run=sepsis3  best_qa=5.0% ===
+2026-03-26 14:25:31  INFO      Exec block 1/1 …
+2026-03-26 14:25:31  INFO      Output:     hadm_id           admittime           dischtime
+0  27454930 2178-04-02 20:02:00 2178-04-03 14:52:00
+
+2026-03-26 14:25:31  INFO      === Iteration 83/100  run=sepsis3  best_qa=5.0% ===
+2026-03-26 14:25:57  INFO      Exec block 1/1 …
+2026-03-26 14:25:57  INFO      Output: Empty DataFrame
+Columns: [charttime, itemid, label, valuenum]
+Index: []
+
+2026-03-26 14:25:57  INFO      === Iteration 84/100  run=sepsis3  best_qa=5.0% ===
+2026-03-26 14:26:17  INFO      Exec block 1/1 …
+2026-03-26 14:26:17  INFO      Output:    subject_id   hadm_id   stay_id              intime             outtime
+0    17407744  23252805  36408300 2164-07-10 17:22:17 2164-07-12 15:02:36
+
+2026-03-26 14:26:17  INFO      === Iteration 85/100  run=sepsis3  best_qa=5.0% ===
+2026-03-26 14:26:39  INFO      Exec block 1/1 …
+2026-03-26 14:26:41  INFO      Output: Infection info: True
+First day SOFA: 11
+Worst SOFA: 13
+
+2026-03-26 14:26:41  INFO      === Iteration 86/100  run=sepsis3  best_qa=5.0% ===
+2026-03-26 14:27:05  INFO      Exec block 1/1 …
+2026-03-26 14:27:05  INFO      Output: Error:
+Traceback (most recent call last):
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 643, in execute
+    _run_with_timeout(_do_execute, timeout)
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 174, in _run_with_timeout
+    raise error[0]
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 156, in target
+    result[0] = func(*args, **kwargs)
+                ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/v-tiossowsk
+2026-03-26 14:27:05  INFO      === Iteration 87/100  run=sepsis3  best_qa=5.0% ===
+2026-03-26 14:27:20  INFO      Exec block 1/1 …
+2026-03-26 14:27:20  INFO      Output: "Functions from 'creatinine_baseline' loaded successfully."
+
+2026-03-26 14:27:20  INFO      === Iteration 88/100  run=sepsis3  best_qa=5.0% ===
+2026-03-26 14:27:34  INFO      Exec block 1/1 …
+2026-03-26 14:27:34  INFO      Output: Creatinine baseline: {'stay_id': 37792009, 'subject_id': 18982070, 'hadm_id': 23505956, 'intime': '2177-07-11 00:30:00', 'baseline_creatinine': 1.3, 'baseline_source': 'first_icu_value', 'has_ckd_diagnosis': True, 'ckd_codes': ['E1122', 'I130', 'N183', 'N189', 'I129'], 'baseline_above_1_5': False, 'prior_creatinine_values': [1.3], 'icu_creatinine_values': [1.3, 1.5, 1.3, 1.3, 1.3]}
+
+2026-03-26 14:27:34  INFO      === Iteration 89/100  run=sepsis3  best_qa=5.0% ===
+2026-03-26 14:28:36  INFO      Exec block 1/1 …
+2026-03-26 14:28:36  INFO      Output: Error:
+Traceback (most recent call last):
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 643, in execute
+    _run_with_timeout(_do_execute, timeout)
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 174, in _run_with_timeout
+    raise error[0]
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 156, in target
+    result[0] = func(*args, **kwargs)
+                ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/v-tiossowsk
+2026-03-26 14:28:36  INFO      === Iteration 90/100  run=sepsis3  best_qa=5.0% ===
+2026-03-26 14:28:36  INFO      Context approaching limit (20153 tokens, limit=25000) — forcing summarize + compress
+2026-03-26 14:31:48  INFO      Context compressed: 91 messages -> 2 messages
+2026-03-26 14:31:58  INFO      Exec block 1/1 …
+2026-03-26 14:31:58  INFO      Output: ['sepsis_guideline']
+
+2026-03-26 14:31:58  INFO      === Iteration 91/100  run=sepsis3  best_qa=5.0% ===
+2026-03-26 14:32:01  INFO      Exec block 1/1 …
+2026-03-26 14:32:01  INFO      Output: '# Sepsis — Clinical Guideline\n# Generated by generate_guidelines.py\n# Source articles: 10 (PMID38245889, PMID26903336, PMID26903335, PMID34612847, PMID38245897...)\n############################################################\n\n# Clinical Guideline: Sepsis — Identification, Scoring, and Classification\n\n**Scope:** This guideline covers adults (≥ 18 years) under the Sepsis-3 framework and children (< 18 years) under the 2024 Phoenix Sepsis criteria, based solely on the information provided i
+2026-03-26 14:32:01  INFO      === Iteration 92/100  run=sepsis3  best_qa=5.0% ===
+2026-03-26 14:32:13  INFO      Exec block 1/1 …
+2026-03-26 14:32:13  INFO      Output: ['creatinine_baseline']
+
+2026-03-26 14:32:13  INFO      === Iteration 93/100  run=sepsis3  best_qa=5.0% ===
+2026-03-26 14:32:17  INFO      Exec block 1/1 …
+2026-03-26 14:32:17  INFO      Output: 'def creatinine_baseline(stay_id):\n    """\n    Calculate baseline serum creatinine for a patient\'s ICU stay.\n\n    Baseline creatinine is determined as:\n    1. Lowest creatinine value during current hospital admission BEFORE ICU admission\n    2. If none, first creatinine value during ICU stay\n    3. If none, lowest creatinine value in 3 months prior to ICU admission (excluding current admission)\n\n    Parameters\n    ----------\n    stay_id : int\n        The ICU stay identifier.\n\n    
+2026-03-26 14:32:17  INFO      === Iteration 94/100  run=sepsis3  best_qa=5.0% ===
+2026-03-26 14:32:27  INFO      === Iteration 95/100  run=sepsis3  best_qa=5.0% ===
+2026-03-26 14:32:36  INFO      Exec block 1/1 …
+2026-03-26 14:32:36  INFO      Output: []
+
+2026-03-26 14:32:36  INFO      === Iteration 96/100  run=sepsis3  best_qa=5.0% ===
+2026-03-26 14:32:41  INFO      Exec block 1/1 …
+2026-03-26 14:32:41  INFO      Output: []
+
+2026-03-26 14:32:41  INFO      === Iteration 97/100  run=sepsis3  best_qa=5.0% ===
+2026-03-26 14:32:49  INFO      Exec block 1/1 …
+2026-03-26 14:32:49  INFO      Output: ['acei', 'age', 'aki', 'antibiotic', 'apsiii', 'arb', 'bg', 'blood_differential', 'cardiac_marker', 'charlson', 'chemistry', 'coagulation', 'code_status', 'complete_blood_count', 'creatinine_baseline', 'crrt', 'dobutamine', 'dopamine', 'enzyme', 'epinephrine', '... (43 more; pass a keyword to filter)']
+
+2026-03-26 14:32:49  INFO      === Iteration 98/100  run=sepsis3  best_qa=5.0% ===
+2026-03-26 14:32:53  INFO      Exec block 1/1 …
+2026-03-26 14:32:53  INFO      Output: ['first_day_sofa', 'sofa']
+
+2026-03-26 14:32:53  INFO      === Iteration 99/100  run=sepsis3  best_qa=5.0% ===
+2026-03-26 14:32:57  INFO      Exec block 1/1 …
+2026-03-26 14:32:57  INFO      Output: 'def compute_sofa_score(stay_id):\n    """\n    Compute the SOFA (Sequential Organ Failure Assessment) score for an ICU stay.\n\n    The SOFA score assesses organ dysfunction across 6 systems:\n    - Respiration (PaO2/FiO2 ratio)\n    - Coagulation (Platelet count)\n    - Liver (Bilirubin)\n    - Cardiovascular (MAP and vasopressors)\n    - Brain (Glasgow Coma Scale)\n    - Kidney (Creatinine)\n\n    Parameters\n    ----------\n    stay_id : int\n        The ICU stay identifier\n    \n    Return
+2026-03-26 14:32:57  INFO      === Iteration 100/100  run=sepsis3  best_qa=5.0% ===
+2026-03-26 14:33:25  INFO      Exec block 1/1 …
+2026-03-26 14:33:25  INFO      Output: Stay info: [{'subject_id': 10639500, 'hadm_id': 28568915, 'intime': Timestamp('2117-03-27 08:13:10'), 'outtime': Timestamp('2117-04-04 11:44:19')}]
+Prior admissions: [{'hadm_id': 28568915, 'admittime': Timestamp('2117-03-19 16:38:00'), 'dischtime': Timestamp('2117-04-22 15:10:00')}, {'hadm_id': 27242256, 'admittime': Timestamp('2117-02-01 23:56:00'), 'dischtime': Timestamp('2117-02-02 13:56:00')}, {'hadm_id': 24220190, 'admittime': Timestamp('2117-01-21 00:31:00'), 'dischtime': Timestamp('2117-0
+2026-03-26 14:33:25  INFO      Function code saved to autoformalized_library/functions/sepsis3.py
+2026-03-26 14:33:25  INFO      Summary saved to autoformalized_library/summary.json
+
+======================================================================
+AUTOFORMALIZATION COMPLETE
+======================================================================
+  Output dir      : autoformalized_library
+  Model           : Qwen/Qwen3.5-27B
+  Dataset         : /home/v-tiossowski/HealthcareAgent/mimic-code/data/MIMICIV_sepsis3_dataset/sepsis3.csv
+  Run name        : sepsis3
+  Status          : FAILED (below threshold)
+  QA accuracy     : 5.0%
+  Iterations      : 100
+  Total tokens    : 142,963  (prompt 126,780 / completion 16,183)
+  LLM calls       : 202
+  SQL queries     : 494
+  Function saved  : autoformalized_library/functions/sepsis3.py
+======================================================================
+[rank0]:[W326 14:33:25.939129316 ProcessGroupNCCL.cpp:1553] Warning: WARNING: destroy_process_group() was not called before program exit, which can leak resources. For more info, please see https://pytorch.org/docs/stable/distributed.html#shutdown (function operator())
+ERROR 03-26 14:33:26 [core_client.py:691] Engine core proc EngineCore_DP0 died unexpectedly, shutting down client.

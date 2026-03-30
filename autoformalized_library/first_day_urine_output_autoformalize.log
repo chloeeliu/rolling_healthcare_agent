@@ -1,0 +1,485 @@
+2026-03-25 23:47:06  INFO      Using database: /home/v-tiossowski/MIMIC-IV/mimic4.db
+2026-03-25 23:47:06  INFO      No --model_url provided; loading vLLM in-process …
+INFO 03-25 23:47:11 [utils.py:238] non-default args: {'trust_remote_code': True, 'max_model_len': 40000, 'disable_log_stats': True, 'model': 'Qwen/Qwen3.5-27B'}
+The argument `trust_remote_code` is to be used with Auto classes. It has no effect here and is ignored.
+The argument `trust_remote_code` is to be used with Auto classes. It has no effect here and is ignored.
+The argument `trust_remote_code` is to be used with Auto classes. It has no effect here and is ignored.
+INFO 03-25 23:47:11 [model.py:531] Resolved architecture: Qwen3_5ForConditionalGeneration
+INFO 03-25 23:47:11 [model.py:1554] Using max model len 40000
+INFO 03-25 23:47:11 [scheduler.py:231] Chunked prefill is enabled with max_num_batched_tokens=8192.
+INFO 03-25 23:47:13 [config.py:544] Setting attention block size to 784 tokens to ensure that attention page size is >= mamba page size.
+INFO 03-25 23:47:13 [config.py:575] Padding mamba page size by 0.13% to ensure that mamba page size and attention page size are exactly equal.
+INFO 03-25 23:47:13 [vllm.py:747] Asynchronous scheduling is enabled.
+WARNING 03-25 23:47:20 [system_utils.py:152] We must use the `spawn` multiprocessing start method. Overriding VLLM_WORKER_MULTIPROC_METHOD to 'spawn'. See https://docs.vllm.ai/en/latest/usage/troubleshooting.html#python-multiprocessing for more information. Reasons: CUDA is initialized
+(EngineCore_DP0 pid=210815) INFO 03-25 23:47:25 [core.py:101] Initializing a V1 LLM engine (v0.17.1) with config: model='Qwen/Qwen3.5-27B', speculative_config=None, tokenizer='Qwen/Qwen3.5-27B', skip_tokenizer_init=False, tokenizer_mode=auto, revision=None, tokenizer_revision=None, trust_remote_code=True, dtype=torch.bfloat16, max_seq_len=40000, download_dir=None, load_format=auto, tensor_parallel_size=1, pipeline_parallel_size=1, data_parallel_size=1, disable_custom_all_reduce=False, quantization=None, enforce_eager=False, enable_return_routed_experts=False, kv_cache_dtype=auto, device_config=cuda, structured_outputs_config=StructuredOutputsConfig(backend='auto', disable_fallback=False, disable_any_whitespace=False, disable_additional_properties=False, reasoning_parser='', reasoning_parser_plugin='', enable_in_reasoning=False), observability_config=ObservabilityConfig(show_hidden_metrics_for_version=None, otlp_traces_endpoint=None, collect_detailed_traces=None, kv_cache_metrics=False, kv_cache_metrics_sample=0.01, cudagraph_metrics=False, enable_layerwise_nvtx_tracing=False, enable_mfu_metrics=False, enable_mm_processor_stats=False, enable_logging_iteration_details=False), seed=0, served_model_name=Qwen/Qwen3.5-27B, enable_prefix_caching=False, enable_chunked_prefill=True, pooler_config=None, compilation_config={'level': None, 'mode': <CompilationMode.VLLM_COMPILE: 3>, 'debug_dump_path': None, 'cache_dir': '', 'compile_cache_save_format': 'binary', 'backend': 'inductor', 'custom_ops': ['none'], 'splitting_ops': ['vllm::unified_attention', 'vllm::unified_attention_with_output', 'vllm::unified_mla_attention', 'vllm::unified_mla_attention_with_output', 'vllm::mamba_mixer2', 'vllm::mamba_mixer', 'vllm::short_conv', 'vllm::linear_attention', 'vllm::plamo2_mamba_mixer', 'vllm::gdn_attention_core', 'vllm::kda_attention', 'vllm::sparse_attn_indexer', 'vllm::rocm_aiter_sparse_attn_indexer', 'vllm::unified_kv_cache_update', 'vllm::unified_mla_kv_cache_update'], 'compile_mm_encoder': False, 'compile_sizes': [], 'compile_ranges_split_points': [8192], 'inductor_compile_config': {'enable_auto_functionalized_v2': False, 'combo_kernels': True, 'benchmark_combo_kernel': True}, 'inductor_passes': {}, 'cudagraph_mode': <CUDAGraphMode.FULL_AND_PIECEWISE: (2, 1)>, 'cudagraph_num_of_warmups': 1, 'cudagraph_capture_sizes': [1, 2, 4, 8, 16, 24, 32, 40, 48, 56, 64, 72, 80, 88, 96, 104, 112, 120, 128, 136, 144, 152, 160, 168, 176, 184, 192, 200, 208, 216, 224, 232, 240, 248, 256, 272, 288, 304, 320, 336, 352, 368, 384, 400, 416, 432, 448, 464, 480, 496, 512], 'cudagraph_copy_inputs': False, 'cudagraph_specialize_lora': True, 'use_inductor_graph_partition': False, 'pass_config': {'fuse_norm_quant': False, 'fuse_act_quant': False, 'fuse_attn_quant': False, 'enable_sp': False, 'fuse_gemm_comms': False, 'fuse_allreduce_rms': False}, 'max_cudagraph_capture_size': 512, 'dynamic_shapes_config': {'type': <DynamicShapesType.BACKED: 'backed'>, 'evaluate_guards': False, 'assume_32_bit_indexing': False}, 'local_cache_dir': None, 'fast_moe_cold_start': True, 'static_all_moe_layers': []}
+(EngineCore_DP0 pid=210815) INFO 03-25 23:47:27 [parallel_state.py:1393] world_size=1 rank=0 local_rank=0 distributed_init_method=tcp://10.8.144.167:47835 backend=nccl
+(EngineCore_DP0 pid=210815) INFO 03-25 23:47:27 [parallel_state.py:1715] rank 0 in world size 1 is assigned as DP rank 0, PP rank 0, PCP rank 0, TP rank 0, EP rank N/A, EPLB rank N/A
+(EngineCore_DP0 pid=210815) INFO 03-25 23:47:34 [base.py:106] Offloader set to NoopOffloader
+(EngineCore_DP0 pid=210815) INFO 03-25 23:47:34 [gpu_model_runner.py:4281] Starting to load model Qwen/Qwen3.5-27B...
+(EngineCore_DP0 pid=210815) INFO 03-25 23:47:34 [cuda.py:453] Using backend AttentionBackendEnum.FLASH_ATTN for vit attention
+(EngineCore_DP0 pid=210815) INFO 03-25 23:47:34 [mm_encoder_attention.py:215] Using AttentionBackendEnum.FLASH_ATTN for MMEncoderAttention.
+(EngineCore_DP0 pid=210815) INFO 03-25 23:47:34 [cuda.py:405] Using FLASH_ATTN attention backend out of potential backends: ['FLASH_ATTN', 'FLASHINFER', 'TRITON_ATTN', 'FLEX_ATTENTION'].
+(EngineCore_DP0 pid=210815) INFO 03-25 23:47:34 [flash_attn.py:587] Using FlashAttention version 2
+(EngineCore_DP0 pid=210815) <frozen importlib._bootstrap_external>:1301: FutureWarning: The cuda.cudart module is deprecated and will be removed in a future release, please switch to use the cuda.bindings.runtime module instead.
+(EngineCore_DP0 pid=210815) <frozen importlib._bootstrap_external>:1301: FutureWarning: The cuda.nvrtc module is deprecated and will be removed in a future release, please switch to use the cuda.bindings.nvrtc module instead.
+(EngineCore_DP0 pid=210815) Loading safetensors checkpoint shards:   0% Completed | 0/11 [00:00<?, ?it/s]
+(EngineCore_DP0 pid=210815) Loading safetensors checkpoint shards:   9% Completed | 1/11 [00:00<00:05,  1.89it/s]
+(EngineCore_DP0 pid=210815) Loading safetensors checkpoint shards:  18% Completed | 2/11 [00:01<00:05,  1.68it/s]
+(EngineCore_DP0 pid=210815) Loading safetensors checkpoint shards:  27% Completed | 3/11 [00:01<00:05,  1.58it/s]
+(EngineCore_DP0 pid=210815) Loading safetensors checkpoint shards:  36% Completed | 4/11 [00:02<00:04,  1.52it/s]
+(EngineCore_DP0 pid=210815) Loading safetensors checkpoint shards:  45% Completed | 5/11 [00:03<00:04,  1.50it/s]
+(EngineCore_DP0 pid=210815) Loading safetensors checkpoint shards:  55% Completed | 6/11 [00:03<00:03,  1.47it/s]
+(EngineCore_DP0 pid=210815) Loading safetensors checkpoint shards:  64% Completed | 7/11 [00:04<00:02,  1.46it/s]
+(EngineCore_DP0 pid=210815) Loading safetensors checkpoint shards:  73% Completed | 8/11 [00:05<00:02,  1.46it/s]
+(EngineCore_DP0 pid=210815) Loading safetensors checkpoint shards:  82% Completed | 9/11 [00:06<00:01,  1.46it/s]
+(EngineCore_DP0 pid=210815) Loading safetensors checkpoint shards:  91% Completed | 10/11 [00:06<00:00,  1.45it/s]
+(EngineCore_DP0 pid=210815) Loading safetensors checkpoint shards: 100% Completed | 11/11 [00:07<00:00,  1.62it/s]
+(EngineCore_DP0 pid=210815) Loading safetensors checkpoint shards: 100% Completed | 11/11 [00:07<00:00,  1.54it/s]
+(EngineCore_DP0 pid=210815) 
+(EngineCore_DP0 pid=210815) INFO 03-25 23:47:42 [default_loader.py:293] Loading weights took 7.21 seconds
+(EngineCore_DP0 pid=210815) INFO 03-25 23:47:43 [gpu_model_runner.py:4364] Model loading took 51.1 GiB memory and 8.258250 seconds
+(EngineCore_DP0 pid=210815) INFO 03-25 23:47:43 [gpu_model_runner.py:5280] Encoder cache will be initialized with a budget of 16384 tokens, and profiled with 1 image items of the maximum feature size.
+(EngineCore_DP0 pid=210815) INFO 03-25 23:47:51 [decorators.py:465] Directly load AOT compilation from path /home/v-tiossowski/.cache/vllm/torch_compile_cache/torch_aot_compile/0232891e22bd4d7db98ac2f43c441f0f81d0a431216053ca49fadeaff23e2af3/rank_0_0/model
+(EngineCore_DP0 pid=210815) INFO 03-25 23:47:51 [backends.py:916] Using cache directory: /home/v-tiossowski/.cache/vllm/torch_compile_cache/feaf61af16/rank_0_0/backbone for vLLM's torch.compile
+(EngineCore_DP0 pid=210815) INFO 03-25 23:47:51 [backends.py:976] Dynamo bytecode transform time: 3.51 s
+(EngineCore_DP0 pid=210815) INFO 03-25 23:48:01 [backends.py:266] Directly load the compiled graph(s) for compile range (1, 8192) from the cache, took 9.426 s
+(EngineCore_DP0 pid=210815) INFO 03-25 23:48:01 [monitor.py:35] torch.compile takes 13.81 s in total
+(EngineCore_DP0 pid=210815) INFO 03-25 23:48:03 [gpu_worker.py:424] Available KV cache memory: 18.3 GiB
+(EngineCore_DP0 pid=210815) INFO 03-25 23:48:03 [kv_cache_utils.py:1314] GPU KV cache size: 74,480 tokens
+(EngineCore_DP0 pid=210815) INFO 03-25 23:48:03 [kv_cache_utils.py:1319] Maximum concurrency for 40,000 tokens per request: 6.95x
+(EngineCore_DP0 pid=210815) Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):   0%|          | 0/51 [00:00<?, ?it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):   2%|▏         | 1/51 [00:00<00:08,  5.75it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):   4%|▍         | 2/51 [00:00<00:08,  5.99it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):   6%|▌         | 3/51 [00:00<00:07,  6.00it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):   8%|▊         | 4/51 [00:00<00:07,  6.02it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  10%|▉         | 5/51 [00:00<00:07,  6.09it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  12%|█▏        | 6/51 [00:00<00:07,  6.17it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  14%|█▎        | 7/51 [00:01<00:07,  6.17it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  16%|█▌        | 8/51 [00:01<00:06,  6.19it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  18%|█▊        | 9/51 [00:01<00:06,  6.52it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  20%|█▉        | 10/51 [00:01<00:06,  6.73it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  22%|██▏       | 11/51 [00:01<00:05,  6.76it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  24%|██▎       | 12/51 [00:01<00:05,  6.91it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  25%|██▌       | 13/51 [00:02<00:05,  7.03it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  27%|██▋       | 14/51 [00:02<00:05,  7.11it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  29%|██▉       | 15/51 [00:02<00:04,  7.22it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  31%|███▏      | 16/51 [00:02<00:04,  7.32it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  33%|███▎      | 17/51 [00:02<00:04,  7.65it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  35%|███▌      | 18/51 [00:02<00:04,  7.94it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  37%|███▋      | 19/51 [00:02<00:03,  8.16it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  39%|███▉      | 20/51 [00:02<00:03,  8.22it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  41%|████      | 21/51 [00:02<00:03,  8.36it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  43%|████▎     | 22/51 [00:03<00:03,  8.47it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  45%|████▌     | 23/51 [00:03<00:03,  8.53it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  47%|████▋     | 24/51 [00:03<00:03,  8.54it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  49%|████▉     | 25/51 [00:03<00:03,  8.43it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  51%|█████     | 26/51 [00:03<00:02,  8.50it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  53%|█████▎    | 27/51 [00:03<00:02,  8.57it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  55%|█████▍    | 28/51 [00:03<00:02,  8.64it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  57%|█████▋    | 29/51 [00:03<00:02,  8.67it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  59%|█████▉    | 30/51 [00:04<00:02,  8.56it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  61%|██████    | 31/51 [00:04<00:02,  8.50it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  63%|██████▎   | 32/51 [00:04<00:02,  8.53it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  65%|██████▍   | 33/51 [00:04<00:02,  8.87it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  67%|██████▋   | 34/51 [00:04<00:01,  9.17it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  71%|███████   | 36/51 [00:04<00:01,  9.54it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  75%|███████▍  | 38/51 [00:04<00:01,  9.71it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  76%|███████▋  | 39/51 [00:04<00:01,  9.77it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  78%|███████▊  | 40/51 [00:05<00:01,  9.81it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  80%|████████  | 41/51 [00:05<00:01,  9.84it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  84%|████████▍ | 43/51 [00:05<00:00, 10.03it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  88%|████████▊ | 45/51 [00:05<00:00, 10.19it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  92%|█████████▏| 47/51 [00:05<00:00, 10.46it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  96%|█████████▌| 49/51 [00:05<00:00, 10.66it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE): 100%|██████████| 51/51 [00:06<00:00, 10.67it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE): 100%|██████████| 51/51 [00:06<00:00,  8.35it/s]
+(EngineCore_DP0 pid=210815) Capturing CUDA graphs (decode, FULL):   0%|          | 0/35 [00:00<?, ?it/s]Capturing CUDA graphs (decode, FULL):   3%|▎         | 1/35 [00:00<00:06,  5.66it/s]Capturing CUDA graphs (decode, FULL):   6%|▌         | 2/35 [00:00<00:05,  6.17it/s]Capturing CUDA graphs (decode, FULL):   9%|▊         | 3/35 [00:00<00:04,  6.41it/s]Capturing CUDA graphs (decode, FULL):  11%|█▏        | 4/35 [00:00<00:04,  6.57it/s]Capturing CUDA graphs (decode, FULL):  14%|█▍        | 5/35 [00:00<00:04,  6.59it/s]Capturing CUDA graphs (decode, FULL):  17%|█▋        | 6/35 [00:00<00:04,  6.65it/s]Capturing CUDA graphs (decode, FULL):  20%|██        | 7/35 [00:01<00:04,  6.68it/s]Capturing CUDA graphs (decode, FULL):  23%|██▎       | 8/35 [00:01<00:03,  6.76it/s]Capturing CUDA graphs (decode, FULL):  26%|██▌       | 9/35 [00:01<00:03,  6.83it/s]Capturing CUDA graphs (decode, FULL):  29%|██▊       | 10/35 [00:01<00:03,  6.90it/s]Capturing CUDA graphs (decode, FULL):  31%|███▏      | 11/35 [00:01<00:03,  6.89it/s]Capturing CUDA graphs (decode, FULL):  34%|███▍      | 12/35 [00:01<00:03,  6.96it/s]Capturing CUDA graphs (decode, FULL):  37%|███▋      | 13/35 [00:01<00:03,  7.04it/s]Capturing CUDA graphs (decode, FULL):  40%|████      | 14/35 [00:02<00:02,  7.09it/s]Capturing CUDA graphs (decode, FULL):  43%|████▎     | 15/35 [00:02<00:02,  7.15it/s]Capturing CUDA graphs (decode, FULL):  46%|████▌     | 16/35 [00:02<00:02,  7.21it/s]Capturing CUDA graphs (decode, FULL):  49%|████▊     | 17/35 [00:02<00:02,  7.48it/s]Capturing CUDA graphs (decode, FULL):  51%|█████▏    | 18/35 [00:02<00:02,  7.76it/s]Capturing CUDA graphs (decode, FULL):  54%|█████▍    | 19/35 [00:02<00:02,  7.93it/s]Capturing CUDA graphs (decode, FULL):  57%|█████▋    | 20/35 [00:02<00:01,  8.10it/s]Capturing CUDA graphs (decode, FULL):  60%|██████    | 21/35 [00:02<00:01,  8.26it/s]Capturing CUDA graphs (decode, FULL):  63%|██████▎   | 22/35 [00:03<00:01,  8.33it/s]Capturing CUDA graphs (decode, FULL):  66%|██████▌   | 23/35 [00:03<00:01,  8.44it/s]Capturing CUDA graphs (decode, FULL):  69%|██████▊   | 24/35 [00:03<00:01,  8.45it/s]Capturing CUDA graphs (decode, FULL):  71%|███████▏  | 25/35 [00:03<00:01,  8.62it/s]Capturing CUDA graphs (decode, FULL):  74%|███████▍  | 26/35 [00:03<00:01,  8.78it/s]Capturing CUDA graphs (decode, FULL):  77%|███████▋  | 27/35 [00:03<00:00,  8.71it/s]Capturing CUDA graphs (decode, FULL):  80%|████████  | 28/35 [00:03<00:00,  8.54it/s]Capturing CUDA graphs (decode, FULL):  83%|████████▎ | 29/35 [00:03<00:00,  8.58it/s]Capturing CUDA graphs (decode, FULL):  86%|████████▌ | 30/35 [00:03<00:00,  8.53it/s]Capturing CUDA graphs (decode, FULL):  89%|████████▊ | 31/35 [00:04<00:00,  8.53it/s]Capturing CUDA graphs (decode, FULL):  91%|█████████▏| 32/35 [00:04<00:00,  8.50it/s]Capturing CUDA graphs (decode, FULL):  94%|█████████▍| 33/35 [00:04<00:00,  8.51it/s]Capturing CUDA graphs (decode, FULL):  97%|█████████▋| 34/35 [00:04<00:00,  8.58it/s]Capturing CUDA graphs (decode, FULL): 100%|██████████| 35/35 [00:04<00:00,  8.68it/s]Capturing CUDA graphs (decode, FULL): 100%|██████████| 35/35 [00:04<00:00,  7.69it/s]
+(EngineCore_DP0 pid=210815) INFO 03-25 23:48:14 [gpu_model_runner.py:5386] Graph capturing finished in 11 secs, took 1.13 GiB
+(EngineCore_DP0 pid=210815) INFO 03-25 23:48:14 [core.py:282] init engine (profile, create kv cache, warmup model) took 31.34 seconds
+(EngineCore_DP0 pid=210815) INFO 03-25 23:48:14 [vllm.py:747] Asynchronous scheduling is enabled.
+INFO 03-25 23:48:14 [llm.py:388] Supported tasks: ['generate']
+2026-03-25 23:48:14  INFO      Loading QA dataset from /home/v-tiossowski/HealthcareAgent/mimic-code/data/MIMICIV_first_day_urine_output_dataset/first_day_urine_output.csv
+2026-03-25 23:48:15  INFO      Dataset: 1000 rows, columns: ['subject_id', 'hadm_id', 'stay_id', 'intime', 'outtime', 'first_careunit', 'last_careunit', 'gt_label', 'question', 'gt_answer_type', 'split', 'first_day_urineoutput']
+2026-03-25 23:48:15  INFO      Filtered to train split: 100 rows
+2026-03-25 23:48:15  INFO      Auto-discovered ground-truth SQL: /home/v-tiossowski/HealthcareAgent/mimic-code/mimic-iv/concepts_duckdb/firstday/first_day_urine_output.sql
+2026-03-25 23:48:15  INFO      === Iteration 1/100  run=first_day_urine_output  best_qa=0.0% ===
+INFO 03-25 23:48:17 [hf.py:318] Detected the chat template content format to be 'string'. You can set `--chat-template-content-format` to override this.
+2026-03-25 23:48:31  INFO      Exec block 1/1 …
+2026-03-25 23:48:31  INFO      Output: []
+
+2026-03-25 23:48:31  INFO      === Iteration 2/100  run=first_day_urine_output  best_qa=0.0% ===
+2026-03-25 23:48:33  INFO      Exec block 1/1 …
+2026-03-25 23:48:33  INFO      Output: []
+
+2026-03-25 23:48:33  INFO      === Iteration 3/100  run=first_day_urine_output  best_qa=0.0% ===
+2026-03-25 23:48:35  INFO      Exec block 1/1 …
+2026-03-25 23:48:35  INFO      Output: ['acidosis_guideline', 'acute_decompensated_heart_failure_guideline', 'acute_hepatic_failure_guideline', 'adverse_effect_of_anticoagulants_guideline', 'alcohol_withdrawal_syndrome_guideline', 'anemia_icu_critically_ill_hemoglobin_transfusion_guideline', 'apache_iii_guideline', 'atrial_fibrillation_guideline', 'bradycardia_guideline', 'cerebral_infarction_guideline', 'coma_altered_consciousness_icu_guideline', 'copd_exacerbation_guideline', 'coronary_artery_disease_guideline', 'deep_vein_thrombos
+2026-03-25 23:48:35  INFO      === Iteration 4/100  run=first_day_urine_output  best_qa=0.0% ===
+2026-03-25 23:48:38  INFO      Exec block 1/1 …
+2026-03-25 23:48:38  INFO      Output: []
+
+2026-03-25 23:48:38  INFO      === Iteration 5/100  run=first_day_urine_output  best_qa=0.0% ===
+2026-03-25 23:48:40  INFO      Exec block 1/1 …
+2026-03-25 23:48:40  INFO      Output: []
+
+2026-03-25 23:48:40  INFO      === Iteration 6/100  run=first_day_urine_output  best_qa=0.0% ===
+2026-03-25 23:48:43  INFO      Exec block 1/1 …
+2026-03-25 23:48:43  INFO      Output: []
+
+2026-03-25 23:48:43  INFO      === Iteration 7/100  run=first_day_urine_output  best_qa=0.0% ===
+2026-03-25 23:48:45  INFO      Exec block 1/1 …
+2026-03-25 23:48:45  INFO      Output: []
+
+2026-03-25 23:48:45  INFO      === Iteration 8/100  run=first_day_urine_output  best_qa=0.0% ===
+2026-03-25 23:48:49  INFO      Exec block 1/1 …
+2026-03-25 23:48:49  INFO      Output: ['acei', 'age', 'antibiotic', 'arb', 'bg', 'blood_differential', 'cardiac_marker', 'charlson', 'chemistry', 'coagulation', 'code_status', 'complete_blood_count', 'creatinine_baseline', 'crrt', 'dobutamine', 'dopamine', 'enzyme', 'epinephrine', 'first_day_bg', 'first_day_bg_art', '... (26 more; pass a keyword to filter)']
+
+2026-03-25 23:48:49  INFO      === Iteration 9/100  run=first_day_urine_output  best_qa=0.0% ===
+2026-03-25 23:48:51  INFO      Exec block 1/1 …
+2026-03-25 23:48:51  INFO      Output: ['urine_output', 'urine_output_rate']
+
+2026-03-25 23:48:51  INFO      === Iteration 10/100  run=first_day_urine_output  best_qa=0.0% ===
+2026-03-25 23:48:54  INFO      Exec block 1/1 …
+2026-03-25 23:48:54  INFO      Output: 'def urine_output(stay_id):\n    """\n    Extract urine output information for a patient\'s ICU stay.\n\n    This function retrieves urine output data from the ICU output events table\n    and calculates daily totals, average daily output, and determines if the\n    patient has oliguria or severe oliguria.\n\n    Urine output is captured from the following itemids in the outputevents table:\n    - 226557: R Ureteral Stent\n    - 226558: L Ureteral Stent\n    - 226559: Foley\n    - 226560: Void\n
+2026-03-25 23:48:54  INFO      === Iteration 11/100  run=first_day_urine_output  best_qa=0.0% ===
+2026-03-25 23:48:57  INFO      Exec block 1/1 …
+2026-03-25 23:48:57  INFO      Output: 'def get_urine_output_rate(stay_id):\n    """\n    Extract urine output rate information for a patient\'s ICU stay.\n\n    This function queries the MIMIC-IV database to calculate urine output rates\n    and identify periods of oliguria during an ICU stay.\n\n    Parameters\n    ----------\n    stay_id : int\n        The ICU stay identifier for the patient.\n\n    Returns\n    -------\n    dict or None\n        A dictionary containing the following keys:\n        - \'stay_id\': The ICU stay iden
+2026-03-25 23:48:57  INFO      === Iteration 12/100  run=first_day_urine_output  best_qa=0.0% ===
+2026-03-25 23:49:03  INFO      Exec block 1/1 …
+2026-03-25 23:49:03  INFO      Output: "Functions from 'urine_output' loaded successfully."
+
+2026-03-25 23:49:03  INFO      === Iteration 13/100  run=first_day_urine_output  best_qa=0.0% ===
+2026-03-25 23:49:08  INFO      Exec block 1/1 …
+2026-03-25 23:49:08  INFO      Output:     column_name  data_type
+0    subject_id    INTEGER
+1       hadm_id    INTEGER
+2       stay_id    INTEGER
+3  caregiver_id    INTEGER
+4     charttime  TIMESTAMP
+5     storetime  TIMESTAMP
+6        itemid    INTEGER
+7         value      FLOAT
+8      valueuom    VARCHAR
+
+2026-03-25 23:49:08  INFO      === Iteration 14/100  run=first_day_urine_output  best_qa=0.0% ===
+2026-03-25 23:49:13  INFO      Exec block 1/1 …
+2026-03-25 23:49:13  INFO      Output: Error:
+Traceback (most recent call last):
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 643, in execute
+    _run_with_timeout(_do_execute, timeout)
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 174, in _run_with_timeout
+    raise error[0]
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 156, in target
+    result[0] = func(*args, **kwargs)
+                ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/v-tiossowsk
+2026-03-25 23:49:13  INFO      === Iteration 15/100  run=first_day_urine_output  best_qa=0.0% ===
+2026-03-25 23:49:18  INFO      Exec block 1/1 …
+2026-03-25 23:49:18  INFO      Output:     itemid                                              label                            category
+0   220473                                            Taurine  Ingredients - general (Not In Use)
+1   220799                          ZSpecific Gravity (urine)                                Labs
+2   223877                                   ZCath Lab Intake                             ZIntake
+3   224015                                       Urine Source                               GI/GU
+4   224016
+2026-03-25 23:49:18  INFO      === Iteration 16/100  run=first_day_urine_output  best_qa=0.0% ===
+2026-03-25 23:49:27  INFO      Exec block 1/1 …
+2026-03-25 23:49:27  INFO      Output:     itemid                         label category
+0   226557              R Ureteral Stent   Output
+1   226558              L Ureteral Stent   Output
+2   226559                         Foley   Output
+3   226560                          Void   Output
+4   226561                   Condom Cath   Output
+5   226563                    Suprapubic   Output
+6   226564                 R Nephrostomy   Output
+7   226565                 L Nephrostomy   Output
+8   226566     Urine and GU Irrigant Out   Output
+
+2026-03-25 23:49:27  INFO      === Iteration 17/100  run=first_day_urine_output  best_qa=0.0% ===
+2026-03-25 23:49:37  INFO      Exec block 1/1 …
+2026-03-25 23:49:37  INFO      Output:     subject_id   hadm_id   stay_id           charttime  itemid  value valueuom
+0     10485425  27469101  39095027 2200-04-06 09:00:00  226559  150.0       mL
+1     10485425  27469101  39095027 2200-04-06 11:00:00  226559  125.0       mL
+2     10485425  27469101  39095027 2200-04-06 13:00:00  226559  125.0       mL
+3     10485425  27469101  39095027 2200-04-06 14:00:00  226559  125.0       mL
+4     10485425  27469101  39095027 2200-04-06 16:00:00  226559  150.0       mL
+5     10485425  27469101  
+2026-03-25 23:49:37  INFO      === Iteration 18/100  run=first_day_urine_output  best_qa=0.0% ===
+2026-03-25 23:49:43  INFO      Exec block 1/1 …
+2026-03-25 23:49:43  INFO      Output:    subject_id   hadm_id   stay_id              intime             outtime
+0    10000032  29079034  39553978 2180-07-23 14:00:00 2180-07-23 23:50:47
+1    10000690  25860671  37081114 2150-11-02 19:37:00 2150-11-06 17:03:17
+2    10000980  26913865  39765666 2189-06-27 08:42:00 2189-06-27 20:38:27
+3    10001217  24597018  37067082 2157-11-20 19:18:02 2157-11-21 22:08:00
+4    10001217  27703517  34592300 2157-12-19 15:42:24 2157-12-20 14:27:41
+5    10001725  25563031  31205490 2110-04-11 15:52:22 21
+2026-03-25 23:49:43  INFO      === Iteration 19/100  run=first_day_urine_output  best_qa=0.0% ===
+2026-03-25 23:49:50  INFO      Exec block 1/1 …
+2026-03-25 23:49:50  INFO      Output: {'subject_id': np.int32(10000690), 'hadm_id': np.int32(25860671), 'stay_id': 37081114, 'total_urine_output_ml': np.float64(6717.0), 'num_days_with_output': 5, 'average_daily_output_ml': np.float64(1343.4), 'daily_outputs': [{'subject_id': 10000690, 'hadm_id': 25860671, 'stay_id': 37081114, 'chart_date': Timestamp('2150-11-02 00:00:00'), 'daily_output': 170.0}, {'subject_id': 10000690, 'hadm_id': 25860671, 'stay_id': 37081114, 'chart_date': Timestamp('2150-11-03 00:00:00'), 'daily_output': 635.0}
+2026-03-25 23:49:50  INFO      === Iteration 20/100  run=first_day_urine_output  best_qa=0.0% ===
+2026-03-25 23:50:04  INFO      Exec block 1/1 …
+2026-03-25 23:50:04  INFO      Output:     stay_id              intime  first_day
+0  37081114 2150-11-02 19:37:00 2150-11-02
+
+2026-03-25 23:50:04  INFO      === Iteration 21/100  run=first_day_urine_output  best_qa=0.0% ===
+2026-03-25 23:50:14  INFO      Exec block 1/1 …
+2026-03-25 23:50:14  INFO      Output: Error:
+Traceback (most recent call last):
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 643, in execute
+    _run_with_timeout(_do_execute, timeout)
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 174, in _run_with_timeout
+    raise error[0]
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 156, in target
+    result[0] = func(*args, **kwargs)
+                ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/v-tiossowsk
+2026-03-25 23:50:14  INFO      === Iteration 22/100  run=first_day_urine_output  best_qa=0.0% ===
+2026-03-25 23:50:30  INFO      Exec block 1/1 …
+2026-03-25 23:50:30  INFO      Output:             charttime  value  itemid
+0 2150-11-02 21:27:00   80.0  226559
+1 2150-11-02 22:00:00   30.0  226559
+2 2150-11-02 23:00:00   60.0  226559
+
+2026-03-25 23:50:30  INFO      === Iteration 23/100  run=first_day_urine_output  best_qa=0.0% ===
+2026-03-25 23:50:49  INFO      Exec block 1/1 …
+2026-03-25 23:50:49  INFO      Output:              charttime  value  itemid              intime  first_day
+0  2200-04-04 04:34:00  150.0  226560 2200-04-04 04:14:39 2200-04-04
+1  2200-04-04 08:00:00  300.0  226560 2200-04-04 04:14:39 2200-04-04
+2  2200-04-04 12:09:00  300.0  226559 2200-04-04 04:14:39 2200-04-04
+3  2200-04-04 13:00:00   75.0  226559 2200-04-04 04:14:39 2200-04-04
+4  2200-04-04 14:00:00   30.0  226559 2200-04-04 04:14:39 2200-04-04
+5  2200-04-04 15:00:00   30.0  226559 2200-04-04 04:14:39 2200-04-04
+6  2200-04-04 16:
+2026-03-25 23:50:49  INFO      === Iteration 24/100  run=first_day_urine_output  best_qa=0.0% ===
+2026-03-25 23:51:07  INFO      Exec block 1/1 …
+2026-03-25 23:51:07  INFO      Output:    total_first_day_output
+0                  1265.0
+
+2026-03-25 23:51:07  INFO      === Iteration 25/100  run=first_day_urine_output  best_qa=0.0% ===
+2026-03-25 23:52:05  INFO      Exec block 1/1 …
+2026-03-25 23:52:05  INFO      Output: Testing first_day_urine_output(37081114):
+{'subject_id': 10000690, 'hadm_id': 25860671, 'stay_id': 37081114, 'first_day_date': '2150-11-02 00:00:00', 'total_urine_output_ml': 170.0, 'num_records': 3, 'has_oliguria': np.True_, 'has_severe_oliguria': np.True_}
+
+2026-03-25 23:52:05  INFO      === Iteration 26/100  run=first_day_urine_output  best_qa=0.0% ===
+2026-03-25 23:52:12  INFO      Exec block 1/1 …
+2026-03-25 23:52:12  INFO      Output: Testing first_day_urine_output(39095027):
+{'subject_id': 10485425, 'hadm_id': 27469101, 'stay_id': 39095027, 'first_day_date': '2200-04-04 00:00:00', 'total_urine_output_ml': 1265.0, 'num_records': 14, 'has_oliguria': np.False_, 'has_severe_oliguria': np.False_}
+
+2026-03-25 23:52:12  INFO      === Iteration 27/100  run=first_day_urine_output  best_qa=0.0% ===
+2026-03-25 23:53:12  INFO      Exec block 1/1 …
+2026-03-25 23:53:12  INFO      Output: Testing first_day_urine_output(37081114):
+{'subject_id': 10000690, 'hadm_id': 25860671, 'stay_id': 37081114, 'first_day_date': '2150-11-02', 'total_urine_output_ml': 170.0, 'num_records': 3, 'has_oliguria': np.True_, 'has_severe_oliguria': np.True_}
+
+Testing first_day_urine_output(39095027):
+{'subject_id': 10485425, 'hadm_id': 27469101, 'stay_id': 39095027, 'first_day_date': '2200-04-04', 'total_urine_output_ml': 1265.0, 'num_records': 14, 'has_oliguria': np.False_, 'has_severe_oliguria': np.Fal
+2026-03-25 23:53:12  INFO      === Iteration 28/100  run=first_day_urine_output  best_qa=0.0% ===
+2026-03-25 23:53:26  INFO      Exec block 1/1 …
+2026-03-25 23:53:26  INFO      Output:             charttime  value  itemid
+0 2180-07-23 15:00:00  175.0  226560
+
+2026-03-25 23:53:26  INFO      === Iteration 29/100  run=first_day_urine_output  best_qa=0.0% ===
+2026-03-25 23:53:35  INFO      Exec block 1/1 …
+2026-03-25 23:53:35  INFO      Output:     stay_id  subject_id   hadm_id              intime             outtime        duration
+0  39088393    14933260  26818445 2115-03-17 02:17:06 2115-03-17 02:18:54 0 days 00:01:48
+1  30540914    15745117  23437079 2183-11-17 17:41:53 2183-11-17 17:43:58 0 days 00:02:05
+2  35932220    19217064  29818700 2163-11-15 05:19:00 2163-11-15 05:22:16 0 days 00:03:16
+3  37403432    12489419  27536984 2149-10-08 12:03:59 2149-10-08 12:07:28 0 days 00:03:29
+4  33255415    13941452  27790400 2161-05-21 19:34
+2026-03-25 23:53:35  INFO      === Iteration 30/100  run=first_day_urine_output  best_qa=0.0% ===
+2026-03-25 23:53:43  INFO      Exec block 1/1 …
+2026-03-25 23:53:43  INFO      Output: Testing first_day_urine_output(39088393):
+{'subject_id': 14933260, 'hadm_id': 26818445, 'stay_id': 39088393, 'first_day_date': '2115-03-17', 'total_urine_output_ml': None, 'num_records': 0, 'has_oliguria': False, 'has_severe_oliguria': False}
+
+2026-03-25 23:53:43  INFO      === Iteration 31/100  run=first_day_urine_output  best_qa=0.0% ===
+2026-03-25 23:53:57  INFO      Exec block 1/1 …
+2026-03-25 23:53:57  INFO      Output: Testing first_day_urine_output(30540914):
+{'subject_id': 15745117, 'hadm_id': 23437079, 'stay_id': 30540914, 'first_day_date': '2183-11-17', 'total_urine_output_ml': None, 'num_records': 0, 'has_oliguria': False, 'has_severe_oliguria': False}
+
+Testing first_day_urine_output(31205490):
+{'subject_id': 10001725, 'hadm_id': 25563031, 'stay_id': 31205490, 'first_day_date': '2110-04-11', 'total_urine_output_ml': 625.0, 'num_records': 3, 'has_oliguria': np.False_, 'has_severe_oliguria': np.False_}
+
+2026-03-25 23:53:57  INFO      === Iteration 32/100  run=first_day_urine_output  best_qa=0.0% ===
+2026-03-25 23:54:10  INFO      Exec block 1/1 …
+2026-03-25 23:54:10  INFO      Output: Testing first_day_urine_output(999999999):
+{'subject_id': None, 'hadm_id': None, 'stay_id': 999999999, 'first_day_date': None, 'total_urine_output_ml': None, 'num_records': 0, 'has_oliguria': None, 'has_severe_oliguria': None}
+
+2026-03-25 23:54:10  INFO      === Iteration 33/100  run=first_day_urine_output  best_qa=0.0% ===
+2026-03-25 23:55:08  INFO      Exec block 1/1 …
+2026-03-25 23:55:08  INFO      Output: Code executed successfully (no output).
+2026-03-25 23:55:08  INFO      Debug conversations will be saved to debug_logs
+2026-03-25 23:55:08  INFO      Using question from dataset column: Does this patient have oliguria (urine output < 500 mL) on their first ICU day?
+2026-03-25 23:55:08  INFO      Answer type for 'first_day_urine_output': numerical (per_row=True)
+2026-03-25 23:55:08  INFO      ReACT iteration 1/5 — 20 active patients
+Rendering conversations:   0%|          | 0/20 [00:00<?, ?it/s]Rendering conversations: 100%|██████████| 20/20 [00:00<00:00, 445.59it/s]
+Processed prompts:   0%|          | 0/20 [00:00<?, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s]Processed prompts:   5%|▌         | 1/20 [00:11<03:35, 11.33s/it, est. speed input: 97.99 toks/s, output: 10.33 toks/s]Processed prompts:  20%|██        | 4/20 [00:11<00:36,  2.28s/it, est. speed input: 375.16 toks/s, output: 40.15 toks/s]Processed prompts:  25%|██▌       | 5/20 [00:11<00:25,  1.68s/it, est. speed input: 463.77 toks/s, output: 50.42 toks/s]Processed prompts:  40%|████      | 8/20 [00:12<00:10,  1.19it/s, est. speed input: 716.66 toks/s, output: 80.83 toks/s]Processed prompts:  50%|█████     | 10/20 [00:12<00:05,  1.71it/s, est. speed input: 883.90 toks/s, output: 102.30 toks/s]Processed prompts:  55%|█████▌    | 11/20 [00:13<00:05,  1.58it/s, est. speed input: 911.40 toks/s, output: 108.23 toks/s]Processed prompts:  70%|███████   | 14/20 [00:13<00:02,  2.63it/s, est. speed input: 1138.25 toks/s, output: 142.87 toks/s]Processed prompts:  75%|███████▌  | 15/20 [00:13<00:01,  3.00it/s, est. speed input: 1208.45 toks/s, output: 154.22 toks/s]Processed prompts:  85%|████████▌ | 17/20 [00:14<00:00,  3.35it/s, est. speed input: 1324.90 toks/s, output: 174.44 toks/s]Processed prompts:  90%|█████████ | 18/20 [00:15<00:00,  2.36it/s, est. speed input: 1315.38 toks/s, output: 177.34 toks/s]Processed prompts:  95%|█████████▌| 19/20 [00:15<00:00,  2.06it/s, est. speed input: 1326.60 toks/s, output: 183.86 toks/s]Processed prompts: 100%|██████████| 20/20 [00:16<00:00,  1.72it/s, est. speed input: 1322.41 toks/s, output: 189.15 toks/s]Processed prompts: 100%|██████████| 20/20 [00:16<00:00,  1.72it/s, est. speed input: 1322.41 toks/s, output: 189.15 toks/s]Processed prompts: 100%|██████████| 20/20 [00:16<00:00,  1.19it/s, est. speed input: 1322.41 toks/s, output: 189.15 toks/s]
+2026-03-25 23:55:25  INFO      ReACT iteration 2/5 — 20 active patients
+Rendering conversations:   0%|          | 0/20 [00:00<?, ?it/s]Rendering conversations: 100%|██████████| 20/20 [00:00<00:00, 388.66it/s]
+Processed prompts:   0%|          | 0/20 [00:00<?, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s]Processed prompts:   5%|▌         | 1/20 [00:10<03:28, 10.96s/it, est. speed input: 119.06 toks/s, output: 8.30 toks/s]Processed prompts:  15%|█▌        | 3/20 [00:12<00:59,  3.49s/it, est. speed input: 308.08 toks/s, output: 24.09 toks/s]Processed prompts:  25%|██▌       | 5/20 [00:12<00:26,  1.74s/it, est. speed input: 505.81 toks/s, output: 43.79 toks/s]Processed prompts:  30%|███       | 6/20 [00:13<00:21,  1.52s/it, est. speed input: 565.14 toks/s, output: 51.96 toks/s]Processed prompts:  40%|████      | 8/20 [00:14<00:11,  1.08it/s, est. speed input: 738.22 toks/s, output: 72.98 toks/s]Processed prompts:  45%|████▌     | 9/20 [00:14<00:08,  1.32it/s, est. speed input: 817.83 toks/s, output: 83.42 toks/s]Processed prompts:  50%|█████     | 10/20 [00:14<00:06,  1.51it/s, est. speed input: 885.49 toks/s, output: 93.19 toks/s]Processed prompts:  65%|██████▌   | 13/20 [00:14<00:02,  2.95it/s, est. speed input: 1142.00 toks/s, output: 127.90 toks/s]Processed prompts:  75%|███████▌  | 15/20 [00:15<00:01,  3.21it/s, est. speed input: 1273.66 toks/s, output: 147.66 toks/s]Processed prompts:  80%|████████  | 16/20 [00:15<00:01,  3.45it/s, est. speed input: 1341.53 toks/s, output: 158.34 toks/s]Processed prompts:  85%|████████▌ | 17/20 [00:15<00:00,  3.84it/s, est. speed input: 1411.66 toks/s, output: 169.41 toks/s]Processed prompts:  90%|█████████ | 18/20 [00:15<00:00,  4.42it/s, est. speed input: 1483.79 toks/s, output: 181.03 toks/s]Processed prompts:  95%|█████████▌| 19/20 [00:15<00:00,  5.06it/s, est. speed input: 1555.33 toks/s, output: 192.63 toks/s]Processed prompts: 100%|██████████| 20/20 [00:21<00:00,  1.67s/it, est. speed input: 1201.00 toks/s, output: 158.04 toks/s]Processed prompts: 100%|██████████| 20/20 [00:21<00:00,  1.67s/it, est. speed input: 1201.00 toks/s, output: 158.04 toks/s]Processed prompts: 100%|██████████| 20/20 [00:21<00:00,  1.08s/it, est. speed input: 1201.00 toks/s, output: 158.04 toks/s]
+2026-03-25 23:55:47  INFO      QA accuracy: 50.0%  (correct=10/20, parse_errors=0)
+2026-03-25 23:55:47  INFO      === Iteration 34/100  run=first_day_urine_output  best_qa=50.0% ===
+2026-03-25 23:56:08  INFO      Exec block 1/1 …
+2026-03-25 23:56:08  INFO      Output:     stay_id              intime             outtime first_day_date
+0  37132484 2182-08-01 23:44:00 2182-08-24 17:39:48     2182-08-01
+
+2026-03-25 23:56:08  INFO      === Iteration 35/100  run=first_day_urine_output  best_qa=50.0% ===
+2026-03-25 23:56:24  INFO      Exec block 1/1 …
+2026-03-25 23:56:24  INFO      Output: Empty DataFrame
+Columns: [charttime, value, itemid]
+Index: []
+
+2026-03-25 23:56:24  INFO      === Iteration 36/100  run=first_day_urine_output  best_qa=50.0% ===
+2026-03-25 23:56:41  INFO      Exec block 1/1 …
+2026-03-25 23:56:41  INFO      Output:              charttime   value  itemid              intime
+0  2182-08-02 02:00:00  1400.0  226559 2182-08-01 23:44:00
+1  2182-08-02 03:00:00   125.0  226559 2182-08-01 23:44:00
+2  2182-08-02 04:00:00    80.0  226559 2182-08-01 23:44:00
+3  2182-08-02 05:00:00    60.0  226559 2182-08-01 23:44:00
+4  2182-08-02 06:00:00    30.0  226559 2182-08-01 23:44:00
+5  2182-08-02 08:00:00   100.0  226559 2182-08-01 23:44:00
+6  2182-08-02 09:00:00    60.0  226559 2182-08-01 23:44:00
+7  2182-08-02 10:00:00   200
+2026-03-25 23:56:41  INFO      === Iteration 37/100  run=first_day_urine_output  best_qa=50.0% ===
+2026-03-25 23:57:03  INFO      Exec block 1/1 …
+2026-03-25 23:57:03  INFO      Output:    total_first_24hr_output
+0                   3270.0
+
+2026-03-25 23:57:03  INFO      === Iteration 38/100  run=first_day_urine_output  best_qa=50.0% ===
+2026-03-25 23:57:24  INFO      Exec block 1/1 …
+2026-03-25 23:57:24  INFO      Output:    total_admission_day_output
+0                         NaN
+
+2026-03-25 23:57:24  INFO      === Iteration 39/100  run=first_day_urine_output  best_qa=50.0% ===
+2026-03-25 23:57:47  INFO      Exec block 1/1 …
+2026-03-25 23:57:47  INFO      Output:    total_2018_08_02_output
+0                      NaN
+
+2026-03-25 23:57:47  INFO      === Iteration 40/100  run=first_day_urine_output  best_qa=50.0% ===
+2026-03-25 23:58:02  INFO      Exec block 1/1 …
+2026-03-25 23:58:02  INFO      Output:    chart_date
+0  2182-08-02
+1  2182-08-03
+2  2182-08-04
+3  2182-08-05
+4  2182-08-06
+5  2182-08-07
+6  2182-08-08
+7  2182-08-09
+8  2182-08-10
+9  2182-08-11
+10 2182-08-12
+11 2182-08-13
+12 2182-08-14
+13 2182-08-15
+14 2182-08-16
+15 2182-08-17
+16 2182-08-18
+17 2182-08-19
+18 2182-08-20
+19 2182-08-21
+20 2182-08-22
+21 2182-08-23
+22 2182-08-24
+
+2026-03-25 23:58:02  INFO      === Iteration 41/100  run=first_day_urine_output  best_qa=50.0% ===
+2026-03-25 23:58:24  INFO      Exec block 1/1 …
+2026-03-25 23:58:24  INFO      Output:    total_first_day_with_data
+0                     3270.0
+
+2026-03-25 23:58:24  INFO      === Iteration 42/100  run=first_day_urine_output  best_qa=50.0% ===
+2026-03-25 23:58:42  INFO      Exec block 1/1 …
+2026-03-25 23:58:42  INFO      Output:     stay_id              intime             outtime first_day_date
+0  32125946 2127-05-30 18:32:16 2127-06-07 18:52:22     2127-05-30
+
+2026-03-25 23:58:42  INFO      === Iteration 43/100  run=first_day_urine_output  best_qa=50.0% ===
+2026-03-25 23:58:59  INFO      Exec block 1/1 …
+2026-03-25 23:58:59  INFO      Output: Empty DataFrame
+Columns: [charttime, value, itemid]
+Index: []
+
+2026-03-25 23:58:59  INFO      === Iteration 44/100  run=first_day_urine_output  best_qa=50.0% ===
+2026-03-25 23:59:29  INFO      Exec block 1/1 …
+2026-03-25 23:59:29  INFO      Output:              charttime   value  itemid time_since_admission
+0  2182-08-02 02:00:00  1400.0  226559      0 days 02:16:00
+1  2182-08-02 03:00:00   125.0  226559      0 days 03:16:00
+2  2182-08-02 04:00:00    80.0  226559      0 days 04:16:00
+3  2182-08-02 05:00:00    60.0  226559      0 days 05:16:00
+4  2182-08-02 06:00:00    30.0  226559      0 days 06:16:00
+5  2182-08-02 08:00:00   100.0  226559      0 days 08:16:00
+6  2182-08-02 09:00:00    60.0  226559      0 days 09:16:00
+7  2182-08-02 10:00:
+2026-03-25 23:59:29  INFO      === Iteration 45/100  run=first_day_urine_output  best_qa=50.0% ===
+2026-03-25 23:59:49  INFO      Exec block 1/1 …
+2026-03-25 23:59:49  INFO      Output:     stay_id              intime             outtime first_day_date
+0  33925207 2147-10-13 12:26:05 2147-10-15 22:35:26     2147-10-13
+
+2026-03-25 23:59:49  INFO      === Iteration 46/100  run=first_day_urine_output  best_qa=50.0% ===
+2026-03-26 00:00:07  INFO      Exec block 1/1 …
+2026-03-26 00:00:07  INFO      Output:             charttime  value  itemid
+0 2147-10-13 20:08:00  250.0  226560
+1 2147-10-13 22:28:00  200.0  226560
+2 2147-10-13 23:34:00  100.0  226560
+
+2026-03-26 00:00:07  INFO      === Iteration 47/100  run=first_day_urine_output  best_qa=50.0% ===
+2026-03-26 00:00:27  INFO      Exec block 1/1 …
+2026-03-26 00:00:27  INFO      Output:             charttime  value  itemid time_since_admission
+0 2147-10-13 20:08:00  250.0  226560      0 days 07:41:55
+1 2147-10-13 22:28:00  200.0  226560      0 days 10:01:55
+2 2147-10-13 23:34:00  100.0  226560      0 days 11:07:55
+3 2147-10-14 00:40:00  200.0  226560      0 days 12:13:55
+4 2147-10-14 03:34:00  150.0  226560      0 days 15:07:55
+5 2147-10-14 12:00:00  250.0  226627      0 days 23:33:55
+
+2026-03-26 00:00:27  INFO      === Iteration 48/100  run=first_day_urine_output  best_qa=50.0% ===
+2026-03-26 00:00:50  INFO      Exec block 1/1 …
+2026-03-26 00:00:50  INFO      Output:     stay_id              intime             outtime first_day_date
+0  32460283 2146-06-29 01:53:10 2146-06-30 20:53:34     2146-06-29
+
+2026-03-26 00:00:50  INFO      === Iteration 49/100  run=first_day_urine_output  best_qa=50.0% ===
+2026-03-26 00:01:07  INFO      Exec block 1/1 …
+2026-03-26 00:01:07  INFO      Output:             charttime  value  itemid
+0 2146-06-29 03:42:00  200.0  226560
+1 2146-06-29 05:00:00  200.0  226560
+2 2146-06-29 07:56:00  200.0  226560
+3 2146-06-29 14:29:00  350.0  226560
+
+2026-03-26 00:01:07  INFO      === Iteration 50/100  run=first_day_urine_output  best_qa=50.0% ===
+2026-03-26 00:01:28  INFO      Exec block 1/1 …
+2026-03-26 00:01:28  INFO      Output:             charttime  value  itemid time_since_admission
+0 2146-06-29 03:42:00  200.0  226560      0 days 01:48:50
+1 2146-06-29 05:00:00  200.0  226560      0 days 03:06:50
+2 2146-06-29 07:56:00  200.0  226560      0 days 06:02:50
+3 2146-06-29 14:29:00  350.0  226560      0 days 12:35:50
+4 2146-06-30 01:00:00  600.0  226560      0 days 23:06:50
+
+2026-03-26 00:01:28  INFO      === Iteration 51/100  run=first_day_urine_output  best_qa=50.0% ===
+2026-03-26 00:02:39  INFO      Exec block 1/1 …
+2026-03-26 00:02:39  INFO      Output:    total_first_24hr_no_or
+0                  2850.0
+
+2026-03-26 00:02:39  INFO      === Iteration 52/100  run=first_day_urine_output  best_qa=50.0% ===
+2026-03-26 00:03:06  INFO      Exec block 1/1 …
+2026-03-26 00:03:06  INFO      Output:    total_first_24hr_no_or
+0                   900.0
+
+2026-03-26 00:03:06  INFO      === Iteration 53/100  run=first_day_urine_output  best_qa=50.0% ===
+2026-03-26 00:03:27  INFO      Exec block 1/1 …
+2026-03-26 00:03:27  INFO      Output:    total_first_24hr_no_or_pacu
+0                       1550.0
+
+2026-03-26 00:03:27  INFO      === Iteration 54/100  run=first_day_urine_output  best_qa=50.0% ===
+2026-03-26 00:03:51  INFO      Exec block 1/1 …
+2026-03-26 00:03:51  INFO      Output:    total_first_24hr_no_or_pacu
+0                        100.0
+
+2026-03-26 00:03:51  INFO      === Iteration 55/100  run=first_day_urine_output  best_qa=50.0% ===
+2026-03-26 00:04:11  INFO      Exec block 1/1 …
+2026-03-26 00:04:11  INFO      Output:     stay_id              intime             outtime first_day_date
+0  35761376 2121-02-28 22:08:00 2121-03-01 17:20:19     2121-02-28
+
+2026-03-26 00:04:11  INFO      === Iteration 56/100  run=first_day_urine_output  best_qa=50.0% ===
+2026-03-26 00:04:30  INFO      Exec block 1/1 …
+2026-03-26 00:04:30  INFO      Output: Empty DataFrame
+Columns: [charttime, value, itemid]
+Index: []
+
+2026-03-26 00:04:30  INFO      === Iteration 57/100  run=first_day_urine_output  best_qa=50.0% ===
+2026-03-26 00:05:52  INFO      Exec block 1/1 …
+2026-03-26 00:05:52  INFO      Output: Testing first_day_urine_output(37132484):
+{'subject_id': 16229616, 'hadm_id': 24110114, 'stay_id': 37132484, 'first_day_start': '2182-08-01 23:44:00', 'first_day_end': '2182-08-02 23:44:00', 'total_urine_output_ml': 2850.0, 'num_records': 15, 'has_oliguria': np.False_, 'has_severe_oliguria': np.False_}
+
+Testing first_day_urine_output(33925207):
+{'subject_id': 17359127, 'hadm_id': 27080316, 'stay_id': 33925207, 'first_day_start': '2147-10-13 12:26:05', 'first_day_end': '2147-10-14 12:26:05', 'tot
+2026-03-26 00:05:52  INFO      === Iteration 58/100  run=first_day_urine_output  best_qa=50.0% ===
+2026-03-26 00:06:19  INFO      Exec block 1/1 …
+2026-03-26 00:06:19  INFO      Output: Testing first_day_urine_output(37081114):
+{'subject_id': 10000690, 'hadm_id': 25860671, 'stay_id': 37081114, 'first_day_start': '2150-11-02 19:37:00', 'first_day_end': '2150-11-03 19:37:00', 'total_urine_output_ml': 695.0, 'num_records': 17, 'has_oliguria': np.False_, 'has_severe_oliguria': np.False_}
+
+Testing first_day_urine_output(39095027):
+{'subject_id': 10485425, 'hadm_id': 27469101, 'stay_id': 39095027, 'first_day_start': '2200-04-04 04:14:39', 'first_day_end': '2200-04-05 04:14:39', 'tota
+2026-03-26 00:06:19  INFO      === Iteration 59/100  run=first_day_urine_output  best_qa=50.0% ===
+2026-03-26 00:07:35  INFO      Exec block 1/1 …
+2026-03-26 00:07:35  INFO      Output: Code executed successfully (no output).
+2026-03-26 00:07:35  INFO      Debug conversations will be saved to debug_logs
+2026-03-26 00:07:35  INFO      Using question from dataset column: Does this patient have oliguria (urine output < 500 mL) on their first ICU day?
+2026-03-26 00:07:35  INFO      Answer type for 'first_day_urine_output': numerical (per_row=True)
+2026-03-26 00:07:35  INFO      ReACT iteration 1/5 — 20 active patients
+Rendering conversations:   0%|          | 0/20 [00:00<?, ?it/s]Rendering conversations: 100%|██████████| 20/20 [00:00<00:00, 465.98it/s]
+Processed prompts:   0%|          | 0/20 [00:00<?, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s]Processed prompts:   5%|▌         | 1/20 [00:11<03:45, 11.87s/it, est. speed input: 101.82 toks/s, output: 9.77 toks/s]Processed prompts:  20%|██        | 4/20 [00:12<00:37,  2.34s/it, est. speed input: 395.16 toks/s, output: 38.65 toks/s]Processed prompts:  25%|██▌       | 5/20 [00:12<00:25,  1.73s/it, est. speed input: 488.78 toks/s, output: 48.67 toks/s]Processed prompts:  55%|█████▌    | 11/20 [00:12<00:04,  1.90it/s, est. speed input: 1064.38 toks/s, output: 109.70 toks/s]Processed prompts:  70%|███████   | 14/20 [00:14<00:03,  1.91it/s, est. speed input: 1203.57 toks/s, output: 133.08 toks/s]Processed prompts:  85%|████████▌ | 17/20 [00:14<00:01,  2.67it/s, est. speed input: 1441.27 toks/s, output: 167.14 toks/s]Processed prompts:  95%|█████████▌| 19/20 [00:14<00:00,  2.70it/s, est. speed input: 1533.17 toks/s, output: 184.44 toks/s]Processed prompts: 100%|██████████| 20/20 [00:15<00:00,  2.70it/s, est. speed input: 1609.37 toks/s, output: 196.92 toks/s]Processed prompts: 100%|██████████| 20/20 [00:15<00:00,  1.33it/s, est. speed input: 1609.37 toks/s, output: 196.92 toks/s]
+2026-03-26 00:07:50  INFO      ReACT iteration 2/5 — 20 active patients
+Rendering conversations:   0%|          | 0/20 [00:00<?, ?it/s]Rendering conversations: 100%|██████████| 20/20 [00:00<00:00, 393.11it/s]
+Processed prompts:   0%|          | 0/20 [00:00<?, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s]Processed prompts:   5%|▌         | 1/20 [00:09<03:02,  9.63s/it, est. speed input: 149.56 toks/s, output: 4.88 toks/s]Processed prompts:  20%|██        | 4/20 [00:11<00:38,  2.38s/it, est. speed input: 492.76 toks/s, output: 19.69 toks/s]Processed prompts:  30%|███       | 6/20 [00:12<00:20,  1.46s/it, est. speed input: 705.49 toks/s, output: 34.80 toks/s]Processed prompts:  35%|███▌      | 7/20 [00:13<00:18,  1.43s/it, est. speed input: 742.79 toks/s, output: 41.43 toks/s]Processed prompts:  40%|████      | 8/20 [00:13<00:14,  1.17s/it, est. speed input: 823.22 toks/s, output: 50.54 toks/s]Processed prompts:  50%|█████     | 10/20 [00:14<00:07,  1.35it/s, est. speed input: 1007.84 toks/s, output: 70.58 toks/s]Processed prompts:  55%|█████▌    | 11/20 [00:15<00:07,  1.28it/s, est. speed input: 1041.73 toks/s, output: 77.77 toks/s]Processed prompts:  65%|██████▌   | 13/20 [00:15<00:03,  1.92it/s, est. speed input: 1211.80 toks/s, output: 99.47 toks/s]Processed prompts:  70%|███████   | 14/20 [00:15<00:02,  2.27it/s, est. speed input: 1291.64 toks/s, output: 110.24 toks/s]Processed prompts:  75%|███████▌  | 15/20 [00:15<00:02,  2.43it/s, est. speed input: 1356.39 toks/s, output: 119.97 toks/s]Processed prompts:  80%|████████  | 16/20 [00:18<00:03,  1.15it/s, est. speed input: 1271.33 toks/s, output: 119.00 toks/s]Processed prompts:  85%|████████▌ | 17/20 [00:18<00:02,  1.46it/s, est. speed input: 1336.60 toks/s, output: 131.57 toks/s]Processed prompts:  90%|█████████ | 18/20 [00:18<00:01,  1.85it/s, est. speed input: 1403.59 toks/s, output: 144.41 toks/s]Processed prompts: 100%|██████████| 20/20 [00:19<00:00,  1.61it/s, est. speed input: 1445.85 toks/s, output: 161.80 toks/s]Processed prompts: 100%|██████████| 20/20 [00:19<00:00,  1.61it/s, est. speed input: 1445.85 toks/s, output: 161.80 toks/s]Processed prompts: 100%|██████████| 20/20 [00:19<00:00,  1.00it/s, est. speed input: 1445.85 toks/s, output: 161.80 toks/s]
+2026-03-26 00:08:10  INFO      QA accuracy: 100.0%  (correct=20/20, parse_errors=0)
+2026-03-26 00:08:10  INFO      SUCCESS: 100.0% QA accuracy for 'first_day_urine_output' at iteration 59
+2026-03-26 00:08:10  INFO      Function code saved to autoformalized_library/functions/first_day_urine_output.py
+2026-03-26 00:08:10  INFO      Summary saved to autoformalized_library/summary.json
+[rank0]:[W326 00:08:10.884514428 ProcessGroupNCCL.cpp:1553] Warning: WARNING: destroy_process_group() was not called before program exit, which can leak resources. For more info, please see https://pytorch.org/docs/stable/distributed.html#shutdown (function operator())
+
+======================================================================
+AUTOFORMALIZATION COMPLETE
+======================================================================
+  Output dir      : autoformalized_library
+  Model           : Qwen/Qwen3.5-27B
+  Dataset         : /home/v-tiossowski/HealthcareAgent/mimic-code/data/MIMICIV_first_day_urine_output_dataset/first_day_urine_output.csv
+  Run name        : first_day_urine_output
+  Status          : SUCCESS
+  QA accuracy     : 100.0%
+  Iterations      : 59
+  Total tokens    : 59,099  (prompt 52,924 / completion 6,175)
+  LLM calls       : 99
+  SQL queries     : 71
+  Function saved  : autoformalized_library/functions/first_day_urine_output.py
+======================================================================

@@ -1,0 +1,1171 @@
+=== Step 1 ===
+# Clinical Coding Agent Memory - OASIS Implementation
+
+## Schema Facts
+
+### Tables
+- `mimiciv_hosp.admissions`: subject_id, hadm_id, admittime, discharge_time, admission_type
+- `mimiciv_hosp.patients`: subject_id, gender, anchor_age, anchor_year
+- `mimiciv_icu.icustays`: subject_id, hadm_id, stay_id, intime, outtime, first_careunit
+- `mimiciv_icu.chartevents`: subject_id, hadm_id, stay_id, charttime, itemid, value, valuenum, valueuom
+- `mimiciv_icu.outputevents`: subject_id, hadm_id, stay_id, charttime, itemid, value, valueuom
+- `mimiciv_icu.procedureevents`: subject_id, hadm_id, stay_id, starttime, endtime, itemid, value
+- `mimiciv_icu.d_items`: itemid, label, category
+
+### Key ItemIDs for OASIS
+| Variable | ItemID(s) | Notes |
+|----------|-----------|-------|
+| Heart Rate | 220045 | Routine Vital Signs |
+| Respiratory Rate | 220210 | Respiratory |
+| Temperature (°C) | 223762 | Routine Vital Signs |
+| MAP (Arterial) | 220052 | Arterial Blood Pressure mean |
+| MAP (Non-invasive) | 220181 | Non Invasive Blood Pressure mean |
+| GCS Eye Opening | 220739 | valuenum: 1-4 |
+| GCS Verbal Response | 223900 | valuenum: 1-5 |
+| GCS Motor Response | 223901 | valuenum: 1-6 |
+| Ventilator Type | 223848 | Respiratory |
+| Ventilator Mode | 223849 | Respiratory |
+| Invasive Ventilation | 225792 | procedureevents |
+| Intubation | 224385 | procedureevents |
+| Urine Output | 226557, 226558, 226559, 226560, 226561, 226563, 226564, 226565, 226566, 226567, 227489 | outputevents |
+
+### Admission Types
+- ELECTIVE, EW EMER., DIRECT EMER., URGENT, EU OBSERVATION, DIRECT OBSERVATION, SURGICAL SAME DAY ADMISSION, AMBULATORY OBSERVATION, OBSERVATION ADMIT
+
+### GCS Value Mappings
+| Component | Value | valuenum |
+|-----------|-------|----------|
+| Eye Opening | Spontaneously | 4 |
+| Eye Opening | To Speech | 3 |
+| Eye Opening | To Pain | 2 |
+| Eye Opening | None | 1 |
+| Verbal | Oriented | 5 |
+| Verbal | Confused | 4 |
+| Verbal | Inappropriate Words | 3 |
+| Verbal | Incomprehensible sounds | 2 |
+| Verbal | No Response / No Response-ETT | 1 |
+| Motor | Obeys Commands | 6 |
+| Motor | Localizes Pain | 5 |
+| Motor | Flex-withdraws | 4 |
+| Motor | Abnormal Flexion | 3 |
+| Motor | Abnormal extension | 2 |
+| Motor | No response | 1 |
+
+## Functions
+
+### calculate_oasis_score
+```python
+import pandas as pd
+import numpy as np
+from datetime import datetime, timedelta
+
+def calculate_oasis_score(stay_id):
+    """
+    Calculate the OASIS (Oxford Acute Severity of Illness Score) for a patient's ICU stay.
+    
+    The OASIS score is a parsimonious ICU severity-of-illness scoring system that uses
+    10 routinely collected variables available in the first 24 hours of ICU admission
+    to predict in-hospital mortality.
+    
+    Parameters
+    ----------
+    stay_id : int
+        The ICU stay identifier.
+    
+    Returns
+    -------
+    dict
+        A dictionary containing:
+        - 'stay_id': The ICU stay identifier
+        - 'subject_id': The patient identifier
+        - 'hadm_id': The hospital admission identifier
+        - 'oasis_score': Total OASIS score (0-47)
+        - 'components': Dictionary with individual component scores
+        - 'on_mechanical_ventilation': Boolean indicating if patient was on MV in first 24h
+        - 'predicted_mortality': Predicted in-hospital mortality probability
+    
+    Notes
+    -----
+    The OASIS score components are:
+    1. Pre-ICU in-hospital length of stay (days)
+    2. Age (years)
+    3. Glasgow Coma Scale (GCS)
+    4. Heart rate (bpm)
+    5. Mean arterial pressure (MAP) (mmHg)
+    6. Respiratory rate (breaths/min)
+    7. Temperature (°C)
+    8. Urine output (mL/24h)
+    9. Mechanical ventilation (binary)
+    10. Elective surgery (binary)
+    """
+    
+    # Get ICU stay information
+    stay_info = query_db(f"""
+        SELECT i.stay_id, i.subject_id, i.hadm_id, i.intime,
+               a.admittime, a.admission_type, p.anchor_age
+        FROM mimiciv_icu.icustays i
+        JOIN mimiciv_hosp.admissions a ON i.hadm_id = a.hadm_id
+        JOIN mimiciv_hosp.patients p ON i.subject_id = p.subject_id
+        WHERE i.stay_id = {stay_id}
+    """)
+    
+    if stay_info.empty:
+        return {'error': 'Stay ID not found'}
+    
+    stay_info = stay_info.iloc[0]
+    subject_id = stay_info['subject_id']
+    hadm_id = stay_info['hadm_id']
+    intime = pd.to_datetime(stay_info['intime'])
+    admittime = pd.to_datetime(stay_info['admittime'])
+    admission_type = stay_info['admission_type']
+    age = stay_info['anchor_age']
+    
+    # Define first 24 hours window
+    first_day_end = intime + timedelta(hours=24)
+    
+    components = {}
+    
+    # 1. Pre-ICU in-hospital length of stay (days)
+    pre_icu_los = (intime - admittime).total_seconds() / 3600 / 24  # in days
+    if pre_icu_los < 0.17:
+        pre_icu_los_score = 0
+    elif pre_icu_los < 1.0:
+        pre_icu_los_score = 1
+    elif pre_icu_los < 4.94:
+        pre_icu_los_score = 2
+    elif pre_icu_los < 24.63:
+        pre_icu_los_score = 3
+    else:
+        pre_icu_los_score = 4
+    components['pre_icu_los'] = {'value': pre_icu_los, 'score': pre_icu_los_score}
+    
+    # 2. Age (years)
+    if age < 24:
+        age_score = 0
+    elif age < 54:
+        age_score = 1
+    elif age < 78:
+        age_score = 2
+    elif age < 90:
+        age_score = 3
+    else:
+        age_score = 4
+    components['age'] = {'value': age, 'score': age_score}
+    
+    # 3. GCS - get lowest GCS in first 24 hours
+    gcs_query = query_db(f"""
+        SELECT 
+            MIN(eye.valuenum) as min_eye,
+            MIN(verbal.valuenum) as min_verbal,
+            MIN(motor.valuenum) as min_motor
+        FROM (
+            SELECT valuenum FROM mimiciv_icu.chartevents
+            WHERE stay_id = {stay_id}
+              AND itemid = 220739  -- GCS Eye Opening
+              AND charttime >= '{intime}'
+              AND charttime <= '{first_day_end}'
+              AND valuenum IS NOT NULL
+        ) eye
+        CROSS JOIN (
+            SELECT valuenum FROM mimiciv_icu.chartevents
+            WHERE stay_id = {stay_id}
+              AND itemid = 223900  -- GCS Verbal Response
+              AND charttime >= '{intime}'
+              AND charttime <= '{first_day_end}'
+              AND valuenum IS NOT NULL
+        ) verbal
+        CROSS JOIN (
+            SELECT valuenum FROM mimiciv_icu.chartevents
+            WHERE stay_id = {stay_id}
+              AND itemid = 223901  -- GCS Motor Response
+              AND charttime >= '{intime}'
+              AND charttime <= '{first_day_end}'
+              AND valuenum IS NOT NULL
+        ) motor
+    """)
+    
+    if not gcs_query.empty and gcs_query.iloc[0]['min_eye'] is not None:
+        gcs_total = gcs_query.iloc[0]['min_eye'] + gcs_query.iloc[0]['min_verbal'] + gcs_query.iloc[0]['min_motor']
+        if gcs_total == 15:
+            gcs_score = 0
+        elif gcs_total == 14:
+            gcs_score = 1
+        elif gcs_total >= 12:
+            gcs_score = 2
+        elif gcs_total >= 8:
+            gcs_score = 3
+        else:
+            gcs_score = 4
+        components['gcs'] = {'value': gcs_total, 'score': gcs_score}
+    else:
+        components['gcs'] = {'value': None, 'score': None}
+        gcs_score = None
+    
+    # 4. Heart rate - get most extreme value in first 24 hours
+    hr_query = query_db(f"""
+        SELECT valuenum FROM mimiciv_icu.chartevents
+        WHERE stay_id = {stay_id}
+          AND itemid = 220045  -- Heart Rate
+          AND charttime >= '{intime}'
+          AND charttime <= '{first_day_end}'
+          AND valuenum IS NOT NULL
+          AND valuenum > 0
+          AND valuenum < 300
+    """)
+    
+    if not hr_query.empty:
+        hr_values = hr_query['valuenum'].tolist()
+        # Find most extreme from normal range (75-100)
+        most_extreme_hr = max(hr_values, key=lambda x: max(abs(x - 75), abs(x - 100)))
+        
+        if 75 <= most_extreme_hr < 100:
+            hr_score = 0
+        elif (100 <= most_extreme_hr < 120) or (60 <= most_extreme_hr < 75):
+            hr_score = 1
+        elif (120 <= most_extreme_hr < 140) or (40 <= most_extreme_hr < 60):
+            hr_score = 2
+        else:  # >= 140 or < 40
+            hr_score = 3
+        components['heart_rate'] = {'value': most_extreme_hr, 'score': hr_score}
+    else:
+        components['heart_rate'] = {'value': None, 'score': None}
+        hr_score = None
+    
+    # 5. MAP - get most extreme value in first 24 hours
+    map_query = query_db(f"""
+        SELECT valuenum FROM mimiciv_icu.chartevents
+        WHERE stay_id = {stay_id}
+          AND itemid IN (220052, 220181)  -- Arterial BP mean, Non-invasive BP mean
+          AND charttime >= '{intime}'
+          AND charttime <= '{first_day_end}'
+          AND valuenum IS NOT NULL
+          AND valuenum > 0
+          AND valuenum < 250
+    """)
+    
+    if not map_query.empty:
+        map_values = map_query['valuenum'].tolist()
+        # Find most extreme from normal range (60-70)
+        most_extreme_map = max(map_values, key=lambda x: max(abs(x - 60), abs(x - 70)))
+        
+        if 60 <= most_extreme_map < 70:
+            map_score = 0
+        elif (70 <= most_extreme_map < 80) or (50 <= most_extreme_map < 60):
+            map_score = 1
+        elif (80 <= most_extreme_map < 100) or (40 <= most_extreme_map < 50):
+            map_score = 2
+        elif 100 <= most_extreme_map < 120:
+            map_score = 3
+        else:  # >= 120 or < 40
+            map_score = 4
+        components['map'] = {'value': most_extreme_map, 'score': map_score}
+    else:
+        components['map'] = {'value': None, 'score': None}
+        map_score = None
+    
+    # 6. Respiratory rate - get most extreme value in first 24 hours
+    rr_query = query_db(f"""
+        SELECT valuenum FROM mimiciv_icu.chartevents
+        WHERE stay_id = {stay_id}
+          AND itemid = 220210  -- Respiratory Rate
+          AND charttime >= '{intime}'
+          AND charttime <= '{first_day_end}'
+          AND valuenum IS NOT NULL
+          AND valuenum > 0
+          AND valuenum < 100
+    """)
+    
+    if not rr_query.empty:
+        rr_values = rr_query['valuenum'].tolist()
+        # Find most extreme from normal range (12-22)
+        most_extreme_rr = max(rr_values, key=lambda x: max(abs(x - 12), abs(x - 22)))
+        
+        if 12 <= most_extreme_rr < 22:
+            rr_score = 0
+        elif (22 <= most_extreme_rr < 30) or (6 <= most_extreme_rr < 12):
+            rr_score = 1
+        elif 30 <= most_extreme_rr < 40:
+            rr_score = 2
+        else:  # >= 40 or < 6
+            rr_score = 3
+        components['respiratory_rate'] = {'value': most_extreme_rr, 'score': rr_score}
+    else:
+        components['respiratory_rate'] = {'value': None, 'score': None}
+        rr_score = None
+    
+    # 7. Temperature - get most extreme value in first 24 hours
+    temp_query = query_db(f"""
+        SELECT valuenum FROM mimiciv_icu.chartevents
+        WHERE stay_id = {stay_id}
+          AND itemid = 223762  -- Temperature Celsius
+          AND charttime >= '{intime}'
+          AND charttime <= '{first_day_end}'
+          AND valuenum IS NOT NULL
+          AND valuenum > 25
+          AND valuenum < 45
+    """)
+    
+    if not temp_query.empty:
+        temp_values = temp_query['valuenum'].tolist()
+        # Find most extreme from normal range (36-37.5)
+        most_extreme_temp = max(temp_values, key=lambda x: max(abs(x - 36), abs(x - 37.5)))
+        
+        if 36 <= most_extreme_temp < 37.5:
+            temp_score = 0
+        elif (37.5 <= most_extreme_temp < 38.5) or (35 <= most_extreme_temp < 36):
+            temp_score = 1
+        elif 38.5 <= most_extreme_temp < 39:
+            temp_score = 2
+        else:  # >= 39 or < 35
+            temp_score = 3
+        components['temperature'] = {'value': most_extreme_temp, 'score': temp_score}
+    else:
+        components['temperature'] = {'value': None, 'score': None}
+        temp_score = None
+    
+    # 8. Urine output - total in first 24 hours
+    urine_query = query_db(f"""
+        SELECT SUM(value) as total_urine
+        FROM mimiciv_icu.outputevents
+        WHERE stay_id = {stay_id}
+          AND itemid IN (226557, 226558, 226559, 226560, 226561, 226563, 226564, 226565, 226566, 226567, 227489)
+          AND charttime >= '{intime}'
+          AND charttime <= '{first_day_end}'
+    """)
+    
+    if not urine_query.empty and urine_query.iloc[0]['total_urine'] is not None:
+        urine_output = urine_query.iloc[0]['total_urine']
+        if urine_output >= 2000 and urine_output < 4000:
+            urine_score = 0
+        elif (urine_output >= 4000 and urine_output < 5500) or (urine_output >= 1000 and urine_output < 2000):
+            urine_score = 1
+        elif urine_output >= 5500 or (urine_output >= 500 and urine_output < 1000):
+            urine_score = 2
+        elif urine_output >= 200 and urine_output < 500:
+            urine_score = 3
+        else:  # < 200
+            urine_score = 4
+        components['urine_output'] = {'value': urine_output, 'score': urine_score}
+    else:
+        components['urine_output'] = {'value': None, 'score': None}
+        urine_score = None
+    
+    # 9. Mechanical ventilation - check if ventilated in first 24 hours
+    # Check for ventilator type or mode in chartevents
+    vent_query = query_db(f"""
+        SELECT COUNT(*) as vent_count
+        FROM mimiciv_icu.chartevents
+        WHERE stay_id = {stay_id}
+          AND itemid IN (223848, 223849)  -- Ventilator Type, Ventilator Mode
+          AND charttime >= '{intime}'
+          AND charttime <= '{first_day_end}'
+    """)
+    
+    # Also check for invasive ventilation in procedureevents
+    vent_proc_query = query_db(f"""
+        SELECT COUNT(*) as vent_proc_count
+        FROM mimiciv_icu.procedureevents
+        WHERE stay_id = {stay_id}
+          AND itemid = 225792  -- Invasive Ventilation
+          AND starttime >= '{intime}'
+          AND starttime <= '{first_day_end}'
+    """)
+    
+    # Check for intubation in procedureevents
+    intub_query = query_db(f"""
+        SELECT COUNT(*) as intub_count
+        FROM mimiciv_icu.procedureevents
+        WHERE stay_id = {stay_id}
+          AND itemid = 224385  -- Intubation
+          AND starttime >= '{intime}'
+          AND starttime <= '{first_day_end}'
+    """)
+    
+    on_mechanical_ventilation = (
+        vent_query.iloc[0]['vent_count'] > 0 or 
+        vent_proc_query.iloc[0]['vent_proc_count'] > 0 or 
+        intub_query.iloc[0]['intub_count'] > 0
+    )
+    
+    if on_mechanical_ventilation:
+        vent_score = 4
+    else:
+        vent_score = 0
+    components['mechanical_ventilation'] = {'value': on_mechanical_ventilation, 'score': vent_score}
+    
+    # 10. Elective surgery - check admission type
+    is_elective = admission_type == 'ELECTIVE'
+    if is_elective:
+        elective_score = 0
+    else:
+        elective_score = 3
+    components['elective_surgery'] = {'value': is_elective, 'score': elective_score}
+    
+    # Calculate total OASIS score
+    score_list = [
+        pre_icu_los_score, age_score, gcs_score, hr_score, map_score,
+        rr_score, temp_score, urine_score, vent_score, elective_score
+    ]
+    
+    # Handle missing values - if any component is missing, we can't calculate a valid score
+    if None in score_list:
+        oasis_score = None
+    else:
+        oasis_score = sum(score_list)
+    
+    # Calculate predicted mortality
+    if oasis_score is not None:
+        # Logistic regression: p = 1 / (1 + exp(-(beta0 + beta1 * OASIS)))
+        beta0 = -6.1746
+        beta1 = 0.1275
+        predicted_mortality = 1 / (1 + np.exp(-(beta0 + beta1 * oasis_score)))
+    else:
+        predicted_mortality = None
+    
+    return {
+        'stay_id': stay_id,
+        'subject_id': subject_id,
+        'hadm_id': hadm_id,
+        'oasis_score': oasis_score,
+        'components': components,
+        'on_mechanical_ventilation': on_mechanical_ventilation,
+        'predicted_mortality': predicted_mortality
+    }
+```
+
+### first_day_urine_output (loaded from library)
+```python
+def first_day_urine_output(stay_id):
+    """
+    Extract urine output information for a patient's first ICU day.
+    
+    This function retrieves urine output data from the ICU output events table
+    and calculates the total urine output during the first 24 hours of the ICU stay.
+    It also determines if the patient has oliguria or severe oliguria on that day.
+    
+    Urine output is captured from the following itemids in the outputevents table:
+    - 226557: R Ureteral Stent
+    - 226558: L Ureteral Stent
+    - 226559: Foley
+    - 226560: Void
+    - 226561: Condom Cath
+    - 226563: Suprapubic
+    - 226564: R Nephrostomy
+    - 226565: L Nephrostomy
+    - 226566: Urine and GU Irrigant Out
+    - 226567: Straight Cath
+    - 227489: GU Irrigant/Urine Volume Out
+    
+    Note: OR Urine (226627) and PACU Urine (226631) are excluded as they represent
+    pre-ICU outputs from the operating room and post-anesthesia care unit.
+    
+    Parameters
+    ----------
+    stay_id : int
+        The ICU stay identifier.
+    
+    Returns
+    -------
+    dict
+        A dictionary containing the following keys:
+        - 'subject_id': patient identifier (int or None)
+        - 'hadm_id': hospital admission identifier (int or None)
+        - 'stay_id': ICU stay identifier (int)
+        - 'first_day_start': start time of the first ICU day (str in ISO format or None)
+        - 'first_day_end': end time of the first ICU day (str in ISO format or None)
+        - 'total_urine_output_ml': total urine output in first 24 hours in mL (float or None)
+        - 'num_records': number of urine output records in first 24 hours (int)
+        - 'has_oliguria': boolean indicating if total output < 500 mL (bool or None)
+        - 'has_severe_oliguria': boolean indicating if total output < 200 mL (bool or None)
+    
+    Raises
+    ------
+    ValueError
+        If stay_id is not provided.
+    
+    Examples
+    --------
+    >>> first_day_urine_output(37081114)
+    {'subject_id': 10000690, 'hadm_id': 25860671, 'stay_id': 37081114,
+     'first_day_start': '2150-11-02 19:37:00', 'first_day_end': '2150-11-03 19:37:00',
+     'total_urine_output_ml': 695.0, 'num_records': 17,
+     'has_oliguria': False, 'has_severe_oliguria': False}
+    
+    Notes
+    -----
+    Clinical thresholds:
+    - Oliguria: total urine output < 500 mL in first 24 hours of ICU stay
+    - Severe oliguria: total urine output < 200 mL in first 24 hours of ICU stay
+    """
+```
+
+## Test Results
+
+### Test: calculate_oasis_score(37293400)
+```
+Result:
+{
+  'stay_id': 37293400,
+  'subject_id': 10018081,
+  'hadm_id': 21027282,
+  'oasis_score': None,  # FAILED - temperature data missing
+  'components': {
+    'pre_icu_los': {'value': 0.0083, 'score': 0},
+    'age': {'value': 79, 'score': 3},
+    'gcs': {'value': 3.0, 'score': 4},
+    'heart_rate': {'value': 99.0, 'score': 0},
+    'map': {'value': 82.0, 'score': 2},
+    'respiratory_rate': {'value': 24.0, 'score': 1},
+    'temperature': {'value': None, 'score': None},  # MISSING DATA
+    'urine_output': {'value': 1182.0, 'score': 1},
+    'mechanical_ventilation': {'value': True, 'score': 4},
+    'elective_surgery': {'value': False, 'score': 3}
+  },
+  'on_mechanical_ventilation': True,
+  'predicted_mortality': None
+}
+```
+
+### Test: first_day_urine_output(37081114)
+```
+Result:
+{
+  'subject_id': 10000690,
+  'hadm_id': 25860671,
+  'stay_id': 37081114,
+  'first_day_start': '2150-11-02 19:37:00',
+  'first_day_end': '2150-11-03 19:37:00',
+  'total_urine_output_ml': 695.0,
+  'num_records': 17,
+  'has_oliguria': False,
+  'has_severe_oliguria': False
+}
+```
+
+## Known Issues
+1. Temperature data may be missing for some stays (item 223762)
+2. GCS calculation uses CROSS JOIN which may produce incorrect results if components are recorded at different times
+3. Need to handle cases where GCS components are recorded separately (not all three at same time)
+4. Mechanical ventilation detection may need refinement - checking multiple sources (chartevents, procedureevents)
+
+=== Step 2 ===
+# Clinical Coding Agent Memory - OASIS Implementation
+
+## Schema Facts
+
+### Tables
+- `mimiciv_hosp.admissions`: subject_id, hadm_id, admittime, discharge_time, admission_type
+- `mimiciv_hosp.patients`: subject_id, gender, anchor_age, anchor_year
+- `mimiciv_icu.icustays`: subject_id, hadm_id, stay_id, intime, outtime, first_careunit
+- `mimiciv_icu.chartevents`: subject_id, hadm_id, stay_id, charttime, itemid, value, valuenum, valueuom
+- `mimiciv_icu.outputevents`: subject_id, hadm_id, stay_id, charttime, itemid, value, valueuom
+- `mimiciv_icu.procedureevents`: subject_id, hadm_id, stay_id, starttime, endtime, itemid, value
+- `mimiciv_icu.d_items`: itemid, label, category
+
+### Key ItemIDs for OASIS
+| Variable | ItemID(s) | Notes |
+|----------|-----------|-------|
+| Heart Rate | 220045 | Routine Vital Signs |
+| Respiratory Rate | 220210 | Respiratory |
+| Temperature (°C) | 223762 | Routine Vital Signs |
+| Temperature (°F) | 223761 | Routine Vital Signs (convert to °C) |
+| MAP (Arterial) | 220052 | Arterial Blood Pressure mean |
+| MAP (Non-invasive) | 220181 | Non Invasive Blood Pressure mean |
+| GCS Eye Opening | 220739 | valuenum: 1-4 |
+| GCS Verbal Response | 223900 | valuenum: 1-5 |
+| GCS Motor Response | 223901 | valuenum: 1-6 |
+| Ventilator Type | 223848 | Respiratory |
+| Ventilator Mode | 223849 | Respiratory |
+| Invasive Ventilation | 225792 | procedureevents |
+| Intubation | 224385 | procedureevents |
+| Urine Output | 226557, 226558, 226559, 226560, 226561, 226563, 226564, 226565, 226566, 226567, 227489 | outputevents |
+
+### Admission Types
+- ELECTIVE, EW EMER., DIRECT EMER., URGENT, EU OBSERVATION, DIRECT OBSERVATION, SURGICAL SAME DAY ADMISSION, AMBULATORY OBSERVATION, OBSERVATION ADMIT
+
+### GCS Value Mappings
+| Component | Value | valuenum |
+|-----------|-------|----------|
+| Eye Opening | Spontaneously | 4 |
+| Eye Opening | To Speech | 3 |
+| Eye Opening | To Pain | 2 |
+| Eye Opening | None | 1 |
+| Verbal | Oriented | 5 |
+| Verbal | Confused | 4 |
+| Verbal | Inappropriate Words | 3 |
+| Verbal | Incomprehensible sounds | 2 |
+| Verbal | No Response / No Response-ETT | 1 |
+| Motor | Obeys Commands | 6 |
+| Motor | Localizes Pain | 5 |
+| Motor | Flex-withdraws | 4 |
+| Motor | Abnormal Flexion | 3 |
+| Motor | Abnormal extension | 2 |
+| Motor | No response | 1 |
+
+## Functions
+
+### calculate_oasis_score
+```python
+import pandas as pd
+import numpy as np
+from datetime import datetime, timedelta
+
+def calculate_oasis_score(stay_id):
+    """
+    Calculate the OASIS (Oxford Acute Severity of Illness Score) for a patient's ICU stay.
+    
+    The OASIS score is a parsimonious ICU severity-of-illness scoring system that uses
+    10 routinely collected variables available in the first 24 hours of ICU admission
+    to predict in-hospital mortality.
+    
+    Parameters
+    ----------
+    stay_id : int
+        The ICU stay identifier.
+    
+    Returns
+    -------
+    dict
+        A dictionary containing:
+        - 'stay_id': The ICU stay identifier
+        - 'subject_id': The patient identifier
+        - 'hadm_id': The hospital admission identifier
+        - 'oasis_score': Total OASIS score (0-47)
+        - 'components': Dictionary with individual component scores
+        - 'on_mechanical_ventilation': Boolean indicating if patient was on MV in first 24h
+        - 'predicted_mortality': Predicted in-hospital mortality probability
+    
+    Notes
+    -----
+    The OASIS score components are:
+    1. Pre-ICU in-hospital length of stay (days)
+    2. Age (years)
+    3. Glasgow Coma Scale (GCS)
+    4. Heart rate (bpm)
+    5. Mean arterial pressure (MAP) (mmHg)
+    6. Respiratory rate (breaths/min)
+    7. Temperature (°C)
+    8. Urine output (mL/24h)
+    9. Mechanical ventilation (binary)
+    10. Elective surgery (binary)
+    """
+    
+    # Get ICU stay information
+    stay_info = query_db(f"""
+        SELECT i.stay_id, i.subject_id, i.hadm_id, i.intime,
+               a.admittime, a.admission_type, p.anchor_age
+        FROM mimiciv_icu.icustays i
+        JOIN mimiciv_hosp.admissions a ON i.hadm_id = a.hadm_id
+        JOIN mimiciv_hosp.patients p ON i.subject_id = p.subject_id
+        WHERE i.stay_id = {stay_id}
+    """)
+    
+    if stay_info.empty:
+        return {'error': 'Stay ID not found'}
+    
+    stay_info = stay_info.iloc[0]
+    subject_id = stay_info['subject_id']
+    hadm_id = stay_info['hadm_id']
+    intime = pd.to_datetime(stay_info['intime'])
+    admittime = pd.to_datetime(stay_info['admittime'])
+    admission_type = stay_info['admission_type']
+    age = stay_info['anchor_age']
+    
+    # Define first 24 hours window
+    first_day_end = intime + timedelta(hours=24)
+    
+    components = {}
+    
+    # 1. Pre-ICU in-hospital length of stay (days)
+    pre_icu_los = (intime - admittime).total_seconds() / 3600 / 24  # in days
+    if pre_icu_los < 0.17:
+        pre_icu_los_score = 0
+    elif pre_icu_los < 1.0:
+        pre_icu_los_score = 1
+    elif pre_icu_los < 4.94:
+        pre_icu_los_score = 2
+    elif pre_icu_los < 24.63:
+        pre_icu_los_score = 3
+    else:
+        pre_icu_los_score = 4
+    components['pre_icu_los'] = {'value': pre_icu_los, 'score': pre_icu_los_score}
+    
+    # 2. Age (years)
+    if age < 24:
+        age_score = 0
+    elif age < 54:
+        age_score = 1
+    elif age < 78:
+        age_score = 2
+    elif age < 90:
+        age_score = 3
+    else:
+        age_score = 4
+    components['age'] = {'value': age, 'score': age_score}
+    
+    # 3. GCS - get minimum of each component independently in first 24 hours
+    gcs_query = query_db(f"""
+        SELECT 
+            MIN(CASE WHEN itemid = 220739 THEN valuenum END) as min_eye,
+            MIN(CASE WHEN itemid = 223900 THEN valuenum END) as min_verbal,
+            MIN(CASE WHEN itemid = 223901 THEN valuenum END) as min_motor
+        FROM mimiciv_icu.chartevents
+        WHERE stay_id = {stay_id}
+          AND itemid IN (220739, 223900, 223901)
+          AND charttime >= '{intime}'
+          AND charttime <= '{first_day_end}'
+          AND valuenum IS NOT NULL
+    """)
+    
+    if not gcs_query.empty and gcs_query.iloc[0]['min_eye'] is not None and pd.notna(gcs_query.iloc[0]['min_eye']):
+        min_eye = gcs_query.iloc[0]['min_eye']
+        min_verbal = gcs_query.iloc[0]['min_verbal']
+        min_motor = gcs_query.iloc[0]['min_motor']
+        
+        # Check if all components are available
+        if pd.notna(min_eye) and pd.notna(min_verbal) and pd.notna(min_motor):
+            gcs_total = min_eye + min_verbal + min_motor
+            if gcs_total == 15:
+                gcs_score = 0
+            elif gcs_total == 14:
+                gcs_score = 1
+            elif gcs_total >= 12:
+                gcs_score = 2
+            elif gcs_total >= 8:
+                gcs_score = 3
+            else:
+                gcs_score = 4
+            components['gcs'] = {'value': gcs_total, 'score': gcs_score}
+        else:
+            components['gcs'] = {'value': None, 'score': None}
+            gcs_score = None
+    else:
+        components['gcs'] = {'value': None, 'score': None}
+        gcs_score = None
+    
+    # 4. Heart rate - get most extreme value in first 24 hours
+    hr_query = query_db(f"""
+        SELECT valuenum FROM mimiciv_icu.chartevents
+        WHERE stay_id = {stay_id}
+          AND itemid = 220045  -- Heart Rate
+          AND charttime >= '{intime}'
+          AND charttime <= '{first_day_end}'
+          AND valuenum IS NOT NULL
+          AND valuenum > 0
+          AND valuenum < 300
+    """)
+    
+    if not hr_query.empty:
+        hr_values = hr_query['valuenum'].tolist()
+        # Find most extreme from normal range (75-100)
+        most_extreme_hr = max(hr_values, key=lambda x: max(abs(x - 75), abs(x - 100)))
+        
+        if 75 <= most_extreme_hr < 100:
+            hr_score = 0
+        elif (100 <= most_extreme_hr < 120) or (60 <= most_extreme_hr < 75):
+            hr_score = 1
+        elif (120 <= most_extreme_hr < 140) or (40 <= most_extreme_hr < 60):
+            hr_score = 2
+        else:  # >= 140 or < 40
+            hr_score = 3
+        components['heart_rate'] = {'value': most_extreme_hr, 'score': hr_score}
+    else:
+        components['heart_rate'] = {'value': None, 'score': None}
+        hr_score = None
+    
+    # 5. MAP - get most extreme value in first 24 hours
+    map_query = query_db(f"""
+        SELECT valuenum FROM mimiciv_icu.chartevents
+        WHERE stay_id = {stay_id}
+          AND itemid IN (220052, 220181)  -- Arterial BP mean, Non-invasive BP mean
+          AND charttime >= '{intime}'
+          AND charttime <= '{first_day_end}'
+          AND valuenum IS NOT NULL
+          AND valuenum > 0
+          AND valuenum < 250
+    """)
+    
+    if not map_query.empty:
+        map_values = map_query['valuenum'].tolist()
+        # Find most extreme from normal range (60-70)
+        most_extreme_map = max(map_values, key=lambda x: max(abs(x - 60), abs(x - 70)))
+        
+        if 60 <= most_extreme_map < 70:
+            map_score = 0
+        elif (70 <= most_extreme_map < 80) or (50 <= most_extreme_map < 60):
+            map_score = 1
+        elif (80 <= most_extreme_map < 100) or (40 <= most_extreme_map < 50):
+            map_score = 2
+        elif 100 <= most_extreme_map < 120:
+            map_score = 3
+        else:  # >= 120 or < 40
+            map_score = 4
+        components['map'] = {'value': most_extreme_map, 'score': map_score}
+    else:
+        components['map'] = {'value': None, 'score': None}
+        map_score = None
+    
+    # 6. Respiratory rate - get most extreme value in first 24 hours
+    rr_query = query_db(f"""
+        SELECT valuenum FROM mimiciv_icu.chartevents
+        WHERE stay_id = {stay_id}
+          AND itemid = 220210  -- Respiratory Rate
+          AND charttime >= '{intime}'
+          AND charttime <= '{first_day_end}'
+          AND valuenum IS NOT NULL
+          AND valuenum > 0
+          AND valuenum < 100
+    """)
+    
+    if not rr_query.empty:
+        rr_values = rr_query['valuenum'].tolist()
+        # Find most extreme from normal range (12-22)
+        most_extreme_rr = max(rr_values, key=lambda x: max(abs(x - 12), abs(x - 22)))
+        
+        if 12 <= most_extreme_rr < 22:
+            rr_score = 0
+        elif (22 <= most_extreme_rr < 30) or (6 <= most_extreme_rr < 12):
+            rr_score = 1
+        elif 30 <= most_extreme_rr < 40:
+            rr_score = 2
+        else:  # >= 40 or < 6
+            rr_score = 3
+        components['respiratory_rate'] = {'value': most_extreme_rr, 'score': rr_score}
+    else:
+        components['respiratory_rate'] = {'value': None, 'score': None}
+        rr_score = None
+    
+    # 7. Temperature - get most extreme value in first 24 hours
+    # Check for Celsius first, then Fahrenheit
+    temp_query = query_db(f"""
+        SELECT valuenum, 'C' as unit FROM mimiciv_icu.chartevents
+        WHERE stay_id = {stay_id}
+          AND itemid = 223762  -- Temperature Celsius
+          AND charttime >= '{intime}'
+          AND charttime <= '{first_day_end}'
+          AND valuenum IS NOT NULL
+          AND valuenum > 25
+          AND valuenum < 45
+        UNION ALL
+        SELECT valuenum * 5.0 / 9.0 - 17.7778, 'F' as unit FROM mimiciv_icu.chartevents
+        WHERE stay_id = {stay_id}
+          AND itemid = 223761  -- Temperature Fahrenheit
+          AND charttime >= '{intime}'
+          AND charttime <= '{first_day_end}'
+          AND valuenum IS NOT NULL
+          AND valuenum > 77
+          AND valuenum < 113
+    """)
+    
+    if not temp_query.empty:
+        temp_values = temp_query['valuenum'].tolist()
+        # Find most extreme from normal range (36-37.5)
+        most_extreme_temp = max(temp_values, key=lambda x: max(abs(x - 36), abs(x - 37.5)))
+        
+        if 36 <= most_extreme_temp < 37.5:
+            temp_score = 0
+        elif (37.5 <= most_extreme_temp < 38.5) or (35 <= most_extreme_temp < 36):
+            temp_score = 1
+        elif 38.5 <= most_extreme_temp < 39:
+            temp_score = 2
+        else:  # >= 39 or < 35
+            temp_score = 3
+        components['temperature'] = {'value': most_extreme_temp, 'score': temp_score}
+    else:
+        components['temperature'] = {'value': None, 'score': None}
+        temp_score = None
+    
+    # 8. Urine output - total in first 24 hours
+    urine_query = query_db(f"""
+        SELECT SUM(value) as total_urine
+        FROM mimiciv_icu.outputevents
+        WHERE stay_id = {stay_id}
+          AND itemid IN (226557, 226558, 226559, 226560, 226561, 226563, 226564, 226565, 226566, 226567, 227489)
+          AND charttime >= '{intime}'
+          AND charttime <= '{first_day_end}'
+    """)
+    
+    if not urine_query.empty and urine_query.iloc[0]['total_urine'] is not None:
+        urine_output = urine_query.iloc[0]['total_urine']
+        if urine_output >= 2000 and urine_output < 4000:
+            urine_score = 0
+        elif (urine_output >= 4000 and urine_output < 5500) or (urine_output >= 1000 and urine_output < 2000):
+            urine_score = 1
+        elif urine_output >= 5500 or (urine_output >= 500 and urine_output < 1000):
+            urine_score = 2
+        elif urine_output >= 200 and urine_output < 500:
+            urine_score = 3
+        else:  # < 200
+            urine_score = 4
+        components['urine_output'] = {'value': urine_output, 'score': urine_score}
+    else:
+        components['urine_output'] = {'value': None, 'score': None}
+        urine_score = None
+    
+    # 9. Mechanical ventilation - check if ventilated in first 24 hours
+    # Check for ventilator type or mode in chartevents
+    vent_query = query_db(f"""
+        SELECT COUNT(*) as vent_count
+        FROM mimiciv_icu.chartevents
+        WHERE stay_id = {stay_id}
+          AND itemid IN (223848, 223849)  -- Ventilator Type, Ventilator Mode
+          AND charttime >= '{intime}'
+          AND charttime <= '{first_day_end}'
+    """)
+    
+    # Also check for invasive ventilation in procedureevents
+    vent_proc_query = query_db(f"""
+        SELECT COUNT(*) as vent_proc_count
+        FROM mimiciv_icu.procedureevents
+        WHERE stay_id = {stay_id}
+          AND itemid = 225792  -- Invasive Ventilation
+          AND starttime >= '{intime}'
+          AND starttime <= '{first_day_end}'
+    """)
+    
+    # Check for intubation in procedureevents
+    intub_query = query_db(f"""
+        SELECT COUNT(*) as intub_count
+        FROM mimiciv_icu.procedureevents
+        WHERE stay_id = {stay_id}
+          AND itemid = 224385  -- Intubation
+          AND starttime >= '{intime}'
+          AND starttime <= '{first_day_end}'
+    """)
+    
+    on_mechanical_ventilation = (
+        vent_query.iloc[0]['vent_count'] > 0 or 
+        vent_proc_query.iloc[0]['vent_proc_count'] > 0 or 
+        intub_query.iloc[0]['intub_count'] > 0
+    )
+    
+    if on_mechanical_ventilation:
+        vent_score = 4
+    else:
+        vent_score = 0
+    components['mechanical_ventilation'] = {'value': on_mechanical_ventilation, 'score': vent_score}
+    
+    # 10. Elective surgery - check admission type
+    is_elective = admission_type == 'ELECTIVE'
+    if is_elective:
+        elective_score = 0
+    else:
+        elective_score = 3
+    components['elective_surgery'] = {'value': is_elective, 'score': elective_score}
+    
+    # Calculate total OASIS score
+    score_list = [
+        pre_icu_los_score, age_score, gcs_score, hr_score, map_score,
+        rr_score, temp_score, urine_score, vent_score, elective_score
+    ]
+    
+    # Handle missing values - if any component is missing, we can't calculate a valid score
+    if None in score_list:
+        oasis_score = None
+    else:
+        oasis_score = sum(score_list)
+    
+    # Calculate predicted mortality
+    if oasis_score is not None:
+        # Logistic regression: p = 1 / (1 + exp(-(beta0 + beta1 * OASIS)))
+        beta0 = -6.1746
+        beta1 = 0.1275
+        predicted_mortality = 1 / (1 + np.exp(-(beta0 + beta1 * oasis_score)))
+    else:
+        predicted_mortality = None
+    
+    return {
+        'stay_id': stay_id,
+        'subject_id': subject_id,
+        'hadm_id': hadm_id,
+        'oasis_score': oasis_score,
+        'components': components,
+        'on_mechanical_ventilation': on_mechanical_ventilation,
+        'predicted_mortality': predicted_mortality
+    }
+```
+
+### first_day_urine_output (loaded from library)
+```python
+def first_day_urine_output(stay_id):
+    """
+    Extract urine output information for a patient's first ICU day.
+    
+    This function retrieves urine output data from the ICU output events table
+    and calculates the total urine output during the first 24 hours of the ICU stay.
+    It also determines if the patient has oliguria or severe oliguria on that day.
+    
+    Urine output is captured from the following itemids in the outputevents table:
+    - 226557: R Ureteral Stent
+    - 226558: L Ureteral Stent
+    - 226559: Foley
+    - 226560: Void
+    - 226561: Condom Cath
+    - 226563: Suprapubic
+    - 226564: R Nephrostomy
+    - 226565: L Nephrostomy
+    - 226566: Urine and GU Irrigant Out
+    - 226567: Straight Cath
+    - 227489: GU Irrigant/Urine Volume Out
+    
+    Note: OR Urine (226627) and PACU Urine (226631) are excluded as they represent
+    pre-ICU outputs from the operating room and post-anesthesia care unit.
+    
+    Parameters
+    ----------
+    stay_id : int
+        The ICU stay identifier.
+    
+    Returns
+    -------
+    dict
+        A dictionary containing the following keys:
+        - 'subject_id': patient identifier (int or None)
+        - 'hadm_id': hospital admission identifier (int or None)
+        - 'stay_id': ICU stay identifier (int)
+        - 'first_day_start': start time of the first ICU day (str in ISO format or None)
+        - 'first_day_end': end time of the first ICU day (str in ISO format or None)
+        - 'total_urine_output_ml': total urine output in first 24 hours in mL (float or None)
+        - 'num_records': number of urine output records in first 24 hours (int)
+        - 'has_oliguria': boolean indicating if total output < 500 mL (bool or None)
+        - 'has_severe_oliguria': boolean indicating if total output < 200 mL (bool or None)
+    
+    Raises
+    ------
+    ValueError
+        If stay_id is not provided.
+    
+    Examples
+    --------
+    >>> first_day_urine_output(37081114)
+    {'subject_id': 10000690, 'hadm_id': 25860671, 'stay_id': 37081114,
+     'first_day_start': '2150-11-02 19:37:00', 'first_day_end': '2150-11-03 19:37:00',
+     'total_urine_output_ml': 695.0, 'num_records': 17,
+     'has_oliguria': False, 'has_severe_oliguria': False}
+    
+    Notes
+    -----
+    Clinical thresholds:
+    - Oliguria: total urine output < 500 mL in first 24 hours of ICU stay
+    - Severe oliguria: total urine output < 200 mL in first 24 hours of ICU stay
+    """
+```
+
+## Test Results
+
+### Test: calculate_oasis_score(37293400) - FIXED
+```
+Result:
+{
+  'stay_id': 37293400,
+  'subject_id': 10018081,
+  'hadm_id': 21027282,
+  'oasis_score': 19,  # FIXED - now using Fahrenheit temperature converted to Celsius
+  'components': {
+    'pre_icu_los': {'value': 0.0083, 'score': 0},
+    'age': {'value': 79, 'score': 3},
+    'gcs': {'value': 3.0, 'score': 4},
+    'heart_rate': {'value': 99.0, 'score': 0},
+    'map': {'value': 82.0, 'score': 2},
+    'respiratory_rate': {'value': 24.0, 'score': 1},
+    'temperature': {'value': 38.06, 'score': 1},  # FIXED - converted from Fahrenheit
+    'urine_output': {'value': 1182.0, 'score': 1},
+    'mechanical_ventilation': {'value': True, 'score': 4},
+    'elective_surgery': {'value': False, 'score': 3}
+  },
+  'on_mechanical_ventilation': True,
+  'predicted_mortality': 0.0229
+}
+```
+
+### Test: calculate_oasis_score(37476235) - FIXED
+```
+Result:
+{
+  'stay_id': 37476235,
+  'subject_id': 12287842,
+  'hadm_id': 27450113,
+  'oasis_score': 19,
+  'predicted_mortality': 0.0229
+}
+```
+
+### Test: calculate_oasis_score(38905169)
+```
+Result:
+{
+  'stay_id': 38905169,
+  'subject_id': 12286776,
+  'hadm_id': 20997886,
+  'oasis_score': 23,
+  'predicted_mortality': 0.0376
+}
+```
+
+### Test: calculate_oasis_score(32466052)
+```
+Result:
+{
+  'stay_id': 32466052,
+  'subject_id': 12286091,
+  'hadm_id': 26404074,
+  'oasis_score': 19,
+  'predicted_mortality': 0.0229
+}
+```
+
+### Test: calculate_oasis_score(35677400) - MISSING DATA
+```
+Result:
+{
+  'stay_id': 35677400,
+  'subject_id': 12287462,
+  'hadm_id': 21293128,
+  'oasis_score': None,  # Missing temperature data (no Celsius or Fahrenheit in first 24h)
+  'components': {
+    'temperature': {'value': None, 'score': None}  # Missing
+  },
+  'predicted_mortality': None
+}
+```
+
+### Test: calculate_oasis_score(30787261)
+```
+Result:
+{
+  'stay_id': 30787261,
+  'subject_id': 12284549,
+  'hadm_id': 21556465,
+  'oasis_score': 21,
+  'predicted_mortality': 0.0294
+}
+```
+
+### Test: first_day_urine_output(37081114)
+```
+Result:
+{
+  'subject_id': 10000690,
+  'hadm_id': 25860671,
+  'stay_id': 37081114,
+  'first_day_start': '2150-11-02 19:37:00',
+  'first_day_end': '2150-11-03 19:37:00',
+  'total_urine_output_ml': 695.0,
+  'num_records': 17,
+  'has_oliguria': False,
+  'has_severe_oliguria': False
+}
+```
+
+## Known Issues
+
+1. **Temperature Data Availability**: Some patients genuinely don't have temperature data in the first 24 hours (e.g., stay 35677400). This is a data availability issue, not a code issue. The function now checks both Celsius (223762) and Fahrenheit (223761) temperature itemids and converts Fahrenheit to Celsius.
+
+2. **GCS Calculation Fixed**: The original CROSS JOIN approach was problematic because it didn't ensure components were from the same time point. The updated function uses a single query with CASE statements to get the minimum of each component independently within the 24-hour window.
+
+3. **Mechanical Ventilation Detection**: The function checks multiple sources (chartevents for ventilator type/mode, procedureevents for invasive ventilation and intubation). This may need refinement based on clinical validation.
+
+4. **Missing Data Handling**: If any of the 10 required components is missing, the function returns None for the OASIS score. This is by design per the OASIS guideline which requires all 10 variables for a complete calculation.
+
+5. **Timestamp Handling**: When querying with timestamps, use CAST to TIMESTAMP to avoid DuckDB type errors: `CAST('{intime}' AS TIMESTAMP) + INTERVAL '24 hours'`
+

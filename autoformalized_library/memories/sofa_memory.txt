@@ -1,0 +1,2416 @@
+=== Step 1 ===
+# Clinical Coding Agent Memory - SOFA Score Implementation
+
+## 1. Key Schema Facts
+
+### Database Schemas
+- **mimiciv_hosp**: Hospital-level data (labevents, d_labitems, admissions, patients)
+- **mimiciv_icu**: ICU-level data (chartevents, d_items, icustays, inputevents, outputevents)
+- **mimiciv_derived**: Empty (no pre-computed tables)
+
+### Table Structures
+
+| Table | Key Columns |
+|-------|-------------|
+| `mimiciv_hosp.d_labitems` | itemid, label, fluid, category |
+| `mimiciv_icu.d_items` | itemid, label, abbreviation, linksto, category, unitname, param_type, lownormalvalue, highnormalvalue |
+| `mimiciv_icu.icustays` | subject_id, hadm_id, stay_id, first_careunit, last_careunit, intime, outtime, los |
+| `mimiciv_icu.chartevents` | subject_id, hadm_id, stay_id, caregiver_id, charttime, storetime, itemid, value, valuenum, valueuom, warning |
+| `mimiciv_hosp.labevents` | labevent_id, subject_id, hadm_id, specimen_id, itemid, order_provider_id, charttime, storetime, value, valuenum, valueuom, ref_range_lower, ref_range_upper, flag, priority, comments |
+| `mimiciv_icu.inputevents` | subject_id, hadm_id, stay_id, caregiver_id, starttime, endtime, storetime, itemid, amount, amountuom, rate, rateuom, orderid, linkorderid, ordercategoryname, secondaryordercategoryname, ordercomponenttypedescription, ordercategorydescription, patientweight, totalamount, totalamountuom, isopenbag, continueinnextdept, statusdescription, originalamount, originalrate |
+| `mimiciv_icu.outputevents` | subject_id, hadm_id, stay_id, caregiver_id, charttime, storetime, itemid, value, valueuom |
+
+### SOFA-Relevant ItemIDs
+
+| Variable | ItemID | Table | Category | Unit |
+|----------|--------|-------|----------|------|
+| Platelet Count | 51265 | d_labitems | Hematology | ×10³/µL |
+| Bilirubin, Total | 50885 | d_labitems | Chemistry | mg/dL |
+| Creatinine | 50912, 51081, 52546 | d_labitems | Chemistry | mg/dL |
+| Arterial O2 pressure (PaO2) | 220224 | d_items | Labs | mmHg |
+| Inspired O2 Fraction (FiO2) | 223835 | d_items | Respiratory | None |
+| Arterial BP mean (MAP) | 220052 | d_items | Routine Vital Signs | mmHg |
+| GCS - Eye Opening | 220739 | d_items | Neurological | None |
+| GCS - Verbal Response | 223900 | d_items | Neurological | None |
+| GCS - Motor Response | 223901 | d_items | Neurological | None |
+| Mechanically Ventilated | 226260 | d_items | General | None |
+| Dopamine | 221662 | d_items | Medications | mcg/kg/min |
+| Dobutamine | 221653 | d_items | Medications | mcg/kg/min |
+| Epinephrine | 221289 | d_items | Medications | mcg/kg/min |
+| Norepinephrine | 221906 | d_items | Medications | mcg/kg/min |
+| Patient Weight | 226512 | d_items | General | kg |
+
+### SOFA Scoring Criteria
+
+| Organ System | Variable | Score 0 | Score 1 | Score 2 | Score 3 | Score 4 |
+|--------------|----------|---------|---------|---------|---------|---------|
+| Respiration | PaO₂/FiO₂ (mm Hg) | ≥400 | <400 | <300 | <200 with support | <100 with support |
+| Coagulation | Platelets (×10³/µL) | ≥150 | <150 | <100 | <50 | <20 |
+| Liver | Bilirubin (mg/dL) | <1.2 | 1.2–1.9 | 2.0–5.9 | 6.0–11.9 | ≥12.0 |
+| Cardiovascular | MAP/vasopressors | MAP≥70 | MAP<70 | Dopamine≤5 or dobutamine(any) | Dopamine>5 or epi≤0.1 or neo≤0.1 | Dopamine>15 or epi>0.1 or neo>0.1 |
+| Brain | GCS | 15 | 13–14 | 10–12 | 6–9 | <6 |
+| Kidney | Creatinine (mg/dL) or urine output (mL/day) | <1.2 | 1.2–1.9 | 2.0–3.4 | 3.5–4.9 or UO<500 | ≥5.0 or UO<200 |
+
+## 2. Function Source Code
+
+### Available Functions
+
+```python
+def get_epinephrine_info(stay_id):
+    """
+    Extract epinephrine infusion information for a patient's ICU stay.
+
+    This function queries the MIMIC-IV database to retrieve epinephrine medication
+    administration data for a specific ICU stay. Epinephrine is a vasopressor and
+    inotropic agent used to treat hypotension, cardiac arrest, and shock.
+
+    Parameters:
+    -----------
+    stay_id : int
+        The ICU stay identifier for the patient.
+
+    Returns:
+    --------
+    dict
+        A dictionary containing the following keys:
+        - 'received_epinephrine': bool - Whether the patient received epinephrine during this stay
+        - 'max_rate': float - Maximum epinephrine infusion rate (mcg/kg/min), rounded to 2 decimals
+                         Returns 0.0 if no epinephrine was received
+        - 'min_rate': float - Minimum epinephrine infusion rate (mcg/kg/min), rounded to 2 decimals
+                         Returns 0.0 if no epinephrine was received
+        - 'avg_rate': float - Average epinephrine infusion rate (mcg/kg/min), rounded to 2 decimals
+                         Returns 0.0 if no epinephrine was received
+        - 'received_high_dose': bool - Whether patient received high-dose epinephrine (>0.1 mcg/kg/min)
+        - 'num_records': int - Number of epinephrine infusion records
+        - 'first_time': datetime or None - First epinephrine administration time
+        - 'last_time': datetime or None - Last epinephrine administration time
+        - 'subject_id': int or None - Patient subject ID
+        - 'hadm_id': int or None - Hospital admission ID
+
+    Example:
+    --------
+    >>> info = get_epinephrine_info(31831386)
+    >>> info['received_epinephrine']
+    True
+    >>> info['max_rate']
+    0.02
+    >>> info['received_high_dose']
+    False
+    """
+    pass  # Implementation not yet retrieved
+```
+
+## 3. Test Results and Error Fixes
+
+### Errors Encountered
+
+| Step | Error | Fix |
+|------|-------|-----|
+| 7 | `Binder Error: Referenced column "abbreviation" not found in FROM clause!` | `d_labitems` does not have `abbreviation` or `unit_name` columns. Use: `itemid, label, fluid, category` |
+| 10 | `Binder Error: Referenced column "unit_name" not found in FROM clause!` | `d_items` uses `unitname` (not `unit_name`). Correct query: `SELECT itemid, label, abbreviation, category, unitname FROM mimiciv_icu.d_items` |
+| 21 | `Catalog Error: Table with name inputevents_mv does not exist!` | MIMIC-IV uses `inputevents` (not `inputevents_mv`). Correct query: `SELECT * FROM mimiciv_icu.inputevents` |
+
+### Key Findings
+
+1. **Vasopressor rates** in `inputevents` are stored in `rate` column with `rateuom = 'mcg/kg/min'`
+2. **Patient weight** is available in `inputevents.patientweight` column for dose calculations
+3. **GCS components** are stored separately (Eye, Verbal, Motor) and must be summed
+4. **No pre-computed SOFA tables** exist in `mimiciv_derived` schema
+5. **Respiratory support** status can be determined from `Mechanically Ventilated` (itemid 226260) or ventilator mode items
+
+### Guidelines Retrieved
+
+- `sofa_guideline`: Complete SOFA scoring criteria, Sepsis-3 definitions, qSOFA criteria
+- `qsofa_guideline`: Quick SOFA screening tool (respiratory rate ≥22, altered mentation, SBP ≤100)
+
+=== Step 2 ===
+# Clinical Coding Agent Memory - SOFA Score Implementation
+
+## 1. Key Schema Facts
+
+### Database Schemas
+- **mimiciv_hosp**: Hospital-level data (labevents, d_labitems, admissions, patients)
+- **mimiciv_icu**: ICU-level data (chartevents, d_items, icustays, inputevents, outputevents)
+- **mimiciv_derived**: Empty (no pre-computed tables)
+
+### Table Structures
+
+| Table | Key Columns |
+|-------|-------------|
+| `mimiciv_hosp.d_labitems` | itemid, label, fluid, category |
+| `mimiciv_icu.d_items` | itemid, label, abbreviation, linksto, category, unitname, param_type, lownormalvalue, highnormalvalue |
+| `mimiciv_icu.icustays` | subject_id, hadm_id, stay_id, first_careunit, last_careunit, intime, outtime, los |
+| `mimiciv_icu.chartevents` | subject_id, hadm_id, stay_id, caregiver_id, charttime, storetime, itemid, value, valuenum, valueuom, warning |
+| `mimiciv_hosp.labevents` | labevent_id, subject_id, hadm_id, specimen_id, itemid, order_provider_id, charttime, storetime, value, valuenum, valueuom, ref_range_lower, ref_range_upper, flag, priority, comments |
+| `mimiciv_icu.inputevents` | subject_id, hadm_id, stay_id, caregiver_id, starttime, endtime, storetime, itemid, amount, amountuom, rate, rateuom, orderid, linkorderid, ordercategoryname, secondaryordercategoryname, ordercomponenttypedescription, ordercategorydescription, patientweight, totalamount, totalamountuom, isopenbag, continueinnextdept, statusdescription, originalamount, originalrate |
+| `mimiciv_icu.outputevents` | subject_id, hadm_id, stay_id, caregiver_id, charttime, storetime, itemid, value, valueuom |
+
+### SOFA-Relevant ItemIDs
+
+| Variable | ItemID | Table | Category | Unit | Notes |
+|----------|--------|-------|----------|------|-------|
+| Platelet Count | 51265 | d_labitems | Hematology | K/uL (×10³/µL) | |
+| Bilirubin, Total | 50885 | d_labitems | Chemistry | mg/dL | |
+| Creatinine | 50912, 51081, 52546 | d_labitems | Chemistry | mg/dL | |
+| Arterial O2 pressure (PaO2) | 220224 | d_items | Labs | mmHg | |
+| Inspired O2 Fraction (FiO2) | 223835 | d_items | Respiratory | None | Stored as percentage, convert to fraction |
+| Arterial BP mean (MAP) | 220052 | d_items | Routine Vital Signs | mmHg | |
+| GCS - Eye Opening | 220739 | d_items | Neurological | None | |
+| GCS - Verbal Response | 223900 | d_items | Neurological | None | |
+| GCS - Motor Response | 223901 | d_items | Neurological | None | |
+| Ventilator Mode | 223849 | d_items | Respiratory | None | Indicates mechanical ventilation |
+| PEEP set | 220339 | d_items | Respiratory | cmH2O | Indicates mechanical ventilation |
+| Dopamine | 221662 | d_items | Medications | mcg/kg/min | |
+| Dobutamine | 221653 | d_items | Medications | mcg/kg/min | |
+| Epinephrine | 221289 | d_items | Medications | mcg/kg/min | |
+| Norepinephrine | 221906 | d_items | Medications | mcg/kg/min | |
+
+### SOFA Scoring Criteria
+
+| Organ System | Variable | Score 0 | Score 1 | Score 2 | Score 3 | Score 4 |
+|--------------|----------|---------|---------|---------|---------|---------|
+| Respiration | PaO₂/FiO₂ (mm Hg) | ≥400 | <400 | <300 | <200 with support | <100 with support |
+| Coagulation | Platelets (×10³/µL) | ≥150 | <150 | <100 | <50 | <20 |
+| Liver | Bilirubin (mg/dL) | <1.2 | 1.2–1.9 | 2.0–5.9 | 6.0–11.9 | ≥12.0 |
+| Cardiovascular | MAP/vasopressors | MAP≥70 | MAP<70 | Dopamine≤5 or dobutamine(any) | Dopamine>5 or epi≤0.1 or neo≤0.1 | Dopamine>15 or epi>0.1 or neo>0.1 |
+| Brain | GCS | 15 | 13–14 | 10–12 | 6–9 | <6 |
+| Kidney | Creatinine (mg/dL) or urine output (mL/day) | <1.2 | 1.2–1.9 | 2.0–3.4 | 3.5–4.9 or UO<500 | ≥5.0 or UO<200 |
+
+## 2. Function Source Code
+
+### compute_sofa_score
+
+```python
+import pandas as pd
+import numpy as np
+from datetime import datetime, timedelta
+
+def compute_sofa_score(stay_id):
+    """
+    Compute the SOFA (Sequential Organ Failure Assessment) score for an ICU stay.
+    
+    The SOFA score assesses organ dysfunction across 6 systems:
+    - Respiration (PaO2/FiO2 ratio)
+    - Coagulation (Platelet count)
+    - Liver (Bilirubin)
+    - Cardiovascular (MAP and vasopressors)
+    - Brain (Glasgow Coma Scale)
+    - Kidney (Creatinine)
+    
+    Parameters
+    ----------
+    stay_id : int
+        The ICU stay identifier
+        
+    Returns
+    -------
+    dict
+        Dictionary containing:
+        - 'total_score': Total SOFA score (0-24)
+        - 'respiration_score': Respiration subscore (0-4)
+        - 'coagulation_score': Coagulation subscore (0-4)
+        - 'liver_score': Liver subscore (0-4)
+        - 'cardiovascular_score': Cardiovascular subscore (0-4)
+        - 'brain_score': Brain subscore (0-4)
+        - 'kidney_score': Kidney subscore (0-4)
+        - 'subject_id': Patient subject ID
+        - 'hadm_id': Hospital admission ID
+        - 'stay_id': ICU stay ID
+        - 'intime': ICU admission time
+        - 'outtime': ICU discharge time
+        - 'details': Dictionary with detailed component values
+    """
+    
+    # Get stay information
+    stay_info = query_db(f"""
+        SELECT stay_id, subject_id, hadm_id, intime, outtime
+        FROM mimiciv_icu.icustays
+        WHERE stay_id = {stay_id}
+    """)
+    
+    if stay_info.empty:
+        return {'error': 'Stay not found'}
+    
+    subject_id = stay_info.iloc[0]['subject_id']
+    hadm_id = stay_info.iloc[0]['hadm_id']
+    intime = stay_info.iloc[0]['intime']
+    outtime = stay_info.iloc[0]['outtime']
+    
+    details = {}
+    
+    # ==========================================
+    # 1. RESPIRATION (PaO2/FiO2 ratio)
+    # ==========================================
+    # Get PaO2 and FiO2 values within the ICU stay
+    resp_data = query_db(f"""
+        SELECT 
+            ce.charttime,
+            pao2.valuenum as pao2,
+            fio2.valuenum as fio2
+        FROM mimiciv_icu.chartevents ce
+        LEFT JOIN (
+            SELECT charttime, valuenum 
+            FROM mimiciv_icu.chartevents 
+            WHERE stay_id = {stay_id} AND itemid = 220224 AND valuenum IS NOT NULL
+        ) pao2 ON ce.charttime = pao2.charttime
+        LEFT JOIN (
+            SELECT charttime, valuenum 
+            FROM mimiciv_icu.chartevents 
+            WHERE stay_id = {stay_id} AND itemid = 223835 AND valuenum IS NOT NULL
+        ) fio2 ON ce.charttime = fio2.charttime
+        WHERE ce.stay_id = {stay_id} 
+        AND ce.itemid = 220224
+        AND ce.valuenum IS NOT NULL
+        AND ce.charttime >= '{intime}'
+        AND ce.charttime <= '{outtime}'
+    """)
+    
+    # Check if patient is on mechanical ventilation
+    # Look for ventilator mode or invasive ventilation indicators
+    vent_status = query_db(f"""
+        SELECT COUNT(*) as vent_count
+        FROM mimiciv_icu.chartevents
+        WHERE stay_id = {stay_id}
+        AND itemid = 223849  -- Ventilator Mode
+        AND value IS NOT NULL
+        AND value != ''
+    """)
+    on_vent = vent_status.iloc[0]['vent_count'] > 0 if not vent_status.empty else False
+    
+    # Also check for PEEP set (indicates mechanical ventilation)
+    peep_status = query_db(f"""
+        SELECT COUNT(*) as peep_count
+        FROM mimiciv_icu.chartevents
+        WHERE stay_id = {stay_id}
+        AND itemid = 220339  -- PEEP set
+        AND valuenum IS NOT NULL
+    """)
+    on_vent = on_vent or (peep_status.iloc[0]['peep_count'] > 0 if not peep_status.empty else False)
+    
+    # Calculate PaO2/FiO2 ratio (FiO2 is stored as percentage, convert to fraction)
+    pao2_fio2_values = []
+    for _, row in resp_data.iterrows():
+        if row['pao2'] is not None and row['fio2'] is not None and row['fio2'] > 0:
+            fio2_fraction = row['fio2'] / 100.0  # Convert percentage to fraction
+            ratio = row['pao2'] / fio2_fraction
+            pao2_fio2_values.append(ratio)
+    
+    # Use worst (minimum) PaO2/FiO2 ratio
+    if pao2_fio2_values:
+        worst_pao2_fio2 = min(pao2_fio2_values)
+        details['pao2_fio2'] = worst_pao2_fio2
+        details['on_ventilator'] = on_vent
+        
+        # Score respiration
+        if worst_pao2_fio2 >= 400:
+            resp_score = 0
+        elif worst_pao2_fio2 >= 300:
+            resp_score = 1
+        elif worst_pao2_fio2 >= 200:
+            resp_score = 2
+        elif worst_pao2_fio2 >= 100 and on_vent:
+            resp_score = 3
+        elif worst_pao2_fio2 < 100 and on_vent:
+            resp_score = 4
+        elif worst_pao2_fio2 < 200 and not on_vent:
+            resp_score = 2  # Without support, <200 is score 2
+        else:
+            resp_score = 2  # Default for <200 without clear vent status
+    else:
+        resp_score = 0  # No data = assume normal
+        details['pao2_fio2'] = None
+        details['on_ventilator'] = on_vent
+    
+    # ==========================================
+    # 2. COAGULATION (Platelets)
+    # ==========================================
+    platelet_data = query_db(f"""
+        SELECT MIN(valuenum) as min_platelets
+        FROM mimiciv_hosp.labevents
+        WHERE hadm_id = {hadm_id}
+        AND itemid = 51265
+        AND valuenum IS NOT NULL
+        AND charttime >= '{intime}'
+        AND charttime <= '{outtime}'
+    """)
+    
+    min_platelets = None
+    if not platelet_data.empty and platelet_data.iloc[0]['min_platelets'] is not None:
+        min_platelets = platelet_data.iloc[0]['min_platelets']
+        if not pd.isna(min_platelets):
+            details['platelets'] = min_platelets
+            
+            if min_platelets >= 150:
+                coag_score = 0
+            elif min_platelets >= 100:
+                coag_score = 1
+            elif min_platelets >= 50:
+                coag_score = 2
+            elif min_platelets >= 20:
+                coag_score = 3
+            else:
+                coag_score = 4
+        else:
+            coag_score = 0
+            details['platelets'] = None
+    else:
+        coag_score = 0
+        details['platelets'] = None
+    
+    # ==========================================
+    # 3. LIVER (Bilirubin)
+    # ==========================================
+    bili_data = query_db(f"""
+        SELECT MAX(valuenum) as max_bilirubin
+        FROM mimiciv_hosp.labevents
+        WHERE hadm_id = {hadm_id}
+        AND itemid = 50885
+        AND valuenum IS NOT NULL
+        AND charttime >= '{intime}'
+        AND charttime <= '{outtime}'
+    """)
+    
+    max_bilirubin = None
+    if not bili_data.empty and bili_data.iloc[0]['max_bilirubin'] is not None:
+        max_bilirubin = bili_data.iloc[0]['max_bilirubin']
+        if not pd.isna(max_bilirubin):
+            details['bilirubin'] = max_bilirubin
+            
+            if max_bilirubin < 1.2:
+                liver_score = 0
+            elif max_bilirubin < 2.0:
+                liver_score = 1
+            elif max_bilirubin < 6.0:
+                liver_score = 2
+            elif max_bilirubin < 12.0:
+                liver_score = 3
+            else:
+                liver_score = 4
+        else:
+            liver_score = 0
+            details['bilirubin'] = None
+    else:
+        liver_score = 0
+        details['bilirubin'] = None
+    
+    # ==========================================
+    # 4. CARDIOVASCULAR (MAP and vasopressors)
+    # ==========================================
+    # Get minimum MAP
+    map_data = query_db(f"""
+        SELECT MIN(valuenum) as min_map
+        FROM mimiciv_icu.chartevents
+        WHERE stay_id = {stay_id}
+        AND itemid = 220052
+        AND valuenum IS NOT NULL
+    """)
+    
+    min_map = None
+    if not map_data.empty and map_data.iloc[0]['min_map'] is not None:
+        min_map = map_data.iloc[0]['min_map']
+        if not pd.isna(min_map):
+            details['min_map'] = min_map
+        else:
+            details['min_map'] = None
+    
+    # Get vasopressor data
+    # Dopamine (221662), Dobutamine (221653), Epinephrine (221289), Norepinephrine (221906)
+    vaso_data = query_db(f"""
+        SELECT 
+            itemid,
+            MAX(rate) as max_rate
+        FROM mimiciv_icu.inputevents
+        WHERE stay_id = {stay_id}
+        AND itemid IN (221662, 221653, 221289, 221906)
+        AND rate IS NOT NULL
+        GROUP BY itemid
+    """)
+    
+    # Create a dictionary of vasopressor max rates
+    vaso_rates = {}
+    for _, row in vaso_data.iterrows():
+        vaso_rates[int(row['itemid'])] = float(row['max_rate'])
+    
+    details['vasopressors'] = vaso_rates
+    
+    # Score cardiovascular
+    # Item IDs: dopamine=221662, dobutamine=221653, epinephrine=221289, norepinephrine=221906
+    dopamine_max = vaso_rates.get(221662, 0)
+    dobutamine_max = vaso_rates.get(221653, 0)
+    epi_max = vaso_rates.get(221289, 0)
+    neo_max = vaso_rates.get(221906, 0)
+    
+    if min_map is not None and min_map >= 70 and dopamine_max == 0 and dobutamine_max == 0 and epi_max == 0 and neo_max == 0:
+        cv_score = 0
+    elif min_map is not None and min_map < 70 and dopamine_max == 0 and dobutamine_max == 0 and epi_max == 0 and neo_max == 0:
+        cv_score = 1
+    elif (dopamine_max > 0 and dopamine_max <= 5) or (dobutamine_max > 0):
+        cv_score = 2
+    elif (dopamine_max > 5 and dopamine_max <= 15) or (epi_max > 0 and epi_max <= 0.1) or (neo_max > 0 and neo_max <= 0.1):
+        cv_score = 3
+    elif dopamine_max > 15 or epi_max > 0.1 or neo_max > 0.1:
+        cv_score = 4
+    elif min_map is not None and min_map < 70:
+        cv_score = 1
+    else:
+        cv_score = 0
+    
+    # ==========================================
+    # 5. BRAIN (GCS)
+    # ==========================================
+    gcs_data = query_db(f"""
+        SELECT 
+            (SELECT MIN(valuenum) FROM mimiciv_icu.chartevents 
+             WHERE stay_id = {stay_id} AND itemid = 220739 AND valuenum IS NOT NULL) as min_eye,
+            (SELECT MIN(valuenum) FROM mimiciv_icu.chartevents 
+             WHERE stay_id = {stay_id} AND itemid = 223900 AND valuenum IS NOT NULL) as min_verbal,
+            (SELECT MIN(valuenum) FROM mimiciv_icu.chartevents 
+             WHERE stay_id = {stay_id} AND itemid = 223901 AND valuenum IS NOT NULL) as min_motor
+    """)
+    
+    min_eye = gcs_data.iloc[0]['min_eye']
+    min_verbal = gcs_data.iloc[0]['min_verbal']
+    min_motor = gcs_data.iloc[0]['min_motor']
+    
+    details['gcs_eye'] = min_eye
+    details['gcs_verbal'] = min_verbal
+    details['gcs_motor'] = min_motor
+    
+    # Calculate worst GCS (sum of minimum components)
+    if (min_eye is not None and not pd.isna(min_eye) and 
+        min_verbal is not None and not pd.isna(min_verbal) and 
+        min_motor is not None and not pd.isna(min_motor)):
+        worst_gcs = min_eye + min_verbal + min_motor
+        details['worst_gcs'] = worst_gcs
+        
+        if worst_gcs == 15:
+            brain_score = 0
+        elif worst_gcs >= 13:
+            brain_score = 1
+        elif worst_gcs >= 10:
+            brain_score = 2
+        elif worst_gcs >= 6:
+            brain_score = 3
+        else:
+            brain_score = 4
+    else:
+        brain_score = 0
+        details['worst_gcs'] = None
+    
+    # ==========================================
+    # 6. KIDNEY (Creatinine)
+    # ==========================================
+    cr_data = query_db(f"""
+        SELECT MAX(valuenum) as max_creatinine
+        FROM mimiciv_hosp.labevents
+        WHERE hadm_id = {hadm_id}
+        AND itemid IN (50912, 51081, 52546)
+        AND valuenum IS NOT NULL
+        AND charttime >= '{intime}'
+        AND charttime <= '{outtime}'
+    """)
+    
+    max_creatinine = None
+    if not cr_data.empty and cr_data.iloc[0]['max_creatinine'] is not None:
+        max_creatinine = cr_data.iloc[0]['max_creatinine']
+        if not pd.isna(max_creatinine):
+            details['max_creatinine'] = max_creatinine
+            
+            if max_creatinine < 1.2:
+                kidney_score = 0
+            elif max_creatinine < 2.0:
+                kidney_score = 1
+            elif max_creatinine < 3.5:
+                kidney_score = 2
+            elif max_creatinine < 5.0:
+                kidney_score = 3
+            else:
+                kidney_score = 4
+        else:
+            kidney_score = 0
+            details['max_creatinine'] = None
+    else:
+        kidney_score = 0
+        details['max_creatinine'] = None
+    
+    # ==========================================
+    # Calculate total score
+    # ==========================================
+    total_score = resp_score + coag_score + liver_score + cv_score + brain_score + kidney_score
+    
+    return {
+        'total_score': total_score,
+        'respiration_score': resp_score,
+        'coagulation_score': coag_score,
+        'liver_score': liver_score,
+        'cardiovascular_score': cv_score,
+        'brain_score': brain_score,
+        'kidney_score': kidney_score,
+        'subject_id': subject_id,
+        'hadm_id': hadm_id,
+        'stay_id': stay_id,
+        'intime': str(intime),
+        'outtime': str(outtime),
+        'details': details
+    }
+```
+
+### get_epinephrine_info
+
+```python
+def get_epinephrine_info(stay_id):
+    """
+    Extract epinephrine infusion information for a patient's ICU stay.
+
+    This function queries the MIMIC-IV database to retrieve epinephrine medication
+    administration data for a specific ICU stay. Epinephrine is a vasopressor and
+    inotropic agent used to treat hypotension, cardiac arrest, and shock.
+
+    Parameters:
+    -----------
+    stay_id : int
+        The ICU stay identifier for the patient.
+
+    Returns:
+    --------
+    dict
+        A dictionary containing the following keys:
+        - 'received_epinephrine': bool - Whether the patient received epinephrine during this stay
+        - 'max_rate': float - Maximum epinephrine infusion rate (mcg/kg/min), rounded to 2 decimals
+                         Returns 0.0 if no epinephrine was received
+        - 'min_rate': float - Minimum epinephrine infusion rate (mcg/kg/min), rounded to 2 decimals
+                         Returns 0.0 if no epinephrine was received
+        - 'avg_rate': float - Average epinephrine infusion rate (mcg/kg/min), rounded to 2 decimals
+                         Returns 0.0 if no epinephrine was received
+        - 'received_high_dose': bool - Whether patient received high-dose epinephrine (>0.1 mcg/kg/min)
+        - 'num_records': int - Number of epinephrine infusion records
+        - 'first_time': datetime or None - First epinephrine administration time
+        - 'last_time': datetime or None - Last epinephrine administration time
+        - 'subject_id': int or None - Patient subject ID
+        - 'hadm_id': int or None - Hospital admission ID
+
+    Example:
+    --------
+    >>> info = get_epinephrine_info(31831386)
+    >>> info['received_epinephrine']
+    True
+    >>> info['max_rate']
+    0.02
+    >>> info['received_high_dose']
+    False
+    """
+    pass  # Implementation not yet retrieved
+```
+
+### get_norepinephrine_info
+
+```python
+def get_norepinephrine_info(stay_id):
+    """
+    Extract norepinephrine infusion information for a patient's ICU stay.
+
+    This function queries the MIMIC-IV database to retrieve norepinephrine medication
+    administration data for a specific ICU stay. Norepinephrine is a vasopressor
+    used to treat hypotension and shock.
+
+    Parameters:
+    -----------
+    stay_id : int
+        The ICU stay identifier for the patient.
+
+    Returns:
+    --------
+    dict
+        A dictionary containing the following keys:
+        - 'received_norepinephrine': bool - Whether the patient received norepinephrine during this stay
+        - 'max_rate': float - Maximum norepinephrine infusion rate (mcg/kg/min), rounded to 2 decimals
+                         Returns 0.0 if no norepinephrine was received
+        - 'min_rate': float - Minimum norepinephrine infusion rate (mcg/kg/min), rounded to 2 decimals
+                         Returns 0.0 if no norepinephrine was received
+        - 'avg_rate': float - Average norepinephrine infusion rate (mcg/kg/min), rounded to 2 decimals
+                         Returns 0.0 if no norepinephrine was received
+        - 'received_high_dose': bool - Whether patient received high-dose norepinephrine (>0.25 mcg/kg/min)
+        - 'num_records': int - Number of norepinephrine infusion records
+        - 'first_time': datetime or None - First norepinephrine administration time
+        - 'last_time': datetime or None - Last norepinephrine administration time
+        - 'subject_id': int or None - Patient subject ID
+        - 'hadm_id': int or None - Hospital admission ID
+
+    Example:
+    --------
+    >>> info = get_norepinephrine_info(39602181)
+    >>> info['received_norepinephrine']
+    True
+    >>> info['max_rate']
+    0.66
+    >>> info['received_high_dose']
+    True
+    """
+    pass  # Implementation not yet retrieved
+```
+
+## 3. Test Results and Error Fixes
+
+### Test Results
+
+| Stay ID | Total Score | Resp | Coag | Liver | CV | Brain | Kidney | Notes |
+|---------|-------------|------|------|-------|----|-------|--------|-------|
+| 34531557 | 10 | 0 | 0 | 0 | 4 | 4 | 2 | On vent, norepinephrine 0.25 mcg/kg/min, GCS=3, Cr=3.2 |
+| 37081114 | 2 | 0 | 0 | 0 | 0 | 2 | 0 | GCS=12, no MAP data, no vasopressors |
+| 39765666 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | GCS=15, no lab data |
+
+### Errors Encountered
+
+| Step | Error | Fix |
+|------|-------|-----|
+| 7 | `Binder Error: Referenced column "abbreviation" not found in FROM clause!` | `d_labitems` does not have `abbreviation` or `unit_name` columns. Use: `itemid, label, fluid, category` |
+| 10 | `Binder Error: Referenced column "unit_name" not found in FROM clause!` | `d_items` uses `unitname` (not `unit_name`). Correct query: `SELECT itemid, label, abbreviation, category, unitname FROM mimiciv_icu.d_items` |
+| 21 | `Catalog Error: Table with name inputevents_mv does not exist!` | MIMIC-IV uses `inputevents` (not `inputevents_mv`). Correct query: `SELECT * FROM mimiciv_icu.inputevents` |
+| 29 | `IndexError: single positional indexer is out-of-bounds` | When matching PaO2 and FiO2 within time window, need to handle empty results properly |
+
+### Key Findings
+
+1. **Vasopressor rates** in `inputevents` are stored in `rate` column with `rateuom = 'mcg/kg/min'`
+2. **Patient weight** is available in `inputevents.patientweight` column for dose calculations
+3. **GCS components** are stored separately (Eye, Verbal, Motor) and must be summed
+4. **No pre-computed SOFA tables** exist in `mimiciv_derived` schema
+5. **Respiratory support** status can be determined from ventilator mode (itemid 223849) or PEEP set (itemid 220339)
+6. **FiO2 is stored as percentage** (e.g., 40.0 = 40%), must convert to fraction (0.40) for PaO2/FiO2 calculation
+7. **PaO2 and FiO2 are measured at different times** - need to match within time window (e.g., 2 hours)
+8. **NaN values** from SQL queries need explicit `pd.isna()` checks before scoring
+
+### Guidelines Retrieved
+
+- `sepsis_guideline`: Complete Sepsis-3 definitions, SOFA scoring criteria, qSOFA criteria, septic shock definitions
+
+=== Step 3 ===
+# Clinical Coding Agent Memory - SOFA Score Implementation
+
+## 1. Key Schema Facts
+
+### Database Schemas
+- **mimiciv_hosp**: Hospital-level data (labevents, d_labitems, admissions, patients)
+- **mimiciv_icu**: ICU-level data (chartevents, d_items, icustays, inputevents, outputevents)
+- **mimiciv_derived**: Empty (no pre-computed tables)
+
+### Table Structures
+
+| Table | Key Columns |
+|-------|-------------|
+| `mimiciv_hosp.d_labitems` | itemid, label, fluid, category |
+| `mimiciv_icu.d_items` | itemid, label, abbreviation, linksto, category, unitname, param_type, lownormalvalue, highnormalvalue |
+| `mimiciv_icu.icustays` | subject_id, hadm_id, stay_id, first_careunit, last_careunit, intime, outtime, los |
+| `mimiciv_icu.chartevents` | subject_id, hadm_id, stay_id, caregiver_id, charttime, storetime, itemid, value, valuenum, valueuom, warning |
+| `mimiciv_hosp.labevents` | labevent_id, subject_id, hadm_id, specimen_id, itemid, order_provider_id, charttime, storetime, value, valuenum, valueuom, ref_range_lower, ref_range_upper, flag, priority, comments |
+| `mimiciv_icu.inputevents` | subject_id, hadm_id, stay_id, caregiver_id, starttime, endtime, storetime, itemid, amount, amountuom, rate, rateuom, orderid, linkorderid, ordercategoryname, secondaryordercategoryname, ordercomponenttypedescription, ordercategorydescription, patientweight, totalamount, totalamountuom, isopenbag, continueinnextdept, statusdescription, originalamount, originalrate |
+| `mimiciv_icu.outputevents` | subject_id, hadm_id, stay_id, caregiver_id, charttime, storetime, itemid, value, valueuom |
+
+### SOFA-Relevant ItemIDs
+
+| Variable | ItemID | Table | Category | Unit | Notes |
+|----------|--------|-------|----------|------|-------|
+| Platelet Count | 51265 | d_labitems | Hematology | K/uL (×10³/µL) | |
+| Bilirubin, Total | 50885 | d_labitems | Chemistry | mg/dL | |
+| Creatinine | 50912, 51081, 52546 | d_labitems | Chemistry | mg/dL | |
+| Arterial O2 pressure (PaO2) | 220224 | d_items | Labs | mmHg | |
+| Inspired O2 Fraction (FiO2) | 223835 | d_items | Respiratory | None | Stored as percentage, convert to fraction |
+| Arterial BP mean (MAP) | 220052 | d_items | Routine Vital Signs | mmHg | |
+| GCS - Eye Opening | 220739 | d_items | Neurological | None | |
+| GCS - Verbal Response | 223900 | d_items | Neurological | None | |
+| GCS - Motor Response | 223901 | d_items | Neurological | None | |
+| Ventilator Mode | 223849 | d_items | Respiratory | None | Indicates mechanical ventilation |
+| PEEP set | 220339 | d_items | Respiratory | cmH2O | Indicates mechanical ventilation |
+| Dopamine | 221662 | d_items | Medications | mcg/kg/min | |
+| Dobutamine | 221653 | d_items | Medications | mcg/kg/min | |
+| Epinephrine | 221289 | d_items | Medications | mcg/kg/min | |
+| Norepinephrine | 221906 | d_items | Medications | mcg/kg/min | |
+
+### SOFA Scoring Criteria
+
+| Organ System | Variable | Score 0 | Score 1 | Score 2 | Score 3 | Score 4 |
+|--------------|----------|---------|---------|---------|---------|---------|
+| Respiration | PaO₂/FiO₂ (mm Hg) | ≥400 | <400 | <300 | <200 with support | <100 with support |
+| Coagulation | Platelets (×10³/µL) | ≥150 | <150 | <100 | <50 | <20 |
+| Liver | Bilirubin (mg/dL) | <1.2 | 1.2–1.9 | 2.0–5.9 | 6.0–11.9 | ≥12.0 |
+| Cardiovascular | MAP/vasopressors | MAP≥70 | MAP<70 | Dopamine≤5 or dobutamine(any) | Dopamine>5 or epi≤0.1 or neo≤0.1 | Dopamine>15 or epi>0.1 or neo>0.1 |
+| Brain | GCS | 15 | 13–14 | 10–12 | 6–9 | <6 |
+| Kidney | Creatinine (mg/dL) or urine output (mL/day) | <1.2 | 1.2–1.9 | 2.0–3.4 | 3.5–4.9 or UO<500 | ≥5.0 or UO<200 |
+
+## 2. Function Source Code
+
+### compute_sofa_score
+
+```python
+import pandas as pd
+import numpy as np
+from datetime import datetime, timedelta
+
+def compute_sofa_score(stay_id):
+    """
+    Compute the SOFA (Sequential Organ Failure Assessment) score for an ICU stay.
+    
+    The SOFA score assesses organ dysfunction across 6 systems:
+    - Respiration (PaO2/FiO2 ratio)
+    - Coagulation (Platelet count)
+    - Liver (Bilirubin)
+    - Cardiovascular (MAP and vasopressors)
+    - Brain (Glasgow Coma Scale)
+    - Kidney (Creatinine)
+    
+    Parameters
+    ----------
+    stay_id : int
+        The ICU stay identifier
+        
+    Returns
+    -------
+    dict
+        Dictionary containing:
+        - 'total_score': Total SOFA score (0-24)
+        - 'respiration_score': Respiration subscore (0-4)
+        - 'coagulation_score': Coagulation subscore (0-4)
+        - 'liver_score': Liver subscore (0-4)
+        - 'cardiovascular_score': Cardiovascular subscore (0-4)
+        - 'brain_score': Brain subscore (0-4)
+        - 'kidney_score': Kidney subscore (0-4)
+        - 'subject_id': Patient subject ID
+        - 'hadm_id': Hospital admission ID
+        - 'stay_id': ICU stay ID
+        - 'intime': ICU admission time
+        - 'outtime': ICU discharge time
+        - 'details': Dictionary with detailed component values
+    """
+    
+    # Get stay information
+    stay_info = query_db(f"""
+        SELECT stay_id, subject_id, hadm_id, intime, outtime
+        FROM mimiciv_icu.icustays
+        WHERE stay_id = {stay_id}
+    """)
+    
+    if stay_info.empty:
+        return {'error': 'Stay not found'}
+    
+    subject_id = stay_info.iloc[0]['subject_id']
+    hadm_id = stay_info.iloc[0]['hadm_id']
+    intime = stay_info.iloc[0]['intime']
+    outtime = stay_info.iloc[0]['outtime']
+    
+    details = {}
+    
+    # ==========================================
+    # 1. RESPIRATION (PaO2/FiO2 ratio)
+    # ==========================================
+    # Get PaO2 values within the ICU stay
+    pao2_data = query_db(f"""
+        SELECT charttime, valuenum as pao2
+        FROM mimiciv_icu.chartevents
+        WHERE stay_id = {stay_id} AND itemid = 220224 AND valuenum IS NOT NULL
+        AND charttime >= '{intime}' AND charttime <= '{outtime}'
+    """)
+    
+    # Get FiO2 values within the ICU stay
+    fio2_data = query_db(f"""
+        SELECT charttime, valuenum as fio2
+        FROM mimiciv_icu.chartevents
+        WHERE stay_id = {stay_id} AND itemid = 223835 AND valuenum IS NOT NULL
+        AND charttime >= '{intime}' AND charttime <= '{outtime}'
+    """)
+    
+    # Check if patient is on mechanical ventilation
+    # Look for ventilator mode or invasive ventilation indicators
+    vent_status = query_db(f"""
+        SELECT COUNT(*) as vent_count
+        FROM mimiciv_icu.chartevents
+        WHERE stay_id = {stay_id}
+        AND itemid = 223849  -- Ventilator Mode
+        AND value IS NOT NULL
+        AND value != ''
+    """)
+    on_vent = vent_status.iloc[0]['vent_count'] > 0 if not vent_status.empty else False
+    
+    # Also check for PEEP set (indicates mechanical ventilation)
+    peep_status = query_db(f"""
+        SELECT COUNT(*) as peep_count
+        FROM mimiciv_icu.chartevents
+        WHERE stay_id = {stay_id}
+        AND itemid = 220339  -- PEEP set
+        AND valuenum IS NOT NULL
+    """)
+    on_vent = on_vent or (peep_status.iloc[0]['peep_count'] > 0 if not peep_status.empty else False)
+    
+    # Calculate PaO2/FiO2 ratio by matching within 2-hour time window
+    pao2_fio2_values = []
+    if not pao2_data.empty and not fio2_data.empty:
+        for _, pao2_row in pao2_data.iterrows():
+            pao2_time = pao2_row['charttime']
+            pao2_val = pao2_row['pao2']
+            
+            # Find FiO2 values within 2 hours of this PaO2 measurement
+            matching_fio2 = fio2_data[
+                (fio2_data['charttime'] >= pao2_time - timedelta(hours=2)) &
+                (fio2_data['charttime'] <= pao2_time + timedelta(hours=2))
+            ]
+            
+            if not matching_fio2.empty:
+                # Use the closest FiO2 value
+                time_diffs = (matching_fio2['charttime'] - pao2_time).abs()
+                closest_idx = time_diffs.idxmin()
+                closest_fio2 = matching_fio2.loc[closest_idx]
+                fio2_fraction = closest_fio2['fio2'] / 100.0  # Convert percentage to fraction
+                ratio = pao2_val / fio2_fraction
+                pao2_fio2_values.append(ratio)
+    
+    # Use worst (minimum) PaO2/FiO2 ratio
+    if pao2_fio2_values:
+        worst_pao2_fio2 = min(pao2_fio2_values)
+        details['pao2_fio2'] = worst_pao2_fio2
+        details['on_ventilator'] = on_vent
+        
+        # Score respiration based on SOFA criteria
+        if worst_pao2_fio2 >= 400:
+            resp_score = 0
+        elif worst_pao2_fio2 >= 300:
+            resp_score = 1
+        elif worst_pao2_fio2 >= 200:
+            resp_score = 2
+        elif worst_pao2_fio2 >= 100 and on_vent:
+            resp_score = 3
+        elif worst_pao2_fio2 < 100 and on_vent:
+            resp_score = 4
+        elif worst_pao2_fio2 < 200 and not on_vent:
+            resp_score = 2  # Without support, <200 is score 2
+        else:
+            resp_score = 2  # Default for <200 without clear vent status
+    else:
+        resp_score = 0  # No data = assume normal
+        details['pao2_fio2'] = None
+        details['on_ventilator'] = on_vent
+    
+    # ==========================================
+    # 2. COAGULATION (Platelets)
+    # ==========================================
+    platelet_data = query_db(f"""
+        SELECT MIN(valuenum) as min_platelets
+        FROM mimiciv_hosp.labevents
+        WHERE hadm_id = {hadm_id}
+        AND itemid = 51265
+        AND valuenum IS NOT NULL
+        AND charttime >= '{intime}'
+        AND charttime <= '{outtime}'
+    """)
+    
+    min_platelets = None
+    if not platelet_data.empty and platelet_data.iloc[0]['min_platelets'] is not None:
+        min_platelets = platelet_data.iloc[0]['min_platelets']
+        if not pd.isna(min_platelets):
+            details['platelets'] = min_platelets
+            
+            if min_platelets >= 150:
+                coag_score = 0
+            elif min_platelets >= 100:
+                coag_score = 1
+            elif min_platelets >= 50:
+                coag_score = 2
+            elif min_platelets >= 20:
+                coag_score = 3
+            else:
+                coag_score = 4
+        else:
+            coag_score = 0
+            details['platelets'] = None
+    else:
+        coag_score = 0
+        details['platelets'] = None
+    
+    # ==========================================
+    # 3. LIVER (Bilirubin)
+    # ==========================================
+    bili_data = query_db(f"""
+        SELECT MAX(valuenum) as max_bilirubin
+        FROM mimiciv_hosp.labevents
+        WHERE hadm_id = {hadm_id}
+        AND itemid = 50885
+        AND valuenum IS NOT NULL
+        AND charttime >= '{intime}'
+        AND charttime <= '{outtime}'
+    """)
+    
+    max_bilirubin = None
+    if not bili_data.empty and bili_data.iloc[0]['max_bilirubin'] is not None:
+        max_bilirubin = bili_data.iloc[0]['max_bilirubin']
+        if not pd.isna(max_bilirubin):
+            details['bilirubin'] = max_bilirubin
+            
+            if max_bilirubin < 1.2:
+                liver_score = 0
+            elif max_bilirubin < 2.0:
+                liver_score = 1
+            elif max_bilirubin < 6.0:
+                liver_score = 2
+            elif max_bilirubin < 12.0:
+                liver_score = 3
+            else:
+                liver_score = 4
+        else:
+            liver_score = 0
+            details['bilirubin'] = None
+    else:
+        liver_score = 0
+        details['bilirubin'] = None
+    
+    # ==========================================
+    # 4. CARDIOVASCULAR (MAP and vasopressors)
+    # ==========================================
+    # Get minimum MAP
+    map_data = query_db(f"""
+        SELECT MIN(valuenum) as min_map
+        FROM mimiciv_icu.chartevents
+        WHERE stay_id = {stay_id}
+        AND itemid = 220052
+        AND valuenum IS NOT NULL
+    """)
+    
+    min_map = None
+    if not map_data.empty and map_data.iloc[0]['min_map'] is not None:
+        min_map = map_data.iloc[0]['min_map']
+        if not pd.isna(min_map):
+            details['min_map'] = min_map
+        else:
+            details['min_map'] = None
+    
+    # Get vasopressor data
+    # Dopamine (221662), Dobutamine (221653), Epinephrine (221289), Norepinephrine (221906)
+    vaso_data = query_db(f"""
+        SELECT 
+            itemid,
+            MAX(rate) as max_rate
+        FROM mimiciv_icu.inputevents
+        WHERE stay_id = {stay_id}
+        AND itemid IN (221662, 221653, 221289, 221906)
+        AND rate IS NOT NULL
+        GROUP BY itemid
+    """)
+    
+    # Create a dictionary of vasopressor max rates
+    vaso_rates = {}
+    for _, row in vaso_data.iterrows():
+        vaso_rates[int(row['itemid'])] = float(row['max_rate'])
+    
+    details['vasopressors'] = vaso_rates
+    
+    # Score cardiovascular - check highest score conditions first
+    # Item IDs: dopamine=221662, dobutamine=221653, epinephrine=221289, norepinephrine=221906
+    dopamine_max = vaso_rates.get(221662, 0)
+    dobutamine_max = vaso_rates.get(221653, 0)
+    epi_max = vaso_rates.get(221289, 0)
+    neo_max = vaso_rates.get(221906, 0)
+    
+    # Score 4: Dopamine > 15 OR Epinephrine > 0.1 OR Norepinephrine > 0.1
+    if dopamine_max > 15 or epi_max > 0.1 or neo_max > 0.1:
+        cv_score = 4
+    # Score 3: Dopamine > 5 and <= 15 OR Epinephrine > 0 and <= 0.1 OR Norepinephrine > 0 and <= 0.1
+    elif (dopamine_max > 5 and dopamine_max <= 15) or (epi_max > 0 and epi_max <= 0.1) or (neo_max > 0 and neo_max <= 0.1):
+        cv_score = 3
+    # Score 2: Dopamine <= 5 OR Dobutamine (any dose)
+    elif (dopamine_max > 0 and dopamine_max <= 5) or (dobutamine_max > 0):
+        cv_score = 2
+    # Score 1: MAP < 70 without vasopressors
+    elif min_map is not None and min_map < 70:
+        cv_score = 1
+    # Score 0: MAP >= 70 without vasopressors
+    else:
+        cv_score = 0
+    
+    # ==========================================
+    # 5. BRAIN (GCS)
+    # ==========================================
+    gcs_data = query_db(f"""
+        SELECT 
+            (SELECT MIN(valuenum) FROM mimiciv_icu.chartevents 
+             WHERE stay_id = {stay_id} AND itemid = 220739 AND valuenum IS NOT NULL) as min_eye,
+            (SELECT MIN(valuenum) FROM mimiciv_icu.chartevents 
+             WHERE stay_id = {stay_id} AND itemid = 223900 AND valuenum IS NOT NULL) as min_verbal,
+            (SELECT MIN(valuenum) FROM mimiciv_icu.chartevents 
+             WHERE stay_id = {stay_id} AND itemid = 223901 AND valuenum IS NOT NULL) as min_motor
+    """)
+    
+    min_eye = gcs_data.iloc[0]['min_eye']
+    min_verbal = gcs_data.iloc[0]['min_verbal']
+    min_motor = gcs_data.iloc[0]['min_motor']
+    
+    details['gcs_eye'] = min_eye
+    details['gcs_verbal'] = min_verbal
+    details['gcs_motor'] = min_motor
+    
+    # Calculate worst GCS (sum of minimum components)
+    if (min_eye is not None and not pd.isna(min_eye) and 
+        min_verbal is not None and not pd.isna(min_verbal) and 
+        min_motor is not None and not pd.isna(min_motor)):
+        worst_gcs = min_eye + min_verbal + min_motor
+        details['worst_gcs'] = worst_gcs
+        
+        if worst_gcs == 15:
+            brain_score = 0
+        elif worst_gcs >= 13:
+            brain_score = 1
+        elif worst_gcs >= 10:
+            brain_score = 2
+        elif worst_gcs >= 6:
+            brain_score = 3
+        else:
+            brain_score = 4
+    else:
+        brain_score = 0
+        details['worst_gcs'] = None
+    
+    # ==========================================
+    # 6. KIDNEY (Creatinine)
+    # ==========================================
+    cr_data = query_db(f"""
+        SELECT MAX(valuenum) as max_creatinine
+        FROM mimiciv_hosp.labevents
+        WHERE hadm_id = {hadm_id}
+        AND itemid IN (50912, 51081, 52546)
+        AND valuenum IS NOT NULL
+        AND charttime >= '{intime}'
+        AND charttime <= '{outtime}'
+    """)
+    
+    max_creatinine = None
+    if not cr_data.empty and cr_data.iloc[0]['max_creatinine'] is not None:
+        max_creatinine = cr_data.iloc[0]['max_creatinine']
+        if not pd.isna(max_creatinine):
+            details['max_creatinine'] = max_creatinine
+            
+            if max_creatinine < 1.2:
+                kidney_score = 0
+            elif max_creatinine < 2.0:
+                kidney_score = 1
+            elif max_creatinine < 3.5:
+                kidney_score = 2
+            elif max_creatinine < 5.0:
+                kidney_score = 3
+            else:
+                kidney_score = 4
+        else:
+            kidney_score = 0
+            details['max_creatinine'] = None
+    else:
+        kidney_score = 0
+        details['max_creatinine'] = None
+    
+    # ==========================================
+    # Calculate total score
+    # ==========================================
+    total_score = resp_score + coag_score + liver_score + cv_score + brain_score + kidney_score
+    
+    return {
+        'total_score': total_score,
+        'respiration_score': resp_score,
+        'coagulation_score': coag_score,
+        'liver_score': liver_score,
+        'cardiovascular_score': cv_score,
+        'brain_score': brain_score,
+        'kidney_score': kidney_score,
+        'subject_id': subject_id,
+        'hadm_id': hadm_id,
+        'stay_id': stay_id,
+        'intime': str(intime),
+        'outtime': str(outtime),
+        'details': details
+    }
+```
+
+### get_epinephrine_info
+
+```python
+def get_epinephrine_info(stay_id):
+    """
+    Extract epinephrine infusion information for a patient's ICU stay.
+
+    This function queries the MIMIC-IV database to retrieve epinephrine medication
+    administration data for a specific ICU stay. Epinephrine is a vasopressor and
+    inotropic agent used to treat hypotension, cardiac arrest, and shock.
+
+    Parameters:
+    -----------
+    stay_id : int
+        The ICU stay identifier for the patient.
+
+    Returns:
+    --------
+    dict
+        A dictionary containing the following keys:
+        - 'received_epinephrine': bool - Whether the patient received epinephrine during this stay
+        - 'max_rate': float - Maximum epinephrine infusion rate (mcg/kg/min), rounded to 2 decimals
+                         Returns 0.0 if no epinephrine was received
+        - 'min_rate': float - Minimum epinephrine infusion rate (mcg/kg/min), rounded to 2 decimals
+                         Returns 0.0 if no epinephrine was received
+        - 'avg_rate': float - Average epinephrine infusion rate (mcg/kg/min), rounded to 2 decimals
+                         Returns 0.0 if no epinephrine was received
+        - 'received_high_dose': bool - Whether patient received high-dose epinephrine (>0.1 mcg/kg/min)
+        - 'num_records': int - Number of epinephrine infusion records
+        - 'first_time': datetime or None - First epinephrine administration time
+        - 'last_time': datetime or None - Last epinephrine administration time
+        - 'subject_id': int or None - Patient subject ID
+        - 'hadm_id': int or None - Hospital admission ID
+
+    Example:
+    --------
+    >>> info = get_epinephrine_info(31831386)
+    >>> info['received_epinephrine']
+    True
+    >>> info['max_rate']
+    0.02
+    >>> info['received_high_dose']
+    False
+    """
+    pass  # Implementation not yet retrieved
+```
+
+### get_norepinephrine_info
+
+```python
+def get_norepinephrine_info(stay_id):
+    """
+    Extract norepinephrine infusion information for a patient's ICU stay.
+
+    This function queries the MIMIC-IV database to retrieve norepinephrine medication
+    administration data for a specific ICU stay. Norepinephrine is a vasopressor
+    used to treat hypotension and shock.
+
+    Parameters:
+    -----------
+    stay_id : int
+        The ICU stay identifier for the patient.
+
+    Returns:
+    --------
+    dict
+        A dictionary containing the following keys:
+        - 'received_norepinephrine': bool - Whether the patient received norepinephrine during this stay
+        - 'max_rate': float - Maximum norepinephrine infusion rate (mcg/kg/min), rounded to 2 decimals
+                         Returns 0.0 if no norepinephrine was received
+        - 'min_rate': float - Minimum norepinephrine infusion rate (mcg/kg/min), rounded to 2 decimals
+                         Returns 0.0 if no norepinephrine was received
+        - 'avg_rate': float - Average norepinephrine infusion rate (mcg/kg/min), rounded to 2 decimals
+                         Returns 0.0 if no norepinephrine was received
+        - 'received_high_dose': bool - Whether patient received high-dose norepinephrine (>0.25 mcg/kg/min)
+        - 'num_records': int - Number of norepinephrine infusion records
+        - 'first_time': datetime or None - First norepinephrine administration time
+        - 'last_time': datetime or None - Last norepinephrine administration time
+        - 'subject_id': int or None - Patient subject ID
+        - 'hadm_id': int or None - Hospital admission ID
+
+    Example:
+    --------
+    >>> info = get_norepinephrine_info(39602181)
+    >>> info['received_norepinephrine']
+    True
+    >>> info['max_rate']
+    0.66
+    >>> info['received_high_dose']
+    True
+    """
+    pass  # Implementation not yet retrieved
+```
+
+## 3. Test Results and Error Fixes
+
+### Test Results
+
+| Stay ID | Total Score | Resp | Coag | Liver | CV | Brain | Kidney | Notes |
+|---------|-------------|------|------|-------|----|-------|--------|-------|
+| 34531557 | 12 | 2 | 0 | 0 | 4 | 4 | 2 | PaO2/FiO2=263.3, on vent, neo=0.12, GCS=3, Cr=3.2 |
+| 37081114 | 2 | 0 | 0 | 0 | 0 | 2 | 0 | GCS=12, no MAP data, no vasopressors |
+| 39765666 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | GCS=15, no lab data |
+| 37510196 | 12 | 3 | 1 | 0 | 3 | 4 | 1 | PaO2/FiO2=162.5, dopamine=10, GCS=3 |
+| 39060235 | 8 | 3 | 0 | 0 | 1 | 4 | 0 | PaO2/FiO2<200, MAP<70, GCS=3 |
+| 34672098 | 12 | 1 | 2 | 0 | 4 | 3 | 2 | Platelets<100, neo>0.1, GCS=6-9 |
+| 32358465 | 8 | 4 | 0 | 0 | 0 | 3 | 1 | PaO2/FiO2=91.7, on vent, GCS=8 |
+| 33685454 | 6 | 2 | 1 | 0 | 1 | 1 | 1 | PaO2/FiO2<300, platelets<150 |
+| 35479615 | 9 | 1 | 1 | 0 | 4 | 3 | 0 | neo>0.1, GCS=6-9 |
+| 38875437 | 13 | 4 | 1 | 0 | 4 | 4 | 0 | PaO2/FiO2=95, neo=0.12, dopamine=5, GCS=3 |
+
+### Errors Encountered
+
+| Step | Error | Fix |
+|------|-------|-----|
+| 7 | `Binder Error: Referenced column "abbreviation" not found in FROM clause!` | `d_labitems` does not have `abbreviation` or `unit_name` columns. Use: `itemid, label, fluid, category` |
+| 10 | `Binder Error: Referenced column "unit_name" not found in FROM clause!` | `d_items` uses `unitname` (not `unit_name`). Correct query: `SELECT itemid, label, abbreviation, category, unitname FROM mimiciv_icu.d_items` |
+| 21 | `Catalog Error: Table with name inputevents_mv does not exist!` | MIMIC-IV uses `inputevents` (not `inputevents_mv`). Correct query: `SELECT * FROM mimiciv_icu.inputevents` |
+| 29 | `IndexError: single positional indexer is out-of-bounds` | When matching PaO2 and FiO2 within time window, need to handle empty results properly |
+| 3 | `AttributeError: '_iLocIndexer' object has no attribute 'to_dict'` | Use `.iloc[0].to_dict()` not `.iloc(0).to_dict()` |
+| 5 | `KeyError: 0` | When finding closest FiO2 value, use `.idxmin()` instead of `.argsort()[0]` |
+| 13 | Cardiovascular scoring logic error | Check highest score conditions first (score 4 before score 3) to avoid incorrect scoring when multiple vasopressors present |
+
+### Key Findings
+
+1. **Vasopressor rates** in `inputevents` are stored in `rate` column with `rateuom = 'mcg/kg/min'`
+2. **Patient weight** is available in `inputevents.patientweight` column for dose calculations
+3. **GCS components** are stored separately (Eye, Verbal, Motor) and must be summed
+4. **No pre-computed SOFA tables** exist in `mimiciv_derived` schema
+5. **Respiratory support** status can be determined from ventilator mode (itemid 223849) or PEEP set (itemid 220339)
+6. **FiO2 is stored as percentage** (e.g., 40.0 = 40%), must convert to fraction (0.40) for PaO2/FiO2 calculation
+7. **PaO2 and FiO2 are measured at different times** - need to match within 2-hour time window using `.idxmin()` to find closest FiO2 value
+8. **NaN values** from SQL queries need explicit `pd.isna()` checks before scoring
+9. **Cardiovascular scoring** must check highest score conditions first (score 4 before score 3) to correctly handle patients on multiple vasopressors
+10. **PaO2/FiO2 matching** requires iterating through PaO2 records and finding closest FiO2 within ±2 hours
+
+### Guidelines Retrieved
+
+- `sepsis_guideline`: Complete Sepsis-3 definitions, SOFA scoring criteria, qSOFA criteria, septic shock definitions
+
+=== Step 4 ===
+# Clinical Coding Agent Memory - SOFA Score Implementation
+
+## 1. Key Schema Facts
+
+### Database Schemas
+- **mimiciv_hosp**: Hospital-level data (labevents, d_labitems, admissions, patients)
+- **mimiciv_icu**: ICU-level data (chartevents, d_items, icustays, inputevents, outputevents)
+- **mimiciv_derived**: Empty (no pre-computed tables)
+
+### Table Structures
+
+| Table | Key Columns |
+|-------|-------------|
+| `mimiciv_hosp.d_labitems` | itemid, label, fluid, category |
+| `mimiciv_icu.d_items` | itemid, label, abbreviation, linksto, category, unitname, param_type, lownormalvalue, highnormalvalue |
+| `mimiciv_icu.icustays` | subject_id, hadm_id, stay_id, first_careunit, last_careunit, intime, outtime, los |
+| `mimiciv_icu.chartevents` | subject_id, hadm_id, stay_id, caregiver_id, charttime, storetime, itemid, value, valuenum, valueuom, warning |
+| `mimiciv_hosp.labevents` | labevent_id, subject_id, hadm_id, specimen_id, itemid, order_provider_id, charttime, storetime, value, valuenum, valueuom, ref_range_lower, ref_range_upper, flag, priority, comments |
+| `mimiciv_icu.inputevents` | subject_id, hadm_id, stay_id, caregiver_id, starttime, endtime, storetime, itemid, amount, amountuom, rate, rateuom, orderid, linkorderid, ordercategoryname, secondaryordercategoryname, ordercomponenttypedescription, ordercategorydescription, patientweight, totalamount, totalamountuom, isopenbag, continueinnextdept, statusdescription, originalamount, originalrate |
+| `mimiciv_icu.outputevents` | subject_id, hadm_id, stay_id, caregiver_id, charttime, storetime, itemid, value, valueuom |
+
+### SOFA-Relevant ItemIDs
+
+| Variable | ItemID | Table | Category | Unit | Notes |
+|----------|--------|-------|----------|------|-------|
+| Platelet Count | 51265 | d_labitems | Hematology | K/uL (×10³/µL) | |
+| Bilirubin, Total | 50885 | d_labitems | Chemistry | mg/dL | |
+| Creatinine | 50912, 51081, 52546 | d_labitems | Chemistry | mg/dL | |
+| Arterial O2 pressure (PaO2) | 220224 | d_items | Labs | mmHg | |
+| Inspired O2 Fraction (FiO2) | 223835 | d_items | Respiratory | None | Stored as percentage, convert to fraction |
+| Arterial BP mean (MAP) | 220052 | d_items | Routine Vital Signs | mmHg | |
+| GCS - Eye Opening | 220739 | d_items | Neurological | None | |
+| GCS - Verbal Response | 223900 | d_items | Neurological | None | |
+| GCS - Motor Response | 223901 | d_items | Neurological | None | |
+| Ventilator Mode | 223849 | d_items | Respiratory | None | Indicates mechanical ventilation |
+| PEEP set | 220339 | d_items | Respiratory | cmH2O | Indicates mechanical ventilation |
+| Dopamine | 221662 | d_items | Medications | mcg/kg/min | |
+| Dobutamine | 221653 | d_items | Medications | mcg/kg/min | |
+| Epinephrine | 221289 | d_items | Medications | mcg/kg/min | |
+| Norepinephrine | 221906 | d_items | Medications | mcg/kg/min | |
+
+### SOFA Scoring Criteria
+
+| Organ System | Variable | Score 0 | Score 1 | Score 2 | Score 3 | Score 4 |
+|--------------|----------|---------|---------|---------|---------|---------|
+| Respiration | PaO₂/FiO₂ (mm Hg) | ≥400 | <400 | <300 | <200 with support | <100 with support |
+| Coagulation | Platelets (×10³/µL) | ≥150 | <150 | <100 | <50 | <20 |
+| Liver | Bilirubin (mg/dL) | <1.2 | 1.2–1.9 | 2.0–5.9 | 6.0–11.9 | ≥12.0 |
+| Cardiovascular | MAP/vasopressors | MAP≥70 | MAP<70 | Dopamine≤5 or dobutamine(any) | Dopamine>5 or epi≤0.1 or neo≤0.1 | Dopamine>15 or epi>0.1 or neo>0.1 |
+| Brain | GCS | 15 | 13–14 | 10–12 | 6–9 | <6 |
+| Kidney | Creatinine (mg/dL) or urine output (mL/day) | <1.2 | 1.2–1.9 | 2.0–3.4 | 3.5–4.9 or UO<500 | ≥5.0 or UO<200 |
+
+## 2. Function Source Code
+
+### compute_sofa_score
+
+```python
+import pandas as pd
+import numpy as np
+from datetime import datetime, timedelta
+
+def compute_sofa_score(stay_id):
+    """
+    Compute the SOFA (Sequential Organ Failure Assessment) score for an ICU stay.
+    
+    The SOFA score assesses organ dysfunction across 6 systems:
+    - Respiration (PaO2/FiO2 ratio)
+    - Coagulation (Platelet count)
+    - Liver (Bilirubin)
+    - Cardiovascular (MAP and vasopressors)
+    - Brain (Glasgow Coma Scale)
+    - Kidney (Creatinine)
+    
+    Parameters
+    ----------
+    stay_id : int
+        The ICU stay identifier
+        
+    Returns
+    -------
+    dict
+        Dictionary containing:
+        - 'total_score': Total SOFA score (0-24)
+        - 'respiration_score': Respiration subscore (0-4)
+        - 'coagulation_score': Coagulation subscore (0-4)
+        - 'liver_score': Liver subscore (0-4)
+        - 'cardiovascular_score': Cardiovascular subscore (0-4)
+        - 'brain_score': Brain subscore (0-4)
+        - 'kidney_score': Kidney subscore (0-4)
+        - 'subject_id': Patient subject ID
+        - 'hadm_id': Hospital admission ID
+        - 'stay_id': ICU stay ID
+        - 'intime': ICU admission time
+        - 'outtime': ICU discharge time
+        - 'details': Dictionary with detailed component values
+    """
+    
+    # Get stay information
+    stay_info = query_db(f"""
+        SELECT stay_id, subject_id, hadm_id, intime, outtime
+        FROM mimiciv_icu.icustays
+        WHERE stay_id = {stay_id}
+    """)
+    
+    if stay_info.empty:
+        return {'error': 'Stay not found'}
+    
+    subject_id = stay_info.iloc[0]['subject_id']
+    hadm_id = stay_info.iloc[0]['hadm_id']
+    intime = stay_info.iloc[0]['intime']
+    outtime = stay_info.iloc[0]['outtime']
+    
+    details = {}
+    
+    # ==========================================
+    # 1. RESPIRATION (PaO2/FiO2 ratio)
+    # ==========================================
+    # Get PaO2 values within the ICU stay
+    pao2_data = query_db(f"""
+        SELECT charttime, valuenum as pao2
+        FROM mimiciv_icu.chartevents
+        WHERE stay_id = {stay_id} AND itemid = 220224 AND valuenum IS NOT NULL
+        AND charttime >= '{intime}' AND charttime <= '{outtime}'
+    """)
+    
+    # Get FiO2 values within the ICU stay
+    fio2_data = query_db(f"""
+        SELECT charttime, valuenum as fio2
+        FROM mimiciv_icu.chartevents
+        WHERE stay_id = {stay_id} AND itemid = 223835 AND valuenum IS NOT NULL
+        AND charttime >= '{intime}' AND charttime <= '{outtime}'
+    """)
+    
+    # Check if patient is on mechanical ventilation
+    # Look for ventilator mode or invasive ventilation indicators
+    vent_status = query_db(f"""
+        SELECT COUNT(*) as vent_count
+        FROM mimiciv_icu.chartevents
+        WHERE stay_id = {stay_id}
+        AND itemid = 223849  -- Ventilator Mode
+        AND value IS NOT NULL
+        AND value != ''
+    """)
+    on_vent = vent_status.iloc[0]['vent_count'] > 0 if not vent_status.empty else False
+    
+    # Also check for PEEP set (indicates mechanical ventilation)
+    peep_status = query_db(f"""
+        SELECT COUNT(*) as peep_count
+        FROM mimiciv_icu.chartevents
+        WHERE stay_id = {stay_id}
+        AND itemid = 220339  -- PEEP set
+        AND valuenum IS NOT NULL
+    """)
+    on_vent = on_vent or (peep_status.iloc[0]['peep_count'] > 0 if not peep_status.empty else False)
+    
+    # Calculate PaO2/FiO2 ratio by matching within 2-hour time window
+    pao2_fio2_values = []
+    if not pao2_data.empty and not fio2_data.empty:
+        for _, pao2_row in pao2_data.iterrows():
+            pao2_time = pao2_row['charttime']
+            pao2_val = pao2_row['pao2']
+            
+            # Find FiO2 values within 2 hours of this PaO2 measurement
+            matching_fio2 = fio2_data[
+                (fio2_data['charttime'] >= pao2_time - timedelta(hours=2)) &
+                (fio2_data['charttime'] <= pao2_time + timedelta(hours=2))
+            ]
+            
+            if not matching_fio2.empty:
+                # Use the closest FiO2 value
+                time_diffs = (matching_fio2['charttime'] - pao2_time).abs()
+                closest_idx = time_diffs.idxmin()
+                closest_fio2 = matching_fio2.loc[closest_idx]
+                fio2_fraction = closest_fio2['fio2'] / 100.0  # Convert percentage to fraction
+                ratio = pao2_val / fio2_fraction
+                pao2_fio2_values.append(ratio)
+    
+    # Use worst (minimum) PaO2/FiO2 ratio
+    if pao2_fio2_values:
+        worst_pao2_fio2 = min(pao2_fio2_values)
+        details['pao2_fio2'] = worst_pao2_fio2
+        details['on_ventilator'] = on_vent
+        
+        # Score respiration based on SOFA criteria
+        if worst_pao2_fio2 >= 400:
+            resp_score = 0
+        elif worst_pao2_fio2 >= 300:
+            resp_score = 1
+        elif worst_pao2_fio2 >= 200:
+            resp_score = 2
+        elif worst_pao2_fio2 >= 100 and on_vent:
+            resp_score = 3
+        elif worst_pao2_fio2 < 100 and on_vent:
+            resp_score = 4
+        elif worst_pao2_fio2 < 200 and not on_vent:
+            resp_score = 2  # Without support, <200 is score 2
+        else:
+            resp_score = 2  # Default for <200 without clear vent status
+    else:
+        resp_score = 0  # No data = assume normal
+        details['pao2_fio2'] = None
+        details['on_ventilator'] = on_vent
+    
+    # ==========================================
+    # 2. COAGULATION (Platelets)
+    # ==========================================
+    platelet_data = query_db(f"""
+        SELECT MIN(valuenum) as min_platelets
+        FROM mimiciv_hosp.labevents
+        WHERE hadm_id = {hadm_id}
+        AND itemid = 51265
+        AND valuenum IS NOT NULL
+        AND charttime >= '{intime}'
+        AND charttime <= '{outtime}'
+    """)
+    
+    min_platelets = None
+    if not platelet_data.empty and platelet_data.iloc[0]['min_platelets'] is not None:
+        min_platelets = platelet_data.iloc[0]['min_platelets']
+        if not pd.isna(min_platelets):
+            details['platelets'] = min_platelets
+            
+            if min_platelets >= 150:
+                coag_score = 0
+            elif min_platelets >= 100:
+                coag_score = 1
+            elif min_platelets >= 50:
+                coag_score = 2
+            elif min_platelets >= 20:
+                coag_score = 3
+            else:
+                coag_score = 4
+        else:
+            coag_score = 0
+            details['platelets'] = None
+    else:
+        coag_score = 0
+        details['platelets'] = None
+    
+    # ==========================================
+    # 3. LIVER (Bilirubin)
+    # ==========================================
+    bili_data = query_db(f"""
+        SELECT MAX(valuenum) as max_bilirubin
+        FROM mimiciv_hosp.labevents
+        WHERE hadm_id = {hadm_id}
+        AND itemid = 50885
+        AND valuenum IS NOT NULL
+        AND charttime >= '{intime}'
+        AND charttime <= '{outtime}'
+    """)
+    
+    max_bilirubin = None
+    if not bili_data.empty and bili_data.iloc[0]['max_bilirubin'] is not None:
+        max_bilirubin = bili_data.iloc[0]['max_bilirubin']
+        if not pd.isna(max_bilirubin):
+            details['bilirubin'] = max_bilirubin
+            
+            if max_bilirubin < 1.2:
+                liver_score = 0
+            elif max_bilirubin < 2.0:
+                liver_score = 1
+            elif max_bilirubin < 6.0:
+                liver_score = 2
+            elif max_bilirubin < 12.0:
+                liver_score = 3
+            else:
+                liver_score = 4
+        else:
+            liver_score = 0
+            details['bilirubin'] = None
+    else:
+        liver_score = 0
+        details['bilirubin'] = None
+    
+    # ==========================================
+    # 4. CARDIOVASCULAR (MAP and vasopressors)
+    # ==========================================
+    # Get minimum MAP
+    map_data = query_db(f"""
+        SELECT MIN(valuenum) as min_map
+        FROM mimiciv_icu.chartevents
+        WHERE stay_id = {stay_id}
+        AND itemid = 220052
+        AND valuenum IS NOT NULL
+    """)
+    
+    min_map = None
+    if not map_data.empty and map_data.iloc[0]['min_map'] is not None:
+        min_map = map_data.iloc[0]['min_map']
+        if not pd.isna(min_map):
+            details['min_map'] = min_map
+        else:
+            details['min_map'] = None
+    
+    # Get vasopressor data
+    # Dopamine (221662), Dobutamine (221653), Epinephrine (221289), Norepinephrine (221906)
+    vaso_data = query_db(f"""
+        SELECT 
+            itemid,
+            MAX(rate) as max_rate
+        FROM mimiciv_icu.inputevents
+        WHERE stay_id = {stay_id}
+        AND itemid IN (221662, 221653, 221289, 221906)
+        AND rate IS NOT NULL
+        GROUP BY itemid
+    """)
+    
+    # Create a dictionary of vasopressor max rates
+    vaso_rates = {}
+    for _, row in vaso_data.iterrows():
+        vaso_rates[int(row['itemid'])] = float(row['max_rate'])
+    
+    details['vasopressors'] = vaso_rates
+    
+    # Score cardiovascular - check highest score conditions first
+    # Item IDs: dopamine=221662, dobutamine=221653, epinephrine=221289, norepinephrine=221906
+    dopamine_max = vaso_rates.get(221662, 0)
+    dobutamine_max = vaso_rates.get(221653, 0)
+    epi_max = vaso_rates.get(221289, 0)
+    neo_max = vaso_rates.get(221906, 0)
+    
+    # Score 4: Dopamine > 15 OR Epinephrine > 0.1 OR Norepinephrine > 0.1
+    if dopamine_max > 15 or epi_max > 0.1 or neo_max > 0.1:
+        cv_score = 4
+    # Score 3: Dopamine > 5 and <= 15 OR Epinephrine > 0 and <= 0.1 OR Norepinephrine > 0 and <= 0.1
+    elif (dopamine_max > 5 and dopamine_max <= 15) or (epi_max > 0 and epi_max <= 0.1) or (neo_max > 0 and neo_max <= 0.1):
+        cv_score = 3
+    # Score 2: Dopamine <= 5 OR Dobutamine (any dose)
+    elif (dopamine_max > 0 and dopamine_max <= 5) or (dobutamine_max > 0):
+        cv_score = 2
+    # Score 1: MAP < 70 without vasopressors
+    elif min_map is not None and min_map < 70:
+        cv_score = 1
+    # Score 0: MAP >= 70 without vasopressors
+    else:
+        cv_score = 0
+    
+    # ==========================================
+    # 5. BRAIN (GCS)
+    # ==========================================
+    gcs_data = query_db(f"""
+        SELECT 
+            (SELECT MIN(valuenum) FROM mimiciv_icu.chartevents 
+             WHERE stay_id = {stay_id} AND itemid = 220739 AND valuenum IS NOT NULL) as min_eye,
+            (SELECT MIN(valuenum) FROM mimiciv_icu.chartevents 
+             WHERE stay_id = {stay_id} AND itemid = 223900 AND valuenum IS NOT NULL) as min_verbal,
+            (SELECT MIN(valuenum) FROM mimiciv_icu.chartevents 
+             WHERE stay_id = {stay_id} AND itemid = 223901 AND valuenum IS NOT NULL) as min_motor
+    """)
+    
+    min_eye = gcs_data.iloc[0]['min_eye']
+    min_verbal = gcs_data.iloc[0]['min_verbal']
+    min_motor = gcs_data.iloc[0]['min_motor']
+    
+    details['gcs_eye'] = min_eye
+    details['gcs_verbal'] = min_verbal
+    details['gcs_motor'] = min_motor
+    
+    # Calculate worst GCS (sum of minimum components)
+    if (min_eye is not None and not pd.isna(min_eye) and 
+        min_verbal is not None and not pd.isna(min_verbal) and 
+        min_motor is not None and not pd.isna(min_motor)):
+        worst_gcs = min_eye + min_verbal + min_motor
+        details['worst_gcs'] = worst_gcs
+        
+        if worst_gcs == 15:
+            brain_score = 0
+        elif worst_gcs >= 13:
+            brain_score = 1
+        elif worst_gcs >= 10:
+            brain_score = 2
+        elif worst_gcs >= 6:
+            brain_score = 3
+        else:
+            brain_score = 4
+    else:
+        brain_score = 0
+        details['worst_gcs'] = None
+    
+    # ==========================================
+    # 6. KIDNEY (Creatinine)
+    # ==========================================
+    cr_data = query_db(f"""
+        SELECT MAX(valuenum) as max_creatinine
+        FROM mimiciv_hosp.labevents
+        WHERE hadm_id = {hadm_id}
+        AND itemid IN (50912, 51081, 52546)
+        AND valuenum IS NOT NULL
+        AND charttime >= '{intime}'
+        AND charttime <= '{outtime}'
+    """)
+    
+    max_creatinine = None
+    if not cr_data.empty and cr_data.iloc[0]['max_creatinine'] is not None:
+        max_creatinine = cr_data.iloc[0]['max_creatinine']
+        if not pd.isna(max_creatinine):
+            details['max_creatinine'] = max_creatinine
+            
+            if max_creatinine < 1.2:
+                kidney_score = 0
+            elif max_creatinine < 2.0:
+                kidney_score = 1
+            elif max_creatinine < 3.5:
+                kidney_score = 2
+            elif max_creatinine < 5.0:
+                kidney_score = 3
+            else:
+                kidney_score = 4
+        else:
+            kidney_score = 0
+            details['max_creatinine'] = None
+    else:
+        kidney_score = 0
+        details['max_creatinine'] = None
+    
+    # ==========================================
+    # Calculate total score
+    # ==========================================
+    total_score = resp_score + coag_score + liver_score + cv_score + brain_score + kidney_score
+    
+    return {
+        'total_score': total_score,
+        'respiration_score': resp_score,
+        'coagulation_score': coag_score,
+        'liver_score': liver_score,
+        'cardiovascular_score': cv_score,
+        'brain_score': brain_score,
+        'kidney_score': kidney_score,
+        'subject_id': subject_id,
+        'hadm_id': hadm_id,
+        'stay_id': stay_id,
+        'intime': str(intime),
+        'outtime': str(outtime),
+        'details': details
+    }
+```
+
+### get_epinephrine_info
+
+```python
+def get_epinephrine_info(stay_id):
+    """
+    Extract epinephrine infusion information for a patient's ICU stay.
+
+    This function queries the MIMIC-IV database to retrieve epinephrine medication
+    administration data for a specific ICU stay. Epinephrine is a vasopressor and
+    inotropic agent used to treat hypotension, cardiac arrest, and shock.
+
+    Parameters:
+    -----------
+    stay_id : int
+        The ICU stay identifier for the patient.
+
+    Returns:
+    --------
+    dict
+        A dictionary containing the following keys:
+        - 'received_epinephrine': bool - Whether the patient received epinephrine during this stay
+        - 'max_rate': float - Maximum epinephrine infusion rate (mcg/kg/min), rounded to 2 decimals
+                         Returns 0.0 if no epinephrine was received
+        - 'min_rate': float - Minimum epinephrine infusion rate (mcg/kg/min), rounded to 2 decimals
+                         Returns 0.0 if no epinephrine was received
+        - 'avg_rate': float - Average epinephrine infusion rate (mcg/kg/min), rounded to 2 decimals
+                         Returns 0.0 if no epinephrine was received
+        - 'received_high_dose': bool - Whether patient received high-dose epinephrine (>0.1 mcg/kg/min)
+        - 'num_records': int - Number of epinephrine infusion records
+        - 'first_time': datetime or None - First epinephrine administration time
+        - 'last_time': datetime or None - Last epinephrine administration time
+        - 'subject_id': int or None - Patient subject ID
+        - 'hadm_id': int or None - Hospital admission ID
+
+    Example:
+    --------
+    >>> info = get_epinephrine_info(31831386)
+    >>> info['received_epinephrine']
+    True
+    >>> info['max_rate']
+    0.02
+    >>> info['received_high_dose']
+    False
+    """
+    pass  # Implementation not yet retrieved
+```
+
+### get_norepinephrine_info
+
+```python
+def get_norepinephrine_info(stay_id):
+    """
+    Extract norepinephrine infusion information for a patient's ICU stay.
+
+    This function queries the MIMIC-IV database to retrieve norepinephrine medication
+    administration data for a specific ICU stay. Norepinephrine is a vasopressor
+    used to treat hypotension and shock.
+
+    Parameters:
+    -----------
+    stay_id : int
+        The ICU stay identifier for the patient.
+
+    Returns:
+    --------
+    dict
+        A dictionary containing the following keys:
+        - 'received_norepinephrine': bool - Whether the patient received norepinephrine during this stay
+        - 'max_rate': float - Maximum norepinephrine infusion rate (mcg/kg/min), rounded to 2 decimals
+                         Returns 0.0 if no norepinephrine was received
+        - 'min_rate': float - Minimum norepinephrine infusion rate (mcg/kg/min), rounded to 2 decimals
+                         Returns 0.0 if no norepinephrine was received
+        - 'avg_rate': float - Average norepinephrine infusion rate (mcg/kg/min), rounded to 2 decimals
+                         Returns 0.0 if no norepinephrine was received
+        - 'received_high_dose': bool - Whether patient received high-dose norepinephrine (>0.25 mcg/kg/min)
+        - 'num_records': int - Number of norepinephrine infusion records
+        - 'first_time': datetime or None - First norepinephrine administration time
+        - 'last_time': datetime or None - Last norepinephrine administration time
+        - 'subject_id': int or None - Patient subject ID
+        - 'hadm_id': int or None - Hospital admission ID
+
+    Example:
+    --------
+    >>> info = get_norepinephrine_info(39602181)
+    >>> info['received_norepinephrine']
+    True
+    >>> info['max_rate']
+    0.66
+    >>> info['received_high_dose']
+    True
+    """
+    pass  # Implementation not yet retrieved
+```
+
+## 3. Test Results and Error Fixes
+
+### Test Results
+
+| Stay ID | Total Score | Resp | Coag | Liver | CV | Brain | Kidney | Notes |
+|---------|-------------|------|------|-------|----|-------|--------|-------|
+| 34531557 | 12 | 2 | 0 | 0 | 4 | 4 | 2 | PaO2/FiO2=263.3, on vent, neo=0.12, GCS=3, Cr=3.2 |
+| 37081114 | 2 | 0 | 0 | 0 | 0 | 2 | 0 | GCS=12, no MAP data, no vasopressors |
+| 39765666 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | GCS=15, no lab data |
+| 37510196 | 12 | 3 | 1 | 0 | 3 | 4 | 1 | PaO2/FiO2=162.5, dopamine=10, GCS=3 |
+| 39060235 | 8 | 3 | 0 | 0 | 1 | 4 | 0 | PaO2/FiO2=180, on vent, MAP=41, GCS=3 |
+| 34672098 | 12 | 1 | 2 | 0 | 4 | 3 | 2 | Platelets=89, neo=1.24, GCS=7, Cr=2.7 |
+| 32358465 | 8 | 4 | 0 | 0 | 0 | 3 | 1 | PaO2/FiO2=91.7, on vent, GCS=8, Cr=1.5 |
+| 33685454 | 6 | 2 | 1 | 0 | 1 | 1 | 1 | PaO2/FiO2=47.4, no vent, platelets=136, MAP=67 |
+| 35479615 | 9 | 1 | 1 | 0 | 4 | 3 | 0 | neo=0.25, GCS=6, platelets=132 |
+| 38875437 | 13 | 4 | 1 | 0 | 4 | 4 | 0 | PaO2/FiO2=95, neo=0.12, dopamine=5, GCS=3 |
+| 39553978 | 1 | 0 | 0 | 0 | 0 | 1 | 0 | GCS=14 |
+| 37067082 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | No data |
+| 34592300 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | No data |
+| 31205490 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | No data |
+| 39698942 | 4 | 0 | 0 | 2 | 0 | 1 | 1 | Bili=3.2, GCS=14, Cr=2.3 |
+| 31090461 | 2 | 0 | 0 | 0 | 0 | 0 | 2 | Cr=2.3 |
+| 32610785 | 1 | 0 | 0 | 0 | 0 | 1 | 0 | GCS=14 |
+| 34807493 | 4 | 2 | 0 | 0 | 0 | 2 | 0 | PaO2/FiO2<300, GCS=11 |
+| 33987268 | 2 | 0 | 0 | 0 | 0 | 1 | 1 | GCS=14, Cr=2.3 |
+| 38392119 | 3 | 0 | 1 | 0 | 0 | 0 | 2 | Platelets=122, Cr=2.3 |
+| 35044219 | 3 | 2 | 0 | 0 | 0 | 1 | 0 | PaO2/FiO2<300, GCS=14 |
+| 30591715 | 10 | 0 | 1 | 2 | 0 | 4 | 3 | PaO2/FiO2=None, Bili=3.2, Cr=4.4, GCS=3 |
+| 33182336 | 3 | 0 | 1 | 0 | 0 | 0 | 2 | Platelets=122, Cr=2.3, GCS=15 |
+| 38036585 | 6 | 0 | 0 | 1 | 0 | 4 | 1 | PaO2/FiO2=464, Bili=1.6, Cr=1.8, GCS=3 |
+| 33081165 | 2 | 0 | 0 | 0 | 0 | 2 | 0 | GCS=11, Cr=0.7 |
+| 34979347 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | GCS=15, Cr=0.6, Bili=0.7 |
+
+### Errors Encountered
+
+| Step | Error | Fix |
+|------|-------|-----|
+| 7 | `Binder Error: Referenced column "abbreviation" not found in FROM clause!` | `d_labitems` does not have `abbreviation` or `unit_name` columns. Use: `itemid, label, fluid, category` |
+| 10 | `Binder Error: Referenced column "unit_name"
+
+=== Step 5 ===
+# Clinical Coding Agent Memory - SOFA Score Implementation
+
+## 1. Key Schema Facts
+
+### Database Schemas
+- **mimiciv_hosp**: Hospital-level data (labevents, d_labitems, admissions, patients)
+- **mimiciv_icu**: ICU-level data (chartevents, d_items, icustays, inputevents, outputevents)
+- **mimiciv_derived**: Empty (no pre-computed tables)
+
+### Table Structures
+
+| Table | Key Columns |
+|-------|-------------|
+| `mimiciv_hosp.d_labitems` | itemid, label, fluid, category |
+| `mimiciv_icu.d_items` | itemid, label, abbreviation, linksto, category, unitname, param_type, lownormalvalue, highnormalvalue |
+| `mimiciv_icu.icustays` | subject_id, hadm_id, stay_id, first_careunit, last_careunit, intime, outtime, los |
+| `mimiciv_icu.chartevents` | subject_id, hadm_id, stay_id, caregiver_id, charttime, storetime, itemid, value, valuenum, valueuom, warning |
+| `mimiciv_hosp.labevents` | labevent_id, subject_id, hadm_id, specimen_id, itemid, order_provider_id, charttime, storetime, value, valuenum, valueuom, ref_range_lower, ref_range_upper, flag, priority, comments |
+| `mimiciv_icu.inputevents` | subject_id, hadm_id, stay_id, caregiver_id, starttime, endtime, storetime, itemid, amount, amountuom, rate, rateuom, orderid, linkorderid, ordercategoryname, secondaryordercategoryname, ordercomponenttypedescription, ordercategorydescription, patientweight, totalamount, totalamountuom, isopenbag, continueinnextdept, statusdescription, originalamount, originalrate |
+| `mimiciv_icu.outputevents` | subject_id, hadm_id, stay_id, caregiver_id, charttime, storetime, itemid, value, valueuom |
+
+### SOFA-Relevant ItemIDs
+
+| Variable | ItemID | Table | Category | Unit | Notes |
+|----------|--------|-------|----------|------|-------|
+| Platelet Count | 51265 | d_labitems | Hematology | K/uL (×10³/µL) | |
+| Bilirubin, Total | 50885 | d_labitems | Chemistry | mg/dL | |
+| Creatinine | 50912, 51081, 52546 | d_labitems | Chemistry | mg/dL | |
+| Arterial O2 pressure (PaO2) | 220224 | d_items | Labs | mmHg | |
+| Inspired O2 Fraction (FiO2) | 223835 | d_items | Respiratory | None | Stored as percentage, convert to fraction |
+| Arterial BP mean (MAP) | 220052 | d_items | Routine Vital Signs | mmHg | |
+| GCS - Eye Opening | 220739 | d_items | Neurological | None | |
+| GCS - Verbal Response | 223900 | d_items | Neurological | None | |
+| GCS - Motor Response | 223901 | d_items | Neurological | None | |
+| Ventilator Mode | 223849 | d_items | Respiratory | None | Indicates mechanical ventilation |
+| PEEP set | 220339 | d_items | Respiratory | cmH2O | Indicates mechanical ventilation |
+| Dopamine | 221662 | d_items | Medications | mcg/kg/min | |
+| Dobutamine | 221653 | d_items | Medications | mcg/kg/min | |
+| Epinephrine | 221289 | d_items | Medications | mcg/kg/min | |
+| Norepinephrine | 221906 | d_items | Medications | mcg/kg/min | |
+| Urine Output | 40055-40200 | outputevents | Output | mL | For kidney scoring when creatinine borderline |
+
+### SOFA Scoring Criteria
+
+| Organ System | Variable | Score 0 | Score 1 | Score 2 | Score 3 | Score 4 |
+|--------------|----------|---------|---------|---------|---------|---------|
+| Respiration | PaO₂/FiO₂ (mm Hg) | ≥400 | <400 | <300 | <200 with support | <100 with support |
+| Coagulation | Platelets (×10³/µL) | ≥150 | <150 | <100 | <50 | <20 |
+| Liver | Bilirubin (mg/dL) | <1.2 | 1.2–1.9 | 2.0–5.9 | 6.0–11.9 | ≥12.0 |
+| Cardiovascular | MAP/vasopressors | MAP≥70 | MAP<70 | Dopamine≤5 or dobutamine(any) | Dopamine>5 or epi≤0.1 or neo≤0.1 | Dopamine>15 or epi>0.1 or neo>0.1 |
+| Brain | GCS | 15 | 13–14 | 10–12 | 6–9 | <6 |
+| Kidney | Creatinine (mg/dL) or urine output (mL/day) | <1.2 | 1.2–1.9 | 2.0–3.4 | 3.5–4.9 or UO<500 | ≥5.0 or UO<200 |
+
+**Important Notes:**
+- Vasopressor doses must be administered for ≥1 hour during scoring window to count
+- All vasopressor doses in µg/kg/min
+- FiO2 stored as percentage (0-100), must convert to fraction (0.21-1.0) for PaO2/FiO2 ratio
+
+## 2. Function Source Code
+
+### compute_sofa_score
+
+```python
+import pandas as pd
+import numpy as np
+from datetime import datetime, timedelta
+
+def compute_sofa_score(stay_id):
+    """
+    Compute the SOFA (Sequential Organ Failure Assessment) score for an ICU stay.
+    
+    The SOFA score assesses organ dysfunction across 6 systems:
+    - Respiration (PaO2/FiO2 ratio)
+    - Coagulation (Platelet count)
+    - Liver (Bilirubin)
+    - Cardiovascular (MAP and vasopressors)
+    - Brain (Glasgow Coma Scale)
+    - Kidney (Creatinine)
+    
+    Parameters
+    ----------
+    stay_id : int
+        The ICU stay identifier
+        
+    Returns
+    -------
+    dict
+        Dictionary containing:
+        - 'total_score': Total SOFA score (0-24)
+        - 'respiration_score': Respiration subscore (0-4)
+        - 'coagulation_score': Coagulation subscore (0-4)
+        - 'liver_score': Liver subscore (0-4)
+        - 'cardiovascular_score': Cardiovascular subscore (0-4)
+        - 'brain_score': Brain subscore (0-4)
+        - 'kidney_score': Kidney subscore (0-4)
+        - 'subject_id': Patient subject ID
+        - 'hadm_id': Hospital admission ID
+        - 'stay_id': ICU stay ID
+        - 'intime': ICU admission time
+        - 'outtime': ICU discharge time
+        - 'details': Dictionary with detailed component values
+    """
+    
+    # Get stay information
+    stay_info = query_db(f"""
+        SELECT stay_id, subject_id, hadm_id, intime, outtime
+        FROM mimiciv_icu.icustays
+        WHERE stay_id = {stay_id}
+    """)
+    
+    if stay_info.empty:
+        return {'error': 'Stay not found'}
+    
+    subject_id = stay_info.iloc[0]['subject_id']
+    hadm_id = stay_info.iloc[0]['hadm_id']
+    intime = stay_info.iloc[0]['intime']
+    outtime = stay_info.iloc[0]['outtime']
+    
+    details = {}
+    
+    # ==========================================
+    # 1. RESPIRATION (PaO2/FiO2 ratio)
+    # ==========================================
+    # Get PaO2 values within the ICU stay
+    pao2_data = query_db(f"""
+        SELECT charttime, valuenum as pao2
+        FROM mimiciv_icu.chartevents
+        WHERE stay_id = {stay_id} AND itemid = 220224 AND valuenum IS NOT NULL
+        AND charttime >= '{intime}' AND charttime <= '{outtime}'
+    """)
+    
+    # Get FiO2 values within the ICU stay
+    fio2_data = query_db(f"""
+        SELECT charttime, valuenum as fio2
+        FROM mimiciv_icu.chartevents
+        WHERE stay_id = {stay_id} AND itemid = 223835 AND valuenum IS NOT NULL
+        AND charttime >= '{intime}' AND charttime <= '{outtime}'
+    """)
+    
+    # Check if patient is on mechanical ventilation
+    # Look for ventilator mode or invasive ventilation indicators
+    vent_status = query_db(f"""
+        SELECT COUNT(*) as vent_count
+        FROM mimiciv_icu.chartevents
+        WHERE stay_id = {stay_id}
+        AND itemid = 223849  -- Ventilator Mode
+        AND value IS NOT NULL
+        AND value != ''
+    """)
+    on_vent = vent_status.iloc[0]['vent_count'] > 0 if not vent_status.empty else False
+    
+    # Also check for PEEP set (indicates mechanical ventilation)
+    peep_status = query_db(f"""
+        SELECT COUNT(*) as peep_count
+        FROM mimiciv_icu.chartevents
+        WHERE stay_id = {stay_id}
+        AND itemid = 220339  -- PEEP set
+        AND valuenum IS NOT NULL
+    """)
+    on_vent = on_vent or (peep_status.iloc[0]['peep_count'] > 0 if not peep_status.empty else False)
+    
+    # Calculate PaO2/FiO2 ratio by matching within 2-hour time window
+    pao2_fio2_values = []
+    if not pao2_data.empty and not fio2_data.empty:
+        for _, pao2_row in pao2_data.iterrows():
+            pao2_time = pao2_row['charttime']
+            pao2_val = pao2_row['pao2']
+            
+            # Find FiO2 values within 2 hours of this PaO2 measurement
+            matching_fio2 = fio2_data[
+                (fio2_data['charttime'] >= pao2_time - timedelta(hours=2)) &
+                (fio2_data['charttime'] <= pao2_time + timedelta(hours=2))
+            ]
+            
+            if not matching_fio2.empty:
+                # Use the closest FiO2 value
+                time_diffs = (matching_fio2['charttime'] - pao2_time).abs()
+                closest_idx = time_diffs.idxmin()
+                closest_fio2 = matching_fio2.loc[closest_idx]
+                fio2_fraction = closest_fio2['fio2'] / 100.0  # Convert percentage to fraction
+                ratio = pao2_val / fio2_fraction
+                pao2_fio2_values.append(ratio)
+    
+    # Use worst (minimum) PaO2/FiO2 ratio
+    if pao2_fio2_values:
+        worst_pao2_fio2 = min(pao2_fio2_values)
+        details['pao2_fio2'] = worst_pao2_fio2
+        details['on_ventilator'] = on_vent
+        
+        # Score respiration based on SOFA criteria
+        if worst_pao2_fio2 >= 400:
+            resp_score = 0
+        elif worst_pao2_fio2 >= 300:
+            resp_score = 1
+        elif worst_pao2_fio2 >= 200:
+            resp_score = 2
+        elif worst_pao2_fio2 >= 100 and on_vent:
+            resp_score = 3
+        elif worst_pao2_fio2 < 100 and on_vent:
+            resp_score = 4
+        elif worst_pao2_fio2 < 200 and not on_vent:
+            resp_score = 2  # Without support, <200 is score 2
+        else:
+            resp_score = 2  # Default for <200 without clear vent status
+    else:
+        resp_score = 0  # No data = assume normal
+        details['pao2_fio2'] = None
+        details['on_ventilator'] = on_vent
+    
+    # ==========================================
+    # 2. COAGULATION (Platelets)
+    # ==========================================
+    platelet_data = query_db(f"""
+        SELECT MIN(valuenum) as min_platelets
+        FROM mimiciv_hosp.labevents
+        WHERE hadm_id = {hadm_id}
+        AND itemid = 51265
+        AND valuenum IS NOT NULL
+        AND charttime >= '{intime}'
+        AND charttime <= '{outtime}'
+    """)
+    
+    min_platelets = None
+    if not platelet_data.empty and platelet_data.iloc[0]['min_platelets'] is not None:
+        min_platelets = platelet_data.iloc[0]['min_platelets']
+        if not pd.isna(min_platelets):
+            details['platelets'] = min_platelets
+            
+            if min_platelets >= 150:
+                coag_score = 0
+            elif min_platelets >= 100:
+                coag_score = 1
+            elif min_platelets >= 50:
+                coag_score = 2
+            elif min_platelets >= 20:
+                coag_score = 3
+            else:
+                coag_score = 4
+        else:
+            coag_score = 0
+            details['platelets'] = None
+    else:
+        coag_score = 0
+        details['platelets'] = None
+    
+    # ==========================================
+    # 3. LIVER (Bilirubin)
+    # ==========================================
+    bili_data = query_db(f"""
+        SELECT MAX(valuenum) as max_bilirubin
+        FROM mimiciv_hosp.labevents
+        WHERE hadm_id = {hadm_id}
+        AND itemid = 50885
+        AND valuenum IS NOT NULL
+        AND charttime >= '{intime}'
+        AND charttime <= '{outtime}'
+    """)
+    
+    max_bilirubin = None
+    if not bili_data.empty and bili_data.iloc[0]['max_bilirubin'] is not None:
+        max_bilirubin = bili_data.iloc[0]['max_bilirubin']
+        if not pd.isna(max_bilirubin):
+            details['bilirubin'] = max_bilirubin
+            
+            if max_bilirubin < 1.2:
+                liver_score = 0
+            elif max_bilirubin < 2.0:
+                liver_score = 1
+            elif max_bilirubin < 6.0:
+                liver_score = 2
+            elif max_bilirubin < 12.0:
+                liver_score = 3
+            else:
+                liver_score = 4
+        else:
+            liver_score = 0
+            details['bilirubin'] = None
+    else:
+        liver_score = 0
+        details['bilirubin'] = None
+    
+    # ==========================================
+    # 4. CARDIOVASCULAR (MAP and vasopressors)
+    # ==========================================
+    # Get minimum MAP
+    map_data = query_db(f"""
+        SELECT MIN(valuenum) as min_map
+        FROM mimiciv_icu.chartevents
+        WHERE stay_id = {stay_id}
+        AND itemid = 220052
+        AND valuenum IS NOT NULL
+    """)
+    
+    min_map = None
+    if not map_data.empty and map_data.iloc[0]['min_map'] is not None:
+        min_map = map_data.iloc[0]['min_map']
+        if not pd.isna(min_map):
+            details['min_map'] = min_map
+        else:
+            details['min_map'] = None
+    
+    # Get vasopressor data
+    # Dopamine (221662), Dobutamine (221653), Epinephrine (221289), Norepinephrine (221906)
+    vaso_data = query_db(f"""
+        SELECT 
+            itemid,
+            MAX(rate) as max_rate
+        FROM mimiciv_icu.inputevents
+        WHERE stay_id = {stay_id}
+        AND itemid IN (221662, 221653, 221289, 221906)
+        AND rate IS NOT NULL
+        GROUP BY itemid
+    """)
+    
+    # Create a dictionary of vasopressor max rates
+    vaso_rates = {}
+    for _, row in vaso_data.iterrows():
+        vaso_rates[int(row['itemid'])] = float(row['max_rate'])
+    
+    details['vasopressors'] = vaso_rates
+    
+    # Score cardiovascular - check highest score conditions first
+    # Item IDs: dopamine=221662, dobutamine=221653, epinephrine=221289, norepinephrine=221906
+    dopamine_max = vaso_rates.get(221662, 0)
+    dobutamine_max = vaso_rates.get(221653, 0)
+    epi_max = vaso_rates.get(221289, 0)
+    neo_max = vaso_rates.get(221906, 0)
+    
+    # Score 4: Dopamine > 15 OR Epinephrine > 0.1 OR Norepinephrine > 0.1
+    if dopamine_max > 15 or epi_max > 0.1 or neo_max > 0.1:
+        cv_score = 4
+    # Score 3: Dopamine > 5 and <= 15 OR Epinephrine > 0 and <= 0.1 OR Norepinephrine > 0 and <= 0.1
+    elif (dopamine_max > 5 and dopamine_max <= 15) or (epi_max > 0 and epi_max <= 0.1) or (neo_max > 0 and neo_max <= 0.1):
+        cv_score = 3
+    # Score 2: Dopamine <= 5 OR Dobutamine (any dose)
+    elif (dopamine_max > 0 and dopamine_max <= 5) or (dobutamine_max > 0):
+        cv_score = 2
+    # Score 1: MAP < 70 without vasopressors
+    elif min_map is not None and min_map < 70:
+        cv_score = 1
+    # Score 0: MAP >= 70 without vasopressors
+    else:
+        cv_score = 0
+    
+    # ==========================================
+    # 5. BRAIN (GCS)
+    # ==========================================
+    gcs_data = query_db(f"""
+        SELECT 
+            (SELECT MIN(valuenum) FROM mimiciv_icu.chartevents 
+             WHERE stay_id = {stay_id} AND itemid = 220739 AND valuenum IS NOT NULL) as min_eye,
+            (SELECT MIN(valuenum) FROM mimiciv_icu.chartevents 
+             WHERE stay_id = {stay_id} AND itemid = 223900 AND valuenum IS NOT NULL) as min_verbal,
+            (SELECT MIN(valuenum) FROM mimiciv_icu.chartevents 
+             WHERE stay_id = {stay_id} AND itemid = 223901 AND valuenum IS NOT NULL) as min_motor
+    """)
+    
+    min_eye = gcs_data.iloc[0]['min_eye']
+    min_verbal = gcs_data.iloc[0]['min_verbal']
+    min_motor = gcs_data.iloc[0]['min_motor']
+    
+    details['gcs_eye'] = min_eye
+    details['gcs_verbal'] = min_verbal
+    details['gcs_motor'] = min_motor
+    
+    # Calculate worst GCS (sum of minimum components)
+    if (min_eye is not None and not pd.isna(min_eye) and 
+        min_verbal is not None and not pd.isna(min_verbal) and 
+        min_motor is not None and not pd.isna(min_motor)):
+        worst_gcs = min_eye + min_verbal + min_motor
+        details['worst_gcs'] = worst_gcs
+        
+        if worst_gcs == 15:
+            brain_score = 0
+        elif worst_gcs >= 13:
+            brain_score = 1
+        elif worst_gcs >= 10:
+            brain_score = 2
+        elif worst_gcs >= 6:
+            brain_score = 3
+        else:
+            brain_score = 4
+    else:
+        brain_score = 0
+        details['worst_gcs'] = None
+    
+    # ==========================================
+    # 6. KIDNEY (Creatinine)
+    # ==========================================
+    cr_data = query_db(f"""
+        SELECT MAX(valuenum) as max_creatinine
+        FROM mimiciv_hosp.labevents
+        WHERE hadm_id = {hadm_id}
+        AND itemid IN (50912, 51081, 52546)
+        AND valuenum IS NOT NULL
+        AND charttime >= '{intime}'
+        AND charttime <= '{outtime}'
+    """)
+    
+    max_creatinine = None
+    if not cr_data.empty and cr_data.iloc[0]['max_creatinine'] is not None:
+        max_creatinine = cr_data.iloc[0]['max_creatinine']
+        if not pd.isna(max_creatinine):
+            details['max_creatinine'] = max_creatinine
+            
+            if max_creatinine < 1.2:
+                kidney_score = 0
+            elif max_creatinine < 2.0:
+                kidney_score = 1
+            elif max_creatinine < 3.5:
+                kidney_score = 2
+            elif max_creatinine < 5.0:
+                kidney_score = 3
+            else:
+                kidney_score = 4
+        else:
+            kidney_score = 0
+            details['max_creatinine'] = None
+    else:
+        kidney_score = 0
+        details['max_creatinine'] = None
+    
+    # ==========================================
+    # Calculate total score
+    # ==========================================
+    total_score = resp_score + coag_score + liver_score + cv_score + brain_score + kidney_score
+    
+    return {
+        'total_score': total_score,
+        'respiration_score': resp_score,
+        'coagulation_score': coag_score,
+        'liver_score': liver_score,
+        'cardiovascular_score': cv_score,
+        'brain_score': brain_score,
+        'kidney_score': kidney_score,
+        'subject_id': subject_id,
+        'hadm_id': hadm_id,
+        'stay_id': stay_id,
+        'intime': str(intime),
+        'outtime': str(outtime),
+        'details': details
+    }
+```
+
+### get_epinephrine_info
+
+```python
+def get_epinephrine_info(stay_id):
+    """
+    Extract epinephrine infusion information for a patient's ICU stay.
+
+    This function queries the MIMIC-IV database to retrieve epinephrine medication
+    administration data for a specific ICU stay. Epinephrine is a vasopressor and
+    inotropic agent used to treat hypotension, cardiac arrest, and shock.
+
+    Parameters:
+    -----------
+    stay_id : int
+        The ICU stay identifier for the patient.
+
+    Returns:
+    --------
+    dict
+        A dictionary containing the following keys:
+        - 'received_epinephrine': bool - Whether the patient received epinephrine during this stay
+        - 'max_rate': float - Maximum epinephrine infusion rate (mcg/kg/min), rounded to 2 decimals
+                         Returns 0.0 if no epinephrine was received
+        - 'min_rate': float - Minimum epinephrine infusion rate (mcg/kg/min), rounded to 2 decimals
+                         Returns 0.0 if no epinephrine was received
+        - 'avg_rate': float - Average epinephrine infusion rate (mcg/kg/min), rounded to 2 decimals
+                         Returns 0.0 if no epinephrine was received
+        - 'received_high_dose': bool - Whether patient received high-dose epinephrine (>0.1 mcg/kg/min)
+        - 'num_records': int - Number of epinephrine infusion records
+        - 'first_time': datetime or None - First epinephrine administration time
+        - 'last_time': datetime or None - Last epinephrine administration time
+        - 'subject_id': int or None - Patient subject ID
+        - 'hadm_id': int or None - Hospital admission ID
+
+    Example:
+    --------
+    >>> info = get_epinephrine_info(31831386)
+    >>> info['received_epinephrine']
+    True
+    >>> info['max_rate']
+    0.02
+    >>> info['received_high_dose']
+    False
+    """
+    pass  # Implementation not yet retrieved
+```
+
+### get_norepinephrine_info
+
+```python
+def get_norepinephrine_info(stay_id):
+    """
+    Extract norepinephrine infusion information for a patient's ICU stay.
+
+    This function queries the MIMIC-IV database to retrieve norepinephrine medication
+    administration data for a specific ICU stay. Norepinephrine is a vasopressor
+    used to treat hypotension and shock.
+
+    Parameters:
+    -----------
+    stay_id : int
+        The ICU stay identifier for the patient.
+
+    Returns:
+    --------
+    dict
+        A dictionary containing the following keys:
+        - 'received_norepinephrine': bool - Whether the patient received norepinephrine during this stay
+        - 'max_rate': float - Maximum norepinephrine infusion rate (mcg/kg/min), rounded to 2 decimals
+                         Returns 0.0 if no norepinephrine was received
+        - 'min_rate': float - Minimum norepinephrine infusion rate (mcg/kg/min), rounded to 2 decimals
+                         Returns 0.0 if no norepinephrine was received
+        - 'avg_rate': float - Average norepinephrine infusion rate (mcg/kg/min), rounded to 2 decimals
+                         Returns 0.0 if no norepinephrine was received
+        - 'received_high_dose': bool - Whether patient received high-dose norepinephrine (>0.25 mcg/kg/min)
+        - 'num_records': int - Number of norepinephrine infusion records
+        - 'first_time': datetime or None - First norepinephrine administration time
+        - 'last_time': datetime or None - Last norepinephrine administration time
+        - 'subject_id': int or None - Patient subject ID
+        - 'hadm_id': int or None - Hospital admission ID
+
+    Example:
+    --------
+    >>> info = get_norepinephrine_info(39602181)
+    >>> info['received_norepinephrine']
+    True
+    >>> info['max_rate']
+    0.66
+    >>> info['received_high_dose']
+    True
+    """
+    pass  # Implementation not yet retrieved
+```
+
+## 3. Test Results and Error Fixes
+
+### Test Results
+
+| Stay ID | Total Score | Resp | Coag | Liver | CV | Brain | Kidney | Notes |
+|---------|-------------|------|------|-------|----|-------|--------|-------|
+| 34531557 | 12 | 2 | 0 | 0 | 4 | 4 | 2 | PaO2/FiO2=263.3, on vent, neo=0.25, GCS=3, Cr=3.2 |
+| 37081114 | 2 | 0 | 0 | 0 | 0 | 2 | 0 | GCS=12, no MAP data, no vasopressors |
+| 39765666 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | GCS=15, no lab data |
+| 37510196 | 12 | 3 | 1 | 0 | 3 | 4 | 1 | PaO2/FiO2=162.5, dopamine=10, GCS=3 |
+| 39060235 | 8 | 3 | 0 | 0 | 1 | 4 | 0 | PaO2/FiO2=180, on vent, MAP=41, GCS=3 |
+| 34672098 | 12 | 1 | 2 | 0 | 4 | 3 | 2 | Platelets=89, neo=1.24, GCS=7, Cr=2.7 |
+| 32358465 | 8 | 4 | 0 | 0 | 0 | 3 | 1 | PaO2/FiO2=91.7, on vent, GCS=8, Cr=1.5 |
+| 33685454 | 6 | 2 | 1 | 0 | 1 | 1 | 1 | PaO2/FiO2=47.4, no vent, platelets=136, MAP=67 |
+| 35479615 | 9 | 1 | 1 | 0 | 4 | 3 | 0 | neo=0.25, GCS=6, platelets=132 |
+| 38875437 | 13 | 4 | 1 | 0 | 4 | 4 | 0 | PaO2/FiO2=95, neo=0.12, dopamine=5, GCS=3 |
+| 39553978 | 1 | 0 | 0 | 0 | 0 | 1 | 0 | GCS=14 |
+| 37067082 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | No data |
+| 34592300 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | No data |
+| 31205490 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | No data |
+| 39698942 | 4 | 0 | 0 | 2 | 0 | 1 | 1 | Bili=3.2, GCS=14, Cr=2.3 |
+| 31090461 | 2 | 0 | 0 | 0 | 0 | 0 | 2 | Cr=2.3 |
+| 32610785 | 1 | 0 | 0 | 0 | 0 | 1 | 0 | GCS=14 |
+| 34807493 | 4 | 2 | 0 | 0 | 0 | 2 | 0 | PaO2/FiO2<300, GCS=11 |
+| 33987268 | 2 | 0 | 0 | 0 | 0 | 1 | 1 | GCS=14, Cr=2.3 |
+| 38392119 | 3 | 0 | 1 | 0 | 0 | 0 | 2 | Platelets=122, Cr=2.3 |
+| 35044219 | 3 | 2 | 0 | 0 | 0 | 1 | 0 | PaO2/FiO2<300, GCS=14 |
+| 30591715 | 10 | 0 | 1 | 2 | 0 | 4 | 3 | PaO2/FiO2=None, Bili=3.2, Cr=4.4, GCS=3 |
+| 33182336 | 3 | 0 | 1 | 0 | 0 | 0 | 2 | Platelets=122, Cr=2.3, GCS=15 |
+| 38036585 | 6 | 0 | 0 | 1 | 0 | 4 | 1 | PaO2/FiO2=464, Bili=1.6, Cr=1.8, GCS=3 |
+| 33081165 | 2 | 0 | 0 | 0 | 0 | 2 | 0 | GCS=11, Cr=0.7 |
+| 34979347 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | GCS=15, Cr=0.6, Bili=0.7 |
+
+### Errors Encountered
+
+| Step | Error | Fix |
+|------|-------|-----|
+| 7 | `Binder Error: Referenced column "abbreviation" not found in FROM clause!` | `d_labitems` does not have `abbreviation` or `unit_name` columns. Use: `itemid, label, fluid, category` |
+| 10 | `Binder Error
+

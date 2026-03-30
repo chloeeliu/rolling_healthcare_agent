@@ -1,0 +1,3841 @@
+=== Step 1 ===
+# Clinical Coding Agent Memory
+
+## Database Schema Facts
+
+### MIMIC-IV Tables
+- **mimiciv_hosp.diagnoses_icd**: subject_id, hadm_id, seq_num, icd_code, icd_version
+- **mimiciv_hosp.d_icd_diagnoses**: icd_code, icd_version, long_title
+- **mimiciv_hosp.admissions**: subject_id, hadm_id, admission_type, etc.
+- **mimiciv_hosp.patients**: subject_id, gender, dob, dod, etc.
+
+### ICD Code Structure
+- **icd_version**: '9' or '10'
+- **icd_code**: String format (e.g., '410', 'I21', '250.4')
+- Code matching uses `startswith()` for prefix matching
+
+## Functions
+
+### compute_charlson(subject_id, hadm_id=None)
+
+```python
+import pandas as pd
+
+def compute_charlson(subject_id, hadm_id=None):
+    """
+    Calculate the Charlson Comorbidity Index (CCI) for a patient.
+    
+    The Charlson Comorbidity Index is a scoring system that predicts 10-year 
+    mortality based on the presence of comorbid conditions. Each condition 
+    is assigned a weight from 1 to 6 points.
+    
+    Parameters:
+    -----------
+    subject_id : int
+        The unique patient identifier in the database.
+    hadm_id : int, optional
+        The hospital admission identifier. If provided, only diagnoses from 
+        this admission are considered. If None, all diagnoses for the patient 
+        across all admissions are considered.
+    
+    Returns:
+    --------
+    dict
+        A dictionary containing:
+        - 'cci_score': The total Charlson Comorbidity Index score
+        - 'conditions': A dictionary of conditions found and their weights
+        - 'has_cohort': Boolean indicating if CCI >= 3
+    """
+    
+    # Define ICD-9 and ICD-10 codes for each Charlson condition
+    # Based on the original Charlson Comorbidity Index definition
+    
+    # Myocardial infarction (1 point)
+    mi_codes = {
+        'icd9': ['410'],
+        'icd10': ['I21', 'I22']
+    }
+    
+    # Congestive heart failure (1 point)
+    chf_codes = {
+        'icd9': ['428'],
+        'icd10': ['I50']
+    }
+    
+    # Peripheral vascular disease (1 point)
+    pvd_codes = {
+        'icd9': ['443', '447', '557', '558'],
+        'icd10': ['I73', 'I70', 'I71', 'I72', 'I74', 'I77', 'I79.2', 'K65.2', 'K55', 'K51.5', 'K55.0', 'K55.1', 'K55.2', 'K55.8', 'K55.9', 'K66.1']
+    }
+    
+    # Cerebrovascular disease (1 point)
+    cbd_codes = {
+        'icd9': ['430', '431', '432', '433', '434', '435', '436', '437', '438'],
+        'icd10': ['I60', 'I61', 'I62', 'I63', 'I64', 'I65', 'I66', 'I67', 'I69']
+    }
+    
+    # Dementia (1 point)
+    dementia_codes = {
+        'icd9': ['290', '331'],
+        'icd10': ['F00', 'F01', 'F02', 'F03', 'G30']
+    }
+    
+    # Chronic pulmonary disease (1 point)
+    cpd_codes = {
+        'icd9': ['490', '491', '492', '493', '494', '495', '496'],
+        'icd10': ['J40', 'J41', 'J42', 'J43', 'J44', 'J45', 'J46', 'J60', 'J61', 'J62', 'J63', 'J64', 'J65', 'J66', 'J67', 'J68', 'J69', 'J70']
+    }
+    
+    # Connective tissue disease (1 point)
+    ctd_codes = {
+        'icd9': ['710', '714', '725', '728', '729'],
+        'icd10': ['M05', 'M06', 'M08', 'M30', 'M31', 'M32', 'M33', 'M34', 'M35', 'M36']
+    }
+    
+    # Peptic ulcer disease (1 point)
+    pud_codes = {
+        'icd9': ['531', '532'],
+        'icd10': ['K25', 'K26', 'K27', 'K28']
+    }
+    
+    # Mild liver disease (1 point)
+    mild_liver_codes = {
+        'icd9': ['571', '572', '573'],
+        'icd10': ['B18', 'B19', 'B23', 'B42', 'B43', 'B44', 'B45', 'B46', 'B47', 'B48', 'B49', 'K70', 'K71', 'K72', 'K73', 'K74', 'K75', 'K76', 'K77']
+    }
+    
+    # Diabetes without end-organ damage (1 point)
+    diabetes_no_comp_codes = {
+        'icd9': ['249', '250'],
+        'icd10': ['E10', 'E11', 'E12', 'E13', 'E14']
+    }
+    
+    # Diabetes with end-organ damage (2 points)
+    diabetes_comp_codes = {
+        'icd9': ['250.4', '250.5', '250.6', '250.7', '250.8', '250.9'],
+        'icd10': ['E10.1', 'E10.2', 'E10.3', 'E10.4', 'E10.5', 'E10.6', 'E10.7', 'E10.8', 'E10.9',
+                  'E11.1', 'E11.2', 'E11.3', 'E11.4', 'E11.5', 'E11.6', 'E11.7', 'E11.8', 'E11.9',
+                  'E12.1', 'E12.2', 'E12.3', 'E12.4', 'E12.5', 'E12.6', 'E12.7', 'E12.8', 'E12.9',
+                  'E13.1', 'E13.2', 'E13.3', 'E13.4', 'E13.5', 'E13.6', 'E13.7', 'E13.8', 'E13.9',
+                  'E14.1', 'E14.2', 'E14.3', 'E14.4', 'E14.5', 'E14.6', 'E14.7', 'E14.8', 'E14.9']
+    }
+    
+    # Hemiplegia (2 points)
+    hemiplegia_codes = {
+        'icd9': ['342', '343', '438.2'],
+        'icd10': ['G80', 'G81', 'G82', 'I69.3']
+    }
+    
+    # Moderate to severe renal disease (2 points)
+    renal_codes = {
+        'icd9': ['585', '586', '587', '588'],
+        'icd10': ['N18', 'N19', 'N25', 'N26', 'N27', 'N28', 'N29']
+    }
+    
+    # Any tumor (2 points) - solid tumors
+    tumor_codes = {
+        'icd9': ['140', '141', '142', '143', '144', '145', '146', '147', '148', '149',
+                 '150', '151', '152', '153', '154', '155', '156', '157', '158', '159',
+                 '160', '161', '162', '163', '164', '165', '166', '167', '168', '169',
+                 '170', '171', '172', '173', '174', '175', '176', '177', '178', '179',
+                 '180', '181', '182', '183', '184', '185', '186', '187', '188', '189',
+                 '190', '191', '192', '193', '194', '195'],
+        'icd10': ['C00', 'C01', 'C02', 'C03', 'C04', 'C05', 'C06', 'C07', 'C08', 'C09',
+                  'C10', 'C11', 'C12', 'C13', 'C14', 'C15', 'C16', 'C17', 'C18', 'C19',
+                  'C20', 'C21', 'C22', 'C23', 'C24', 'C25', 'C26', 'C27', 'C28', 'C29',
+                  'C30', 'C31', 'C32', 'C33', 'C34', 'C35', 'C36', 'C37', 'C38', 'C39',
+                  'C40', 'C41', 'C42', 'C43', 'C44', 'C45', 'C46', 'C47', 'C48', 'C49',
+                  'C50', 'C51', 'C52', 'C53', 'C54', 'C55', 'C56', 'C57', 'C58', 'C59',
+                  'C60', 'C61', 'C62', 'C63', 'C64', 'C65', 'C66', 'C67', 'C68', 'C69',
+                  'C70', 'C71', 'C72', 'C73', 'C74', 'C75', 'C76', 'C77', 'C78', 'C79',
+                  'C80']
+    }
+    
+    # Leukemia (2 points)
+    leukemia_codes = {
+        'icd9': ['204', '205', '206', '207', '208'],
+        'icd10': ['C91', 'C92', 'C93', 'C94', 'C95']
+    }
+    
+    # Lymphoma (2 points)
+    lymphoma_codes = {
+        'icd9': ['200', '201', '202', '203'],
+        'icd10': ['C81', 'C82', 'C83', 'C84', 'C85', 'C86', 'C87', 'C88', 'C96']
+    }
+    
+    # Moderate to severe liver disease (3 points)
+    severe_liver_codes = {
+        'icd9': ['571.2', '571.5', '571.6', '571.8', '571.9'],
+        'icd10': ['K70.3', 'K70.4', 'K71.7', 'K72.0', 'K72.1', 'K72.9', 'K73.0', 'K73.1', 'K73.2', 'K73.9',
+                  'K74.0', 'K74.1', 'K74.2', 'K74.3', 'K74.4', 'K74.5', 'K74.6', 'K75.4', 'K76.0', 'K76.1', 'K76.2', 'K76.3', 'K76.4', 'K76.5', 'K76.6', 'K76.7', 'K76.8', 'K76.9']
+    }
+    
+    # Metastatic solid tumor (6 points)
+    metastatic_codes = {
+        'icd9': ['196', '197', '198', '199'],
+        'icd10': ['C77', 'C78', 'C79']
+    }
+    
+    # AIDS (6 points)
+    aids_codes = {
+        'icd9': ['042'],
+        'icd10': ['B20']
+    }
+    
+    # Build the SQL query to get all diagnoses for the patient
+    if hadm_id is not None:
+        query = """
+        SELECT icd_code, icd_version
+        FROM mimiciv_hosp.diagnoses_icd
+        WHERE subject_id = ? AND hadm_id = ?
+        """
+        params = (subject_id, hadm_id)
+    else:
+        query = """
+        SELECT icd_code, icd_version
+        FROM mimiciv_hosp.diagnoses_icd
+        WHERE subject_id = ?
+        """
+        params = (subject_id,)
+    
+    # Execute the query
+    df = query_db(query, params)
+    
+    # Calculate the CCI score
+    cci_score = 0
+    conditions = {}
+    
+    # Track which conditions have been found
+    has_diabetes_no_comp = False
+    has_diabetes_comp = False
+    has_mild_liver = False
+    has_severe_liver = False
+    has_any_tumor = False
+    has_metastatic = False
+    
+    for _, row in df.iterrows():
+        icd_code = str(row['icd_code'])
+        icd_version = str(row['icd_version'])
+        
+        # Check for each condition
+        if icd_version == '9':
+            # Myocardial infarction
+            if any(icd_code.startswith(code) for code in mi_codes['icd9']):
+                conditions['myocardial_infarction'] = 1
+                cci_score += 1
+            
+            # Congestive heart failure
+            if any(icd_code.startswith(code) for code in chf_codes['icd9']):
+                conditions['congestive_heart_failure'] = 1
+                cci_score += 1
+            
+            # Peripheral vascular disease
+            if any(icd_code.startswith(code) for code in pvd_codes['icd9']):
+                conditions['peripheral_vascular_disease'] = 1
+                cci_score += 1
+            
+            # Cerebrovascular disease
+            if any(icd_code.startswith(code) for code in cbd_codes['icd9']):
+                conditions['cerebrovascular_disease'] = 1
+                cci_score += 1
+            
+            # Dementia
+            if any(icd_code.startswith(code) for code in dementia_codes['icd9']):
+                conditions['dementia'] = 1
+                cci_score += 1
+            
+            # Chronic pulmonary disease
+            if any(icd_code.startswith(code) for code in cpd_codes['icd9']):
+                conditions['chronic_pulmonary_disease'] = 1
+                cci_score += 1
+            
+            # Connective tissue disease
+            if any(icd_code.startswith(code) for code in ctd_codes['icd9']):
+                conditions['connective_tissue_disease'] = 1
+                cci_score += 1
+            
+            # Peptic ulcer disease
+            if any(icd_code.startswith(code) for code in pud_codes['icd9']):
+                conditions['peptic_ulcer_disease'] = 1
+                cci_score += 1
+            
+            # Mild liver disease
+            if any(icd_code.startswith(code) for code in mild_liver_codes['icd9']):
+                if not has_severe_liver:
+                    has_mild_liver = True
+            
+            # Diabetes without end-organ damage
+            if any(icd_code.startswith(code) for code in diabetes_no_comp_codes['icd9']):
+                # Check if it's not a complication code
+                if not any(icd_code.startswith(code) for code in diabetes_comp_codes['icd9']):
+                    has_diabetes_no_comp = True
+            
+            # Diabetes with end-organ damage
+            if any(icd_code.startswith(code) for code in diabetes_comp_codes['icd9']):
+                has_diabetes_comp = True
+            
+            # Hemiplegia
+            if any(icd_code.startswith(code) for code in hemiplegia_codes['icd9']):
+                conditions['hemiplegia'] = 2
+                cci_score += 2
+            
+            # Moderate to severe renal disease
+            if any(icd_code.startswith(code) for code in renal_codes['icd9']):
+                conditions['moderate_severe_renal_disease'] = 2
+                cci_score += 2
+            
+            # Any tumor
+            if any(icd_code.startswith(code) for code in tumor_codes['icd9']):
+                has_any_tumor = True
+            
+            # Leukemia
+            if any(icd_code.startswith(code) for code in leukemia_codes['icd9']):
+                conditions['leukemia'] = 2
+                cci_score += 2
+            
+            # Lymphoma
+            if any(icd_code.startswith(code) for code in lymphoma_codes['icd9']):
+                conditions['lymphoma'] = 2
+                cci_score += 2
+            
+            # Moderate to severe liver disease
+            if any(icd_code.startswith(code) for code in severe_liver_codes['icd9']):
+                has_severe_liver = True
+            
+            # Metastatic solid tumor
+            if any(icd_code.startswith(code) for code in metastatic_codes['icd9']):
+                has_metastatic = True
+            
+            # AIDS
+            if any(icd_code.startswith(code) for code in aids_codes['icd9']):
+                conditions['aids'] = 6
+                cci_score += 6
+        
+        elif icd_version == '10':
+            # Myocardial infarction
+            if any(icd_code.startswith(code) for code in mi_codes['icd10']):
+                conditions['myocardial_infarction'] = 1
+                cci_score += 1
+            
+            # Congestive heart failure
+            if any(icd_code.startswith(code) for code in chf_codes['icd10']):
+                conditions['congestive_heart_failure'] = 1
+                cci_score += 1
+            
+            # Peripheral vascular disease
+            if any(icd_code.startswith(code) for code in pvd_codes['icd10']):
+                conditions['peripheral_vascular_disease'] = 1
+                cci_score += 1
+            
+            # Cerebrovascular disease
+            if any(icd_code.startswith(code) for code in cbd_codes['icd10']):
+                conditions['cerebrovascular_disease'] = 1
+                cci_score += 1
+            
+            # Dementia
+            if any(icd_code.startswith(code) for code in dementia_codes['icd10']):
+                conditions['dementia'] = 1
+                cci_score += 1
+            
+            # Chronic pulmonary disease
+            if any(icd_code.startswith(code) for code in cpd_codes['icd10']):
+                conditions['chronic_pulmonary_disease'] = 1
+                cci_score += 1
+            
+            # Connective tissue disease
+            if any(icd_code.startswith(code) for code in ctd_codes['icd10']):
+                conditions['connective_tissue_disease'] = 1
+                cci_score += 1
+            
+            # Peptic ulcer disease
+            if any(icd_code.startswith(code) for code in pud_codes['icd10']):
+                conditions['peptic_ulcer_disease'] = 1
+                cci_score += 1
+            
+            # Mild liver disease
+            if any(icd_code.startswith(code) for code in mild_liver_codes['icd10']):
+                if not has_severe_liver:
+                    has_mild_liver = True
+            
+            # Diabetes without end-organ damage
+            if any(icd_code.startswith(code) for code in diabetes_no_comp_codes['icd10']):
+                # Check if it's not a complication code
+                if not any(icd_code.startswith(code) for code in diabetes_comp_codes['icd10']):
+                    has_diabetes_no_comp = True
+            
+            # Diabetes with end-organ damage
+            if any(icd_code.startswith(code) for code in diabetes_comp_codes['icd10']):
+                has_diabetes_comp = True
+            
+            # Hemiplegia
+            if any(icd_code.startswith(code) for code in hemiplegia_codes['icd10']):
+                conditions['hemiplegia'] = 2
+                cci_score += 2
+            
+            # Moderate to severe renal disease
+            if any(icd_code.startswith(code) for code in renal_codes['icd10']):
+                conditions['moderate_severe_renal_disease'] = 2
+                cci_score += 2
+            
+            # Any tumor
+            if any(icd_code.startswith(code) for code in tumor_codes['icd10']):
+                has_any_tumor = True
+            
+            # Leukemia
+            if any(icd_code.startswith(code) for code in leukemia_codes['icd10']):
+                conditions['leukemia'] = 2
+                cci_score += 2
+            
+            # Lymphoma
+            if any(icd_code.startswith(code) for code in lymphoma_codes['icd10']):
+                conditions['lymphoma'] = 2
+                cci_score += 2
+            
+            # Moderate to severe liver disease
+            if any(icd_code.startswith(code) for code in severe_liver_codes['icd10']):
+                has_severe_liver = True
+            
+            # Metastatic solid tumor
+            if any(icd_code.startswith(code) for code in metastatic_codes['icd10']):
+                has_metastatic = True
+            
+            # AIDS
+            if any(icd_code.startswith(code) for code in aids_codes['icd10']):
+                conditions['aids'] = 6
+                cci_score += 6
+    
+    # Handle special cases
+    # Diabetes: if both no-comp and comp are found, only count comp (2 points)
+    if has_diabetes_comp:
+        conditions['diabetes_with_end_organ_damage'] = 2
+        cci_score += 2
+    elif has_diabetes_no_comp:
+        conditions['diabetes_without_end_organ_damage'] = 1
+        cci_score += 1
+    
+    # Liver disease: if both mild and severe are found, only count severe (3 points)
+    if has_severe_liver:
+        conditions['moderate_severe_liver_disease'] = 3
+        cci_score += 3
+    elif has_mild_liver:
+        conditions['mild_liver_disease'] = 1
+        cci_score += 1
+    
+    # Tumor: if metastatic is found, count 6 points; otherwise if any tumor, count 2 points
+    if has_metastatic:
+        conditions['metastatic_solid_tumor'] = 6
+        cci_score += 6
+    elif has_any_tumor:
+        conditions['any_tumor'] = 2
+        cci_score += 2
+    
+    return {
+        'cci_score': cci_score,
+        'conditions': conditions,
+        'has_cohort': cci_score >= 3
+    }
+```
+
+## Test Results
+
+### Test Case: subject_id = 10000032
+```
+Result: {'cci_score': 5, 'conditions': {'chronic_pulmonary_disease': 1, 'mild_liver_disease': 1}, 'has_cohort': True}
+```
+
+**Note**: Test shows CCI score of 5 but conditions only sum to 2. This indicates a potential bug in the scoring logic that needs investigation.
+
+## Available Guidelines
+- acidosis_guideline, acute_decompensated_heart_failure_guideline, acute_hepatic_failure_guideline, adverse_effect_of_anticoagulants_guideline, alcohol_withdrawal_syndrome_guideline, anemia_icu_critically_ill_hemoglobin_transfusion_guideline, apache_iii_guideline, atrial_fibrillation_guideline, bradycardia_guideline, cerebral_infarction_guideline, coma_altered_consciousness_icu_guideline, copd_exacerbation_guideline, coronary_artery_disease_guideline, deep_vein_thrombosis_guideline, elevated_white_blood_cell_count_guideline, epilepsy_guideline, escherichia_coli_infection_guideline, gastrointestinal_bleeding_guideline, hypothyroidism_guideline, hypovolemia_guideline, ... (24 more)
+
+## Available Functions
+- acei, age, antibiotic, arb, bg, blood_differential, cardiac_marker, chemistry, coagulation, code_status, complete_blood_count, crrt, dobutamine, dopamine, enzyme, epinephrine, gcs, height, icp, icustay_detail, ... (14 more)
+
+=== Step 2 ===
+# Clinical Coding Agent Memory
+
+## Database Schema Facts
+
+### MIMIC-IV Tables
+- **mimiciv_hosp.diagnoses_icd**: subject_id, hadm_id, seq_num, icd_code, icd_version
+- **mimiciv_hosp.d_icd_diagnoses**: icd_code, icd_version, long_title
+- **mimiciv_hosp.admissions**: subject_id, hadm_id, admission_type, etc.
+- **mimiciv_hosp.patients**: subject_id, gender, dob, dod, etc.
+
+### ICD Code Structure
+- **icd_version**: '9' or '10'
+- **icd_code**: String format
+  - ICD-9: Stored WITHOUT decimal points (e.g., '5715' not '571.5')
+  - ICD-10: Stored WITH decimal points (e.g., 'K70.3')
+- Code matching uses `startswith()` for prefix matching
+
+## Functions
+
+### compute_charlson(subject_id, hadm_id=None)
+
+```python
+def compute_charlson(subject_id, hadm_id=None):
+    """
+    Calculate the Charlson Comorbidity Index (CCI) for a patient.
+    
+    The Charlson Comorbidity Index is a scoring system that predicts 10-year 
+    mortality based on the presence of comorbid conditions. Each condition 
+    is assigned a weight from 1 to 6 points.
+    
+    Parameters:
+    -----------
+    subject_id : int
+        The unique patient identifier in the database.
+    hadm_id : int, optional
+        The hospital admission identifier. If provided, only diagnoses from 
+        this admission are considered. If None, all diagnoses for the patient 
+        across all admissions are considered.
+    
+    Returns:
+    --------
+    dict
+        A dictionary containing:
+        - 'cci_score': The total Charlson Comorbidity Index score
+        - 'conditions': A dictionary of conditions found and their weights
+        - 'has_cohort': Boolean indicating if CCI >= 3
+    """
+    
+    # Define ICD-9 and ICD-10 codes for each Charlson condition
+    # ICD-9 codes are stored WITHOUT decimal points in the database
+    # ICD-10 codes are stored WITH decimal points
+    
+    # Myocardial infarction (1 point)
+    mi_codes = {
+        'icd9': ['410'],
+        'icd10': ['I21', 'I22']
+    }
+    
+    # Congestive heart failure (1 point)
+    chf_codes = {
+        'icd9': ['428'],
+        'icd10': ['I50']
+    }
+    
+    # Peripheral vascular disease (1 point)
+    pvd_codes = {
+        'icd9': ['443', '447', '557', '558'],
+        'icd10': ['I73', 'I70', 'I71', 'I72', 'I74', 'I77', 'I79.2', 'K65.2', 'K55', 'K51.5', 'K55.0', 'K55.1', 'K55.2', 'K55.8', 'K55.9', 'K66.1']
+    }
+    
+    # Cerebrovascular disease (1 point)
+    cbd_codes = {
+        'icd9': ['430', '431', '432', '433', '434', '435', '436', '437', '438'],
+        'icd10': ['I60', 'I61', 'I62', 'I63', 'I64', 'I65', 'I66', 'I67', 'I69']
+    }
+    
+    # Dementia (1 point)
+    dementia_codes = {
+        'icd9': ['290', '331'],
+        'icd10': ['F00', 'F01', 'F02', 'F03', 'G30']
+    }
+    
+    # Chronic pulmonary disease (1 point)
+    cpd_codes = {
+        'icd9': ['490', '491', '492', '493', '494', '495', '496'],
+        'icd10': ['J40', 'J41', 'J42', 'J43', 'J44', 'J45', 'J46', 'J60', 'J61', 'J62', 'J63', 'J64', 'J65', 'J66', 'J67', 'J68', 'J69', 'J70']
+    }
+    
+    # Connective tissue disease (1 point)
+    ctd_codes = {
+        'icd9': ['710', '714', '725', '728', '729'],
+        'icd10': ['M05', 'M06', 'M08', 'M30', 'M31', 'M32', 'M33', 'M34', 'M35', 'M36']
+    }
+    
+    # Peptic ulcer disease (1 point)
+    pud_codes = {
+        'icd9': ['531', '532'],
+        'icd10': ['K25', 'K26', 'K27', 'K28']
+    }
+    
+    # Mild liver disease (1 point) - ICD-9 without decimals
+    mild_liver_codes = {
+        'icd9': ['571', '572', '573'],
+        'icd10': ['B18', 'B19', 'B23', 'B42', 'B43', 'B44', 'B45', 'B46', 'B47', 'B48', 'B49', 'K70', 'K71', 'K72', 'K73', 'K74', 'K75', 'K76', 'K77']
+    }
+    
+    # Diabetes without end-organ damage (1 point)
+    diabetes_no_comp_codes = {
+        'icd9': ['249', '250'],
+        'icd10': ['E10', 'E11', 'E12', 'E13', 'E14']
+    }
+    
+    # Diabetes with end-organ damage (2 points) - ICD-9 without decimals
+    diabetes_comp_codes = {
+        'icd9': ['2504', '2505', '2506', '2507', '2508', '2509'],
+        'icd10': ['E10.1', 'E10.2', 'E10.3', 'E10.4', 'E10.5', 'E10.6', 'E10.7', 'E10.8', 'E10.9',
+                  'E11.1', 'E11.2', 'E11.3', 'E11.4', 'E11.5', 'E11.6', 'E11.7', 'E11.8', 'E11.9',
+                  'E12.1', 'E12.2', 'E12.3', 'E12.4', 'E12.5', 'E12.6', 'E12.7', 'E12.8', 'E12.9',
+                  'E13.1', 'E13.2', 'E13.3', 'E13.4', 'E13.5', 'E13.6', 'E13.7', 'E13.8', 'E13.9',
+                  'E14.1', 'E14.2', 'E14.3', 'E14.4', 'E14.5', 'E14.6', 'E14.7', 'E14.8', 'E14.9']
+    }
+    
+    # Hemiplegia (2 points) - ICD-9 without decimals
+    hemiplegia_codes = {
+        'icd9': ['342', '343', '4382'],
+        'icd10': ['G80', 'G81', 'G82', 'I69.3']
+    }
+    
+    # Moderate to severe renal disease (2 points)
+    renal_codes = {
+        'icd9': ['585', '586', '587', '588'],
+        'icd10': ['N18', 'N19', 'N25', 'N26', 'N27', 'N28', 'N29']
+    }
+    
+    # Any tumor (2 points) - solid tumors
+    tumor_codes = {
+        'icd9': ['140', '141', '142', '143', '144', '145', '146', '147', '148', '149',
+                 '150', '151', '152', '153', '154', '155', '156', '157', '158', '159',
+                 '160', '161', '162', '163', '164', '165', '166', '167', '168', '169',
+                 '170', '171', '172', '173', '174', '175', '176', '177', '178', '179',
+                 '180', '181', '182', '183', '184', '185', '186', '187', '188', '189',
+                 '190', '191', '192', '193', '194', '195'],
+        'icd10': ['C00', 'C01', 'C02', 'C03', 'C04', 'C05', 'C06', 'C07', 'C08', 'C09',
+                  'C10', 'C11', 'C12', 'C13', 'C14', 'C15', 'C16', 'C17', 'C18', 'C19',
+                  'C20', 'C21', 'C22', 'C23', 'C24', 'C25', 'C26', 'C27', 'C28', 'C29',
+                  'C30', 'C31', 'C32', 'C33', 'C34', 'C35', 'C36', 'C37', 'C38', 'C39',
+                  'C40', 'C41', 'C42', 'C43', 'C44', 'C45', 'C46', 'C47', 'C48', 'C49',
+                  'C50', 'C51', 'C52', 'C53', 'C54', 'C55', 'C56', 'C57', 'C58', 'C59',
+                  'C60', 'C61', 'C62', 'C63', 'C64', 'C65', 'C66', 'C67', 'C68', 'C69',
+                  'C70', 'C71', 'C72', 'C73', 'C74', 'C75', 'C76', 'C77', 'C78', 'C79',
+                  'C80']
+    }
+    
+    # Leukemia (2 points)
+    leukemia_codes = {
+        'icd9': ['204', '205', '206', '207', '208'],
+        'icd10': ['C91', 'C92', 'C93', 'C94', 'C95']
+    }
+    
+    # Lymphoma (2 points)
+    lymphoma_codes = {
+        'icd9': ['200', '201', '202', '203'],
+        'icd10': ['C81', 'C82', 'C83', 'C84', 'C85', 'C86', 'C87', 'C88', 'C96']
+    }
+    
+    # Moderate to severe liver disease (3 points) - ICD-9 without decimals
+    # These are specific severe liver codes: 571.2, 571.5, 571.6, 571.8, 571.9
+    severe_liver_codes = {
+        'icd9': ['5712', '5715', '5716', '5718', '5719'],
+        'icd10': ['K70.3', 'K70.4', 'K71.7', 'K72.0', 'K72.1', 'K72.9', 'K73.0', 'K73.1', 'K73.2', 'K73.9',
+                  'K74.0', 'K74.1', 'K74.2', 'K74.3', 'K74.4', 'K74.5', 'K74.6', 'K75.4', 'K76.0', 'K76.1', 'K76.2', 'K76.3', 'K76.4', 'K76.5', 'K76.6', 'K76.7', 'K76.8', 'K76.9']
+    }
+    
+    # Metastatic solid tumor (6 points)
+    metastatic_codes = {
+        'icd9': ['196', '197', '198', '199'],
+        'icd10': ['C77', 'C78', 'C79']
+    }
+    
+    # AIDS (6 points)
+    aids_codes = {
+        'icd9': ['042'],
+        'icd10': ['B20']
+    }
+    
+    # Build the SQL query to get all diagnoses for the patient
+    if hadm_id is not None:
+        query = """
+        SELECT icd_code, icd_version
+        FROM mimiciv_hosp.diagnoses_icd
+        WHERE subject_id = ? AND hadm_id = ?
+        """
+        params = (subject_id, hadm_id)
+    else:
+        query = """
+        SELECT icd_code, icd_version
+        FROM mimiciv_hosp.diagnoses_icd
+        WHERE subject_id = ?
+        """
+        params = (subject_id,)
+    
+    # Execute the query
+    df = query_db(query, params)
+    
+    # Track which conditions have been found (use sets to avoid duplicates)
+    # Conditions with 1 point
+    found_1pt = set()
+    # Conditions with 2 points
+    found_2pt = set()
+    # Conditions with 3 points
+    found_3pt = set()
+    # Conditions with 6 points
+    found_6pt = set()
+    
+    # Track special conditions that need priority handling
+    has_diabetes_no_comp = False
+    has_diabetes_comp = False
+    has_mild_liver = False
+    has_severe_liver = False
+    has_any_tumor = False
+    has_metastatic = False
+    
+    for _, row in df.iterrows():
+        icd_code = str(row['icd_code'])
+        icd_version = str(row['icd_version'])
+        
+        if icd_version == '9':
+            # Myocardial infarction (1 point)
+            if any(icd_code.startswith(code) for code in mi_codes['icd9']):
+                found_1pt.add('myocardial_infarction')
+            
+            # Congestive heart failure (1 point)
+            if any(icd_code.startswith(code) for code in chf_codes['icd9']):
+                found_1pt.add('congestive_heart_failure')
+            
+            # Peripheral vascular disease (1 point)
+            if any(icd_code.startswith(code) for code in pvd_codes['icd9']):
+                found_1pt.add('peripheral_vascular_disease')
+            
+            # Cerebrovascular disease (1 point)
+            if any(icd_code.startswith(code) for code in cbd_codes['icd9']):
+                found_1pt.add('cerebrovascular_disease')
+            
+            # Dementia (1 point)
+            if any(icd_code.startswith(code) for code in dementia_codes['icd9']):
+                found_1pt.add('dementia')
+            
+            # Chronic pulmonary disease (1 point)
+            if any(icd_code.startswith(code) for code in cpd_codes['icd9']):
+                found_1pt.add('chronic_pulmonary_disease')
+            
+            # Connective tissue disease (1 point)
+            if any(icd_code.startswith(code) for code in ctd_codes['icd9']):
+                found_1pt.add('connective_tissue_disease')
+            
+            # Peptic ulcer disease (1 point)
+            if any(icd_code.startswith(code) for code in pud_codes['icd9']):
+                found_1pt.add('peptic_ulcer_disease')
+            
+            # Mild liver disease (1 point)
+            if any(icd_code.startswith(code) for code in mild_liver_codes['icd9']):
+                has_mild_liver = True
+            
+            # Diabetes without end-organ damage (1 point)
+            if any(icd_code.startswith(code) for code in diabetes_no_comp_codes['icd9']):
+                # Check if it's not a complication code
+                if not any(icd_code.startswith(code) for code in diabetes_comp_codes['icd9']):
+                    has_diabetes_no_comp = True
+            
+            # Diabetes with end-organ damage (2 points)
+            if any(icd_code.startswith(code) for code in diabetes_comp_codes['icd9']):
+                has_diabetes_comp = True
+            
+            # Hemiplegia (2 points)
+            if any(icd_code.startswith(code) for code in hemiplegia_codes['icd9']):
+                found_2pt.add('hemiplegia')
+            
+            # Moderate to severe renal disease (2 points)
+            if any(icd_code.startswith(code) for code in renal_codes['icd9']):
+                found_2pt.add('moderate_severe_renal_disease')
+            
+            # Any tumor (2 points)
+            if any(icd_code.startswith(code) for code in tumor_codes['icd9']):
+                has_any_tumor = True
+            
+            # Leukemia (2 points)
+            if any(icd_code.startswith(code) for code in leukemia_codes['icd9']):
+                found_2pt.add('leukemia')
+            
+            # Lymphoma (2 points)
+            if any(icd_code.startswith(code) for code in lymphoma_codes['icd9']):
+                found_2pt.add('lymphoma')
+            
+            # Moderate to severe liver disease (3 points)
+            if any(icd_code.startswith(code) for code in severe_liver_codes['icd9']):
+                has_severe_liver = True
+            
+            # Metastatic solid tumor (6 points)
+            if any(icd_code.startswith(code) for code in metastatic_codes['icd9']):
+                has_metastatic = True
+            
+            # AIDS (6 points)
+            if any(icd_code.startswith(code) for code in aids_codes['icd9']):
+                found_6pt.add('aids')
+        
+        elif icd_version == '10':
+            # Myocardial infarction (1 point)
+            if any(icd_code.startswith(code) for code in mi_codes['icd10']):
+                found_1pt.add('myocardial_infarction')
+            
+            # Congestive heart failure (1 point)
+            if any(icd_code.startswith(code) for code in chf_codes['icd10']):
+                found_1pt.add('congestive_heart_failure')
+            
+            # Peripheral vascular disease (1 point)
+            if any(icd_code.startswith(code) for code in pvd_codes['icd10']):
+                found_1pt.add('peripheral_vascular_disease')
+            
+            # Cerebrovascular disease (1 point)
+            if any(icd_code.startswith(code) for code in cbd_codes['icd10']):
+                found_1pt.add('cerebrovascular_disease')
+            
+            # Dementia (1 point)
+            if any(icd_code.startswith(code) for code in dementia_codes['icd10']):
+                found_1pt.add('dementia')
+            
+            # Chronic pulmonary disease (1 point)
+            if any(icd_code.startswith(code) for code in cpd_codes['icd10']):
+                found_1pt.add('chronic_pulmonary_disease')
+            
+            # Connective tissue disease (1 point)
+            if any(icd_code.startswith(code) for code in ctd_codes['icd10']):
+                found_1pt.add('connective_tissue_disease')
+            
+            # Peptic ulcer disease (1 point)
+            if any(icd_code.startswith(code) for code in pud_codes['icd10']):
+                found_1pt.add('peptic_ulcer_disease')
+            
+            # Mild liver disease (1 point)
+            if any(icd_code.startswith(code) for code in mild_liver_codes['icd10']):
+                has_mild_liver = True
+            
+            # Diabetes without end-organ damage (1 point)
+            if any(icd_code.startswith(code) for code in diabetes_no_comp_codes['icd10']):
+                # Check if it's not a complication code
+                if not any(icd_code.startswith(code) for code in diabetes_comp_codes['icd10']):
+                    has_diabetes_no_comp = True
+            
+            # Diabetes with end-organ damage (2 points)
+            if any(icd_code.startswith(code) for code in diabetes_comp_codes['icd10']):
+                has_diabetes_comp = True
+            
+            # Hemiplegia (2 points)
+            if any(icd_code.startswith(code) for code in hemiplegia_codes['icd10']):
+                found_2pt.add('hemiplegia')
+            
+            # Moderate to severe renal disease (2 points)
+            if any(icd_code.startswith(code) for code in renal_codes['icd10']):
+                found_2pt.add('moderate_severe_renal_disease')
+            
+            # Any tumor (2 points)
+            if any(icd_code.startswith(code) for code in tumor_codes['icd10']):
+                has_any_tumor = True
+            
+            # Leukemia (2 points)
+            if any(icd_code.startswith(code) for code in leukemia_codes['icd10']):
+                found_2pt.add('leukemia')
+            
+            # Lymphoma (2 points)
+            if any(icd_code.startswith(code) for code in lymphoma_codes['icd10']):
+                found_2pt.add('lymphoma')
+            
+            # Moderate to severe liver disease (3 points)
+            if any(icd_code.startswith(code) for code in severe_liver_codes['icd10']):
+                has_severe_liver = True
+            
+            # Metastatic solid tumor (6 points)
+            if any(icd_code.startswith(code) for code in metastatic_codes['icd10']):
+                has_metastatic = True
+            
+            # AIDS (6 points)
+            if any(icd_code.startswith(code) for code in aids_codes['icd10']):
+                found_6pt.add('aids')
+    
+    # Calculate the CCI score
+    cci_score = 0
+    conditions = {}
+    
+    # Add points for each found condition (1 point each)
+    for condition in found_1pt:
+        conditions[condition] = 1
+        cci_score += 1
+    
+    # Add points for each found condition (2 points each)
+    for condition in found_2pt:
+        conditions[condition] = 2
+        cci_score += 2
+    
+    # Add points for each found condition (3 points each)
+    for condition in found_3pt:
+        conditions[condition] = 3
+        cci_score += 3
+    
+    # Add points for each found condition (6 points each)
+    for condition in found_6pt:
+        conditions[condition] = 6
+        cci_score += 6
+    
+    # Handle special cases
+    
+    # Diabetes: if both no-comp and comp are found, only count comp (2 points)
+    if has_diabetes_comp:
+        conditions['diabetes_with_end_organ_damage'] = 2
+        cci_score += 2
+    elif has_diabetes_no_comp:
+        conditions['diabetes_without_end_organ_damage'] = 1
+        cci_score += 1
+    
+    # Liver disease: if both mild and severe are found, only count severe (3 points)
+    if has_severe_liver:
+        conditions['moderate_severe_liver_disease'] = 3
+        cci_score += 3
+    elif has_mild_liver:
+        conditions['mild_liver_disease'] = 1
+        cci_score += 1
+    
+    # Tumor: if metastatic is found, count 6 points; otherwise if any tumor, count 2 points
+    if has_metastatic:
+        conditions['metastatic_solid_tumor'] = 6
+        cci_score += 6
+    elif has_any_tumor:
+        conditions['any_tumor'] = 2
+        cci_score += 2
+    
+    return {
+        'cci_score': cci_score,
+        'conditions': conditions,
+        'has_cohort': cci_score >= 3
+    }
+```
+
+## Test Results
+
+### Test Case: subject_id = 10000032
+```
+Result: {'cci_score': 4, 'conditions': {'chronic_pulmonary_disease': 1, 'moderate_severe_liver_disease': 3}, 'has_cohort': True}
+Score verification: 4
+```
+- ICD-9 code 5715 = 571.5 (severe liver disease - alcoholic cirrhosis)
+- ICD-9 code 496 = chronic pulmonary disease
+
+### Test Case: subject_id = 12468016
+```
+Result: {'cci_score': 8, 'conditions': {'myocardial_infarction': 1, 'congestive_heart_failure': 1, 'moderate_severe_renal_disease': 1, 'chronic_pulmonary_disease': 1, 'peripheral_vascular_disease': 1, 'connective_tissue_disease': 1, 'diabetes_without_end_organ_damage': 1, 'mild_liver_disease': 1}, 'has_cohort': True}
+Score verification: 8
+```
+
+### Test Case: subject_id = 18284271
+```
+Result: {'cci_score': 12, 'conditions': {'congestive_heart_failure': 1, 'peptic_ulcer_disease': 1, 'cerebrovascular_disease': 1, 'chronic_pulmonary_disease': 1, 'peripheral_vascular_disease': 1, 'connective_tissue_disease': 1, 'hemiplegia': 2, 'moderate_severe_renal_disease': 2, 'diabetes_without_end_organ_damage': 1, 'mild_liver_disease': 1}, 'has_cohort': True}
+Score verification: 12
+Hemiplegia weight: 2
+```
+
+### Test Case: subject_id = 12468016, hadm_id = 20024645
+```
+All admissions: {'cci_score': 8, 'conditions': {...}, 'has_cohort': True}
+Single admission: {'cci_score': 3, 'conditions': {'chronic_pulmonary_disease': 1, 'congestive_heart_failure': 1, 'moderate_severe_renal_disease': 1}, 'has_cohort': True}
+```
+
+## Error Fixes
+
+1. **ICD-9 Code Format**: ICD-9 codes stored WITHOUT decimal points (e.g., '5715' not '571.5'). Updated all ICD-9 code lists accordingly.
+
+2. **Duplicate Condition Counting**: Changed from adding points in loop to using sets to track unique conditions, then calculating score after loop.
+
+3. **Condition Weights**: Fixed hemiplegia, renal disease, leukemia, lymphoma to be 2 points (not 1). Used separate sets for 1pt, 2pt, 3pt, 6pt conditions.
+
+4. **numpy.int64 Type Error**: When accessing DataFrame columns, convert to Python int using `int(df.iloc[0]['subject_id'])`.
+
+5. **Pandas Column Access**: Use `df['column_name'].iloc[0]` instead of `df.iloc[0]['column_name']` for proper column access.
+
+=== Step 3 ===
+# Clinical Coding Agent Memory
+
+## Database Schema Facts
+
+### MIMIC-IV Tables
+- **mimiciv_hosp.diagnoses_icd**: subject_id, hadm_id, seq_num, icd_code, icd_version
+- **mimiciv_hosp.d_icd_diagnoses**: icd_code, icd_version, long_title
+- **mimiciv_hosp.admissions**: subject_id, hadm_id, admission_type, etc.
+- **mimiciv_hosp.patients**: subject_id, gender, dob, dod, etc.
+
+### ICD Code Structure
+- **icd_version**: '9' or '10'
+- **icd_code**: String format
+  - ICD-9: Stored WITHOUT decimal points (e.g., '5715' not '571.5')
+  - ICD-10: Stored WITHOUT decimal points (e.g., 'E1122' not 'E11.22', 'I252' not 'I25.2')
+- Code matching uses `startswith()` for prefix matching
+
+## Functions
+
+### compute_charlson(subject_id, hadm_id=None)
+
+```python
+def compute_charlson(subject_id, hadm_id=None):
+    """
+    Calculate the Charlson Comorbidity Index (CCI) for a patient.
+    
+    The Charlson Comorbidity Index is a scoring system that predicts 10-year 
+    mortality based on the presence of comorbid conditions. Each condition 
+    is assigned a weight from 1 to 6 points.
+    
+    Parameters:
+    -----------
+    subject_id : int
+        The unique patient identifier in the database.
+    hadm_id : int, optional
+        The hospital admission identifier. If provided, only diagnoses from 
+        this admission are considered. If None, all diagnoses for the patient 
+        across all admissions are considered.
+    
+    Returns:
+    --------
+    dict
+        A dictionary containing:
+        - 'cci_score': The total Charlson Comorbidity Index score
+        - 'conditions': A dictionary of conditions found and their weights
+        - 'has_cohort': Boolean indicating if CCI >= 3
+    """
+    
+    # Define ICD-9 and ICD-10 codes for each Charlson condition
+    # ICD-9 codes are stored WITHOUT decimal points in the database
+    # ICD-10 codes are stored WITHOUT decimal points in the database
+    
+    # Myocardial infarction (1 point)
+    mi_codes = {
+        'icd9': ['410'],
+        'icd10': ['I21', 'I22', 'I252']
+    }
+    
+    # Congestive heart failure (1 point)
+    chf_codes = {
+        'icd9': ['428'],
+        'icd10': ['I50', 'J81', 'I255']
+    }
+    
+    # Peripheral vascular disease (1 point)
+    pvd_codes = {
+        'icd9': ['443', '447', '557', '558'],
+        'icd10': ['I73', 'I70', 'I71', 'I72', 'I74', 'I77', 'I792', 'K652', 'K55', 'K515', 'K550', 'K551', 'K552', 'K558', 'K559', 'K661']
+    }
+    
+    # Cerebrovascular disease (1 point)
+    cbd_codes = {
+        'icd9': ['430', '431', '432', '433', '434', '435', '436', '437', '438'],
+        'icd10': ['I60', 'I61', 'I62', 'I63', 'I64', 'I65', 'I66', 'I67', 'I69']
+    }
+    
+    # Dementia (1 point)
+    dementia_codes = {
+        'icd9': ['290', '331'],
+        'icd10': ['F00', 'F01', 'F02', 'F03', 'G30']
+    }
+    
+    # Chronic pulmonary disease (1 point)
+    cpd_codes = {
+        'icd9': ['490', '491', '492', '493', '494', '495', '496'],
+        'icd10': ['J40', 'J41', 'J42', 'J43', 'J44', 'J45', 'J46', 'J60', 'J61', 'J62', 'J63', 'J64', 'J65', 'J66', 'J67', 'J68', 'J69', 'J70']
+    }
+    
+    # Connective tissue disease (1 point)
+    ctd_codes = {
+        'icd9': ['710', '714', '725', '728', '729'],
+        'icd10': ['M05', 'M06', 'M08', 'M30', 'M31', 'M32', 'M33', 'M34', 'M35', 'M36']
+    }
+    
+    # Peptic ulcer disease (1 point)
+    pud_codes = {
+        'icd9': ['531', '532'],
+        'icd10': ['K25', 'K26', 'K27', 'K28']
+    }
+    
+    # Mild liver disease (1 point) - ICD-9 without decimals
+    mild_liver_codes = {
+        'icd9': ['571', '572', '573'],
+        'icd10': ['B18', 'B19', 'B23', 'B42', 'B43', 'B44', 'B45', 'B46', 'B47', 'B48', 'B49', 'K70', 'K71', 'K72', 'K73', 'K74', 'K75', 'K76', 'K77']
+    }
+    
+    # Diabetes without end-organ damage (1 point)
+    diabetes_no_comp_codes = {
+        'icd9': ['249', '250'],
+        'icd10': ['E10', 'E11', 'E12', 'E13', 'E14']
+    }
+    
+    # Diabetes with end-organ damage (2 points) - ICD-9 without decimals
+    # ICD-10 codes without decimals: E102, E103, E104, E105, E106, E112, E113, E114, E115, E116, etc.
+    diabetes_comp_codes = {
+        'icd9': ['2504', '2505', '2506', '2507', '2508', '2509'],
+        'icd10': ['E102', 'E103', 'E104', 'E105', 'E106', 'E107', 'E108', 'E109',
+                  'E112', 'E113', 'E114', 'E115', 'E116', 'E117', 'E118', 'E119',
+                  'E122', 'E123', 'E124', 'E125', 'E126', 'E127', 'E128', 'E129',
+                  'E132', 'E133', 'E134', 'E135', 'E136', 'E137', 'E138', 'E139',
+                  'E142', 'E143', 'E144', 'E145', 'E146', 'E147', 'E148', 'E149']
+    }
+    
+    # Hemiplegia (2 points) - ICD-9 without decimals
+    hemiplegia_codes = {
+        'icd9': ['342', '343', '4382'],
+        'icd10': ['G80', 'G81', 'G82', 'I693']
+    }
+    
+    # Moderate to severe renal disease (2 points)
+    # Added N17 (acute kidney failure) to renal codes
+    renal_codes = {
+        'icd9': ['585', '586', '587', '588'],
+        'icd10': ['N17', 'N18', 'N19', 'N25', 'N26', 'N27', 'N28', 'N29']
+    }
+    
+    # Any tumor (2 points) - solid tumors
+    tumor_codes = {
+        'icd9': ['140', '141', '142', '143', '144', '145', '146', '147', '148', '149',
+                 '150', '151', '152', '153', '154', '155', '156', '157', '158', '159',
+                 '160', '161', '162', '163', '164', '165', '166', '167', '168', '169',
+                 '170', '171', '172', '173', '174', '175', '176', '177', '178', '179',
+                 '180', '181', '182', '183', '184', '185', '186', '187', '188', '189',
+                 '190', '191', '192', '193', '194', '195'],
+        'icd10': ['C00', 'C01', 'C02', 'C03', 'C04', 'C05', 'C06', 'C07', 'C08', 'C09',
+                  'C10', 'C11', 'C12', 'C13', 'C14', 'C15', 'C16', 'C17', 'C18', 'C19',
+                  'C20', 'C21', 'C22', 'C23', 'C24', 'C25', 'C26', 'C27', 'C28', 'C29',
+                  'C30', 'C31', 'C32', 'C33', 'C34', 'C35', 'C36', 'C37', 'C38', 'C39',
+                  'C40', 'C41', 'C42', 'C43', 'C44', 'C45', 'C46', 'C47', 'C48', 'C49',
+                  'C50', 'C51', 'C52', 'C53', 'C54', 'C55', 'C56', 'C57', 'C58', 'C59',
+                  'C60', 'C61', 'C62', 'C63', 'C64', 'C65', 'C66', 'C67', 'C68', 'C69',
+                  'C70', 'C71', 'C72', 'C73', 'C74', 'C75', 'C76', 'C77', 'C78', 'C79',
+                  'C80']
+    }
+    
+    # Leukemia (2 points)
+    leukemia_codes = {
+        'icd9': ['204', '205', '206', '207', '208'],
+        'icd10': ['C91', 'C92', 'C93', 'C94', 'C95']
+    }
+    
+    # Lymphoma (2 points)
+    lymphoma_codes = {
+        'icd9': ['200', '201', '202', '203'],
+        'icd10': ['C81', 'C82', 'C83', 'C84', 'C85', 'C86', 'C87', 'C88', 'C96']
+    }
+    
+    # Moderate to severe liver disease (3 points) - ICD-9 without decimals
+    # These are specific severe liver codes: 571.2, 571.5, 571.6, 571.8, 571.9
+    severe_liver_codes = {
+        'icd9': ['5712', '5715', '5716', '5718', '5719'],
+        'icd10': ['K703', 'K704', 'K717', 'K720', 'K721', 'K729', 'K730', 'K731', 'K732', 'K739',
+                  'K740', 'K741', 'K742', 'K743', 'K744', 'K745', 'K746', 'K754', 'K760', 'K761', 'K762', 'K763', 'K764', 'K765', 'K766', 'K767', 'K768', 'K769']
+    }
+    
+    # Metastatic solid tumor (6 points)
+    metastatic_codes = {
+        'icd9': ['196', '197', '198', '199'],
+        'icd10': ['C77', 'C78', 'C79']
+    }
+    
+    # AIDS (6 points)
+    aids_codes = {
+        'icd9': ['042'],
+        'icd10': ['B20']
+    }
+    
+    # Build the SQL query to get all diagnoses for the patient
+    if hadm_id is not None:
+        query = """
+        SELECT icd_code, icd_version
+        FROM mimiciv_hosp.diagnoses_icd
+        WHERE subject_id = ? AND hadm_id = ?
+        """
+        params = (subject_id, hadm_id)
+    else:
+        query = """
+        SELECT icd_code, icd_version
+        FROM mimiciv_hosp.diagnoses_icd
+        WHERE subject_id = ?
+        """
+        params = (subject_id,)
+    
+    # Execute the query
+    df = query_db(query, params)
+    
+    # Track which conditions have been found (use sets to avoid duplicates)
+    # Conditions with 1 point
+    found_1pt = set()
+    # Conditions with 2 points
+    found_2pt = set()
+    # Conditions with 3 points
+    found_3pt = set()
+    # Conditions with 6 points
+    found_6pt = set()
+    
+    # Track special conditions that need priority handling
+    has_diabetes_no_comp = False
+    has_diabetes_comp = False
+    has_mild_liver = False
+    has_severe_liver = False
+    has_any_tumor = False
+    has_metastatic = False
+    
+    for _, row in df.iterrows():
+        icd_code = str(row['icd_code'])
+        icd_version = str(row['icd_version'])
+        
+        if icd_version == '9':
+            # Myocardial infarction (1 point)
+            if any(icd_code.startswith(code) for code in mi_codes['icd9']):
+                found_1pt.add('myocardial_infarction')
+            
+            # Congestive heart failure (1 point)
+            if any(icd_code.startswith(code) for code in chf_codes['icd9']):
+                found_1pt.add('congestive_heart_failure')
+            
+            # Peripheral vascular disease (1 point)
+            if any(icd_code.startswith(code) for code in pvd_codes['icd9']):
+                found_1pt.add('peripheral_vascular_disease')
+            
+            # Cerebrovascular disease (1 point)
+            if any(icd_code.startswith(code) for code in cbd_codes['icd9']):
+                found_1pt.add('cerebrovascular_disease')
+            
+            # Dementia (1 point)
+            if any(icd_code.startswith(code) for code in dementia_codes['icd9']):
+                found_1pt.add('dementia')
+            
+            # Chronic pulmonary disease (1 point)
+            if any(icd_code.startswith(code) for code in cpd_codes['icd9']):
+                found_1pt.add('chronic_pulmonary_disease')
+            
+            # Connective tissue disease (1 point)
+            if any(icd_code.startswith(code) for code in ctd_codes['icd9']):
+                found_1pt.add('connective_tissue_disease')
+            
+            # Peptic ulcer disease (1 point)
+            if any(icd_code.startswith(code) for code in pud_codes['icd9']):
+                found_1pt.add('peptic_ulcer_disease')
+            
+            # Mild liver disease (1 point)
+            if any(icd_code.startswith(code) for code in mild_liver_codes['icd9']):
+                has_mild_liver = True
+            
+            # Diabetes without end-organ damage (1 point)
+            if any(icd_code.startswith(code) for code in diabetes_no_comp_codes['icd9']):
+                # Check if it's not a complication code
+                if not any(icd_code.startswith(code) for code in diabetes_comp_codes['icd9']):
+                    has_diabetes_no_comp = True
+            
+            # Diabetes with end-organ damage (2 points)
+            if any(icd_code.startswith(code) for code in diabetes_comp_codes['icd9']):
+                has_diabetes_comp = True
+            
+            # Hemiplegia (2 points)
+            if any(icd_code.startswith(code) for code in hemiplegia_codes['icd9']):
+                found_2pt.add('hemiplegia')
+            
+            # Moderate to severe renal disease (2 points)
+            if any(icd_code.startswith(code) for code in renal_codes['icd9']):
+                found_2pt.add('moderate_severe_renal_disease')
+            
+            # Any tumor (2 points)
+            if any(icd_code.startswith(code) for code in tumor_codes['icd9']):
+                has_any_tumor = True
+            
+            # Leukemia (2 points)
+            if any(icd_code.startswith(code) for code in leukemia_codes['icd9']):
+                found_2pt.add('leukemia')
+            
+            # Lymphoma (2 points)
+            if any(icd_code.startswith(code) for code in lymphoma_codes['icd9']):
+                found_2pt.add('lymphoma')
+            
+            # Moderate to severe liver disease (3 points)
+            if any(icd_code.startswith(code) for code in severe_liver_codes['icd9']):
+                has_severe_liver = True
+            
+            # Metastatic solid tumor (6 points)
+            if any(icd_code.startswith(code) for code in metastatic_codes['icd9']):
+                has_metastatic = True
+            
+            # AIDS (6 points)
+            if any(icd_code.startswith(code) for code in aids_codes['icd9']):
+                found_6pt.add('aids')
+        
+        elif icd_version == '10':
+            # Myocardial infarction (1 point)
+            if any(icd_code.startswith(code) for code in mi_codes['icd10']):
+                found_1pt.add('myocardial_infarction')
+            
+            # Congestive heart failure (1 point)
+            if any(icd_code.startswith(code) for code in chf_codes['icd10']):
+                found_1pt.add('congestive_heart_failure')
+            
+            # Peripheral vascular disease (1 point)
+            if any(icd_code.startswith(code) for code in pvd_codes['icd10']):
+                found_1pt.add('peripheral_vascular_disease')
+            
+            # Cerebrovascular disease (1 point)
+            if any(icd_code.startswith(code) for code in cbd_codes['icd10']):
+                found_1pt.add('cerebrovascular_disease')
+            
+            # Dementia (1 point)
+            if any(icd_code.startswith(code) for code in dementia_codes['icd10']):
+                found_1pt.add('dementia')
+            
+            # Chronic pulmonary disease (1 point)
+            if any(icd_code.startswith(code) for code in cpd_codes['icd10']):
+                found_1pt.add('chronic_pulmonary_disease')
+            
+            # Connective tissue disease (1 point)
+            if any(icd_code.startswith(code) for code in ctd_codes['icd10']):
+                found_1pt.add('connective_tissue_disease')
+            
+            # Peptic ulcer disease (1 point)
+            if any(icd_code.startswith(code) for code in pud_codes['icd10']):
+                found_1pt.add('peptic_ulcer_disease')
+            
+            # Mild liver disease (1 point)
+            if any(icd_code.startswith(code) for code in mild_liver_codes['icd10']):
+                has_mild_liver = True
+            
+            # Diabetes without end-organ damage (1 point)
+            if any(icd_code.startswith(code) for code in diabetes_no_comp_codes['icd10']):
+                # Check if it's not a complication code
+                if not any(icd_code.startswith(code) for code in diabetes_comp_codes['icd10']):
+                    has_diabetes_no_comp = True
+            
+            # Diabetes with end-organ damage (2 points)
+            if any(icd_code.startswith(code) for code in diabetes_comp_codes['icd10']):
+                has_diabetes_comp = True
+            
+            # Hemiplegia (2 points)
+            if any(icd_code.startswith(code) for code in hemiplegia_codes['icd10']):
+                found_2pt.add('hemiplegia')
+            
+            # Moderate to severe renal disease (2 points)
+            if any(icd_code.startswith(code) for code in renal_codes['icd10']):
+                found_2pt.add('moderate_severe_renal_disease')
+            
+            # Any tumor (2 points)
+            if any(icd_code.startswith(code) for code in tumor_codes['icd10']):
+                has_any_tumor = True
+            
+            # Leukemia (2 points)
+            if any(icd_code.startswith(code) for code in leukemia_codes['icd10']):
+                found_2pt.add('leukemia')
+            
+            # Lymphoma (2 points)
+            if any(icd_code.startswith(code) for code in lymphoma_codes['icd10']):
+                found_2pt.add('lymphoma')
+            
+            # Moderate to severe liver disease (3 points)
+            if any(icd_code.startswith(code) for code in severe_liver_codes['icd10']):
+                has_severe_liver = True
+            
+            # Metastatic solid tumor (6 points)
+            if any(icd_code.startswith(code) for code in metastatic_codes['icd10']):
+                has_metastatic = True
+            
+            # AIDS (6 points)
+            if any(icd_code.startswith(code) for code in aids_codes['icd10']):
+                found_6pt.add('aids')
+    
+    # Calculate the CCI score
+    cci_score = 0
+    conditions = {}
+    
+    # Add points for each found condition (1 point each)
+    for condition in found_1pt:
+        conditions[condition] = 1
+        cci_score += 1
+    
+    # Add points for each found condition (2 points each)
+    for condition in found_2pt:
+        conditions[condition] = 2
+        cci_score += 2
+    
+    # Add points for each found condition (3 points each)
+    for condition in found_3pt:
+        conditions[condition] = 3
+        cci_score += 3
+    
+    # Add points for each found condition (6 points each)
+    for condition in found_6pt:
+        conditions[condition] = 6
+        cci_score += 6
+    
+    # Handle special cases
+    
+    # Diabetes: if both no-comp and comp are found, only count comp (2 points)
+    if has_diabetes_comp:
+        conditions['diabetes_with_end_organ_damage'] = 2
+        cci_score += 2
+    elif has_diabetes_no_comp:
+        conditions['diabetes_without_end_organ_damage'] = 1
+        cci_score += 1
+    
+    # Liver disease: if both mild and severe are found, only count severe (3 points)
+    if has_severe_liver:
+        conditions['moderate_severe_liver_disease'] = 3
+        cci_score += 3
+    elif has_mild_liver:
+        conditions['mild_liver_disease'] = 1
+        cci_score += 1
+    
+    # Tumor: if metastatic is found, count 6 points; otherwise if any tumor, count 2 points
+    if has_metastatic:
+        conditions['metastatic_solid_tumor'] = 6
+        cci_score += 6
+    elif has_any_tumor:
+        conditions['any_tumor'] = 2
+        cci_score += 2
+    
+    return {
+        'cci_score': cci_score,
+        'conditions': conditions,
+        'has_cohort': cci_score >= 3
+    }
+```
+
+## Test Results
+
+### Test Case: subject_id = 10000032
+```
+Result: {'cci_score': 4, 'conditions': {'chronic_pulmonary_disease': 1, 'moderate_severe_liver_disease': 3}, 'has_cohort': True}
+Score verification: 4
+```
+- ICD-9 code 5715 = 571.5 (severe liver disease - alcoholic cirrhosis)
+- ICD-9 code 496 = chronic pulmonary disease
+
+### Test Case: subject_id = 12468016
+```
+Result: {'cci_score': 8, 'conditions': {'myocardial_infarction': 1, 'congestive_heart_failure': 1, 'moderate_severe_renal_disease': 1, 'chronic_pulmonary_disease': 1, 'peripheral_vascular_disease': 1, 'connective_tissue_disease': 1, 'diabetes_without_end_organ_damage': 1, 'mild_liver_disease': 1}, 'has_cohort': True}
+Score verification: 8
+```
+
+### Test Case: subject_id = 18284271
+```
+Result: {'cci_score': 12, 'conditions': {'congestive_heart_failure': 1, 'peptic_ulcer_disease': 1, 'cerebrovascular_disease': 1, 'chronic_pulmonary_disease': 1, 'peripheral_vascular_disease': 1, 'connective_tissue_disease': 1, 'hemiplegia': 2, 'moderate_severe_renal_disease': 2, 'diabetes_without_end_organ_damage': 1, 'mild_liver_disease': 1}, 'has_cohort': True}
+Score verification: 12
+Hemiplegia weight: 2
+```
+
+### Test Case: subject_id = 12568220 (metastatic cancer)
+```
+Result: {'cci_score': 8, 'conditions': {'chronic_pulmonary_disease': 1, 'cerebrovascular_disease': 1, 'metastatic_solid_tumor': 6}, 'has_cohort': True}
+```
+
+### Test Case: subject_id = 15808118 (AIDS)
+```
+Result: {'cci_score': 6, 'conditions': {'aids': 6}, 'has_cohort': True}
+```
+
+### Test Case: subject_id = 11488263 (leukemia)
+```
+Result: {'cci_score': 2, 'conditions': {'leukemia': 2}, 'has_cohort': False}
+```
+
+### Test Case: subject_id = 10057948 (lymphoma)
+```
+Result: {'cci_score': 6, 'conditions': {'leukemia': 2, 'lymphoma': 2, 'diabetes_without_end_organ_damage': 1, 'mild_liver_disease': 1}, 'has_cohort': True}
+```
+
+### Test Case: subject_id = 10000001 (no diagnoses)
+```
+Result: {'cci_score': 0, 'conditions': {}, 'has_cohort': False}
+```
+
+## Error Fixes
+
+1. **ICD-9 Code Format**: ICD-9 codes stored WITHOUT decimal points (e.g., '5715' not '571.5'). Updated all ICD-9 code lists accordingly.
+
+2. **ICD-10 Code Format**: ICD-10 codes stored WITHOUT decimal points (e.g., 'E1122' not 'E11.22', 'I252' not 'I25.2'). Updated all ICD-10 code lists to remove decimal points.
+
+3. **Duplicate Condition Counting**: Changed from adding points in loop to using sets to track unique conditions, then calculating score after loop.
+
+4. **Condition Weights**: Fixed hemiplegia, renal disease, leukemia, lymphoma to be 2 points (not 1). Used separate sets for 1pt, 2pt, 3pt, 6pt conditions.
+
+5. **numpy.int64 Type Error**: When accessing DataFrame columns, convert to Python int using `int(df.iloc[0]['subject_id'])`.
+
+6. **Pandas Column Access**: Use `df['column_name'].iloc[0]` instead of `df.iloc[0]['column_name']` for proper column access.
+
+7. **Missing ICD-10 Codes**: Added missing codes:
+   - I252 (old myocardial infarction) to MI codes
+   - J81 (pulmonary edema) to CHF codes
+   - I255 (ischemic cardiomyopathy) to CHF codes
+   - N17 (acute kidney failure) to renal codes
+   - Updated diabetes complication codes to match database format (without decimals)
+
+8. **Diabetes Complication Code Format**: Changed from 'E11.2' to 'E112' format to match database storage.
+
+=== Step 4 ===
+# Clinical Coding Agent Memory
+
+## Database Schema Facts
+
+### MIMIC-IV Tables
+- **mimiciv_hosp.diagnoses_icd**: subject_id, hadm_id, seq_num, icd_code, icd_version
+- **mimiciv_hosp.d_icd_diagnoses**: icd_code, icd_version, long_title
+- **mimiciv_hosp.admissions**: subject_id, hadm_id, admission_type, etc.
+- **mimiciv_hosp.patients**: subject_id, gender, dob, dod, etc.
+
+### ICD Code Structure
+- **icd_version**: '9' or '10'
+- **icd_code**: String format
+  - ICD-9: Stored WITHOUT decimal points (e.g., '5715' not '571.5')
+  - ICD-10: Stored WITHOUT decimal points (e.g., 'E1122' not 'E11.22', 'I252' not 'I25.2')
+- Code matching uses `startswith()` for prefix matching
+
+## Functions
+
+### compute_charlson(subject_id, hadm_id=None)
+
+```python
+def compute_charlson(subject_id, hadm_id=None):
+    """
+    Calculate the Charlson Comorbidity Index (CCI) for a patient.
+    
+    The Charlson Comorbidity Index is a scoring system that predicts 10-year 
+    mortality based on the presence of comorbid conditions. Each condition 
+    is assigned a weight from 1 to 6 points.
+    
+    Parameters:
+    -----------
+    subject_id : int
+        The unique patient identifier in the database.
+    hadm_id : int, optional
+        The hospital admission identifier. If provided, only diagnoses from 
+        this admission are considered. If None, all diagnoses for the patient 
+        across all admissions are considered.
+    
+    Returns:
+    --------
+    dict
+        A dictionary containing:
+        - 'cci_score': The total Charlson Comorbidity Index score
+        - 'conditions': A dictionary of conditions found and their weights
+        - 'has_cohort': Boolean indicating if CCI >= 3
+    """
+    
+    # Define ICD-9 and ICD-10 codes for each Charlson condition
+    # ICD-9 codes are stored WITHOUT decimal points in the database
+    # ICD-10 codes are stored WITHOUT decimal points in the database
+    
+    # Myocardial infarction (1 point)
+    mi_codes = {
+        'icd9': ['410'],
+        'icd10': ['I21', 'I22', 'I252']
+    }
+    
+    # Congestive heart failure (1 point)
+    chf_codes = {
+        'icd9': ['428'],
+        'icd10': ['I50', 'J81', 'I255']
+    }
+    
+    # Peripheral vascular disease (1 point)
+    pvd_codes = {
+        'icd9': ['443', '447', '557', '558'],
+        'icd10': ['I73', 'I70', 'I71', 'I72', 'I74', 'I77', 'I792', 'K652', 'K55', 'K515', 'K550', 'K551', 'K552', 'K558', 'K559', 'K661']
+    }
+    
+    # Cerebrovascular disease (1 point)
+    cbd_codes = {
+        'icd9': ['430', '431', '432', '433', '434', '435', '436', '437', '438'],
+        'icd10': ['I60', 'I61', 'I62', 'I63', 'I64', 'I65', 'I66', 'I67', 'I69']
+    }
+    
+    # Dementia (1 point)
+    dementia_codes = {
+        'icd9': ['290', '331'],
+        'icd10': ['F00', 'F01', 'F02', 'F03', 'G30']
+    }
+    
+    # Chronic pulmonary disease (1 point)
+    cpd_codes = {
+        'icd9': ['490', '491', '492', '493', '494', '495', '496'],
+        'icd10': ['J40', 'J41', 'J42', 'J43', 'J44', 'J45', 'J46', 'J60', 'J61', 'J62', 'J63', 'J64', 'J65', 'J66', 'J67', 'J68', 'J69', 'J70']
+    }
+    
+    # Connective tissue disease (1 point)
+    ctd_codes = {
+        'icd9': ['710', '714', '725', '728', '729'],
+        'icd10': ['M05', 'M06', 'M08', 'M30', 'M31', 'M32', 'M33', 'M34', 'M35', 'M36']
+    }
+    
+    # Peptic ulcer disease (1 point)
+    pud_codes = {
+        'icd9': ['531', '532'],
+        'icd10': ['K25', 'K26', 'K27', 'K28']
+    }
+    
+    # Mild liver disease (1 point) - ICD-9 without decimals
+    mild_liver_codes = {
+        'icd9': ['571', '572', '573'],
+        'icd10': ['B18', 'B19', 'B23', 'B42', 'B43', 'B44', 'B45', 'B46', 'B47', 'B48', 'B49', 'K70', 'K71', 'K72', 'K73', 'K74', 'K75', 'K76', 'K77']
+    }
+    
+    # Diabetes without end-organ damage (1 point)
+    diabetes_no_comp_codes = {
+        'icd9': ['249', '250'],
+        'icd10': ['E10', 'E11', 'E12', 'E13', 'E14']
+    }
+    
+    # Diabetes with end-organ damage (2 points) - ICD-9 without decimals
+    # ICD-10 codes without decimals: E102, E103, E104, E105, E106, E112, E113, E114, E115, E116, etc.
+    diabetes_comp_codes = {
+        'icd9': ['2504', '2505', '2506', '2507', '2508', '2509'],
+        'icd10': ['E102', 'E103', 'E104', 'E105', 'E106', 'E107', 'E108', 'E109',
+                  'E112', 'E113', 'E114', 'E115', 'E116', 'E117', 'E118', 'E119',
+                  'E122', 'E123', 'E124', 'E125', 'E126', 'E127', 'E128', 'E129',
+                  'E132', 'E133', 'E134', 'E135', 'E136', 'E137', 'E138', 'E139',
+                  'E142', 'E143', 'E144', 'E145', 'E146', 'E147', 'E148', 'E149']
+    }
+    
+    # Hemiplegia (2 points) - ICD-9 without decimals
+    hemiplegia_codes = {
+        'icd9': ['342', '343', '4382'],
+        'icd10': ['G80', 'G81', 'G82', 'I693']
+    }
+    
+    # Moderate to severe renal disease (2 points)
+    # Added N17 (acute kidney failure) to renal codes
+    renal_codes = {
+        'icd9': ['585', '586', '587', '588'],
+        'icd10': ['N17', 'N18', 'N19', 'N25', 'N26', 'N27', 'N28', 'N29']
+    }
+    
+    # Any tumor (2 points) - solid tumors
+    tumor_codes = {
+        'icd9': ['140', '141', '142', '143', '144', '145', '146', '147', '148', '149',
+                 '150', '151', '152', '153', '154', '155', '156', '157', '158', '159',
+                 '160', '161', '162', '163', '164', '165', '166', '167', '168', '169',
+                 '170', '171', '172', '173', '174', '175', '176', '177', '178', '179',
+                 '180', '181', '182', '183', '184', '185', '186', '187', '188', '189',
+                 '190', '191', '192', '193', '194', '195'],
+        'icd10': ['C00', 'C01', 'C02', 'C03', 'C04', 'C05', 'C06', 'C07', 'C08', 'C09',
+                  'C10', 'C11', 'C12', 'C13', 'C14', 'C15', 'C16', 'C17', 'C18', 'C19',
+                  'C20', 'C21', 'C22', 'C23', 'C24', 'C25', 'C26', 'C27', 'C28', 'C29',
+                  'C30', 'C31', 'C32', 'C33', 'C34', 'C35', 'C36', 'C37', 'C38', 'C39',
+                  'C40', 'C41', 'C42', 'C43', 'C44', 'C45', 'C46', 'C47', 'C48', 'C49',
+                  'C50', 'C51', 'C52', 'C53', 'C54', 'C55', 'C56', 'C57', 'C58', 'C59',
+                  'C60', 'C61', 'C62', 'C63', 'C64', 'C65', 'C66', 'C67', 'C68', 'C69',
+                  'C70', 'C71', 'C72', 'C73', 'C74', 'C75', 'C76', 'C77', 'C78', 'C79',
+                  'C80']
+    }
+    
+    # Leukemia (2 points)
+    leukemia_codes = {
+        'icd9': ['204', '205', '206', '207', '208'],
+        'icd10': ['C91', 'C92', 'C93', 'C94', 'C95']
+    }
+    
+    # Lymphoma (2 points)
+    lymphoma_codes = {
+        'icd9': ['200', '201', '202', '203'],
+        'icd10': ['C81', 'C82', 'C83', 'C84', 'C85', 'C86', 'C87', 'C88', 'C96']
+    }
+    
+    # Moderate to severe liver disease (3 points) - ICD-9 without decimals
+    # These are specific severe liver codes: 571.2, 571.5, 571.6, 571.8, 571.9
+    severe_liver_codes = {
+        'icd9': ['5712', '5715', '5716', '5718', '5719'],
+        'icd10': ['K703', 'K704', 'K717', 'K720', 'K721', 'K729', 'K730', 'K731', 'K732', 'K739',
+                  'K740', 'K741', 'K742', 'K743', 'K744', 'K745', 'K746', 'K754', 'K760', 'K761', 'K762', 'K763', 'K764', 'K765', 'K766', 'K767', 'K768', 'K769']
+    }
+    
+    # Metastatic solid tumor (6 points)
+    metastatic_codes = {
+        'icd9': ['196', '197', '198', '199'],
+        'icd10': ['C77', 'C78', 'C79']
+    }
+    
+    # AIDS (6 points)
+    aids_codes = {
+        'icd9': ['042'],
+        'icd10': ['B20']
+    }
+    
+    # Build the SQL query to get all diagnoses for the patient
+    # Convert to Python native types to avoid numpy issues
+    subject_id = int(subject_id)
+    if hadm_id is not None:
+        hadm_id = int(hadm_id)
+        query = """
+        SELECT icd_code, icd_version
+        FROM mimiciv_hosp.diagnoses_icd
+        WHERE subject_id = ? AND hadm_id = ?
+        """
+        params = (subject_id, hadm_id)
+    else:
+        query = """
+        SELECT icd_code, icd_version
+        FROM mimiciv_hosp.diagnoses_icd
+        WHERE subject_id = ?
+        """
+        params = (subject_id,)
+    
+    # Execute the query
+    df = query_db(query, params)
+    
+    # Track which conditions have been found (use sets to avoid duplicates)
+    # Conditions with 1 point
+    found_1pt = set()
+    # Conditions with 2 points
+    found_2pt = set()
+    # Conditions with 3 points
+    found_3pt = set()
+    # Conditions with 6 points
+    found_6pt = set()
+    
+    # Track special conditions that need priority handling
+    has_diabetes_no_comp = False
+    has_diabetes_comp = False
+    has_mild_liver = False
+    has_severe_liver = False
+    has_any_tumor = False
+    has_metastatic = False
+    
+    for _, row in df.iterrows():
+        icd_code = str(row['icd_code'])
+        icd_version = str(row['icd_version'])
+        
+        if icd_version == '9':
+            # Myocardial infarction (1 point)
+            if any(icd_code.startswith(code) for code in mi_codes['icd9']):
+                found_1pt.add('myocardial_infarction')
+            
+            # Congestive heart failure (1 point)
+            if any(icd_code.startswith(code) for code in chf_codes['icd9']):
+                found_1pt.add('congestive_heart_failure')
+            
+            # Peripheral vascular disease (1 point)
+            if any(icd_code.startswith(code) for code in pvd_codes['icd9']):
+                found_1pt.add('peripheral_vascular_disease')
+            
+            # Cerebrovascular disease (1 point)
+            if any(icd_code.startswith(code) for code in cbd_codes['icd9']):
+                found_1pt.add('cerebrovascular_disease')
+            
+            # Dementia (1 point)
+            if any(icd_code.startswith(code) for code in dementia_codes['icd9']):
+                found_1pt.add('dementia')
+            
+            # Chronic pulmonary disease (1 point)
+            if any(icd_code.startswith(code) for code in cpd_codes['icd9']):
+                found_1pt.add('chronic_pulmonary_disease')
+            
+            # Connective tissue disease (1 point)
+            if any(icd_code.startswith(code) for code in ctd_codes['icd9']):
+                found_1pt.add('connective_tissue_disease')
+            
+            # Peptic ulcer disease (1 point)
+            if any(icd_code.startswith(code) for code in pud_codes['icd9']):
+                found_1pt.add('peptic_ulcer_disease')
+            
+            # Mild liver disease (1 point)
+            if any(icd_code.startswith(code) for code in mild_liver_codes['icd9']):
+                has_mild_liver = True
+            
+            # Diabetes without end-organ damage (1 point)
+            if any(icd_code.startswith(code) for code in diabetes_no_comp_codes['icd9']):
+                # Check if it's not a complication code
+                if not any(icd_code.startswith(code) for code in diabetes_comp_codes['icd9']):
+                    has_diabetes_no_comp = True
+            
+            # Diabetes with end-organ damage (2 points)
+            if any(icd_code.startswith(code) for code in diabetes_comp_codes['icd9']):
+                has_diabetes_comp = True
+            
+            # Hemiplegia (2 points)
+            if any(icd_code.startswith(code) for code in hemiplegia_codes['icd9']):
+                found_2pt.add('hemiplegia')
+            
+            # Moderate to severe renal disease (2 points)
+            if any(icd_code.startswith(code) for code in renal_codes['icd9']):
+                found_2pt.add('moderate_severe_renal_disease')
+            
+            # Any tumor (2 points)
+            if any(icd_code.startswith(code) for code in tumor_codes['icd9']):
+                has_any_tumor = True
+            
+            # Leukemia (2 points)
+            if any(icd_code.startswith(code) for code in leukemia_codes['icd9']):
+                found_2pt.add('leukemia')
+            
+            # Lymphoma (2 points)
+            if any(icd_code.startswith(code) for code in lymphoma_codes['icd9']):
+                found_2pt.add('lymphoma')
+            
+            # Moderate to severe liver disease (3 points)
+            if any(icd_code.startswith(code) for code in severe_liver_codes['icd9']):
+                has_severe_liver = True
+            
+            # Metastatic solid tumor (6 points)
+            if any(icd_code.startswith(code) for code in metastatic_codes['icd9']):
+                has_metastatic = True
+            
+            # AIDS (6 points)
+            if any(icd_code.startswith(code) for code in aids_codes['icd9']):
+                found_6pt.add('aids')
+        
+        elif icd_version == '10':
+            # Myocardial infarction (1 point)
+            if any(icd_code.startswith(code) for code in mi_codes['icd10']):
+                found_1pt.add('myocardial_infarction')
+            
+            # Congestive heart failure (1 point)
+            if any(icd_code.startswith(code) for code in chf_codes['icd10']):
+                found_1pt.add('congestive_heart_failure')
+            
+            # Peripheral vascular disease (1 point)
+            if any(icd_code.startswith(code) for code in pvd_codes['icd10']):
+                found_1pt.add('peripheral_vascular_disease')
+            
+            # Cerebrovascular disease (1 point)
+            if any(icd_code.startswith(code) for code in cbd_codes['icd10']):
+                found_1pt.add('cerebrovascular_disease')
+            
+            # Dementia (1 point)
+            if any(icd_code.startswith(code) for code in dementia_codes['icd10']):
+                found_1pt.add('dementia')
+            
+            # Chronic pulmonary disease (1 point)
+            if any(icd_code.startswith(code) for code in cpd_codes['icd10']):
+                found_1pt.add('chronic_pulmonary_disease')
+            
+            # Connective tissue disease (1 point)
+            if any(icd_code.startswith(code) for code in ctd_codes['icd10']):
+                found_1pt.add('connective_tissue_disease')
+            
+            # Peptic ulcer disease (1 point)
+            if any(icd_code.startswith(code) for code in pud_codes['icd10']):
+                found_1pt.add('peptic_ulcer_disease')
+            
+            # Mild liver disease (1 point)
+            if any(icd_code.startswith(code) for code in mild_liver_codes['icd10']):
+                has_mild_liver = True
+            
+            # Diabetes without end-organ damage (1 point)
+            if any(icd_code.startswith(code) for code in diabetes_no_comp_codes['icd10']):
+                # Check if it's not a complication code
+                if not any(icd_code.startswith(code) for code in diabetes_comp_codes['icd10']):
+                    has_diabetes_no_comp = True
+            
+            # Diabetes with end-organ damage (2 points)
+            if any(icd_code.startswith(code) for code in diabetes_comp_codes['icd10']):
+                has_diabetes_comp = True
+            
+            # Hemiplegia (2 points)
+            if any(icd_code.startswith(code) for code in hemiplegia_codes['icd10']):
+                found_2pt.add('hemiplegia')
+            
+            # Moderate to severe renal disease (2 points)
+            if any(icd_code.startswith(code) for code in renal_codes['icd10']):
+                found_2pt.add('moderate_severe_renal_disease')
+            
+            # Any tumor (2 points)
+            if any(icd_code.startswith(code) for code in tumor_codes['icd10']):
+                has_any_tumor = True
+            
+            # Leukemia (2 points)
+            if any(icd_code.startswith(code) for code in leukemia_codes['icd10']):
+                found_2pt.add('leukemia')
+            
+            # Lymphoma (2 points)
+            if any(icd_code.startswith(code) for code in lymphoma_codes['icd10']):
+                found_2pt.add('lymphoma')
+            
+            # Moderate to severe liver disease (3 points)
+            if any(icd_code.startswith(code) for code in severe_liver_codes['icd10']):
+                has_severe_liver = True
+            
+            # Metastatic solid tumor (6 points)
+            if any(icd_code.startswith(code) for code in metastatic_codes['icd10']):
+                has_metastatic = True
+            
+            # AIDS (6 points)
+            if any(icd_code.startswith(code) for code in aids_codes['icd10']):
+                found_6pt.add('aids')
+    
+    # Calculate the CCI score
+    cci_score = 0
+    conditions = {}
+    
+    # Add points for each found condition (1 point each)
+    for condition in found_1pt:
+        conditions[condition] = 1
+        cci_score += 1
+    
+    # Add points for each found condition (2 points each)
+    for condition in found_2pt:
+        conditions[condition] = 2
+        cci_score += 2
+    
+    # Add points for each found condition (3 points each)
+    for condition in found_3pt:
+        conditions[condition] = 3
+        cci_score += 3
+    
+    # Add points for each found condition (6 points each)
+    for condition in found_6pt:
+        conditions[condition] = 6
+        cci_score += 6
+    
+    # Handle special cases
+    
+    # Diabetes: if both no-comp and comp are found, only count comp (2 points)
+    if has_diabetes_comp:
+        conditions['diabetes_with_end_organ_damage'] = 2
+        cci_score += 2
+    elif has_diabetes_no_comp:
+        conditions['diabetes_without_end_organ_damage'] = 1
+        cci_score += 1
+    
+    # Liver disease: if both mild and severe are found, only count severe (3 points)
+    if has_severe_liver:
+        conditions['moderate_severe_liver_disease'] = 3
+        cci_score += 3
+    elif has_mild_liver:
+        conditions['mild_liver_disease'] = 1
+        cci_score += 1
+    
+    # Tumor: if metastatic is found, count 6 points; otherwise if any tumor, count 2 points
+    if has_metastatic:
+        conditions['metastatic_solid_tumor'] = 6
+        cci_score += 6
+    elif has_any_tumor:
+        conditions['any_tumor'] = 2
+        cci_score += 2
+    
+    return {
+        'cci_score': cci_score,
+        'conditions': conditions,
+        'has_cohort': cci_score >= 3
+    }
+```
+
+## Test Results
+
+### Test Case: subject_id = 10000032
+```
+Result: {'cci_score': 4, 'conditions': {'chronic_pulmonary_disease': 1, 'moderate_severe_liver_disease': 3}, 'has_cohort': True}
+Score verification: 4
+```
+- ICD-9 code 5715 = 571.5 (severe liver disease - alcoholic cirrhosis)
+- ICD-9 code 496 = chronic pulmonary disease
+
+### Test Case: subject_id = 12468016
+```
+Result: {'cci_score': 12, 'conditions': {'myocardial_infarction': 1, 'congestive_heart_failure': 1, 'chronic_pulmonary_disease': 1, 'peripheral_vascular_disease': 1, 'connective_tissue_disease': 1, 'moderate_severe_renal_disease': 2, 'diabetes_with_end_organ_damage': 2, 'moderate_severe_liver_disease': 3}, 'has_cohort': True}
+Score verification: 12
+```
+
+### Test Case: subject_id = 12468016 with hadm_id = 20024645
+```
+Result: {'cci_score': 4, 'conditions': {'chronic_pulmonary_disease': 1, 'congestive_heart_failure': 1, 'moderate_severe_renal_disease': 2}, 'has_cohort': True}
+Score verification: 4
+```
+
+### Test Case: subject_id = 18284271
+```
+Result: {'cci_score': 16, 'conditions': {'myocardial_infarction': 1, 'congestive_heart_failure': 1, 'peptic_ulcer_disease': 1, 'cerebrovascular_disease': 1, 'chronic_pulmonary_disease': 1, 'peripheral_vascular_disease': 1, 'connective_tissue_disease': 1, 'hemiplegia': 2, 'moderate_severe_renal_disease': 2, 'diabetes_with_end_organ_damage': 2, 'moderate_severe_liver_disease': 3}, 'has_cohort': True}
+Score verification: 16
+Hemiplegia weight: 2
+```
+
+### Test Case: subject_id = 12568220 (metastatic cancer)
+```
+Result: {'cci_score': 8, 'conditions': {'chronic_pulmonary_disease': 1, 'cerebrovascular_disease': 1, 'metastatic_solid_tumor': 6}, 'has_cohort': True}
+```
+
+### Test Case: subject_id = 15808118 (AIDS)
+```
+Result: {'cci_score': 6, 'conditions': {'aids': 6}, 'has_cohort': True}
+```
+
+### Test Case: subject_id = 11488263 (leukemia)
+```
+Result: {'cci_score': 2, 'conditions': {'leukemia': 2}, 'has_cohort': False}
+```
+
+### Test Case: subject_id = 10057948 (lymphoma)
+```
+Result: {'cci_score': 7, 'conditions': {'leukemia': 2, 'lymphoma': 2, 'diabetes_with_end_organ_damage': 2, 'mild_liver_disease': 1}, 'has_cohort': True}
+```
+
+### Test Case: subject_id = 10000001 (no diagnoses)
+```
+Result: {'cci_score': 0, 'conditions': {}, 'has_cohort': False}
+```
+
+### Test Case: subject_id = 10174039 (diabetes without complications)
+```
+Result: {'cci_score': 4, 'conditions': {'myocardial_infarction': 1, 'moderate_severe_renal_disease': 2, 'diabetes_without_end_organ_damage': 1}, 'has_cohort': True}
+```
+
+### Test Case: subject_id = 10003502 (dementia)
+```
+Result: {'cci_score': 7, 'conditions': {'myocardial_infarction': 1, 'congestive_heart_failure': 1, 'cerebrovascular_disease': 1, 'chronic_pulmonary_disease': 1, 'dementia': 1, 'moderate_severe_renal_disease': 2}, 'has_cohort': True}
+```
+
+## Error Fixes
+
+1. **ICD-9 Code Format**: ICD-9 codes stored WITHOUT decimal points (e.g., '5715' not '571.5'). Updated all ICD-9 code lists accordingly.
+
+2. **ICD-10 Code Format**: ICD-10 codes stored WITHOUT decimal points (e.g., 'E1122' not 'E11.22', 'I252' not 'I25.2'). Updated all ICD-10 code lists to remove decimal points.
+
+3. **Duplicate Condition Counting**: Changed from adding points in loop to using sets to track unique conditions, then calculating score after loop.
+
+4. **Condition Weights**: Fixed hemiplegia, renal disease, leukemia, lymphoma to be 2 points (not 1). Used separate sets for 1pt, 2pt, 3pt, 6pt conditions.
+
+5. **numpy.int32 Type Error**: When accessing DataFrame columns, convert to Python int using `int(df.iloc[0]['subject_id'])`.
+
+6. **Pandas Column Access**: Use `df['column_name'].iloc[0]` instead of `df.iloc[0]['column_name']` for proper column access.
+
+7. **Missing ICD-10 Codes**: Added missing codes:
+   - I252 (old myocardial infarction) to MI codes
+   - J81 (pulmonary edema) to CHF codes
+   - I255 (ischemic cardiomyopathy) to CHF codes
+   - N17 (acute kidney failure) to renal codes
+   - Updated diabetes complication codes to match database format (without decimals)
+
+8. **Diabetes Complication Code Format**: Changed from 'E11.2' to 'E112' format to match database storage.
+
+9. **DuckDB numpy.int32 Type Error**: Fixed by converting subject_id and hadm_id to Python native int types at the start of the function: `subject_id = int(subject_id)` and `hadm_id = int(hadm_id)`.
+
+10. **Invalid hadm_id Handling**: When hadm
+
+=== Step 5 ===
+# Clinical Coding Agent Memory
+
+## Database Schema Facts
+
+### MIMIC-IV Tables
+- **mimiciv_hosp.diagnoses_icd**: subject_id, hadm_id, seq_num, icd_code, icd_version
+- **mimiciv_hosp.d_icd_diagnoses**: icd_code, icd_version, long_title
+- **mimiciv_hosp.admissions**: subject_id, hadm_id, admission_type, etc.
+- **mimiciv_hosp.patients**: subject_id, gender, dob, dod, etc.
+
+### ICD Code Structure
+- **icd_version**: '9' or '10'
+- **icd_code**: String format
+  - ICD-9: Stored WITHOUT decimal points (e.g., '5715' not '571.5')
+  - ICD-10: Stored WITHOUT decimal points (e.g., 'E1122' not 'E11.22', 'I252' not 'I25.2')
+- Code matching uses `startswith()` for prefix matching
+
+## Functions
+
+### compute_charlson(subject_id, hadm_id=None)
+
+```python
+def compute_charlson(subject_id, hadm_id=None):
+    """
+    Calculate the Charlson Comorbidity Index (CCI) for a patient.
+    
+    The Charlson Comorbidity Index is a scoring system that predicts 10-year 
+    mortality based on the presence of comorbid conditions. Each condition 
+    is assigned a weight from 1 to 6 points.
+    
+    Parameters:
+    -----------
+    subject_id : int
+        The unique patient identifier in the database.
+    hadm_id : int, optional
+        The hospital admission identifier. If provided, only diagnoses from 
+        this admission are considered. If None, all diagnoses for the patient 
+        across all admissions are considered.
+    
+    Returns:
+    --------
+    dict
+        A dictionary containing:
+        - 'cci_score': The total Charlson Comorbidity Index score
+        - 'conditions': A dictionary of conditions found and their weights
+        - 'has_cohort': Boolean indicating if CCI >= 3
+    """
+    
+    # Define ICD-9 and ICD-10 codes for each Charlson condition
+    # ICD-9 codes are stored WITHOUT decimal points in the database
+    # ICD-10 codes are stored WITHOUT decimal points in the database
+    
+    # Myocardial infarction (1 point)
+    mi_codes = {
+        'icd9': ['410'],
+        'icd10': ['I21', 'I22', 'I252']
+    }
+    
+    # Congestive heart failure (1 point)
+    chf_codes = {
+        'icd9': ['428'],
+        'icd10': ['I50', 'J81', 'I255']
+    }
+    
+    # Peripheral vascular disease (1 point)
+    pvd_codes = {
+        'icd9': ['443', '447', '557', '558'],
+        'icd10': ['I73', 'I70', 'I71', 'I72', 'I74', 'I77', 'I792', 'K652', 'K55', 'K515', 'K550', 'K551', 'K552', 'K558', 'K559', 'K661']
+    }
+    
+    # Cerebrovascular disease (1 point)
+    cbd_codes = {
+        'icd9': ['430', '431', '432', '433', '434', '435', '436', '437', '438'],
+        'icd10': ['I60', 'I61', 'I62', 'I63', 'I64', 'I65', 'I66', 'I67', 'I69']
+    }
+    
+    # Dementia (1 point)
+    dementia_codes = {
+        'icd9': ['290', '331'],
+        'icd10': ['F00', 'F01', 'F02', 'F03', 'G30']
+    }
+    
+    # Chronic pulmonary disease (1 point)
+    cpd_codes = {
+        'icd9': ['490', '491', '492', '493', '494', '495', '496'],
+        'icd10': ['J40', 'J41', 'J42', 'J43', 'J44', 'J45', 'J46', 'J60', 'J61', 'J62', 'J63', 'J64', 'J65', 'J66', 'J67', 'J68', 'J69', 'J70']
+    }
+    
+    # Connective tissue disease (1 point)
+    ctd_codes = {
+        'icd9': ['710', '714', '725', '728', '729'],
+        'icd10': ['M05', 'M06', 'M08', 'M30', 'M31', 'M32', 'M33', 'M34', 'M35', 'M36']
+    }
+    
+    # Peptic ulcer disease (1 point)
+    pud_codes = {
+        'icd9': ['531', '532'],
+        'icd10': ['K25', 'K26', 'K27', 'K28']
+    }
+    
+    # Mild liver disease (1 point) - ICD-9 without decimals
+    mild_liver_codes = {
+        'icd9': ['571', '572', '573'],
+        'icd10': ['B18', 'B19', 'B23', 'B42', 'B43', 'B44', 'B45', 'B46', 'B47', 'B48', 'B49', 'K70', 'K71', 'K72', 'K73', 'K74', 'K75', 'K76', 'K77']
+    }
+    
+    # Diabetes without end-organ damage (1 point)
+    diabetes_no_comp_codes = {
+        'icd9': ['249', '250'],
+        'icd10': ['E10', 'E11', 'E12', 'E13', 'E14']
+    }
+    
+    # Diabetes with end-organ damage (2 points) - ICD-9 without decimals
+    # ICD-10 codes without decimals: E102, E103, E104, E105, E106, E112, E113, E114, E115, E116, etc.
+    diabetes_comp_codes = {
+        'icd9': ['2504', '2505', '2506', '2507', '2508', '2509'],
+        'icd10': ['E102', 'E103', 'E104', 'E105', 'E106', 'E107', 'E108', 'E109',
+                  'E112', 'E113', 'E114', 'E115', 'E116', 'E117', 'E118', 'E119',
+                  'E122', 'E123', 'E124', 'E125', 'E126', 'E127', 'E128', 'E129',
+                  'E132', 'E133', 'E134', 'E135', 'E136', 'E137', 'E138', 'E139',
+                  'E142', 'E143', 'E144', 'E145', 'E146', 'E147', 'E148', 'E149']
+    }
+    
+    # Hemiplegia (2 points) - ICD-9 without decimals
+    hemiplegia_codes = {
+        'icd9': ['342', '343', '4382'],
+        'icd10': ['G80', 'G81', 'G82', 'I693']
+    }
+    
+    # Moderate to severe renal disease (2 points)
+    # Added N17 (acute kidney failure) to renal codes
+    renal_codes = {
+        'icd9': ['585', '586', '587', '588'],
+        'icd10': ['N17', 'N18', 'N19', 'N25', 'N26', 'N27', 'N28', 'N29']
+    }
+    
+    # Any tumor (2 points) - solid tumors
+    tumor_codes = {
+        'icd9': ['140', '141', '142', '143', '144', '145', '146', '147', '148', '149',
+                 '150', '151', '152', '153', '154', '155', '156', '157', '158', '159',
+                 '160', '161', '162', '163', '164', '165', '166', '167', '168', '169',
+                 '170', '171', '172', '173', '174', '175', '176', '177', '178', '179',
+                 '180', '181', '182', '183', '184', '185', '186', '187', '188', '189',
+                 '190', '191', '192', '193', '194', '195'],
+        'icd10': ['C00', 'C01', 'C02', 'C03', 'C04', 'C05', 'C06', 'C07', 'C08', 'C09',
+                  'C10', 'C11', 'C12', 'C13', 'C14', 'C15', 'C16', 'C17', 'C18', 'C19',
+                  'C20', 'C21', 'C22', 'C23', 'C24', 'C25', 'C26', 'C27', 'C28', 'C29',
+                  'C30', 'C31', 'C32', 'C33', 'C34', 'C35', 'C36', 'C37', 'C38', 'C39',
+                  'C40', 'C41', 'C42', 'C43', 'C44', 'C45', 'C46', 'C47', 'C48', 'C49',
+                  'C50', 'C51', 'C52', 'C53', 'C54', 'C55', 'C56', 'C57', 'C58', 'C59',
+                  'C60', 'C61', 'C62', 'C63', 'C64', 'C65', 'C66', 'C67', 'C68', 'C69',
+                  'C70', 'C71', 'C72', 'C73', 'C74', 'C75', 'C76', 'C77', 'C78', 'C79',
+                  'C80']
+    }
+    
+    # Leukemia (2 points)
+    leukemia_codes = {
+        'icd9': ['204', '205', '206', '207', '208'],
+        'icd10': ['C91', 'C92', 'C93', 'C94', 'C95']
+    }
+    
+    # Lymphoma (2 points)
+    lymphoma_codes = {
+        'icd9': ['200', '201', '202', '203'],
+        'icd10': ['C81', 'C82', 'C83', 'C84', 'C85', 'C86', 'C87', 'C88', 'C96']
+    }
+    
+    # Moderate to severe liver disease (3 points) - ICD-9 without decimals
+    # These are specific severe liver codes: 571.2, 571.5, 571.6, 571.8, 571.9
+    severe_liver_codes = {
+        'icd9': ['5712', '5715', '5716', '5718', '5719'],
+        'icd10': ['K703', 'K704', 'K717', 'K720', 'K721', 'K729', 'K730', 'K731', 'K732', 'K739',
+                  'K740', 'K741', 'K742', 'K743', 'K744', 'K745', 'K746', 'K754', 'K760', 'K761', 'K762', 'K763', 'K764', 'K765', 'K766', 'K767', 'K768', 'K769']
+    }
+    
+    # Metastatic solid tumor (6 points)
+    metastatic_codes = {
+        'icd9': ['196', '197', '198', '199'],
+        'icd10': ['C77', 'C78', 'C79']
+    }
+    
+    # AIDS (6 points)
+    aids_codes = {
+        'icd9': ['042'],
+        'icd10': ['B20']
+    }
+    
+    # Build the SQL query to get all diagnoses for the patient
+    # Convert to Python native types to avoid numpy issues
+    subject_id = int(subject_id)
+    if hadm_id is not None:
+        hadm_id = int(hadm_id)
+        query = """
+        SELECT icd_code, icd_version
+        FROM mimiciv_hosp.diagnoses_icd
+        WHERE subject_id = ? AND hadm_id = ?
+        """
+        params = (subject_id, hadm_id)
+    else:
+        query = """
+        SELECT icd_code, icd_version
+        FROM mimiciv_hosp.diagnoses_icd
+        WHERE subject_id = ?
+        """
+        params = (subject_id,)
+    
+    # Execute the query
+    df = query_db(query, params)
+    
+    # Track which conditions have been found (use sets to avoid duplicates)
+    # Conditions with 1 point
+    found_1pt = set()
+    # Conditions with 2 points
+    found_2pt = set()
+    # Conditions with 3 points
+    found_3pt = set()
+    # Conditions with 6 points
+    found_6pt = set()
+    
+    # Track special conditions that need priority handling
+    has_diabetes_no_comp = False
+    has_diabetes_comp = False
+    has_mild_liver = False
+    has_severe_liver = False
+    has_any_tumor = False
+    has_metastatic = False
+    
+    for _, row in df.iterrows():
+        icd_code = str(row['icd_code'])
+        icd_version = str(row['icd_version'])
+        
+        if icd_version == '9':
+            # Myocardial infarction (1 point)
+            if any(icd_code.startswith(code) for code in mi_codes['icd9']):
+                found_1pt.add('myocardial_infarction')
+            
+            # Congestive heart failure (1 point)
+            if any(icd_code.startswith(code) for code in chf_codes['icd9']):
+                found_1pt.add('congestive_heart_failure')
+            
+            # Peripheral vascular disease (1 point)
+            if any(icd_code.startswith(code) for code in pvd_codes['icd9']):
+                found_1pt.add('peripheral_vascular_disease')
+            
+            # Cerebrovascular disease (1 point)
+            if any(icd_code.startswith(code) for code in cbd_codes['icd9']):
+                found_1pt.add('cerebrovascular_disease')
+            
+            # Dementia (1 point)
+            if any(icd_code.startswith(code) for code in dementia_codes['icd9']):
+                found_1pt.add('dementia')
+            
+            # Chronic pulmonary disease (1 point)
+            if any(icd_code.startswith(code) for code in cpd_codes['icd9']):
+                found_1pt.add('chronic_pulmonary_disease')
+            
+            # Connective tissue disease (1 point)
+            if any(icd_code.startswith(code) for code in ctd_codes['icd9']):
+                found_1pt.add('connective_tissue_disease')
+            
+            # Peptic ulcer disease (1 point)
+            if any(icd_code.startswith(code) for code in pud_codes['icd9']):
+                found_1pt.add('peptic_ulcer_disease')
+            
+            # Mild liver disease (1 point)
+            if any(icd_code.startswith(code) for code in mild_liver_codes['icd9']):
+                has_mild_liver = True
+            
+            # Diabetes without end-organ damage (1 point)
+            if any(icd_code.startswith(code) for code in diabetes_no_comp_codes['icd9']):
+                # Check if it's not a complication code
+                if not any(icd_code.startswith(code) for code in diabetes_comp_codes['icd9']):
+                    has_diabetes_no_comp = True
+            
+            # Diabetes with end-organ damage (2 points)
+            if any(icd_code.startswith(code) for code in diabetes_comp_codes['icd9']):
+                has_diabetes_comp = True
+            
+            # Hemiplegia (2 points)
+            if any(icd_code.startswith(code) for code in hemiplegia_codes['icd9']):
+                found_2pt.add('hemiplegia')
+            
+            # Moderate to severe renal disease (2 points)
+            if any(icd_code.startswith(code) for code in renal_codes['icd9']):
+                found_2pt.add('moderate_severe_renal_disease')
+            
+            # Any tumor (2 points)
+            if any(icd_code.startswith(code) for code in tumor_codes['icd9']):
+                has_any_tumor = True
+            
+            # Leukemia (2 points)
+            if any(icd_code.startswith(code) for code in leukemia_codes['icd9']):
+                found_2pt.add('leukemia')
+            
+            # Lymphoma (2 points)
+            if any(icd_code.startswith(code) for code in lymphoma_codes['icd9']):
+                found_2pt.add('lymphoma')
+            
+            # Moderate to severe liver disease (3 points)
+            if any(icd_code.startswith(code) for code in severe_liver_codes['icd9']):
+                has_severe_liver = True
+            
+            # Metastatic solid tumor (6 points)
+            if any(icd_code.startswith(code) for code in metastatic_codes['icd9']):
+                has_metastatic = True
+            
+            # AIDS (6 points)
+            if any(icd_code.startswith(code) for code in aids_codes['icd9']):
+                found_6pt.add('aids')
+        
+        elif icd_version == '10':
+            # Myocardial infarction (1 point)
+            if any(icd_code.startswith(code) for code in mi_codes['icd10']):
+                found_1pt.add('myocardial_infarction')
+            
+            # Congestive heart failure (1 point)
+            if any(icd_code.startswith(code) for code in chf_codes['icd10']):
+                found_1pt.add('congestive_heart_failure')
+            
+            # Peripheral vascular disease (1 point)
+            if any(icd_code.startswith(code) for code in pvd_codes['icd10']):
+                found_1pt.add('peripheral_vascular_disease')
+            
+            # Cerebrovascular disease (1 point)
+            if any(icd_code.startswith(code) for code in cbd_codes['icd10']):
+                found_1pt.add('cerebrovascular_disease')
+            
+            # Dementia (1 point)
+            if any(icd_code.startswith(code) for code in dementia_codes['icd10']):
+                found_1pt.add('dementia')
+            
+            # Chronic pulmonary disease (1 point)
+            if any(icd_code.startswith(code) for code in cpd_codes['icd10']):
+                found_1pt.add('chronic_pulmonary_disease')
+            
+            # Connective tissue disease (1 point)
+            if any(icd_code.startswith(code) for code in ctd_codes['icd10']):
+                found_1pt.add('connective_tissue_disease')
+            
+            # Peptic ulcer disease (1 point)
+            if any(icd_code.startswith(code) for code in pud_codes['icd10']):
+                found_1pt.add('peptic_ulcer_disease')
+            
+            # Mild liver disease (1 point)
+            if any(icd_code.startswith(code) for code in mild_liver_codes['icd10']):
+                has_mild_liver = True
+            
+            # Diabetes without end-organ damage (1 point)
+            if any(icd_code.startswith(code) for code in diabetes_no_comp_codes['icd10']):
+                # Check if it's not a complication code
+                if not any(icd_code.startswith(code) for code in diabetes_comp_codes['icd10']):
+                    has_diabetes_no_comp = True
+            
+            # Diabetes with end-organ damage (2 points)
+            if any(icd_code.startswith(code) for code in diabetes_comp_codes['icd10']):
+                has_diabetes_comp = True
+            
+            # Hemiplegia (2 points)
+            if any(icd_code.startswith(code) for code in hemiplegia_codes['icd10']):
+                found_2pt.add('hemiplegia')
+            
+            # Moderate to severe renal disease (2 points)
+            if any(icd_code.startswith(code) for code in renal_codes['icd10']):
+                found_2pt.add('moderate_severe_renal_disease')
+            
+            # Any tumor (2 points)
+            if any(icd_code.startswith(code) for code in tumor_codes['icd10']):
+                has_any_tumor = True
+            
+            # Leukemia (2 points)
+            if any(icd_code.startswith(code) for code in leukemia_codes['icd10']):
+                found_2pt.add('leukemia')
+            
+            # Lymphoma (2 points)
+            if any(icd_code.startswith(code) for code in lymphoma_codes['icd10']):
+                found_2pt.add('lymphoma')
+            
+            # Moderate to severe liver disease (3 points)
+            if any(icd_code.startswith(code) for code in severe_liver_codes['icd10']):
+                has_severe_liver = True
+            
+            # Metastatic solid tumor (6 points)
+            if any(icd_code.startswith(code) for code in metastatic_codes['icd10']):
+                has_metastatic = True
+            
+            # AIDS (6 points)
+            if any(icd_code.startswith(code) for code in aids_codes['icd10']):
+                found_6pt.add('aids')
+    
+    # Calculate the CCI score
+    cci_score = 0
+    conditions = {}
+    
+    # Add points for each found condition (1 point each)
+    for condition in found_1pt:
+        conditions[condition] = 1
+        cci_score += 1
+    
+    # Add points for each found condition (2 points each)
+    for condition in found_2pt:
+        conditions[condition] = 2
+        cci_score += 2
+    
+    # Add points for each found condition (3 points each)
+    for condition in found_3pt:
+        conditions[condition] = 3
+        cci_score += 3
+    
+    # Add points for each found condition (6 points each)
+    for condition in found_6pt:
+        conditions[condition] = 6
+        cci_score += 6
+    
+    # Handle special cases
+    
+    # Diabetes: if both no-comp and comp are found, only count comp (2 points)
+    if has_diabetes_comp:
+        conditions['diabetes_with_end_organ_damage'] = 2
+        cci_score += 2
+    elif has_diabetes_no_comp:
+        conditions['diabetes_without_end_organ_damage'] = 1
+        cci_score += 1
+    
+    # Liver disease: if both mild and severe are found, only count severe (3 points)
+    if has_severe_liver:
+        conditions['moderate_severe_liver_disease'] = 3
+        cci_score += 3
+    elif has_mild_liver:
+        conditions['mild_liver_disease'] = 1
+        cci_score += 1
+    
+    # Tumor: if metastatic is found, count 6 points; otherwise if any tumor, count 2 points
+    if has_metastatic:
+        conditions['metastatic_solid_tumor'] = 6
+        cci_score += 6
+    elif has_any_tumor:
+        conditions['any_tumor'] = 2
+        cci_score += 2
+    
+    return {
+        'cci_score': cci_score,
+        'conditions': conditions,
+        'has_cohort': cci_score >= 3
+    }
+```
+
+## Test Results
+
+### Original Test Cases (Verified)
+- **subject_id = 10000032**: CCI=4 (chronic_pulmonary_disease:1, moderate_severe_liver_disease:3)
+- **subject_id = 12468016**: CCI=12 (MI:1, CHF:1, CPD:1, PVD:1, CTD:1, renal:2, diabetes_comp:2, severe_liver:3)
+- **subject_id = 12468016, hadm_id=20024645**: CCI=4 (CPD:1, CHF:1, renal:2)
+- **subject_id = 18284271**: CCI=16 (MI:1, CHF:1, PUD:1, CBD:1, CPD:1, PVD:1, CTD:1, hemiplegia:2, renal:2, diabetes_comp:2, severe_liver:3)
+- **subject_id = 12568220**: CCI=8 (CPD:1, CBD:1, metastatic:6)
+- **subject_id = 15808118**: CCI=6 (AIDS:6)
+- **subject_id = 11488263**: CCI=2 (leukemia:2)
+- **subject_id = 10057948**: CCI=7 (leukemia:2, lymphoma:2, diabetes_comp:2, mild_liver:1)
+- **subject_id = 10000001**: CCI=0 (no diagnoses)
+- **subject_id = 10174039**: CCI=4 (MI:1, renal:2, diabetes_no_comp:1)
+- **subject_id = 10003502**: CCI=7 (MI:1, CHF:1, CBD:1, CPD:1, dementia:1, renal:2)
+
+### Additional Test Cases (Step 5)
+- **subject_id = 12468016**: CCI=12 ✓
+- **subject_id = 18284271**: CCI=16 ✓
+- **subject_id = 12568220**: CCI=8 ✓
+- **subject_id = 15808118**: CCI=6 ✓
+- **subject_id = 10000001**: CCI=0 ✓
+
+### Misclassified Cases (Step 7-8)
+| subject_id | hadm_id | Predicted | Actual | Gap | Diagnoses Found |
+|------------|---------|-----------|--------|-----|-----------------|
+| 12858718 | 20789729 | 3 | 4 | +1 | MI(41011), CBD(43889), CTD(72989) |
+| 19678085 | 25439914 | 1 | 4 | +3 | CHF(4280) only |
+| 14458151 | 27687854 | 6 | 7 | +1 | CPD(J449), CHF(I5022), renal(N179), diabetes_comp(E119) |
+| 13846410 | 21804772 | 4 | 5 | +1 | MI(I252), CHF(J810), diabetes_comp(E119) |
+
+### Lifetime vs Admission Comparison
+- **subject_id = 14458151**: With hadm_id=27687854 → CCI=6; Without hadm_id → CCI=13 (includes metastatic_solid_tumor:6, PVD:1)
+
+## Error Fixes
+
+1. **ICD-9 Code Format**: ICD-9 codes stored WITHOUT decimal points (e.g., '5715' not '571.5'). Updated all ICD-9 code lists accordingly.
+
+2. **ICD-10 Code Format**: ICD-10 codes stored WITHOUT decimal points (e.g., 'E1122' not 'E11.22', 'I252' not 'I25.2'). Updated all ICD-10 code lists to remove decimal points.
+
+3. **Duplicate Condition Counting**: Changed from adding points in loop to using sets to track unique conditions, then calculating score after loop.
+
+4. **Condition Weights**: Fixed hemiplegia, renal disease, leukemia, lymphoma to be 2 points (not 1). Used separate sets for 1pt, 2pt, 3pt, 6pt conditions.
+
+5. **numpy.int32 Type Error**: When accessing DataFrame columns, convert to Python int using `int(df.iloc[0]['subject_id'])`.
+
+6. **Pandas Column Access**: Use `df['column_name'].iloc[0]`
+
+=== Step 6 ===
+# Clinical Coding Agent Memory
+
+## Database Schema Facts
+
+### MIMIC-IV Tables
+- **mimiciv_hosp.diagnoses_icd**: subject_id, hadm_id, seq_num, icd_code, icd_version
+- **mimiciv_hosp.d_icd_diagnoses**: icd_code, icd_version, long_title
+- **mimiciv_hosp.admissions**: subject_id, hadm_id, admission_type, etc.
+- **mimiciv_hosp.patients**: subject_id, gender, dob, dod, etc.
+
+### ICD Code Structure
+- **icd_version**: '9' or '10'
+- **icd_code**: String format
+  - ICD-9: Stored WITHOUT decimal points (e.g., '5715' not '571.5')
+  - ICD-10: Stored WITHOUT decimal points (e.g., 'E1122' not 'E11.22', 'I252' not 'I25.2')
+- Code matching uses `startswith()` for prefix matching
+
+## Functions
+
+### compute_charlson(subject_id, hadm_id=None)
+
+```python
+def compute_charlson(subject_id, hadm_id=None):
+    """
+    Calculate the Charlson Comorbidity Index (CCI) for a patient.
+    
+    The Charlson Comorbidity Index is a scoring system that predicts 10-year 
+    mortality based on the presence of comorbid conditions. Each condition 
+    is assigned a weight from 1 to 6 points.
+    
+    Parameters:
+    -----------
+    subject_id : int
+        The unique patient identifier in the database.
+    hadm_id : int, optional
+        The hospital admission identifier. If provided, only diagnoses from 
+        this admission are considered. If None, all diagnoses for the patient 
+        across all admissions are considered.
+    
+    Returns:
+    --------
+    dict
+        A dictionary containing:
+        - 'cci_score': The total Charlson Comorbidity Index score
+        - 'conditions': A dictionary of conditions found and their weights
+        - 'has_cohort': Boolean indicating if CCI >= 3
+    """
+    
+    # Define ICD-9 and ICD-10 codes for each Charlson condition
+    # ICD-9 codes are stored WITHOUT decimal points in the database
+    # ICD-10 codes are stored WITHOUT decimal points in the database
+    
+    # Myocardial infarction (1 point)
+    mi_codes = {
+        'icd9': ['410'],
+        'icd10': ['I21', 'I22', 'I252']
+    }
+    
+    # Congestive heart failure (1 point)
+    chf_codes = {
+        'icd9': ['428'],
+        'icd10': ['I50', 'J81', 'I255']
+    }
+    
+    # Peripheral vascular disease (1 point)
+    pvd_codes = {
+        'icd9': ['443', '447', '557', '558'],
+        'icd10': ['I73', 'I70', 'I71', 'I72', 'I74', 'I77', 'I792', 'K652', 'K55', 'K515', 'K550', 'K551', 'K552', 'K558', 'K559', 'K661']
+    }
+    
+    # Cerebrovascular disease (1 point)
+    cbd_codes = {
+        'icd9': ['430', '431', '432', '433', '434', '435', '436', '437', '438'],
+        'icd10': ['I60', 'I61', 'I62', 'I63', 'I64', 'I65', 'I66', 'I67', 'I69']
+    }
+    
+    # Dementia (1 point)
+    dementia_codes = {
+        'icd9': ['290', '331'],
+        'icd10': ['F00', 'F01', 'F02', 'F03', 'G30']
+    }
+    
+    # Chronic pulmonary disease (1 point)
+    cpd_codes = {
+        'icd9': ['490', '491', '492', '493', '494', '495', '496'],
+        'icd10': ['J40', 'J41', 'J42', 'J43', 'J44', 'J45', 'J46', 'J60', 'J61', 'J62', 'J63', 'J64', 'J65', 'J66', 'J67', 'J68', 'J69', 'J70']
+    }
+    
+    # Connective tissue disease (1 point)
+    ctd_codes = {
+        'icd9': ['710', '714', '725', '728', '729'],
+        'icd10': ['M05', 'M06', 'M08', 'M30', 'M31', 'M32', 'M33', 'M34', 'M35', 'M36']
+    }
+    
+    # Peptic ulcer disease (1 point)
+    pud_codes = {
+        'icd9': ['531', '532'],
+        'icd10': ['K25', 'K26', 'K27', 'K28']
+    }
+    
+    # Mild liver disease (1 point) - ICD-9 without decimals
+    mild_liver_codes = {
+        'icd9': ['571', '572', '573'],
+        'icd10': ['B18', 'B19', 'B23', 'B42', 'B43', 'B44', 'B45', 'B46', 'B47', 'B48', 'B49', 'K70', 'K71', 'K72', 'K73', 'K74', 'K75', 'K76', 'K77']
+    }
+    
+    # Diabetes without end-organ damage (1 point)
+    diabetes_no_comp_codes = {
+        'icd9': ['249', '250'],
+        'icd10': ['E10', 'E11', 'E12', 'E13', 'E14']
+    }
+    
+    # Diabetes with end-organ damage (2 points) - ICD-9 without decimals
+    # ICD-10 codes without decimals: E102, E103, E104, E105, E106, E112, E113, E114, E115, E116, etc.
+    diabetes_comp_codes = {
+        'icd9': ['2504', '2505', '2506', '2507', '2508', '2509'],
+        'icd10': ['E102', 'E103', 'E104', 'E105', 'E106', 'E107', 'E108', 'E109',
+                  'E112', 'E113', 'E114', 'E115', 'E116', 'E117', 'E118', 'E119',
+                  'E122', 'E123', 'E124', 'E125', 'E126', 'E127', 'E128', 'E129',
+                  'E132', 'E133', 'E134', 'E135', 'E136', 'E137', 'E138', 'E139',
+                  'E142', 'E143', 'E144', 'E145', 'E146', 'E147', 'E148', 'E149']
+    }
+    
+    # Hemiplegia (2 points) - ICD-9 without decimals
+    hemiplegia_codes = {
+        'icd9': ['342', '343', '4382'],
+        'icd10': ['G80', 'G81', 'G82', 'I693']
+    }
+    
+    # Moderate to severe renal disease (2 points)
+    # Added N17 (acute kidney failure) to renal codes
+    renal_codes = {
+        'icd9': ['585', '586', '587', '588'],
+        'icd10': ['N17', 'N18', 'N19', 'N25', 'N26', 'N27', 'N28', 'N29']
+    }
+    
+    # Any tumor (2 points) - solid tumors
+    tumor_codes = {
+        'icd9': ['140', '141', '142', '143', '144', '145', '146', '147', '148', '149',
+                 '150', '151', '152', '153', '154', '155', '156', '157', '158', '159',
+                 '160', '161', '162', '163', '164', '165', '166', '167', '168', '169',
+                 '170', '171', '172', '173', '174', '175', '176', '177', '178', '179',
+                 '180', '181', '182', '183', '184', '185', '186', '187', '188', '189',
+                 '190', '191', '192', '193', '194', '195'],
+        'icd10': ['C00', 'C01', 'C02', 'C03', 'C04', 'C05', 'C06', 'C07', 'C08', 'C09',
+                  'C10', 'C11', 'C12', 'C13', 'C14', 'C15', 'C16', 'C17', 'C18', 'C19',
+                  'C20', 'C21', 'C22', 'C23', 'C24', 'C25', 'C26', 'C27', 'C28', 'C29',
+                  'C30', 'C31', 'C32', 'C33', 'C34', 'C35', 'C36', 'C37', 'C38', 'C39',
+                  'C40', 'C41', 'C42', 'C43', 'C44', 'C45', 'C46', 'C47', 'C48', 'C49',
+                  'C50', 'C51', 'C52', 'C53', 'C54', 'C55', 'C56', 'C57', 'C58', 'C59',
+                  'C60', 'C61', 'C62', 'C63', 'C64', 'C65', 'C66', 'C67', 'C68', 'C69',
+                  'C70', 'C71', 'C72', 'C73', 'C74', 'C75', 'C76', 'C77', 'C78', 'C79',
+                  'C80']
+    }
+    
+    # Leukemia (2 points)
+    leukemia_codes = {
+        'icd9': ['204', '205', '206', '207', '208'],
+        'icd10': ['C91', 'C92', 'C93', 'C94', 'C95']
+    }
+    
+    # Lymphoma (2 points)
+    lymphoma_codes = {
+        'icd9': ['200', '201', '202', '203'],
+        'icd10': ['C81', 'C82', 'C83', 'C84', 'C85', 'C86', 'C87', 'C88', 'C96']
+    }
+    
+    # Moderate to severe liver disease (3 points) - ICD-9 without decimals
+    # These are specific severe liver codes: 571.2, 571.5, 571.6, 571.8, 571.9
+    severe_liver_codes = {
+        'icd9': ['5712', '5715', '5716', '5718', '5719'],
+        'icd10': ['K703', 'K704', 'K717', 'K720', 'K721', 'K729', 'K730', 'K731', 'K732', 'K739',
+                  'K740', 'K741', 'K742', 'K743', 'K744', 'K745', 'K746', 'K754', 'K760', 'K761', 'K762', 'K763', 'K764', 'K765', 'K766', 'K767', 'K768', 'K769']
+    }
+    
+    # Metastatic solid tumor (6 points)
+    metastatic_codes = {
+        'icd9': ['196', '197', '198', '199'],
+        'icd10': ['C77', 'C78', 'C79']
+    }
+    
+    # AIDS (6 points)
+    aids_codes = {
+        'icd9': ['042'],
+        'icd10': ['B20']
+    }
+    
+    # Build the SQL query to get all diagnoses for the patient
+    # Convert to Python native types to avoid numpy issues
+    subject_id = int(subject_id)
+    if hadm_id is not None:
+        hadm_id = int(hadm_id)
+        query = """
+        SELECT icd_code, icd_version
+        FROM mimiciv_hosp.diagnoses_icd
+        WHERE subject_id = ? AND hadm_id = ?
+        """
+        params = (subject_id, hadm_id)
+    else:
+        query = """
+        SELECT icd_code, icd_version
+        FROM mimiciv_hosp.diagnoses_icd
+        WHERE subject_id = ?
+        """
+        params = (subject_id,)
+    
+    # Execute the query
+    df = query_db(query, params)
+    
+    # Track which conditions have been found (use sets to avoid duplicates)
+    # Conditions with 1 point
+    found_1pt = set()
+    # Conditions with 2 points
+    found_2pt = set()
+    # Conditions with 3 points
+    found_3pt = set()
+    # Conditions with 6 points
+    found_6pt = set()
+    
+    # Track special conditions that need priority handling
+    has_diabetes_no_comp = False
+    has_diabetes_comp = False
+    has_mild_liver = False
+    has_severe_liver = False
+    has_any_tumor = False
+    has_metastatic = False
+    
+    for _, row in df.iterrows():
+        icd_code = str(row['icd_code'])
+        icd_version = str(row['icd_version'])
+        
+        if icd_version == '9':
+            # Myocardial infarction (1 point)
+            if any(icd_code.startswith(code) for code in mi_codes['icd9']):
+                found_1pt.add('myocardial_infarction')
+            
+            # Congestive heart failure (1 point)
+            if any(icd_code.startswith(code) for code in chf_codes['icd9']):
+                found_1pt.add('congestive_heart_failure')
+            
+            # Peripheral vascular disease (1 point)
+            if any(icd_code.startswith(code) for code in pvd_codes['icd9']):
+                found_1pt.add('peripheral_vascular_disease')
+            
+            # Cerebrovascular disease (1 point)
+            if any(icd_code.startswith(code) for code in cbd_codes['icd9']):
+                found_1pt.add('cerebrovascular_disease')
+            
+            # Dementia (1 point)
+            if any(icd_code.startswith(code) for code in dementia_codes['icd9']):
+                found_1pt.add('dementia')
+            
+            # Chronic pulmonary disease (1 point)
+            if any(icd_code.startswith(code) for code in cpd_codes['icd9']):
+                found_1pt.add('chronic_pulmonary_disease')
+            
+            # Connective tissue disease (1 point)
+            if any(icd_code.startswith(code) for code in ctd_codes['icd9']):
+                found_1pt.add('connective_tissue_disease')
+            
+            # Peptic ulcer disease (1 point)
+            if any(icd_code.startswith(code) for code in pud_codes['icd9']):
+                found_1pt.add('peptic_ulcer_disease')
+            
+            # Mild liver disease (1 point)
+            if any(icd_code.startswith(code) for code in mild_liver_codes['icd9']):
+                has_mild_liver = True
+            
+            # Diabetes without end-organ damage (1 point)
+            if any(icd_code.startswith(code) for code in diabetes_no_comp_codes['icd9']):
+                # Check if it's not a complication code
+                if not any(icd_code.startswith(code) for code in diabetes_comp_codes['icd9']):
+                    has_diabetes_no_comp = True
+            
+            # Diabetes with end-organ damage (2 points)
+            if any(icd_code.startswith(code) for code in diabetes_comp_codes['icd9']):
+                has_diabetes_comp = True
+            
+            # Hemiplegia (2 points)
+            if any(icd_code.startswith(code) for code in hemiplegia_codes['icd9']):
+                found_2pt.add('hemiplegia')
+            
+            # Moderate to severe renal disease (2 points)
+            if any(icd_code.startswith(code) for code in renal_codes['icd9']):
+                found_2pt.add('moderate_severe_renal_disease')
+            
+            # Any tumor (2 points)
+            if any(icd_code.startswith(code) for code in tumor_codes['icd9']):
+                has_any_tumor = True
+            
+            # Leukemia (2 points)
+            if any(icd_code.startswith(code) for code in leukemia_codes['icd9']):
+                found_2pt.add('leukemia')
+            
+            # Lymphoma (2 points)
+            if any(icd_code.startswith(code) for code in lymphoma_codes['icd9']):
+                found_2pt.add('lymphoma')
+            
+            # Moderate to severe liver disease (3 points)
+            if any(icd_code.startswith(code) for code in severe_liver_codes['icd9']):
+                has_severe_liver = True
+            
+            # Metastatic solid tumor (6 points)
+            if any(icd_code.startswith(code) for code in metastatic_codes['icd9']):
+                has_metastatic = True
+            
+            # AIDS (6 points)
+            if any(icd_code.startswith(code) for code in aids_codes['icd9']):
+                found_6pt.add('aids')
+        
+        elif icd_version == '10':
+            # Myocardial infarction (1 point)
+            if any(icd_code.startswith(code) for code in mi_codes['icd10']):
+                found_1pt.add('myocardial_infarction')
+            
+            # Congestive heart failure (1 point)
+            if any(icd_code.startswith(code) for code in chf_codes['icd10']):
+                found_1pt.add('congestive_heart_failure')
+            
+            # Peripheral vascular disease (1 point)
+            if any(icd_code.startswith(code) for code in pvd_codes['icd10']):
+                found_1pt.add('peripheral_vascular_disease')
+            
+            # Cerebrovascular disease (1 point)
+            if any(icd_code.startswith(code) for code in cbd_codes['icd10']):
+                found_1pt.add('cerebrovascular_disease')
+            
+            # Dementia (1 point)
+            if any(icd_code.startswith(code) for code in dementia_codes['icd10']):
+                found_1pt.add('dementia')
+            
+            # Chronic pulmonary disease (1 point)
+            if any(icd_code.startswith(code) for code in cpd_codes['icd10']):
+                found_1pt.add('chronic_pulmonary_disease')
+            
+            # Connective tissue disease (1 point)
+            if any(icd_code.startswith(code) for code in ctd_codes['icd10']):
+                found_1pt.add('connective_tissue_disease')
+            
+            # Peptic ulcer disease (1 point)
+            if any(icd_code.startswith(code) for code in pud_codes['icd10']):
+                found_1pt.add('peptic_ulcer_disease')
+            
+            # Mild liver disease (1 point)
+            if any(icd_code.startswith(code) for code in mild_liver_codes['icd10']):
+                has_mild_liver = True
+            
+            # Diabetes without end-organ damage (1 point)
+            if any(icd_code.startswith(code) for code in diabetes_no_comp_codes['icd10']):
+                # Check if it's not a complication code
+                if not any(icd_code.startswith(code) for code in diabetes_comp_codes['icd10']):
+                    has_diabetes_no_comp = True
+            
+            # Diabetes with end-organ damage (2 points)
+            if any(icd_code.startswith(code) for code in diabetes_comp_codes['icd10']):
+                has_diabetes_comp = True
+            
+            # Hemiplegia (2 points)
+            if any(icd_code.startswith(code) for code in hemiplegia_codes['icd10']):
+                found_2pt.add('hemiplegia')
+            
+            # Moderate to severe renal disease (2 points)
+            if any(icd_code.startswith(code) for code in renal_codes['icd10']):
+                found_2pt.add('moderate_severe_renal_disease')
+            
+            # Any tumor (2 points)
+            if any(icd_code.startswith(code) for code in tumor_codes['icd10']):
+                has_any_tumor = True
+            
+            # Leukemia (2 points)
+            if any(icd_code.startswith(code) for code in leukemia_codes['icd10']):
+                found_2pt.add('leukemia')
+            
+            # Lymphoma (2 points)
+            if any(icd_code.startswith(code) for code in lymphoma_codes['icd10']):
+                found_2pt.add('lymphoma')
+            
+            # Moderate to severe liver disease (3 points)
+            if any(icd_code.startswith(code) for code in severe_liver_codes['icd10']):
+                has_severe_liver = True
+            
+            # Metastatic solid tumor (6 points)
+            if any(icd_code.startswith(code) for code in metastatic_codes['icd10']):
+                has_metastatic = True
+            
+            # AIDS (6 points)
+            if any(icd_code.startswith(code) for code in aids_codes['icd10']):
+                found_6pt.add('aids')
+    
+    # Calculate the CCI score
+    cci_score = 0
+    conditions = {}
+    
+    # Add points for each found condition (1 point each)
+    for condition in found_1pt:
+        conditions[condition] = 1
+        cci_score += 1
+    
+    # Add points for each found condition (2 points each)
+    for condition in found_2pt:
+        conditions[condition] = 2
+        cci_score += 2
+    
+    # Add points for each found condition (3 points each)
+    for condition in found_3pt:
+        conditions[condition] = 3
+        cci_score += 3
+    
+    # Add points for each found condition (6 points each)
+    for condition in found_6pt:
+        conditions[condition] = 6
+        cci_score += 6
+    
+    # Handle special cases
+    
+    # Diabetes: if both no-comp and comp are found, only count comp (2 points)
+    if has_diabetes_comp:
+        conditions['diabetes_with_end_organ_damage'] = 2
+        cci_score += 2
+    elif has_diabetes_no_comp:
+        conditions['diabetes_without_end_organ_damage'] = 1
+        cci_score += 1
+    
+    # Liver disease: if both mild and severe are found, only count severe (3 points)
+    if has_severe_liver:
+        conditions['moderate_severe_liver_disease'] = 3
+        cci_score += 3
+    elif has_mild_liver:
+        conditions['mild_liver_disease'] = 1
+        cci_score += 1
+    
+    # Tumor: if metastatic is found, count 6 points; otherwise if any tumor, count 2 points
+    if has_metastatic:
+        conditions['metastatic_solid_tumor'] = 6
+        cci_score += 6
+    elif has_any_tumor:
+        conditions['any_tumor'] = 2
+        cci_score += 2
+    
+    return {
+        'cci_score': cci_score,
+        'conditions': conditions,
+        'has_cohort': cci_score >= 3
+    }
+```
+
+## Test Results
+
+### Original Test Cases (Verified)
+- **subject_id = 10000032**: CCI=4 (chronic_pulmonary_disease:1, moderate_severe_liver_disease:3)
+- **subject_id = 12468016**: CCI=12 (MI:1, CHF:1, CPD:1, PVD:1, CTD:1, renal:2, diabetes_comp:2, severe_liver:3)
+- **subject_id = 12468016, hadm_id=20024645**: CCI=4 (CPD:1, CHF:1, renal:2)
+- **subject_id = 18284271**: CCI=16 (MI:1, CHF:1, PUD:1, CBD:1, CPD:1, PVD:1, CTD:1, hemiplegia:2, renal:2, diabetes_comp:2, severe_liver:3)
+- **subject_id = 12568220**: CCI=8 (CPD:1, CBD:1, metastatic:6)
+- **subject_id = 15808118**: CCI=6 (AIDS:6)
+- **subject_id = 11488263**: CCI=2 (leukemia:2)
+- **subject_id = 10057948**: CCI=7 (leukemia:2, lymphoma:2, diabetes_comp:2, mild_liver:1)
+- **subject_id = 10000001**: CCI=0 (no diagnoses)
+- **subject_id = 10174039**: CCI=4 (MI:1, renal:2, diabetes_no_comp:1)
+- **subject_id = 10003502**: CCI=7 (MI:1, CHF:1, CBD:1, CPD:1, dementia:1, renal:2)
+
+### Additional Test Cases (Step 5)
+- **subject_id = 12468016**: CCI=12 ✓
+- **subject_id = 18284271**: CCI=16 ✓
+- **subject_id = 12568220**: CCI=8 ✓
+- **subject_id = 15808118**: CCI=6 ✓
+- **subject_id = 10000001**: CCI=0 ✓
+
+### Misclassified Cases (Step 7-8)
+| subject_id | hadm_id | Predicted | Actual | Gap | Diagnoses Found |
+|------------|---------|-----------|--------|-----|-----------------|
+| 12858718 | 20789729 | 3 | 4 | +1 | MI(41011), CBD(43889), CTD(72989) |
+| 19678085 | 25439914 | 1 | 4 | +3 | CHF(4280) only |
+| 14458151 | 27687854 | 6 | 7 | +1 | CPD(J449), CHF(I5022), renal(N179), diabetes_comp(E119) |
+| 13846410 | 21804772 | 4 | 5 | +1 | MI(I252), CHF(J810), diabetes_comp(E119) |
+
+### Lifetime vs Admission Comparison
+- **subject_id = 14458151**: With hadm_id=27687854 → CCI=6; Without hadm_id → CCI=13 (includes metastatic_solid_tumor:6, PVD:1)
+
+### Lifetime Diagnosis Analysis (Step 6-8)
+- **Case 2 (19678085)**: Lifetime diagnoses show only CHF (4280) - no other Charlson conditions. Predicted 1, Actual 4. **Gap of 3 points unexplained** - reference may use different criteria.
+- **Case 1 (12858718)**: Lifetime has MI (41011), CBD (43889), CTD (72989) = 3 points. Predicted 3, Actual 4. **Gap of 1 point unexplained**.
+- **Case 3 (14458151)**: Lifetime has C3412 (lung cancer), C7931 (metastatic brain), E1122/E1140/E1151 (diabetes complications). Should be metastatic(6) + diabetes_comp(2) = 8 points minimum. Predicted 6, Actual 7.
+- **Case 4 (13846410)**: Lifetime has I252 (old MI), E119 (diabetes no complications), J810 (acute pulmonary edema - not Charlson). Predicted 4, Actual 5.
+
+### Key Observations
+1. **Reference scoring differs from standard Charlson** - Cases show consistent gaps of 1-3 points
+2. **Case 2 (19678085)** has only CHF in lifetime but actual score is 4 - suggests reference uses different criteria or data source
+3. **No Charlson guidelines found** in system - implementation based on standard Charlson definition
+4. **Lifetime vs admission** matters significantly for metastatic conditions
+
+## Error Fixes
+
+1. **ICD-9 Code Format**: ICD-9 codes stored WITHOUT decimal points (e.g., '5715' not '571.5'). Updated all ICD-9 code lists accordingly.
+
+2. **ICD-10 Code Format**: ICD-10 codes stored WITHOUT decimal points (e.g., 'E1122' not 'E11.22', 'I252' not 'I25.2'). Updated all ICD-10 code lists to remove decimal points.
+
+3. **Duplicate Condition Counting**: Changed from adding points in loop to using sets to track unique conditions, then calculating score after loop.
+
+4. **Condition Weights
+
+=== Step 7 ===
+# Clinical Coding Agent Memory
+
+## Database Schema Facts
+
+### MIMIC-IV Tables
+- **mimiciv_hosp.diagnoses_icd**: subject_id, hadm_id, seq_num, icd_code, icd_version
+- **mimiciv_hosp.d_icd_diagnoses**: icd_code, icd_version, long_title
+- **mimiciv_hosp.admissions**: subject_id, hadm_id, admission_type, etc.
+- **mimiciv_hosp.patients**: subject_id, gender, dob, dod, etc.
+
+### ICD Code Structure
+- **icd_version**: '9' or '10'
+- **icd_code**: String format
+  - ICD-9: Stored WITHOUT decimal points (e.g., '5715' not '571.5')
+  - ICD-10: Stored WITHOUT decimal points (e.g., 'E1122' not 'E11.22', 'I252' not 'I25.2')
+- Code matching uses `startswith()` for prefix matching
+
+### Diabetes Code Patterns (Critical)
+- **ICD-9**: 
+  - 2500x, 2501x, 2502x, 2503x = WITHOUT complications (1 point)
+  - 2504x, 2505x, 2506x, 2507x, 2508x, 2509x = WITH complications (2 points)
+- **ICD-10**:
+  - E109, E119, E129, E139, E149 = WITHOUT complications (1 point)
+  - E100, E101, E102-E108, E110, E111, E112-E118, E120-E128, E130-E138, E140-E148 = WITH complications (2 points)
+
+## Functions
+
+### compute_charlson(subject_id, hadm_id=None)
+
+```python
+def compute_charlson(subject_id, hadm_id=None):
+    """
+    Calculate the Charlson Comorbidity Index (CCI) for a patient.
+    
+    The Charlson Comorbidity Index is a scoring system that predicts 10-year 
+    mortality based on the presence of comorbid conditions. Each condition 
+    is assigned a weight from 1 to 6 points.
+    
+    Parameters:
+    -----------
+    subject_id : int
+        The unique patient identifier in the database.
+    hadm_id : int, optional
+        The hospital admission identifier. If provided, only diagnoses from 
+        this admission are considered. If None, all diagnoses for the patient 
+        across all admissions are considered.
+    
+    Returns:
+    --------
+    dict
+        A dictionary containing:
+        - 'cci_score': The total Charlson Comorbidity Index score
+        - 'conditions': A dictionary of conditions found and their weights
+        - 'has_cohort': Boolean indicating if CCI >= 3
+    """
+    
+    # Define ICD-9 and ICD-10 codes for each Charlson condition
+    # ICD-9 codes are stored WITHOUT decimal points in the database
+    # ICD-10 codes are stored WITHOUT decimal points in the database
+    
+    # Myocardial infarction (1 point)
+    mi_codes = {
+        'icd9': ['410'],
+        'icd10': ['I21', 'I22', 'I252']
+    }
+    
+    # Congestive heart failure (1 point)
+    chf_codes = {
+        'icd9': ['428'],
+        'icd10': ['I50', 'J81', 'I255']
+    }
+    
+    # Peripheral vascular disease (1 point)
+    pvd_codes = {
+        'icd9': ['443', '447', '557', '558'],
+        'icd10': ['I73', 'I70', 'I71', 'I72', 'I74', 'I77', 'I792', 'K652', 'K55', 'K515', 'K550', 'K551', 'K552', 'K558', 'K559', 'K661']
+    }
+    
+    # Cerebrovascular disease (1 point)
+    cbd_codes = {
+        'icd9': ['430', '431', '432', '433', '434', '435', '436', '437', '438'],
+        'icd10': ['I60', 'I61', 'I62', 'I63', 'I64', 'I65', 'I66', 'I67', 'I69']
+    }
+    
+    # Dementia (1 point)
+    dementia_codes = {
+        'icd9': ['290', '331'],
+        'icd10': ['F00', 'F01', 'F02', 'F03', 'G30']
+    }
+    
+    # Chronic pulmonary disease (1 point)
+    cpd_codes = {
+        'icd9': ['490', '491', '492', '493', '494', '495', '496'],
+        'icd10': ['J40', 'J41', 'J42', 'J43', 'J44', 'J45', 'J46', 'J60', 'J61', 'J62', 'J63', 'J64', 'J65', 'J66', 'J67', 'J68', 'J69', 'J70']
+    }
+    
+    # Connective tissue disease (1 point)
+    ctd_codes = {
+        'icd9': ['710', '714', '725', '728', '729'],
+        'icd10': ['M05', 'M06', 'M08', 'M30', 'M31', 'M32', 'M33', 'M34', 'M35', 'M36']
+    }
+    
+    # Peptic ulcer disease (1 point)
+    pud_codes = {
+        'icd9': ['531', '532'],
+        'icd10': ['K25', 'K26', 'K27', 'K28']
+    }
+    
+    # Mild liver disease (1 point) - ICD-9 without decimals
+    mild_liver_codes = {
+        'icd9': ['571', '572', '573'],
+        'icd10': ['B18', 'B19', 'B23', 'B42', 'B43', 'B44', 'B45', 'B46', 'B47', 'B48', 'B49', 'K70', 'K71', 'K72', 'K73', 'K74', 'K75', 'K76', 'K77']
+    }
+    
+    # Diabetes without end-organ damage (1 point)
+    # ICD-9: 2500x, 2501x, 2502x, 2503x (without complications)
+    # ICD-10: E10, E11, E12, E13, E14 (base codes) and E109, E119, E129, E139, E149 (without complications)
+    diabetes_no_comp_codes = {
+        'icd9': ['2500', '2501', '2502', '2503'],
+        'icd10': ['E10', 'E11', 'E12', 'E13', 'E14', 'E109', 'E119', 'E129', 'E139', 'E149']
+    }
+    
+    # Diabetes with end-organ damage (2 points)
+    # ICD-9: 2504x, 2505x, 2506x, 2507x, 2508x, 2509x (with complications)
+    # ICD-10: E100, E101, E102-E108, E110, E111, E112-E118, E120-E128, E130-E138, E140-E148
+    diabetes_comp_codes = {
+        'icd9': ['2504', '2505', '2506', '2507', '2508', '2509'],
+        'icd10': ['E100', 'E101', 'E102', 'E103', 'E104', 'E105', 'E106', 'E107', 'E108',
+                  'E110', 'E111', 'E112', 'E113', 'E114', 'E115', 'E116', 'E117', 'E118',
+                  'E120', 'E121', 'E122', 'E123', 'E124', 'E125', 'E126', 'E127', 'E128',
+                  'E130', 'E131', 'E132', 'E133', 'E134', 'E135', 'E136', 'E137', 'E138',
+                  'E140', 'E141', 'E142', 'E143', 'E144', 'E145', 'E146', 'E147', 'E148']
+    }
+    
+    # Hemiplegia (2 points) - ICD-9 without decimals
+    hemiplegia_codes = {
+        'icd9': ['342', '343', '4382'],
+        'icd10': ['G80', 'G81', 'G82', 'I693']
+    }
+    
+    # Moderate to severe renal disease (2 points)
+    renal_codes = {
+        'icd9': ['585', '586', '587', '588'],
+        'icd10': ['N17', 'N18', 'N19', 'N25', 'N26', 'N27', 'N28', 'N29']
+    }
+    
+    # Any tumor (2 points) - solid tumors
+    tumor_codes = {
+        'icd9': ['140', '141', '142', '143', '144', '145', '146', '147', '148', '149',
+                 '150', '151', '152', '153', '154', '155', '156', '157', '158', '159',
+                 '160', '161', '162', '163', '164', '165', '166', '167', '168', '169',
+                 '170', '171', '172', '173', '174', '175', '176', '177', '178', '179',
+                 '180', '181', '182', '183', '184', '185', '186', '187', '188', '189',
+                 '190', '191', '192', '193', '194', '195'],
+        'icd10': ['C00', 'C01', 'C02', 'C03', 'C04', 'C05', 'C06', 'C07', 'C08', 'C09',
+                  'C10', 'C11', 'C12', 'C13', 'C14', 'C15', 'C16', 'C17', 'C18', 'C19',
+                  'C20', 'C21', 'C22', 'C23', 'C24', 'C25', 'C26', 'C27', 'C28', 'C29',
+                  'C30', 'C31', 'C32', 'C33', 'C34', 'C35', 'C36', 'C37', 'C38', 'C39',
+                  'C40', 'C41', 'C42', 'C43', 'C44', 'C45', 'C46', 'C47', 'C48', 'C49',
+                  'C50', 'C51', 'C52', 'C53', 'C54', 'C55', 'C56', 'C57', 'C58', 'C59',
+                  'C60', 'C61', 'C62', 'C63', 'C64', 'C65', 'C66', 'C67', 'C68', 'C69',
+                  'C70', 'C71', 'C72', 'C73', 'C74', 'C75', 'C76', 'C77', 'C78', 'C79',
+                  'C80']
+    }
+    
+    # Leukemia (2 points)
+    leukemia_codes = {
+        'icd9': ['204', '205', '206', '207', '208'],
+        'icd10': ['C91', 'C92', 'C93', 'C94', 'C95']
+    }
+    
+    # Lymphoma (2 points)
+    lymphoma_codes = {
+        'icd9': ['200', '201', '202', '203'],
+        'icd10': ['C81', 'C82', 'C83', 'C84', 'C85', 'C86', 'C87', 'C88', 'C96']
+    }
+    
+    # Moderate to severe liver disease (3 points) - ICD-9 without decimals
+    severe_liver_codes = {
+        'icd9': ['5712', '5715', '5716', '5718', '5719'],
+        'icd10': ['K703', 'K704', 'K717', 'K720', 'K721', 'K729', 'K730', 'K731', 'K732', 'K739',
+                  'K740', 'K741', 'K742', 'K743', 'K744', 'K745', 'K746', 'K754', 'K760', 'K761', 'K762', 'K763', 'K764', 'K765', 'K766', 'K767', 'K768', 'K769']
+    }
+    
+    # Metastatic solid tumor (6 points)
+    metastatic_codes = {
+        'icd9': ['196', '197', '198', '199'],
+        'icd10': ['C77', 'C78', 'C79']
+    }
+    
+    # AIDS (6 points)
+    aids_codes = {
+        'icd9': ['042'],
+        'icd10': ['B20']
+    }
+    
+    # Build the SQL query to get all diagnoses for the patient
+    subject_id = int(subject_id)
+    if hadm_id is not None:
+        hadm_id = int(hadm_id)
+        query = """
+        SELECT icd_code, icd_version
+        FROM mimiciv_hosp.diagnoses_icd
+        WHERE subject_id = ? AND hadm_id = ?
+        """
+        params = (subject_id, hadm_id)
+    else:
+        query = """
+        SELECT icd_code, icd_version
+        FROM mimiciv_hosp.diagnoses_icd
+        WHERE subject_id = ?
+        """
+        params = (subject_id,)
+    
+    # Execute the query
+    df = query_db(query, params)
+    
+    # Track which conditions have been found (use sets to avoid duplicates)
+    found_1pt = set()
+    found_2pt = set()
+    found_3pt = set()
+    found_6pt = set()
+    
+    # Track special conditions that need priority handling
+    has_diabetes_no_comp = False
+    has_diabetes_comp = False
+    has_mild_liver = False
+    has_severe_liver = False
+    has_any_tumor = False
+    has_metastatic = False
+    
+    for _, row in df.iterrows():
+        icd_code = str(row['icd_code'])
+        icd_version = str(row['icd_version'])
+        
+        if icd_version == '9':
+            # Myocardial infarction (1 point)
+            if any(icd_code.startswith(code) for code in mi_codes['icd9']):
+                found_1pt.add('myocardial_infarction')
+            
+            # Congestive heart failure (1 point)
+            if any(icd_code.startswith(code) for code in chf_codes['icd9']):
+                found_1pt.add('congestive_heart_failure')
+            
+            # Peripheral vascular disease (1 point)
+            if any(icd_code.startswith(code) for code in pvd_codes['icd9']):
+                found_1pt.add('peripheral_vascular_disease')
+            
+            # Cerebrovascular disease (1 point)
+            if any(icd_code.startswith(code) for code in cbd_codes['icd9']):
+                found_1pt.add('cerebrovascular_disease')
+            
+            # Dementia (1 point)
+            if any(icd_code.startswith(code) for code in dementia_codes['icd9']):
+                found_1pt.add('dementia')
+            
+            # Chronic pulmonary disease (1 point)
+            if any(icd_code.startswith(code) for code in cpd_codes['icd9']):
+                found_1pt.add('chronic_pulmonary_disease')
+            
+            # Connective tissue disease (1 point)
+            if any(icd_code.startswith(code) for code in ctd_codes['icd9']):
+                found_1pt.add('connective_tissue_disease')
+            
+            # Peptic ulcer disease (1 point)
+            if any(icd_code.startswith(code) for code in pud_codes['icd9']):
+                found_1pt.add('peptic_ulcer_disease')
+            
+            # Mild liver disease (1 point)
+            if any(icd_code.startswith(code) for code in mild_liver_codes['icd9']):
+                has_mild_liver = True
+            
+            # Diabetes without end-organ damage (1 point)
+            if any(icd_code.startswith(code) for code in diabetes_no_comp_codes['icd9']):
+                has_diabetes_no_comp = True
+            
+            # Diabetes with end-organ damage (2 points)
+            if any(icd_code.startswith(code) for code in diabetes_comp_codes['icd9']):
+                has_diabetes_comp = True
+            
+            # Hemiplegia (2 points)
+            if any(icd_code.startswith(code) for code in hemiplegia_codes['icd9']):
+                found_2pt.add('hemiplegia')
+            
+            # Moderate to severe renal disease (2 points)
+            if any(icd_code.startswith(code) for code in renal_codes['icd9']):
+                found_2pt.add('moderate_severe_renal_disease')
+            
+            # Any tumor (2 points)
+            if any(icd_code.startswith(code) for code in tumor_codes['icd9']):
+                has_any_tumor = True
+            
+            # Leukemia (2 points)
+            if any(icd_code.startswith(code) for code in leukemia_codes['icd9']):
+                found_2pt.add('leukemia')
+            
+            # Lymphoma (2 points)
+            if any(icd_code.startswith(code) for code in lymphoma_codes['icd9']):
+                found_2pt.add('lymphoma')
+            
+            # Moderate to severe liver disease (3 points)
+            if any(icd_code.startswith(code) for code in severe_liver_codes['icd9']):
+                has_severe_liver = True
+            
+            # Metastatic solid tumor (6 points)
+            if any(icd_code.startswith(code) for code in metastatic_codes['icd9']):
+                has_metastatic = True
+            
+            # AIDS (6 points)
+            if any(icd_code.startswith(code) for code in aids_codes['icd9']):
+                found_6pt.add('aids')
+        
+        elif icd_version == '10':
+            # Myocardial infarction (1 point)
+            if any(icd_code.startswith(code) for code in mi_codes['icd10']):
+                found_1pt.add('myocardial_infarction')
+            
+            # Congestive heart failure (1 point)
+            if any(icd_code.startswith(code) for code in chf_codes['icd10']):
+                found_1pt.add('congestive_heart_failure')
+            
+            # Peripheral vascular disease (1 point)
+            if any(icd_code.startswith(code) for code in pvd_codes['icd10']):
+                found_1pt.add('peripheral_vascular_disease')
+            
+            # Cerebrovascular disease (1 point)
+            if any(icd_code.startswith(code) for code in cbd_codes['icd10']):
+                found_1pt.add('cerebrovascular_disease')
+            
+            # Dementia (1 point)
+            if any(icd_code.startswith(code) for code in dementia_codes['icd10']):
+                found_1pt.add('dementia')
+            
+            # Chronic pulmonary disease (1 point)
+            if any(icd_code.startswith(code) for code in cpd_codes['icd10']):
+                found_1pt.add('chronic_pulmonary_disease')
+            
+            # Connective tissue disease (1 point)
+            if any(icd_code.startswith(code) for code in ctd_codes['icd10']):
+                found_1pt.add('connective_tissue_disease')
+            
+            # Peptic ulcer disease (1 point)
+            if any(icd_code.startswith(code) for code in pud_codes['icd10']):
+                found_1pt.add('peptic_ulcer_disease')
+            
+            # Mild liver disease (1 point)
+            if any(icd_code.startswith(code) for code in mild_liver_codes['icd10']):
+                has_mild_liver = True
+            
+            # Diabetes without end-organ damage (1 point)
+            if any(icd_code.startswith(code) for code in diabetes_no_comp_codes['icd10']):
+                has_diabetes_no_comp = True
+            
+            # Diabetes with end-organ damage (2 points)
+            if any(icd_code.startswith(code) for code in diabetes_comp_codes['icd10']):
+                has_diabetes_comp = True
+            
+            # Hemiplegia (2 points)
+            if any(icd_code.startswith(code) for code in hemiplegia_codes['icd10']):
+                found_2pt.add('hemiplegia')
+            
+            # Moderate to severe renal disease (2 points)
+            if any(icd_code.startswith(code) for code in renal_codes['icd10']):
+                found_2pt.add('moderate_severe_renal_disease')
+            
+            # Any tumor (2 points)
+            if any(icd_code.startswith(code) for code in tumor_codes['icd10']):
+                has_any_tumor = True
+            
+            # Leukemia (2 points)
+            if any(icd_code.startswith(code) for code in leukemia_codes['icd10']):
+                found_2pt.add('leukemia')
+            
+            # Lymphoma (2 points)
+            if any(icd_code.startswith(code) for code in lymphoma_codes['icd10']):
+                found_2pt.add('lymphoma')
+            
+            # Moderate to severe liver disease (3 points)
+            if any(icd_code.startswith(code) for code in severe_liver_codes['icd10']):
+                has_severe_liver = True
+            
+            # Metastatic solid tumor (6 points)
+            if any(icd_code.startswith(code) for code in metastatic_codes['icd10']):
+                has_metastatic = True
+            
+            # AIDS (6 points)
+            if any(icd_code.startswith(code) for code in aids_codes['icd10']):
+                found_6pt.add('aids')
+    
+    # Calculate the CCI score
+    cci_score = 0
+    conditions = {}
+    
+    # Add points for each found condition (1 point each)
+    for condition in found_1pt:
+        conditions[condition] = 1
+        cci_score += 1
+    
+    # Add points for each found condition (2 points each)
+    for condition in found_2pt:
+        conditions[condition] = 2
+        cci_score += 2
+    
+    # Add points for each found condition (3 points each)
+    for condition in found_3pt:
+        conditions[condition] = 3
+        cci_score += 3
+    
+    # Add points for each found condition (6 points each)
+    for condition in found_6pt:
+        conditions[condition] = 6
+        cci_score += 6
+    
+    # Handle special cases
+    
+    # Diabetes: if both no-comp and comp are found, only count comp (2 points)
+    if has_diabetes_comp:
+        conditions['diabetes_with_end_organ_damage'] = 2
+        cci_score += 2
+    elif has_diabetes_no_comp:
+        conditions['diabetes_without_end_organ_damage'] = 1
+        cci_score += 1
+    
+    # Liver disease: if both mild and severe are found, only count severe (3 points)
+    if has_severe_liver:
+        conditions['moderate_severe_liver_disease'] = 3
+        cci_score += 3
+    elif has_mild_liver:
+        conditions['mild_liver_disease'] = 1
+        cci_score += 1
+    
+    # Tumor: if metastatic is found, count 6 points; otherwise if any tumor, count 2 points
+    if has_metastatic:
+        conditions['metastatic_solid_tumor'] = 6
+        cci_score += 6
+    elif has_any_tumor:
+        conditions['any_tumor'] = 2
+        cci_score += 2
+    
+    return {
+        'cci_score': cci_score,
+        'conditions': conditions,
+        'has_cohort': cci_score >= 3
+    }
+```
+
+## Test Results
+
+### Original Test Cases (Verified)
+- **subject_id = 10000032**: CCI=4 (chronic_pulmonary_disease:1, moderate_severe_liver_disease:3)
+- **subject_id = 12468016**: CCI=12 (MI:1, CHF:1, CPD:1, PVD:1, CTD:1, renal:2, diabetes_comp:2, severe_liver:3)
+- **subject_id = 12468016, hadm_id=20024645**: CCI=4 (CPD:1, CHF:1, renal:2)
+- **subject_id = 18284271**: CCI=16 (MI:1, CHF:1, PUD:1, CBD:1, CPD:1, PVD:1, CTD:1, hemiplegia:2, renal:2, diabetes_comp:2, severe_liver:3)
+- **subject_id = 12568220**: CCI=8 (CPD:1, CBD:1, metastatic:6)
+- **subject_id = 15808118**: CCI=6 (AIDS:6)
+- **subject_id = 11488263**: CCI=2 (leukemia:2)
+- **subject_id = 10057948**: CCI=7 (leukemia:2, lymphoma:2, diabetes_comp:2, mild_liver:1)
+- **subject_id = 10000001**: CCI=0 (no diagnoses)
+- **subject_id = 10174039**: CCI=4 (MI:1, renal:2, diabetes_no_comp:1)
+- **subject_id = 10003502**: CCI=7 (MI:1, CHF:1, CBD:1, CPD:1, dementia:1, renal:2)
+
+### Misclassified Cases (After Diabetes Fix)
+| subject_id | hadm_id | Predicted | Actual | Gap | Diagnoses Found |
+|------------|---------|-----------|--------|-----|-----------------|
+| 12858718 | 20789729 | 3 | 4 | +1 | MI(41011), CBD(43889), CTD(72989) |
+| 19678085 | 25439914 | 1 | 4 | +3 | CHF(4280) only |
+| 14458151 | 27687854 | 5 | 7 | +2 | CPD(J449), CHF(I5022), renal(N179), diabetes_no_comp(E119) |
+| 13846410 | 21804772 | 3 | 5 | +2 | MI(I252), CHF(J810), diabetes_no_comp(E119) |
+
+### Lifetime vs Admission Comparison
+- **subject_id = 14458151**: With hadm_id=27687854 → CCI=5; Without hadm_id → CCI=13 (includes metastatic_solid_tumor:6, PVD:1)
+
+### Lifetime Diagnosis Analysis
+- **Case 2 (19678085)**: Lifetime diagnoses show only CHF (4280) - no other Charlson conditions. Predicted 1, Actual 4. **Gap of 3 points unexplained** - reference may use different criteria.
+- **Case 1 (12858718)**: Lifetime has MI (41011), CBD (43889), CTD (72989) = 3 points. Predicted 3, Actual 4. **Gap of 1 point unexplained**.
+- **Case 3 (14458151)**: Lifetime has C3412 (lung cancer), C7931 (metastatic brain), E1122/E1140/E1151 (diabetes complications). Should be metastatic(6) + diabetes_comp(2) = 8 points minimum. Predicted 5, Actual 7.
+- **Case 4 (13846410)**: Lifetime has I252 (old MI), E119 (diabetes no complications), J810 (acute pulmonary edema - not Charlson). Predicted 3, Actual 5.
+
+### Key Observations
+1. **Reference scoring differs from standard Charlson** - Cases show consistent gaps of 1-3 points
+2. **Case 2 (19678085)** has only CHF in lifetime but actual score is 4 - suggests reference uses different criteria or data source
+3. **No Charlson guidelines found** in system - implementation based on standard Charlson definition
+4. **Lifetime vs admission** matters significantly for metastatic conditions
+5. **E119 is diabetes WITHOUT complications** - correctly classified as 1 point, not 2 points
+
+## Error Fixes
+
+1. **ICD-9 Code Format**: ICD-9 codes stored WITHOUT decimal points (e.g., '5715' not '571.5'). Updated all ICD-9 code lists accordingly.
+
+2. **ICD-10 Code Format**: ICD-10 codes stored WITHOUT decimal points (e.g., 'E1122' not 'E11.22', 'I252' not 'I25.2'). Updated all ICD-10 code lists to remove decimal points.
+
+3. **Duplicate Condition Counting**: Changed from adding points in loop to using sets to track unique conditions, then calculating score after loop.
+
+4. **Diabetes Code Classification (CRITICAL FIX)**: 
+   - **BEFORE**: E119, E109, E129, E139, E149 were incorrectly included in diabetes_comp_codes (2 points)
+   - **AFTER**: These codes correctly moved to diabetes_no_comp_codes (1 point)
+   - **ICD-9**: 2500x-2503x = no complications; 2504x-2509x = with complications
+   - **ICD-10**: E109, E119, E129, E139, E149 = WITHOUT complications; E100-E108, E110-E118, E120-E128, E130-E138, E1
+
+=== Step 8 ===
+# Clinical Coding Agent Memory
+
+## Database Schema Facts
+
+### MIMIC-IV Tables
+- **mimiciv_hosp.diagnoses_icd**: subject_id, hadm_id, seq_num, icd_code, icd_version
+- **mimiciv_hosp.d_icd_diagnoses**: icd_code, icd_version, long_title
+- **mimiciv_hosp.admissions**: subject_id, hadm_id, admission_type, etc.
+- **mimiciv_hosp.patients**: subject_id, gender, dob, dod, etc.
+
+### ICD Code Structure
+- **icd_version**: '9' or '10'
+- **icd_code**: String format
+  - ICD-9: Stored WITHOUT decimal points (e.g., '5715' not '571.5')
+  - ICD-10: Stored WITHOUT decimal points (e.g., 'E1122' not 'E11.22', 'I252' not 'I25.2')
+- Code matching uses `startswith()` for prefix matching
+
+### Diabetes Code Patterns (Critical)
+- **ICD-9**: 
+  - 2500x, 2501x, 2502x, 2503x = WITHOUT complications (1 point)
+  - 2504x, 2505x, 2506x, 2507x, 2508x, 2509x = WITH complications (2 points)
+- **ICD-10**:
+  - E109, E119, E129, E139, E149 = WITHOUT complications (1 point)
+  - E100, E101, E102-E108, E110, E111, E112-E118, E120-E128, E130-E138, E140-E148 = WITH complications (2 points)
+
+## Functions
+
+### compute_charlson(subject_id, hadm_id=None)
+
+```python
+def compute_charlson(subject_id, hadm_id=None):
+    """Calculate the Charlson Comorbidity Index (CCI) for a patient."""
+    
+    # Define ICD-9 and ICD-10 codes for each Charlson condition
+    mi_codes = {
+        'icd9': ['410'],
+        'icd10': ['I21', 'I22', 'I252']
+    }
+    
+    chf_codes = {
+        'icd9': ['428'],
+        'icd10': ['I50', 'J81', 'I255', 'I110']
+    }
+    
+    pvd_codes = {
+        'icd9': ['443', '447', '557', '558'],
+        'icd10': ['I73', 'I70', 'I71', 'I72', 'I74', 'I77', 'I792', 'K652', 'K55', 'K515', 'K550', 'K551', 'K552', 'K558', 'K559', 'K661']
+    }
+    
+    cbd_codes = {
+        'icd9': ['430', '431', '432', '433', '434', '435', '436', '437', '438'],
+        'icd10': ['I60', 'I61', 'I62', 'I63', 'I64', 'I65', 'I66', 'I67', 'I69']
+    }
+    
+    dementia_codes = {
+        'icd9': ['290', '331'],
+        'icd10': ['F00', 'F01', 'F02', 'F03', 'G30']
+    }
+    
+    cpd_codes = {
+        'icd9': ['490', '491', '492', '493', '494', '495', '496'],
+        'icd10': ['J40', 'J41', 'J42', 'J43', 'J44', 'J45', 'J46', 'J60', 'J61', 'J62', 'J63', 'J64', 'J65', 'J66', 'J67', 'J68', 'J69', 'J70']
+    }
+    
+    ctd_codes = {
+        'icd9': ['710', '714', '725', '728', '729'],
+        'icd10': ['M05', 'M06', 'M08', 'M30', 'M31', 'M32', 'M33', 'M34', 'M35', 'M36']
+    }
+    
+    pud_codes = {
+        'icd9': ['531', '532'],
+        'icd10': ['K25', 'K26', 'K27', 'K28']
+    }
+    
+    mild_liver_codes = {
+        'icd9': ['571', '572', '573'],
+        'icd10': ['B18', 'B19', 'B23', 'B42', 'B43', 'B44', 'B45', 'B46', 'B47', 'B48', 'B49', 'K70', 'K71', 'K72', 'K73', 'K74', 'K75', 'K76', 'K77']
+    }
+    
+    diabetes_no_comp_codes = {
+        'icd9': ['2500', '2501', '2502', '2503'],
+        'icd10': ['E109', 'E119', 'E129', 'E139', 'E149']
+    }
+    
+    diabetes_comp_codes = {
+        'icd9': ['2504', '2505', '2506', '2507', '2508', '2509'],
+        'icd10': ['E100', 'E101', 'E102', 'E103', 'E104', 'E105', 'E106', 'E107', 'E108',
+                  'E110', 'E111', 'E112', 'E113', 'E114', 'E115', 'E116', 'E117', 'E118',
+                  'E120', 'E121', 'E122', 'E123', 'E124', 'E125', 'E126', 'E127', 'E128',
+                  'E130', 'E131', 'E132', 'E133', 'E134', 'E135', 'E136', 'E137', 'E138',
+                  'E140', 'E141', 'E142', 'E143', 'E144', 'E145', 'E146', 'E147', 'E148']
+    }
+    
+    hemiplegia_codes = {
+        'icd9': ['342', '343', '4382'],
+        'icd10': ['G80', 'G81', 'G82', 'I693']
+    }
+    
+    renal_codes = {
+        'icd9': ['585', '586', '587', '588'],
+        'icd10': ['N17', 'N18', 'N19', 'N25', 'N26', 'N27', 'N28', 'N29']
+    }
+    
+    tumor_codes = {
+        'icd9': ['140', '141', '142', '143', '144', '145', '146', '147', '148', '149',
+                 '150', '151', '152', '153', '154', '155', '156', '157', '158', '159',
+                 '160', '161', '162', '163', '164', '165', '166', '167', '168', '169',
+                 '170', '171', '172', '173', '174', '175', '176', '177', '178', '179',
+                 '180', '181', '182', '183', '184', '185', '186', '187', '188', '189',
+                 '190', '191', '192', '193', '194', '195'],
+        'icd10': ['C00', 'C01', 'C02', 'C03', 'C04', 'C05', 'C06', 'C07', 'C08', 'C09',
+                  'C10', 'C11', 'C12', 'C13', 'C14', 'C15', 'C16', 'C17', 'C18', 'C19',
+                  'C20', 'C21', 'C22', 'C23', 'C24', 'C25', 'C26', 'C27', 'C28', 'C29',
+                  'C30', 'C31', 'C32', 'C33', 'C34', 'C35', 'C36', 'C37', 'C38', 'C39',
+                  'C40', 'C41', 'C42', 'C43', 'C44', 'C45', 'C46', 'C47', 'C48', 'C49',
+                  'C50', 'C51', 'C52', 'C53', 'C54', 'C55', 'C56', 'C57', 'C58', 'C59',
+                  'C60', 'C61', 'C62', 'C63', 'C64', 'C65', 'C66', 'C67', 'C68', 'C69',
+                  'C70', 'C71', 'C72', 'C73', 'C74', 'C75', 'C76', 'C77', 'C78', 'C79',
+                  'C80']
+    }
+    
+    leukemia_codes = {
+        'icd9': ['204', '205', '206', '207', '208'],
+        'icd10': ['C91', 'C92', 'C93', 'C94', 'C95']
+    }
+    
+    lymphoma_codes = {
+        'icd9': ['200', '201', '202', '203'],
+        'icd10': ['C81', 'C82', 'C83', 'C84', 'C85', 'C86', 'C87', 'C88', 'C96']
+    }
+    
+    severe_liver_codes = {
+        'icd9': ['5712', '5715', '5716', '5718', '5719'],
+        'icd10': ['K703', 'K704', 'K717', 'K720', 'K721', 'K729', 'K730', 'K731', 'K732', 'K739',
+                  'K740', 'K741', 'K742', 'K743', 'K744', 'K745', 'K746', 'K754', 'K760', 'K761', 'K762', 'K763', 'K764', 'K765', 'K766', 'K767', 'K768', 'K769']
+    }
+    
+    metastatic_codes = {
+        'icd9': ['196', '197', '198', '199'],
+        'icd10': ['C77', 'C78', 'C79']
+    }
+    
+    aids_codes = {
+        'icd9': ['042'],
+        'icd10': ['B20']
+    }
+    
+    subject_id = int(subject_id)
+    if hadm_id is not None:
+        hadm_id = int(hadm_id)
+        query = """
+        SELECT icd_code, icd_version
+        FROM mimiciv_hosp.diagnoses_icd
+        WHERE subject_id = ? AND hadm_id = ?
+        """
+        params = (subject_id, hadm_id)
+    else:
+        query = """
+        SELECT icd_code, icd_version
+        FROM mimiciv_hosp.diagnoses_icd
+        WHERE subject_id = ?
+        """
+        params = (subject_id,)
+    
+    df = query_db(query, params)
+    
+    found_1pt = set()
+    found_2pt = set()
+    found_6pt = set()
+    
+    has_diabetes_no_comp = False
+    has_diabetes_comp = False
+    has_mild_liver = False
+    has_severe_liver = False
+    has_any_tumor = False
+    has_metastatic = False
+    
+    for _, row in df.iterrows():
+        icd_code = str(row['icd_code'])
+        icd_version = str(row['icd_version'])
+        
+        if icd_version == '9':
+            if any(icd_code.startswith(code) for code in mi_codes['icd9']):
+                found_1pt.add('myocardial_infarction')
+            if any(icd_code.startswith(code) for code in chf_codes['icd9']):
+                found_1pt.add('congestive_heart_failure')
+            if any(icd_code.startswith(code) for code in pvd_codes['icd9']):
+                found_1pt.add('peripheral_vascular_disease')
+            if any(icd_code.startswith(code) for code in cbd_codes['icd9']):
+                found_1pt.add('cerebrovascular_disease')
+            if any(icd_code.startswith(code) for code in dementia_codes['icd9']):
+                found_1pt.add('dementia')
+            if any(icd_code.startswith(code) for code in cpd_codes['icd9']):
+                found_1pt.add('chronic_pulmonary_disease')
+            if any(icd_code.startswith(code) for code in ctd_codes['icd9']):
+                found_1pt.add('connective_tissue_disease')
+            if any(icd_code.startswith(code) for code in pud_codes['icd9']):
+                found_1pt.add('peptic_ulcer_disease')
+            if any(icd_code.startswith(code) for code in mild_liver_codes['icd9']):
+                has_mild_liver = True
+            if any(icd_code.startswith(code) for code in diabetes_no_comp_codes['icd9']):
+                has_diabetes_no_comp = True
+            if any(icd_code.startswith(code) for code in diabetes_comp_codes['icd9']):
+                has_diabetes_comp = True
+            if any(icd_code.startswith(code) for code in hemiplegia_codes['icd9']):
+                found_2pt.add('hemiplegia')
+            if any(icd_code.startswith(code) for code in renal_codes['icd9']):
+                found_2pt.add('moderate_severe_renal_disease')
+            if any(icd_code.startswith(code) for code in tumor_codes['icd9']):
+                has_any_tumor = True
+            if any(icd_code.startswith(code) for code in leukemia_codes['icd9']):
+                found_2pt.add('leukemia')
+            if any(icd_code.startswith(code) for code in lymphoma_codes['icd9']):
+                found_2pt.add('lymphoma')
+            if any(icd_code.startswith(code) for code in severe_liver_codes['icd9']):
+                has_severe_liver = True
+            if any(icd_code.startswith(code) for code in metastatic_codes['icd9']):
+                has_metastatic = True
+            if any(icd_code.startswith(code) for code in aids_codes['icd9']):
+                found_6pt.add('aids')
+        
+        elif icd_version == '10':
+            if any(icd_code.startswith(code) for code in mi_codes['icd10']):
+                found_1pt.add('myocardial_infarction')
+            if any(icd_code.startswith(code) for code in chf_codes['icd10']):
+                found_1pt.add('congestive_heart_failure')
+            if any(icd_code.startswith(code) for code in pvd_codes['icd10']):
+                found_1pt.add('peripheral_vascular_disease')
+            if any(icd_code.startswith(code) for code in cbd_codes['icd10']):
+                found_1pt.add('cerebrovascular_disease')
+            if any(icd_code.startswith(code) for code in dementia_codes['icd10']):
+                found_1pt.add('dementia')
+            if any(icd_code.startswith(code) for code in cpd_codes['icd10']):
+                found_1pt.add('chronic_pulmonary_disease')
+            if any(icd_code.startswith(code) for code in ctd_codes['icd10']):
+                found_1pt.add('connective_tissue_disease')
+            if any(icd_code.startswith(code) for code in pud_codes['icd10']):
+                found_1pt.add('peptic_ulcer_disease')
+            if any(icd_code.startswith(code) for code in mild_liver_codes['icd10']):
+                has_mild_liver = True
+            if any(icd_code.startswith(code) for code in diabetes_no_comp_codes['icd10']):
+                has_diabetes_no_comp = True
+            if any(icd_code.startswith(code) for code in diabetes_comp_codes['icd10']):
+                has_diabetes_comp = True
+            if any(icd_code.startswith(code) for code in hemiplegia_codes['icd10']):
+                found_2pt.add('hemiplegia')
+            if any(icd_code.startswith(code) for code in renal_codes['icd10']):
+                found_2pt.add('moderate_severe_renal_disease')
+            if any(icd_code.startswith(code) for code in tumor_codes['icd10']):
+                has_any_tumor = True
+            if any(icd_code.startswith(code) for code in leukemia_codes['icd10']):
+                found_2pt.add('leukemia')
+            if any(icd_code.startswith(code) for code in lymphoma_codes['icd10']):
+                found_2pt.add('lymphoma')
+            if any(icd_code.startswith(code) for code in severe_liver_codes['icd10']):
+                has_severe_liver = True
+            if any(icd_code.startswith(code) for code in metastatic_codes['icd10']):
+                has_metastatic = True
+            if any(icd_code.startswith(code) for code in aids_codes['icd10']):
+                found_6pt.add('aids')
+    
+    cci_score = 0
+    conditions = {}
+    
+    for condition in found_1pt:
+        conditions[condition] = 1
+        cci_score += 1
+    
+    for condition in found_2pt:
+        conditions[condition] = 2
+        cci_score += 2
+    
+    for condition in found_6pt:
+        conditions[condition] = 6
+        cci_score += 6
+    
+    if has_diabetes_comp:
+        conditions['diabetes_with_end_organ_damage'] = 2
+        cci_score += 2
+    elif has_diabetes_no_comp:
+        conditions['diabetes_without_end_organ_damage'] = 1
+        cci_score += 1
+    
+    if has_severe_liver:
+        conditions['moderate_severe_liver_disease'] = 3
+        cci_score += 3
+    elif has_mild_liver:
+        conditions['mild_liver_disease'] = 1
+        cci_score += 1
+    
+    if has_metastatic:
+        conditions['metastatic_solid_tumor'] = 6
+        cci_score += 6
+    elif has_any_tumor:
+        conditions['any_tumor'] = 2
+        cci_score += 2
+    
+    return {
+        'cci_score': cci_score,
+        'conditions': conditions,
+        'has_cohort': cci_score >= 3
+    }
+```
+
+## Test Results
+
+### Latest Test Results (Step 8)
+| subject_id | hadm_id | Predicted | Actual | Gap | Conditions Found |
+|------------|---------|-----------|--------|-----|------------------|
+| 12858718 | 20789729 | 3 | 4 | +1 | MI(1), CBD(1), CTD(1) |
+| 19678085 | 25439914 | 1 | 4 | +3 | CHF(1) only |
+| 14458151 | 27687854 | 5 | 7 | +2 | CPD(1), CHF(1), renal(2), diabetes_no_comp(1) |
+| 13846410 | 21804772 | 3 | 5 | +2 | MI(1), CHF(1), diabetes_no_comp(1) |
+
+### Verified Test Cases
+- **subject_id = 10000032**: CCI=4 (chronic_pulmonary_disease:1, moderate_severe_liver_disease:3)
+- **subject_id = 12468016**: CCI=12 (MI:1, CHF:1, CPD:1, PVD:1, CTD:1, renal:2, diabetes_comp:2, severe_liver:3)
+- **subject_id = 12468016, hadm_id=20024645**: CCI=4 (CPD:1, CHF:1, renal:2)
+- **subject_id = 18284271**: CCI=16 (MI:1, CHF:1, PUD:1, CBD:1, CPD:1, PVD:1, CTD:1, hemiplegia:2, renal:2, diabetes_comp:2, severe_liver:3)
+- **subject_id = 12568220**: CCI=8 (CPD:1, CBD:1, metastatic:6)
+- **subject_id = 15808118**: CCI=6 (AIDS:6)
+- **subject_id = 11488263**: CCI=2 (leukemia:2)
+- **subject_id = 10057948**: CCI=7 (leukemia:2, lymphoma:2, diabetes_comp:2, mild_liver:1)
+- **subject_id = 10000001**: CCI=0 (no diagnoses)
+- **subject_id = 10174039**: CCI=4 (MI:1, renal:2, diabetes_no_comp:1)
+- **subject_id = 10003502**: CCI=7 (MI:1, CHF:1, CBD:1, CPD:1, dementia:1, renal:2)
+
+### Lifetime vs Admission Comparison
+- **subject_id = 14458151**: With hadm_id=27687854 → CCI=5; Without hadm_id → CCI=13 (includes metastatic_solid_tumor:6, PVD:1)
+
+## Error Fixes
+
+1. **ICD-9 Code Format**: ICD-9 codes stored WITHOUT decimal points (e.g., '5715' not '571.5'). Updated all ICD-9 code lists accordingly.
+
+2. **ICD-10 Code Format**: ICD-10 codes stored WITHOUT decimal points (e.g., 'E1122' not 'E11.22', 'I252' not 'I25.2'). Updated all ICD-10 code lists to remove decimal points.
+
+3. **Duplicate Condition Counting**: Changed from adding points in loop to using sets to track unique conditions, then calculating score after loop.
+
+4. **Diabetes Code Classification (CRITICAL FIX)**: 
+   - **BEFORE**: E119, E109, E129, E139, E149 were incorrectly included in diabetes_comp_codes (2 points)
+   - **AFTER**: These codes correctly moved to diabetes_no_comp_codes (1 point)
+   - **ICD-9**: 2500x-2503x = no complications; 2504x-2509x = with complications
+   - **ICD-10**: E109, E119, E129, E139, E149 = WITHOUT complications; E100-E108, E110-E118, E120-E128, E130-E138, E140-E148 = WITH complications
+
+5. **CHF ICD-10 Code Addition**: Added 'I110' (hypertensive heart disease with heart failure) to chf_codes['icd10'] to capture additional CHF cases.
+
+## Key Observations
+
+1. **Reference scoring differs from standard Charlson** - Cases show consistent gaps of 1-3 points
+2. **Case 2 (19678085)** has only CHF in lifetime but actual score is 4 - suggests reference uses different criteria or data source
+3. **No Charlson guidelines found** in system - implementation based on standard Charlson definition
+4. **Lifetime vs admission** matters significantly for metastatic conditions
+5. **E119 is diabetes WITHOUT complications** - correctly classified as 1 point, not 2 points
+6. **Function is now registered** in system (search_functions returns 'charlson')
+

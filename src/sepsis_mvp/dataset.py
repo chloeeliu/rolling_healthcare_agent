@@ -216,6 +216,18 @@ def load_rolling_csv_dataset(
         step_hours = checkpoints[1].t_hour - checkpoints[0].t_hour if len(checkpoints) > 1 else 4
         horizon_hours = checkpoints[-1].t_hour
 
+        transitions = {
+            "infection_start_hour": _parse_optional_int(first.get("infection_start_hour")),
+            "sepsis_start_hour": _parse_optional_int(first.get("sepsis_start_hour")),
+            "infection_start_time": first.get("infection_start_time") or None,
+            "sepsis_start_time": first.get("sepsis_start_time") or None,
+        }
+        organ_dysfunction_start_hour = _parse_optional_int(first.get("organ_dysfunction_start_hour"))
+        organ_dysfunction_start_time = first.get("organ_dysfunction_start_time") or None
+        if organ_dysfunction_start_hour is not None or organ_dysfunction_start_time is not None:
+            transitions["organ_dysfunction_start_hour"] = organ_dysfunction_start_hour
+            transitions["organ_dysfunction_start_time"] = organ_dysfunction_start_time
+
         trajectories.append(
             Trajectory(
                 trajectory_id=trajectory_id,
@@ -225,14 +237,7 @@ def load_rolling_csv_dataset(
                 anchor="icu_intime",
                 step_hours=step_hours,
                 horizon_hours=horizon_hours,
-                transitions={
-                    "infection_start_hour": _parse_optional_int(first.get("infection_start_hour")),
-                    "organ_dysfunction_start_hour": _parse_optional_int(first.get("organ_dysfunction_start_hour")),
-                    "sepsis_start_hour": _parse_optional_int(first.get("sepsis_start_hour")),
-                    "infection_start_time": first.get("infection_start_time") or None,
-                    "organ_dysfunction_start_time": first.get("organ_dysfunction_start_time") or None,
-                    "sepsis_start_time": first.get("sepsis_start_time") or None,
-                },
+                transitions=transitions,
                 checkpoints=checkpoints,
                 icu_intime=first.get("icu_intime") or None,
                 icu_outtime=first.get("icu_outtime") or None,

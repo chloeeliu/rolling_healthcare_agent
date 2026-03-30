@@ -1,0 +1,1177 @@
+2026-03-26 10:52:14  INFO      Using database: /home/v-tiossowski/MIMIC-IV/mimic4.db
+2026-03-26 10:52:14  INFO      No --model_url provided; loading vLLM in-process …
+INFO 03-26 10:52:19 [utils.py:238] non-default args: {'trust_remote_code': True, 'max_model_len': 40000, 'disable_log_stats': True, 'model': 'Qwen/Qwen3.5-27B'}
+The argument `trust_remote_code` is to be used with Auto classes. It has no effect here and is ignored.
+The argument `trust_remote_code` is to be used with Auto classes. It has no effect here and is ignored.
+The argument `trust_remote_code` is to be used with Auto classes. It has no effect here and is ignored.
+INFO 03-26 10:52:20 [model.py:531] Resolved architecture: Qwen3_5ForConditionalGeneration
+INFO 03-26 10:52:20 [model.py:1554] Using max model len 40000
+INFO 03-26 10:52:20 [scheduler.py:231] Chunked prefill is enabled with max_num_batched_tokens=8192.
+INFO 03-26 10:52:21 [config.py:544] Setting attention block size to 784 tokens to ensure that attention page size is >= mamba page size.
+INFO 03-26 10:52:21 [config.py:575] Padding mamba page size by 0.13% to ensure that mamba page size and attention page size are exactly equal.
+INFO 03-26 10:52:21 [vllm.py:747] Asynchronous scheduling is enabled.
+WARNING 03-26 10:52:29 [system_utils.py:152] We must use the `spawn` multiprocessing start method. Overriding VLLM_WORKER_MULTIPROC_METHOD to 'spawn'. See https://docs.vllm.ai/en/latest/usage/troubleshooting.html#python-multiprocessing for more information. Reasons: CUDA is initialized
+(EngineCore_DP0 pid=1026122) INFO 03-26 10:52:33 [core.py:101] Initializing a V1 LLM engine (v0.17.1) with config: model='Qwen/Qwen3.5-27B', speculative_config=None, tokenizer='Qwen/Qwen3.5-27B', skip_tokenizer_init=False, tokenizer_mode=auto, revision=None, tokenizer_revision=None, trust_remote_code=True, dtype=torch.bfloat16, max_seq_len=40000, download_dir=None, load_format=auto, tensor_parallel_size=1, pipeline_parallel_size=1, data_parallel_size=1, disable_custom_all_reduce=False, quantization=None, enforce_eager=False, enable_return_routed_experts=False, kv_cache_dtype=auto, device_config=cuda, structured_outputs_config=StructuredOutputsConfig(backend='auto', disable_fallback=False, disable_any_whitespace=False, disable_additional_properties=False, reasoning_parser='', reasoning_parser_plugin='', enable_in_reasoning=False), observability_config=ObservabilityConfig(show_hidden_metrics_for_version=None, otlp_traces_endpoint=None, collect_detailed_traces=None, kv_cache_metrics=False, kv_cache_metrics_sample=0.01, cudagraph_metrics=False, enable_layerwise_nvtx_tracing=False, enable_mfu_metrics=False, enable_mm_processor_stats=False, enable_logging_iteration_details=False), seed=0, served_model_name=Qwen/Qwen3.5-27B, enable_prefix_caching=False, enable_chunked_prefill=True, pooler_config=None, compilation_config={'level': None, 'mode': <CompilationMode.VLLM_COMPILE: 3>, 'debug_dump_path': None, 'cache_dir': '', 'compile_cache_save_format': 'binary', 'backend': 'inductor', 'custom_ops': ['none'], 'splitting_ops': ['vllm::unified_attention', 'vllm::unified_attention_with_output', 'vllm::unified_mla_attention', 'vllm::unified_mla_attention_with_output', 'vllm::mamba_mixer2', 'vllm::mamba_mixer', 'vllm::short_conv', 'vllm::linear_attention', 'vllm::plamo2_mamba_mixer', 'vllm::gdn_attention_core', 'vllm::kda_attention', 'vllm::sparse_attn_indexer', 'vllm::rocm_aiter_sparse_attn_indexer', 'vllm::unified_kv_cache_update', 'vllm::unified_mla_kv_cache_update'], 'compile_mm_encoder': False, 'compile_sizes': [], 'compile_ranges_split_points': [8192], 'inductor_compile_config': {'enable_auto_functionalized_v2': False, 'combo_kernels': True, 'benchmark_combo_kernel': True}, 'inductor_passes': {}, 'cudagraph_mode': <CUDAGraphMode.FULL_AND_PIECEWISE: (2, 1)>, 'cudagraph_num_of_warmups': 1, 'cudagraph_capture_sizes': [1, 2, 4, 8, 16, 24, 32, 40, 48, 56, 64, 72, 80, 88, 96, 104, 112, 120, 128, 136, 144, 152, 160, 168, 176, 184, 192, 200, 208, 216, 224, 232, 240, 248, 256, 272, 288, 304, 320, 336, 352, 368, 384, 400, 416, 432, 448, 464, 480, 496, 512], 'cudagraph_copy_inputs': False, 'cudagraph_specialize_lora': True, 'use_inductor_graph_partition': False, 'pass_config': {'fuse_norm_quant': False, 'fuse_act_quant': False, 'fuse_attn_quant': False, 'enable_sp': False, 'fuse_gemm_comms': False, 'fuse_allreduce_rms': False}, 'max_cudagraph_capture_size': 512, 'dynamic_shapes_config': {'type': <DynamicShapesType.BACKED: 'backed'>, 'evaluate_guards': False, 'assume_32_bit_indexing': False}, 'local_cache_dir': None, 'fast_moe_cold_start': True, 'static_all_moe_layers': []}
+(EngineCore_DP0 pid=1026122) INFO 03-26 10:52:36 [parallel_state.py:1393] world_size=1 rank=0 local_rank=0 distributed_init_method=tcp://10.8.144.167:35407 backend=nccl
+(EngineCore_DP0 pid=1026122) INFO 03-26 10:52:36 [parallel_state.py:1715] rank 0 in world size 1 is assigned as DP rank 0, PP rank 0, PCP rank 0, TP rank 0, EP rank N/A, EPLB rank N/A
+(EngineCore_DP0 pid=1026122) INFO 03-26 10:52:42 [base.py:106] Offloader set to NoopOffloader
+(EngineCore_DP0 pid=1026122) INFO 03-26 10:52:42 [gpu_model_runner.py:4281] Starting to load model Qwen/Qwen3.5-27B...
+(EngineCore_DP0 pid=1026122) INFO 03-26 10:52:42 [cuda.py:453] Using backend AttentionBackendEnum.FLASH_ATTN for vit attention
+(EngineCore_DP0 pid=1026122) INFO 03-26 10:52:42 [mm_encoder_attention.py:215] Using AttentionBackendEnum.FLASH_ATTN for MMEncoderAttention.
+(EngineCore_DP0 pid=1026122) INFO 03-26 10:52:43 [cuda.py:405] Using FLASH_ATTN attention backend out of potential backends: ['FLASH_ATTN', 'FLASHINFER', 'TRITON_ATTN', 'FLEX_ATTENTION'].
+(EngineCore_DP0 pid=1026122) INFO 03-26 10:52:43 [flash_attn.py:587] Using FlashAttention version 2
+(EngineCore_DP0 pid=1026122) <frozen importlib._bootstrap_external>:1301: FutureWarning: The cuda.cudart module is deprecated and will be removed in a future release, please switch to use the cuda.bindings.runtime module instead.
+(EngineCore_DP0 pid=1026122) <frozen importlib._bootstrap_external>:1301: FutureWarning: The cuda.nvrtc module is deprecated and will be removed in a future release, please switch to use the cuda.bindings.nvrtc module instead.
+(EngineCore_DP0 pid=1026122) Loading safetensors checkpoint shards:   0% Completed | 0/11 [00:00<?, ?it/s]
+(EngineCore_DP0 pid=1026122) Loading safetensors checkpoint shards:   9% Completed | 1/11 [00:00<00:05,  1.89it/s]
+(EngineCore_DP0 pid=1026122) Loading safetensors checkpoint shards:  18% Completed | 2/11 [00:01<00:05,  1.68it/s]
+(EngineCore_DP0 pid=1026122) Loading safetensors checkpoint shards:  27% Completed | 3/11 [00:01<00:05,  1.58it/s]
+(EngineCore_DP0 pid=1026122) Loading safetensors checkpoint shards:  36% Completed | 4/11 [00:02<00:04,  1.52it/s]
+(EngineCore_DP0 pid=1026122) Loading safetensors checkpoint shards:  45% Completed | 5/11 [00:03<00:04,  1.48it/s]
+(EngineCore_DP0 pid=1026122) Loading safetensors checkpoint shards:  55% Completed | 6/11 [00:03<00:03,  1.47it/s]
+(EngineCore_DP0 pid=1026122) Loading safetensors checkpoint shards:  64% Completed | 7/11 [00:04<00:02,  1.46it/s]
+(EngineCore_DP0 pid=1026122) Loading safetensors checkpoint shards:  73% Completed | 8/11 [00:05<00:02,  1.46it/s]
+(EngineCore_DP0 pid=1026122) Loading safetensors checkpoint shards:  82% Completed | 9/11 [00:06<00:01,  1.45it/s]
+(EngineCore_DP0 pid=1026122) Loading safetensors checkpoint shards:  91% Completed | 10/11 [00:06<00:00,  1.45it/s]
+(EngineCore_DP0 pid=1026122) Loading safetensors checkpoint shards: 100% Completed | 11/11 [00:07<00:00,  1.63it/s]
+(EngineCore_DP0 pid=1026122) Loading safetensors checkpoint shards: 100% Completed | 11/11 [00:07<00:00,  1.54it/s]
+(EngineCore_DP0 pid=1026122) 
+(EngineCore_DP0 pid=1026122) INFO 03-26 10:52:50 [default_loader.py:293] Loading weights took 7.21 seconds
+(EngineCore_DP0 pid=1026122) INFO 03-26 10:52:51 [gpu_model_runner.py:4364] Model loading took 51.1 GiB memory and 8.209059 seconds
+(EngineCore_DP0 pid=1026122) INFO 03-26 10:52:51 [gpu_model_runner.py:5280] Encoder cache will be initialized with a budget of 16384 tokens, and profiled with 1 image items of the maximum feature size.
+(EngineCore_DP0 pid=1026122) INFO 03-26 10:52:59 [decorators.py:465] Directly load AOT compilation from path /home/v-tiossowski/.cache/vllm/torch_compile_cache/torch_aot_compile/0232891e22bd4d7db98ac2f43c441f0f81d0a431216053ca49fadeaff23e2af3/rank_0_0/model
+(EngineCore_DP0 pid=1026122) INFO 03-26 10:52:59 [backends.py:916] Using cache directory: /home/v-tiossowski/.cache/vllm/torch_compile_cache/feaf61af16/rank_0_0/backbone for vLLM's torch.compile
+(EngineCore_DP0 pid=1026122) INFO 03-26 10:52:59 [backends.py:976] Dynamo bytecode transform time: 3.51 s
+(EngineCore_DP0 pid=1026122) INFO 03-26 10:53:10 [backends.py:266] Directly load the compiled graph(s) for compile range (1, 8192) from the cache, took 9.459 s
+(EngineCore_DP0 pid=1026122) INFO 03-26 10:53:10 [monitor.py:35] torch.compile takes 13.84 s in total
+(EngineCore_DP0 pid=1026122) INFO 03-26 10:53:11 [gpu_worker.py:424] Available KV cache memory: 18.3 GiB
+(EngineCore_DP0 pid=1026122) INFO 03-26 10:53:11 [kv_cache_utils.py:1314] GPU KV cache size: 74,480 tokens
+(EngineCore_DP0 pid=1026122) INFO 03-26 10:53:11 [kv_cache_utils.py:1319] Maximum concurrency for 40,000 tokens per request: 6.95x
+(EngineCore_DP0 pid=1026122) Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):   0%|          | 0/51 [00:00<?, ?it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):   2%|▏         | 1/51 [00:00<00:08,  5.77it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):   4%|▍         | 2/51 [00:00<00:08,  5.98it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):   6%|▌         | 3/51 [00:00<00:07,  6.07it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):   8%|▊         | 4/51 [00:00<00:07,  6.10it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  10%|▉         | 5/51 [00:00<00:07,  6.14it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  12%|█▏        | 6/51 [00:00<00:07,  6.17it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  14%|█▎        | 7/51 [00:01<00:07,  6.16it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  16%|█▌        | 8/51 [00:01<00:06,  6.17it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  18%|█▊        | 9/51 [00:01<00:06,  6.49it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  20%|█▉        | 10/51 [00:01<00:06,  6.74it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  22%|██▏       | 11/51 [00:01<00:05,  6.69it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  24%|██▎       | 12/51 [00:01<00:05,  6.88it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  25%|██▌       | 13/51 [00:02<00:05,  7.03it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  27%|██▋       | 14/51 [00:02<00:05,  7.12it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  29%|██▉       | 15/51 [00:02<00:05,  7.15it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  31%|███▏      | 16/51 [00:02<00:04,  7.16it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  33%|███▎      | 17/51 [00:02<00:04,  7.47it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  35%|███▌      | 18/51 [00:02<00:04,  7.77it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  37%|███▋      | 19/51 [00:02<00:03,  8.00it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  39%|███▉      | 20/51 [00:02<00:03,  8.07it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  41%|████      | 21/51 [00:03<00:03,  8.22it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  43%|████▎     | 22/51 [00:03<00:03,  8.27it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  45%|████▌     | 23/51 [00:03<00:03,  8.33it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  47%|████▋     | 24/51 [00:03<00:03,  8.40it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  49%|████▉     | 25/51 [00:03<00:03,  8.42it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  51%|█████     | 26/51 [00:03<00:02,  8.46it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  53%|█████▎    | 27/51 [00:03<00:02,  8.51it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  55%|█████▍    | 28/51 [00:03<00:02,  8.54it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  57%|█████▋    | 29/51 [00:03<00:02,  8.58it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  59%|█████▉    | 30/51 [00:04<00:02,  8.56it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  61%|██████    | 31/51 [00:04<00:02,  8.53it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  63%|██████▎   | 32/51 [00:04<00:02,  8.55it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  65%|██████▍   | 33/51 [00:04<00:02,  8.77it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  67%|██████▋   | 34/51 [00:04<00:01,  9.03it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  69%|██████▊   | 35/51 [00:04<00:01,  9.28it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  71%|███████   | 36/51 [00:04<00:01,  9.47it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  73%|███████▎  | 37/51 [00:04<00:01,  9.57it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  75%|███████▍  | 38/51 [00:04<00:01,  9.66it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  76%|███████▋  | 39/51 [00:05<00:01,  9.54it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  78%|███████▊  | 40/51 [00:05<00:01,  9.59it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  80%|████████  | 41/51 [00:05<00:01,  9.63it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  84%|████████▍ | 43/51 [00:05<00:00,  9.91it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  88%|████████▊ | 45/51 [00:05<00:00, 10.11it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  92%|█████████▏| 47/51 [00:05<00:00, 10.34it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  96%|█████████▌| 49/51 [00:05<00:00, 10.55it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE): 100%|██████████| 51/51 [00:06<00:00, 10.61it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE): 100%|██████████| 51/51 [00:06<00:00,  8.27it/s]
+(EngineCore_DP0 pid=1026122) Capturing CUDA graphs (decode, FULL):   0%|          | 0/35 [00:00<?, ?it/s]Capturing CUDA graphs (decode, FULL):   3%|▎         | 1/35 [00:00<00:05,  5.69it/s]Capturing CUDA graphs (decode, FULL):   6%|▌         | 2/35 [00:00<00:05,  6.15it/s]Capturing CUDA graphs (decode, FULL):   9%|▊         | 3/35 [00:00<00:05,  6.39it/s]Capturing CUDA graphs (decode, FULL):  11%|█▏        | 4/35 [00:00<00:04,  6.51it/s]Capturing CUDA graphs (decode, FULL):  14%|█▍        | 5/35 [00:00<00:04,  6.55it/s]Capturing CUDA graphs (decode, FULL):  17%|█▋        | 6/35 [00:00<00:04,  6.65it/s]Capturing CUDA graphs (decode, FULL):  20%|██        | 7/35 [00:01<00:04,  6.70it/s]Capturing CUDA graphs (decode, FULL):  23%|██▎       | 8/35 [00:01<00:04,  6.73it/s]Capturing CUDA graphs (decode, FULL):  26%|██▌       | 9/35 [00:01<00:03,  6.78it/s]Capturing CUDA graphs (decode, FULL):  29%|██▊       | 10/35 [00:01<00:03,  6.84it/s]Capturing CUDA graphs (decode, FULL):  31%|███▏      | 11/35 [00:01<00:03,  6.85it/s]Capturing CUDA graphs (decode, FULL):  34%|███▍      | 12/35 [00:01<00:03,  6.88it/s]Capturing CUDA graphs (decode, FULL):  37%|███▋      | 13/35 [00:01<00:03,  6.93it/s]Capturing CUDA graphs (decode, FULL):  40%|████      | 14/35 [00:02<00:02,  7.00it/s]Capturing CUDA graphs (decode, FULL):  43%|████▎     | 15/35 [00:02<00:02,  7.06it/s]Capturing CUDA graphs (decode, FULL):  46%|████▌     | 16/35 [00:02<00:02,  7.14it/s]Capturing CUDA graphs (decode, FULL):  49%|████▊     | 17/35 [00:02<00:02,  7.41it/s]Capturing CUDA graphs (decode, FULL):  51%|█████▏    | 18/35 [00:02<00:02,  7.68it/s]Capturing CUDA graphs (decode, FULL):  54%|█████▍    | 19/35 [00:02<00:02,  7.91it/s]Capturing CUDA graphs (decode, FULL):  57%|█████▋    | 20/35 [00:02<00:01,  8.07it/s]Capturing CUDA graphs (decode, FULL):  60%|██████    | 21/35 [00:02<00:01,  8.15it/s]Capturing CUDA graphs (decode, FULL):  63%|██████▎   | 22/35 [00:03<00:01,  8.18it/s]Capturing CUDA graphs (decode, FULL):  66%|██████▌   | 23/35 [00:03<00:01,  8.32it/s]Capturing CUDA graphs (decode, FULL):  69%|██████▊   | 24/35 [00:03<00:01,  8.39it/s]Capturing CUDA graphs (decode, FULL):  71%|███████▏  | 25/35 [00:03<00:01,  8.51it/s]Capturing CUDA graphs (decode, FULL):  74%|███████▍  | 26/35 [00:03<00:01,  8.56it/s]Capturing CUDA graphs (decode, FULL):  77%|███████▋  | 27/35 [00:03<00:00,  8.69it/s]Capturing CUDA graphs (decode, FULL):  80%|████████  | 28/35 [00:03<00:00,  8.71it/s]Capturing CUDA graphs (decode, FULL):  83%|████████▎ | 29/35 [00:03<00:00,  8.63it/s]Capturing CUDA graphs (decode, FULL):  86%|████████▌ | 30/35 [00:03<00:00,  8.56it/s]Capturing CUDA graphs (decode, FULL):  89%|████████▊ | 31/35 [00:04<00:00,  8.64it/s]Capturing CUDA graphs (decode, FULL):  91%|█████████▏| 32/35 [00:04<00:00,  8.74it/s]Capturing CUDA graphs (decode, FULL):  94%|█████████▍| 33/35 [00:04<00:00,  8.86it/s]Capturing CUDA graphs (decode, FULL):  97%|█████████▋| 34/35 [00:04<00:00,  8.90it/s]Capturing CUDA graphs (decode, FULL): 100%|██████████| 35/35 [00:04<00:00,  9.02it/s]Capturing CUDA graphs (decode, FULL): 100%|██████████| 35/35 [00:04<00:00,  7.70it/s]
+(EngineCore_DP0 pid=1026122) INFO 03-26 10:53:22 [gpu_model_runner.py:5386] Graph capturing finished in 11 secs, took 1.13 GiB
+(EngineCore_DP0 pid=1026122) INFO 03-26 10:53:22 [core.py:282] init engine (profile, create kv cache, warmup model) took 31.39 seconds
+(EngineCore_DP0 pid=1026122) INFO 03-26 10:53:23 [vllm.py:747] Asynchronous scheduling is enabled.
+INFO 03-26 10:53:23 [llm.py:388] Supported tasks: ['generate']
+2026-03-26 10:53:23  INFO      Loading QA dataset from /home/v-tiossowski/HealthcareAgent/mimic-code/data/MIMICIV_lods_dataset/lods.csv
+2026-03-26 10:53:23  INFO      Dataset: 1000 rows, columns: ['subject_id', 'hadm_id', 'stay_id', 'intime', 'outtime', 'first_careunit', 'last_careunit', 'gt_label', 'question', 'gt_answer_type', 'split', 'lods', 'neurologic', 'cardiovascular', 'renal', 'pulmonary', 'hematologic', 'hepatic']
+2026-03-26 10:53:23  INFO      Filtered to train split: 100 rows
+2026-03-26 10:53:23  INFO      Auto-discovered ground-truth SQL: /home/v-tiossowski/HealthcareAgent/mimic-code/mimic-iv/concepts_duckdb/score/lods.sql
+2026-03-26 10:53:23  INFO      === Iteration 1/100  run=lods  best_qa=0.0% ===
+INFO 03-26 10:53:25 [hf.py:318] Detected the chat template content format to be 'string'. You can set `--chat-template-content-format` to override this.
+2026-03-26 10:53:40  INFO      Exec block 1/1 …
+2026-03-26 10:53:40  INFO      Output: ['lods_guideline']
+
+2026-03-26 10:53:40  INFO      === Iteration 2/100  run=lods  best_qa=0.0% ===
+2026-03-26 10:53:43  INFO      Exec block 1/1 …
+2026-03-26 10:53:43  INFO      Output: '# LODS — Clinical Guideline\n# Generated by generate_guidelines.py\n# Source articles: 10 (PMID26903335, PMID35967847, PMID39244800, PMID38377099, PMID28011419...)\n############################################################\n\n# Clinical Guideline: Logistic Organ Dysfunction System (LODS)\n\n---\n\n## 1. Definition\n\nThe **Logistic Organ Dysfunction System (LODS)** is an ICU severity-of-illness scoring system that quantifies the degree of organ dysfunction across six organ systems. It was de
+2026-03-26 10:53:43  INFO      === Iteration 3/100  run=lods  best_qa=0.0% ===
+2026-03-26 10:53:47  INFO      Exec block 1/1 …
+2026-03-26 10:53:47  INFO      Output: # LODS — Clinical Guideline
+# Generated by generate_guidelines.py
+# Source articles: 10 (PMID26903335, PMID35967847, PMID39244800, PMID38377099, PMID28011419...)
+############################################################
+
+# Clinical Guideline: Logistic Organ Dysfunction System (LODS)
+
+---
+
+## 1. Definition
+
+The **Logistic Organ Dysfunction System (LODS)** is an ICU severity-of-illness scoring system that quantifies the degree of organ dysfunction across six organ systems. It was developed by *
+2026-03-26 10:53:47  INFO      === Iteration 4/100  run=lods  best_qa=0.0% ===
+2026-03-26 10:53:51  INFO      Exec block 1/1 …
+2026-03-26 10:53:51  INFO      Output: ['acei', 'age', 'aki', 'antibiotic', 'apsiii', 'arb', 'bg', 'blood_differential', 'cardiac_marker', 'charlson', 'chemistry', 'coagulation', 'code_status', 'complete_blood_count', 'creatinine_baseline', 'crrt', 'dobutamine', 'dopamine', 'enzyme', 'epinephrine', '... (38 more; pass a keyword to filter)']
+
+2026-03-26 10:53:51  INFO      === Iteration 5/100  run=lods  best_qa=0.0% ===
+2026-03-26 10:53:56  INFO      Exec block 1/1 …
+2026-03-26 10:53:56  INFO      Output: ['first_day_sofa', 'sofa']
+
+2026-03-26 10:53:56  INFO      === Iteration 6/100  run=lods  best_qa=0.0% ===
+2026-03-26 10:54:00  INFO      Exec block 1/1 …
+2026-03-26 10:54:00  INFO      Output: 'def compute_sofa_score(stay_id):\n    """\n    Compute the SOFA (Sequential Organ Failure Assessment) score for an ICU stay.\n\n    The SOFA score assesses organ dysfunction across 6 systems:\n    - Respiration (PaO2/FiO2 ratio)\n    - Coagulation (Platelet count)\n    - Liver (Bilirubin)\n    - Cardiovascular (MAP and vasopressors)\n    - Brain (Glasgow Coma Scale)\n    - Kidney (Creatinine)\n\n    Parameters\n    ----------\n    stay_id : int\n        The ICU stay identifier\n    \n    Return
+2026-03-26 10:54:00  INFO      === Iteration 7/100  run=lods  best_qa=0.0% ===
+2026-03-26 10:54:11  INFO      Exec block 1/1 …
+2026-03-26 10:54:11  INFO      Output:     table_schema          table_name
+0   mimiciv_hosp          admissions
+1   mimiciv_hosp             d_hcpcs
+2   mimiciv_hosp     d_icd_diagnoses
+3   mimiciv_hosp    d_icd_procedures
+4   mimiciv_hosp          d_labitems
+5   mimiciv_hosp       diagnoses_icd
+6   mimiciv_hosp            drgcodes
+7   mimiciv_hosp                emar
+8   mimiciv_hosp         emar_detail
+9   mimiciv_hosp         hcpcsevents
+10  mimiciv_hosp           labevents
+11  mimiciv_hosp  microbiologyevents
+12  mimiciv_hosp   
+2026-03-26 10:54:11  INFO      === Iteration 8/100  run=lods  best_qa=0.0% ===
+2026-03-26 10:54:23  INFO      Exec block 1/1 …
+2026-03-26 10:54:23  INFO      Output: Error:
+Traceback (most recent call last):
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 643, in execute
+    _run_with_timeout(_do_execute, timeout)
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 174, in _run_with_timeout
+    raise error[0]
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 156, in target
+    result[0] = func(*args, **kwargs)
+                ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/v-tiossowsk
+2026-03-26 10:54:23  INFO      === Iteration 9/100  run=lods  best_qa=0.0% ===
+2026-03-26 10:54:31  INFO      Exec block 1/1 …
+2026-03-26 10:54:31  INFO      Output:     itemid                                 label unitname
+0   220050      Arterial Blood Pressure systolic     mmHg
+1   220739                     GCS - Eye Opening      NaN
+2   223901                  GCS - Motor Response      NaN
+3   223900                 GCS - Verbal Response      NaN
+4   226756                   GCSEyeApacheIIValue      NaN
+5   227011                       GCSEye_ApacheIV      NaN
+6   226757                 GCSMotorApacheIIValue      NaN
+7   227012                     GCSMo
+2026-03-26 10:54:31  INFO      === Iteration 10/100  run=lods  best_qa=0.0% ===
+2026-03-26 10:54:39  INFO      Exec block 1/1 …
+2026-03-26 10:54:39  INFO      Output:     itemid                                    label unitname
+0   227923  Activity HR - Aerobic Activity Response     None
+1   227864           Activity HR - Aerobic Capacity     None
+2   230152                                   CFS-HR      NaN
+3   224721                                 HR > 140      NaN
+4   230037                               HR per min      NaN
+5   227018                              HR_ApacheIV      bpm
+6   223764                     Orthostatic HR lying      bpm
+7   223765  
+2026-03-26 10:54:39  INFO      === Iteration 11/100  run=lods  best_qa=0.0% ===
+2026-03-26 10:54:45  INFO      Exec block 1/1 …
+2026-03-26 10:54:45  INFO      Output:    itemid                   label unitname
+0  220045              Heart Rate      bpm
+1  220047  Heart Rate Alarm - Low      bpm
+
+2026-03-26 10:54:45  INFO      === Iteration 12/100  run=lods  best_qa=0.0% ===
+2026-03-26 10:54:53  INFO      Exec block 1/1 …
+2026-03-26 10:54:53  INFO      Output:     itemid                           label  unitname
+0   229841                       FiO2 (CH)         %
+1   229280                     FiO2 (ECMO)         %
+2   229238                  FiO2 Challenge       NaN
+3   229239           FiO2 Challenge Result       NaN
+4   226754               FiO2ApacheIIValue         %
+5   227010                   FiO2_ApacheIV         %
+6   227009               FiO2_ApacheIV_old      None
+7   220210                Respiratory Rate  insp/min
+8   224688          Res
+2026-03-26 10:54:53  INFO      === Iteration 13/100  run=lods  best_qa=0.0% ===
+2026-03-26 10:55:00  INFO      Exec block 1/1 …
+2026-03-26 10:55:00  INFO      Output:    itemid         label unitname
+0  227002  CABG Patient     None
+
+2026-03-26 10:55:00  INFO      === Iteration 14/100  run=lods  best_qa=0.0% ===
+2026-03-26 10:55:07  INFO      Exec block 1/1 …
+2026-03-26 10:55:07  INFO      Output: Error:
+Traceback (most recent call last):
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 643, in execute
+    _run_with_timeout(_do_execute, timeout)
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 174, in _run_with_timeout
+    raise error[0]
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 156, in target
+    result[0] = func(*args, **kwargs)
+                ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/v-tiossowsk
+2026-03-26 10:55:07  INFO      === Iteration 15/100  run=lods  best_qa=0.0% ===
+2026-03-26 10:55:12  INFO      Exec block 1/1 …
+2026-03-26 10:55:12  INFO      Output:    itemid                                label  fluid   category
+0   50801           Alveolar-arterial Gradient  Blood  Blood Gas
+1   50802                          Base Excess  Blood  Blood Gas
+2   50803  Calculated Bicarbonate, Whole Blood  Blood  Blood Gas
+3   50804                 Calculated Total CO2  Blood  Blood Gas
+4   50805                    Carboxyhemoglobin  Blood  Blood Gas
+
+2026-03-26 10:55:12  INFO      === Iteration 16/100  run=lods  best_qa=0.0% ===
+2026-03-26 10:55:21  INFO      Exec block 1/1 …
+2026-03-26 10:55:21  INFO      Output:     itemid                            label                fluid    category
+0    51067                 24 hr Creatinine                Urine   Chemistry
+1    51141                         APT Test                Blood  Hematology
+2    51070        Albumin/Creatinine, Urine                Urine   Chemistry
+3    51963     Amylase/Creatinine Clearance                Urine   Chemistry
+4    51073  Amylase/Creatinine Ratio, Urine                Urine   Chemistry
+5    51966                        Bili
+2026-03-26 10:55:21  INFO      === Iteration 17/100  run=lods  best_qa=0.0% ===
+2026-03-26 10:55:39  INFO      Exec block 1/1 …
+2026-03-26 10:55:39  INFO      Output:     itemid                       label                fluid    category
+0    51240             Large Platelets                Blood  Hematology
+1    52142        Mean Platelet Volume                Blood  Hematology
+2    52159        Platelet Aggregation                Blood  Hematology
+3    51264             Platelet Clumps                Blood  Hematology
+4    51265              Platelet Count                Blood  Hematology
+5    53189              Platelet Count                Blood   Chemis
+2026-03-26 10:55:39  INFO      === Iteration 18/100  run=lods  best_qa=0.0% ===
+2026-03-26 10:55:46  INFO      Exec block 1/1 …
+2026-03-26 10:55:46  INFO      Output: Empty DataFrame
+Columns: [itemid, label, fluid, category]
+Index: []
+
+2026-03-26 10:55:46  INFO      === Iteration 19/100  run=lods  best_qa=0.0% ===
+2026-03-26 10:55:52  INFO      Exec block 1/1 …
+2026-03-26 10:55:52  INFO      Output:     itemid                                label             fluid   category
+0    52029                    % Ionized Calcium             Blood  Blood Gas
+1    52021                                  Abz             Blood  Blood Gas
+2    52022                       Albumin, Blood             Blood  Blood Gas
+3    50801           Alveolar-arterial Gradient             Blood  Blood Gas
+4    52023                       Assist/Control             Blood  Blood Gas
+5    50802                          Ba
+2026-03-26 10:55:52  INFO      === Iteration 20/100  run=lods  best_qa=0.0% ===
+2026-03-26 10:56:00  INFO      Exec block 1/1 …
+2026-03-26 10:56:00  INFO      Output:    itemid            label             fluid   category
+0   52042              pO2             Fluid  Blood Gas
+1   50821              pO2             Blood  Blood Gas
+2   50832  pO2, Body Fluid  Other Body Fluid  Blood Gas
+
+2026-03-26 10:56:00  INFO      === Iteration 21/100  run=lods  best_qa=0.0% ===
+2026-03-26 10:56:07  INFO      Exec block 1/1 …
+2026-03-26 10:56:07  INFO      Output:     itemid                         label unitname
+0   227489  GU Irrigant/Urine Volume Out       mL
+1   226627                      OR Urine       mL
+2   226631                    PACU Urine       mL
+3   227471      Specific Gravity (urine)     None
+4   220473                       Taurine       mg
+5   224876              Urine Appearance      NaN
+6   224016                   Urine Color      NaN
+7   225454                 Urine Culture     None
+8   224015                  Urine Source      NaN
+
+2026-03-26 10:56:07  INFO      === Iteration 22/100  run=lods  best_qa=0.0% ===
+2026-03-26 10:56:14  INFO      Exec block 1/1 …
+2026-03-26 10:56:14  INFO      Output:    labevent_id  subject_id  hadm_id  specimen_id  itemid order_provider_id           charttime           storetime value  valuenum valueuom  ref_range_lower  ref_range_upper  flag priority                                               comments
+0            1    10000032     <NA>      2704548   50931            P69FQC 2180-03-23 11:51:00 2180-03-23 15:56:00   ___      95.0    mg/dL             70.0            100.0  None  ROUTINE  IF FASTING, 70-100 NORMAL, >125 PROVISIONAL DIABETES.
+1           
+2026-03-26 10:56:14  INFO      === Iteration 23/100  run=lods  best_qa=0.0% ===
+2026-03-26 10:56:20  INFO      Exec block 1/1 …
+2026-03-26 10:56:20  INFO      Output:    subject_id   hadm_id   stay_id  caregiver_id           charttime           storetime  itemid value    valuenum valueuom  warning
+0    10000032  29079034  39553978         18704 2180-07-23 12:36:00 2180-07-23 14:45:00  226512  39.4   39.400002       kg        0
+1    10000032  29079034  39553978         18704 2180-07-23 12:36:00 2180-07-23 14:45:00  226707    60   60.000000     Inch        0
+2    10000032  29079034  39553978         18704 2180-07-23 12:36:00 2180-07-23 14:45:00  226730   152  1
+2026-03-26 10:56:20  INFO      === Iteration 24/100  run=lods  best_qa=0.0% ===
+2026-03-26 10:56:38  INFO      Exec block 1/1 …
+2026-03-26 10:56:38  INFO      Output: "Functions from 'sofa' loaded successfully."
+
+2026-03-26 10:56:38  INFO      === Iteration 25/100  run=lods  best_qa=0.0% ===
+2026-03-26 10:57:18  INFO      Exec block 1/1 …
+2026-03-26 10:57:18  INFO      Output:    itemid                               label unitname
+0  220739                   GCS - Eye Opening     None
+1  223901                GCS - Motor Response     None
+2  223900               GCS - Verbal Response     None
+3  226756                 GCSEyeApacheIIValue     None
+4  227011                     GCSEye_ApacheIV     None
+5  226757               GCSMotorApacheIIValue     None
+6  227012                   GCSMotor_ApacheIV     None
+7  226758              GCSVerbalApacheIIValue     None
+8  22
+2026-03-26 10:57:18  INFO      === Iteration 26/100  run=lods  best_qa=0.0% ===
+2026-03-26 10:57:51  INFO      Exec block 1/1 …
+2026-03-26 10:57:51  INFO      Output:    itemid                       label unitname
+0  223849             Ventilator Mode      NaN
+1  229314  Ventilator Mode (Hamilton)      NaN
+2  227565          Ventilator Tank #1     None
+3  227566          Ventilator Tank #2     None
+4  223848             Ventilator Type      NaN
+
+2026-03-26 10:57:51  INFO      === Iteration 27/100  run=lods  best_qa=0.0% ===
+2026-03-26 10:57:58  INFO      Exec block 1/1 …
+2026-03-26 10:57:58  INFO      Output:                      value
+0                     SIMV
+1                 PCV+/PSV
+2                 CPAP/PSV
+3               CMV/ASSIST
+4                  PSV/SBT
+5             MMV/AutoFlow
+6                  PRES/AC
+7                    P-CMV
+8                  (S) CMV
+9                     APRV
+10          SYNCHRON SLAVE
+11                   SPONT
+12               APV (cmv)
+13                CPAP/PPS
+14         SYNCHRON MASTER
+15               PRVC/SIMV
+16                SIMV/VOL
+17    APRV/Bip
+2026-03-26 10:57:58  INFO      === Iteration 28/100  run=lods  best_qa=0.0% ===
+2026-03-26 10:58:06  INFO      Exec block 1/1 …
+2026-03-26 10:58:06  INFO      Output:    itemid                  label unitname
+0  229841              FiO2 (CH)        %
+1  229280            FiO2 (ECMO)        %
+2  229238         FiO2 Challenge      NaN
+3  229239  FiO2 Challenge Result      NaN
+4  226754      FiO2ApacheIIValue        %
+5  227010          FiO2_ApacheIV        %
+6  227009      FiO2_ApacheIV_old     None
+
+2026-03-26 10:58:06  INFO      === Iteration 29/100  run=lods  best_qa=0.0% ===
+2026-03-26 10:58:29  INFO      Exec block 1/1 …
+2026-03-26 10:58:29  INFO      Output:     itemid              label  fluid    category
+0    50885   Bilirubin, Total  Blood   Chemistry
+1    50912         Creatinine  Blood   Chemistry
+2    51006      Urea Nitrogen  Blood   Chemistry
+3    51235   Inhibitor Screen  Blood  Hematology
+4    51240    Large Platelets  Blood  Hematology
+5    51265     Platelet Count  Blood  Hematology
+6    51300          WBC Count  Blood  Hematology
+7    51301  White Blood Cells  Blood  Hematology
+8    51755  White Blood Cells  Blood   Chemistry
+9    52546
+2026-03-26 10:58:29  INFO      === Iteration 30/100  run=lods  best_qa=0.0% ===
+2026-03-26 10:58:39  INFO      Exec block 1/1 …
+2026-03-26 10:58:39  INFO      Output:   valueuom
+0      NaN
+1    mg/dL
+2     K/uL
+
+2026-03-26 10:58:39  INFO      === Iteration 31/100  run=lods  best_qa=0.0% ===
+2026-03-26 10:58:47  INFO      Exec block 1/1 …
+2026-03-26 10:58:47  INFO      Output:    itemid valueuom      cnt
+0   51006    mg/dL  4202806
+
+2026-03-26 10:58:47  INFO      === Iteration 32/100  run=lods  best_qa=0.0% ===
+2026-03-26 10:58:55  INFO      Exec block 1/1 …
+2026-03-26 10:58:55  INFO      Output:    itemid valueuom      cnt
+0   50912    mg/dL  4319090
+
+2026-03-26 10:58:55  INFO      === Iteration 33/100  run=lods  best_qa=0.0% ===
+2026-03-26 10:59:04  INFO      Exec block 1/1 …
+2026-03-26 10:59:04  INFO      Output:    itemid valueuom    cnt
+0   51300     K/uL  29573
+
+2026-03-26 10:59:04  INFO      === Iteration 34/100  run=lods  best_qa=0.0% ===
+2026-03-26 10:59:13  INFO      Exec block 1/1 …
+2026-03-26 10:59:14  INFO      Output:    itemid valueuom      cnt
+0   51265     K/uL  4214047
+
+2026-03-26 10:59:14  INFO      === Iteration 35/100  run=lods  best_qa=0.0% ===
+2026-03-26 10:59:24  INFO      Exec block 1/1 …
+2026-03-26 10:59:24  INFO      Output:    itemid valueuom      cnt
+0   50885    mg/dL  1605452
+
+2026-03-26 10:59:24  INFO      === Iteration 36/100  run=lods  best_qa=0.0% ===
+2026-03-26 10:59:33  INFO      Exec block 1/1 …
+2026-03-26 10:59:33  INFO      Output: Error:
+Traceback (most recent call last):
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 643, in execute
+    _run_with_timeout(_do_execute, timeout)
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 174, in _run_with_timeout
+    raise error[0]
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 156, in target
+    result[0] = func(*args, **kwargs)
+                ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/v-tiossowsk
+2026-03-26 10:59:33  INFO      === Iteration 37/100  run=lods  best_qa=0.0% ===
+2026-03-26 10:59:42  INFO      Exec block 1/1 …
+2026-03-26 10:59:42  INFO      Output:    itemid valueuom      cnt
+0   51274      sec  1782641
+
+2026-03-26 10:59:42  INFO      === Iteration 38/100  run=lods  best_qa=0.0% ===
+2026-03-26 11:00:09  INFO      Exec block 1/1 …
+2026-03-26 11:00:09  INFO      Output:    itemid                  label unitname
+0  227519  Urine output_ApacheIV     None
+
+2026-03-26 11:00:09  INFO      === Iteration 39/100  run=lods  best_qa=0.0% ===
+2026-03-26 11:00:16  INFO      Exec block 1/1 …
+2026-03-26 11:00:16  INFO      Output:    subject_id   hadm_id   stay_id  caregiver_id           charttime           storetime  itemid  value valueuom
+0    10000032  29079034  39553978         18704 2180-07-23 15:00:00 2180-07-23 16:00:00  226560  175.0       mL
+1    10000690  25860671  37081114          8787 2150-11-06 08:00:00 2150-11-06 09:08:00  226559   15.0       mL
+2    10000690  25860671  37081114          8787 2150-11-06 09:00:00 2150-11-06 09:08:00  226559   15.0       mL
+3    10000690  25860671  37081114          8787 2150
+2026-03-26 11:00:16  INFO      === Iteration 40/100  run=lods  best_qa=0.0% ===
+2026-03-26 11:00:25  INFO      Exec block 1/1 …
+2026-03-26 11:00:25  INFO      Output:    itemid                         label unitname
+0  226559                         Foley       mL
+1  226566     Urine and GU Irrigant Out       mL
+2  226631                    PACU Urine       mL
+3  226627                      OR Urine       mL
+4  226560                          Void       mL
+5  227489  GU Irrigant/Urine Volume Out       mL
+
+2026-03-26 11:00:25  INFO      === Iteration 41/100  run=lods  best_qa=0.0% ===
+2026-03-26 11:00:48  INFO      Exec block 1/1 …
+2026-03-26 11:00:48  INFO      Output:    subject_id   hadm_id   stay_id                      first_careunit                       last_careunit              intime             outtime       los
+0    10000032  29079034  39553978  Medical Intensive Care Unit (MICU)  Medical Intensive Care Unit (MICU) 2180-07-23 14:00:00 2180-07-23 23:50:47  0.410266
+1    10000690  25860671  37081114  Medical Intensive Care Unit (MICU)  Medical Intensive Care Unit (MICU) 2150-11-02 19:37:00 2150-11-06 17:03:17  3.893252
+2    10000980  26913865  3976566
+2026-03-26 11:00:48  INFO      === Iteration 42/100  run=lods  best_qa=0.0% ===
+2026-03-26 11:01:30  INFO      Exec block 1/1 …
+2026-03-26 11:01:30  INFO      Output: Empty DataFrame
+Columns: [itemid, valueuom, cnt]
+Index: []
+
+2026-03-26 11:01:30  INFO      === Iteration 43/100  run=lods  best_qa=0.0% ===
+2026-03-26 11:01:38  INFO      Exec block 1/1 …
+2026-03-26 11:01:38  INFO      Output:    itemid    label
+0   51675  INR(PT)
+1   51237  INR(PT)
+
+2026-03-26 11:01:38  INFO      === Iteration 44/100  run=lods  best_qa=0.0% ===
+2026-03-26 11:01:46  INFO      Exec block 1/1 …
+2026-03-26 11:01:46  INFO      Output:        cnt
+0  1783392
+
+2026-03-26 11:01:46  INFO      === Iteration 45/100  run=lods  best_qa=0.0% ===
+2026-03-26 11:01:54  INFO      Exec block 1/1 …
+2026-03-26 11:01:54  INFO      Output:   valueuom      cnt
+0     None  1783392
+
+2026-03-26 11:01:54  INFO      === Iteration 46/100  run=lods  best_qa=0.0% ===
+2026-03-26 11:02:24  INFO      Exec block 1/1 …
+2026-03-26 11:02:24  INFO      Output: #### Hepatic System (0–3 points) [training knowledge]
+
+Uses **serum bilirubin** and **prothrombin time (PT)**. The worst-scoring variable determines the organ system score.
+
+| Score | Bilirubin (µmol/L) | PT (seconds above normal or as INR/% activity) |
+|-------|--------------------|-------------------------------------------------|
+| 0 | < 34.2 | PT ≤ 3 sec above control (or ≥ 25% activity) |
+| 1 | 34.2–68.4 | PT 3–6 sec above control |
+| 3 | ≥ 68.4 | PT > 6 sec above control (or < 25% activity
+2026-03-26 11:02:24  INFO      === Iteration 47/100  run=lods  best_qa=0.0% ===
+2026-03-26 11:03:04  INFO      Exec block 1/1 …
+2026-03-26 11:03:04  INFO      Output: Error:
+Traceback (most recent call last):
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 643, in execute
+    _run_with_timeout(_do_execute, timeout)
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 174, in _run_with_timeout
+    raise error[0]
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 156, in target
+    result[0] = func(*args, **kwargs)
+                ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/v-tiossowsk
+2026-03-26 11:03:04  INFO      === Iteration 48/100  run=lods  best_qa=0.0% ===
+2026-03-26 11:03:45  INFO      Exec block 1/1 …
+2026-03-26 11:03:45  INFO      Output:    valuenum
+0       1.0
+1       2.0
+2       3.0
+3       4.0
+4       5.0
+5       6.0
+
+2026-03-26 11:03:45  INFO      === Iteration 49/100  run=lods  best_qa=0.0% ===
+2026-03-26 11:04:27  INFO      Exec block 1/1 …
+2026-03-26 11:04:27  INFO      Output:    itemid valueuom     cnt
+0   50821    mm Hg  698483
+
+2026-03-26 11:04:27  INFO      === Iteration 50/100  run=lods  best_qa=0.0% ===
+2026-03-26 11:05:06  INFO      Exec block 1/1 …
+2026-03-26 11:05:07  INFO      Output:    ref_range_lower  ref_range_upper
+0             10.4             13.4
+1              9.4             12.5
+2             10.4             13.1
+
+2026-03-26 11:05:07  INFO      === Iteration 51/100  run=lods  best_qa=0.0% ===
+2026-03-26 11:05:43  INFO      Exec block 1/1 …
+2026-03-26 11:05:43  INFO      Output:     stay_id  subject_id   hadm_id              intime             outtime
+0  39553978    10000032  29079034 2180-07-23 14:00:00 2180-07-23 23:50:47
+
+2026-03-26 11:05:43  INFO      === Iteration 52/100  run=lods  best_qa=0.0% ===
+2026-03-26 11:06:26  INFO      Exec block 1/1 …
+2026-03-26 11:06:26  INFO      Output:             charttime  itemid  valuenum
+0 2180-07-23 14:45:00  220739       4.0
+1 2180-07-23 14:45:00  223901       6.0
+2 2180-07-23 14:45:00  223900       4.0
+3 2180-07-23 18:22:00  220739       4.0
+4 2180-07-23 18:22:00  223900       5.0
+5 2180-07-23 18:22:00  223901       6.0
+6 2180-07-23 20:00:00  220739       4.0
+7 2180-07-23 20:00:00  223900       5.0
+8 2180-07-23 20:00:00  223901       6.0
+
+2026-03-26 11:06:26  INFO      === Iteration 53/100  run=lods  best_qa=0.0% ===
+2026-03-26 11:06:40  INFO      Exec block 1/1 …
+2026-03-26 11:06:40  INFO      Output:              charttime  itemid  valuenum valueuom
+0  2180-07-23 14:11:00  220179      84.0     mmHg
+1  2180-07-23 14:12:00  220045      91.0      bpm
+2  2180-07-23 14:30:00  220045      93.0      bpm
+3  2180-07-23 14:30:00  220179      95.0     mmHg
+4  2180-07-23 15:00:00  220045      94.0      bpm
+5  2180-07-23 15:00:00  220179      88.0     mmHg
+6  2180-07-23 16:00:00  220045     105.0      bpm
+7  2180-07-23 16:01:00  220179      91.0     mmHg
+8  2180-07-23 17:00:00  220045      97.0      bpm
+
+2026-03-26 11:06:40  INFO      === Iteration 54/100  run=lods  best_qa=0.0% ===
+2026-03-26 11:06:55  INFO      Exec block 1/1 …
+2026-03-26 11:06:55  INFO      Output: Empty DataFrame
+Columns: [charttime, itemid, value]
+Index: []
+
+2026-03-26 11:06:55  INFO      === Iteration 55/100  run=lods  best_qa=0.0% ===
+2026-03-26 11:07:06  INFO      Exec block 1/1 …
+2026-03-26 11:07:06  INFO      Output: Empty DataFrame
+Columns: [charttime, itemid, valuenum]
+Index: []
+
+2026-03-26 11:07:06  INFO      === Iteration 56/100  run=lods  best_qa=0.0% ===
+2026-03-26 11:07:19  INFO      Exec block 1/1 …
+2026-03-26 11:07:19  INFO      Output: Error:
+Traceback (most recent call last):
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 643, in execute
+    _run_with_timeout(_do_execute, timeout)
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 174, in _run_with_timeout
+    raise error[0]
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 156, in target
+    result[0] = func(*args, **kwargs)
+                ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/v-tiossowsk
+2026-03-26 11:07:19  INFO      === Iteration 57/100  run=lods  best_qa=0.0% ===
+2026-03-26 11:07:32  INFO      Exec block 1/1 …
+2026-03-26 11:07:32  INFO      Output:    itemid             label  valuenum valueuom           charttime
+0   50912        Creatinine       0.5    mg/dL 2180-07-23 21:45:00
+1   51006     Urea Nitrogen      33.0    mg/dL 2180-07-23 21:45:00
+2   50885  Bilirubin, Total       2.7    mg/dL 2180-07-24 06:35:00
+3   51265    Platelet Count      94.0     K/uL 2180-07-24 06:35:00
+4   50912        Creatinine       0.4    mg/dL 2180-07-24 06:35:00
+5   51006     Urea Nitrogen      28.0    mg/dL 2180-07-24 06:35:00
+6   50885  Bilirubin, Total    
+2026-03-26 11:07:32  INFO      === Iteration 58/100  run=lods  best_qa=0.0% ===
+2026-03-26 11:11:19  INFO      Exec block 1/1 …
+2026-03-26 11:11:19  INFO      Output: Error:
+Traceback (most recent call last):
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 643, in execute
+    _run_with_timeout(_do_execute, timeout)
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 174, in _run_with_timeout
+    raise error[0]
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 156, in target
+    result[0] = func(*args, **kwargs)
+                ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/v-tiossowsk
+2026-03-26 11:11:19  INFO      === Iteration 59/100  run=lods  best_qa=0.0% ===
+2026-03-26 11:11:19  INFO      Context approaching limit (22341 tokens, limit=25000) — forcing summarize + compress
+2026-03-26 11:15:29  INFO      Context compressed: 118 messages -> 2 messages
+2026-03-26 11:15:37  INFO      Exec block 1/1 …
+2026-03-26 11:15:37  INFO      Output: ['lods_guideline']
+
+2026-03-26 11:15:37  INFO      === Iteration 60/100  run=lods  best_qa=0.0% ===
+2026-03-26 11:15:41  INFO      Exec block 1/1 …
+2026-03-26 11:15:41  INFO      Output: '# LODS — Clinical Guideline\n# Generated by generate_guidelines.py\n# Source articles: 10 (PMID26903335, PMID35967847, PMID39244800, PMID38377099, PMID28011419...)\n############################################################\n\n# Clinical Guideline: Logistic Organ Dysfunction System (LODS)\n\n---\n\n## 1. Definition\n\nThe **Logistic Organ Dysfunction System (LODS)** is an ICU severity-of-illness scoring system that quantifies the degree of organ dysfunction across six organ systems. It was de
+2026-03-26 11:15:41  INFO      === Iteration 61/100  run=lods  best_qa=0.0% ===
+2026-03-26 11:16:30  INFO      Exec block 1/1 …
+2026-03-26 11:16:30  INFO      Output: Error:
+Traceback (most recent call last):
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 643, in execute
+    _run_with_timeout(_do_execute, timeout)
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 174, in _run_with_timeout
+    raise error[0]
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 156, in target
+    result[0] = func(*args, **kwargs)
+                ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/v-tiossowsk
+2026-03-26 11:16:30  INFO      === Iteration 62/100  run=lods  best_qa=0.0% ===
+2026-03-26 11:19:56  INFO      Exec block 1/1 …
+2026-03-26 11:19:57  INFO      Output: Test result for stay_id 39553978:
+  total_score: 8
+  neurologic_score: 1
+  cardiovascular_score: 1
+  renal_score: 3
+  pulmonary_score: 0
+  hematologic_score: 0
+  hepatic_score: 3
+  subject_id: 10000032
+  hadm_id: 29079034
+  stay_id: 39553978
+  intime: 2180-07-23 14:00:00
+  outtime: 2180-07-23 23:50:47
+
+Details:
+  neurologic: {'gcs_total': 14, 'score': 1}
+  cardiovascular: {'worst_hr': 105.0, 'worst_sbp': np.float32(82.0), 'score': 1}
+  renal: {'bun_mmol': np.float64(11.780999999999999), 'cr_umol
+2026-03-26 11:19:57  INFO      === Iteration 63/100  run=lods  best_qa=0.0% ===
+2026-03-26 11:20:24  INFO      Exec block 1/1 …
+2026-03-26 11:20:24  INFO      Output: Test stays with ventilation:
+    stay_id  subject_id   hadm_id              intime             outtime
+0  37293400    10018081  21027282 2133-12-18 17:10:00 2134-01-01 14:44:53
+1  35465057    10092572  29709457 2139-05-24 11:37:00 2139-05-30 14:59:32
+2  31841674    10093718  21604509 2193-10-06 23:57:00 2193-10-14 15:30:04
+
+Test result for stay_id 37293400:
+  total_score: 15
+  neurologic_score: 5
+  cardiovascular_score: 1
+  renal_score: 5
+  pulmonary_score: 1
+  hematologic_score: 0
+  hepatic_sco
+2026-03-26 11:20:24  INFO      === Iteration 64/100  run=lods  best_qa=0.0% ===
+2026-03-26 11:22:14  INFO      Exec block 1/1 …
+2026-03-26 11:22:14  INFO      Output: Error:
+Traceback (most recent call last):
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 643, in execute
+    _run_with_timeout(_do_execute, timeout)
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 174, in _run_with_timeout
+    raise error[0]
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 156, in target
+    result[0] = func(*args, **kwargs)
+                ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/v-tiossowsk
+2026-03-26 11:22:14  INFO      === Iteration 65/100  run=lods  best_qa=0.0% ===
+2026-03-26 11:22:29  INFO      Exec block 1/1 …
+2026-03-26 11:22:29  INFO      Output: Error:
+Traceback (most recent call last):
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 643, in execute
+    _run_with_timeout(_do_execute, timeout)
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 174, in _run_with_timeout
+    raise error[0]
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 156, in target
+    result[0] = func(*args, **kwargs)
+                ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/v-tiossowsk
+2026-03-26 11:22:29  INFO      === Iteration 66/100  run=lods  best_qa=0.0% ===
+2026-03-26 11:22:44  INFO      Exec block 1/1 …
+2026-03-26 11:22:44  INFO      Output: PT values and reference ranges:
+   itemid  valuenum  ref_range_upper
+0   51274      35.1             12.5
+1   51274      37.9             12.5
+2   51274      43.7             12.5
+
+INR/Prothrombin related lab items:
+   itemid    label  fluid
+0   51237  INR(PT)  Blood
+1   51675  INR(PT)  Blood
+
+2026-03-26 11:22:44  INFO      === Iteration 67/100  run=lods  best_qa=0.0% ===
+2026-03-26 11:23:17  INFO      Exec block 1/1 …
+2026-03-26 11:23:17  INFO      Output: 
+Stay 39553978: Total=8, N=1, CV=1, R=3, P=0, H=0, Hep=3
+
+Stay 37293400: Total=15, N=5, CV=1, R=5, P=1, H=0, Hep=3
+
+Stay 35465057: Total=7, N=5, CV=0, R=1, P=1, H=0, Hep=0
+
+Stay 31841674: Total=7, N=5, CV=1, R=1, P=0, H=0, Hep=0
+
+2026-03-26 11:23:17  INFO      === Iteration 68/100  run=lods  best_qa=0.0% ===
+2026-03-26 11:23:42  INFO      Exec block 1/1 …
+2026-03-26 11:23:42  INFO      Output: Hepatic lab values:
+   itemid  valuenum  ref_range_upper           charttime
+0   51274      35.1             12.5 2133-12-18 17:28:00
+1   51274      37.9             12.5 2133-12-19 01:43:00
+2   51274      43.7             12.5 2133-12-19 09:46:00
+
+PT reference ranges across different records:
+   itemid  ref_range_upper
+0   51274              NaN
+1   51274             12.5
+2   51274             13.1
+3   51274             13.4
+
+2026-03-26 11:23:42  INFO      === Iteration 69/100  run=lods  best_qa=0.0% ===
+2026-03-26 11:23:59  INFO      Exec block 1/1 …
+2026-03-26 11:23:59  INFO      Output: INR values:
+   itemid  valuenum valueuom           charttime
+0   51237       3.3     None 2133-12-18 17:28:00
+1   51237       3.6     None 2133-12-19 01:43:00
+2   51237       4.1     None 2133-12-19 09:46:00
+
+2026-03-26 11:23:59  INFO      === Iteration 70/100  run=lods  best_qa=0.0% ===
+2026-03-26 11:24:39  INFO      Exec block 1/1 …
+2026-03-26 11:24:39  INFO      Output: Error:
+Traceback (most recent call last):
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 643, in execute
+    _run_with_timeout(_do_execute, timeout)
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 174, in _run_with_timeout
+    raise error[0]
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 156, in target
+    result[0] = func(*args, **kwargs)
+                ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/v-tiossowsk
+2026-03-26 11:24:39  INFO      === Iteration 71/100  run=lods  best_qa=0.0% ===
+2026-03-26 11:24:59  INFO      Exec block 1/1 …
+2026-03-26 11:24:59  INFO      Output: Patients with INR:
+    stay_id  subject_id   hadm_id
+0  33804579    10038688  25926997
+1  35707168    10039688  23371687
+2  39142259    10039831  26924951
+3  36107367    10040025  27996267
+4  39947371    10042810  29126412
+
+Hematologic values for stay 35465057:
+   wbc_min  wbc_max  platelet_min
+0     12.0     13.8         200.0
+
+2026-03-26 11:24:59  INFO      === Iteration 72/100  run=lods  best_qa=0.0% ===
+2026-03-26 11:25:17  INFO      Exec block 1/1 …
+2026-03-26 11:25:17  INFO      Output: Hematologic section from guideline:
+#### Hematologic System (0–3 points) [training knowledge]
+
+Uses **WBC count** and **platelet count**. The worst-scoring variable determines the organ system score.
+
+| Score | WBC (×10⁹/L) | Platelet Count (×10⁹/L) |
+|-------|--------------|------------------------|
+| 0 | 2.5–49.9 | ≥ 50 |
+| 1 | — | — (intermediate; see note) |
+| 3 | < 2.5 **OR** ≥ 50.0 | < 50 |
+
+> **Note [training knowledge]:** The original LODS hematologic component assigns 0 for normal range
+2026-03-26 11:25:17  INFO      === Iteration 73/100  run=lods  best_qa=0.0% ===
+2026-03-26 11:25:30  INFO      Exec block 1/1 …
+2026-03-26 11:25:30  INFO      Output: Hepatic section from guideline:
+#### Hepatic System (0–3 points) [training knowledge]
+
+Uses **serum bilirubin** and **prothrombin time (PT)**. The worst-scoring variable determines the organ system score.
+
+| Score | Bilirubin (µmol/L) | PT (seconds above normal or as INR/% activity) |
+|-------|--------------------|-------------------------------------------------|
+| 0 | < 34.2 | PT ≤ 3 sec above control (or ≥ 25% activity) |
+| 1 | 34.2–68.4 | PT 3–6 sec above control |
+| 3 | ≥ 68.4 | PT > 6 sec 
+2026-03-26 11:25:30  INFO      === Iteration 74/100  run=lods  best_qa=0.0% ===
+2026-03-26 11:25:48  INFO      Exec block 1/1 …
+2026-03-26 11:25:49  INFO      Output: Patients without GCS data:
+    stay_id  subject_id   hadm_id
+0  37743005    10050755  20050796
+1  36438063    10052938  25231169
+2  39701064    10091724  27974453
+
+Test result for stay_id 37743005 (no GCS):
+  total_score: 3
+  neurologic_score: 0
+  cardiovascular_score: 3
+  renal_score: 0
+  pulmonary_score: 0
+  hematologic_score: 0
+  hepatic_score: 0
+  subject_id: 10050755
+  hadm_id: 20050796
+  stay_id: 37743005
+  intime: 2134-02-26 01:03:02
+  outtime: 2134-02-26 04:27:45
+
+2026-03-26 11:25:49  INFO      === Iteration 75/100  run=lods  best_qa=0.0% ===
+2026-03-26 11:26:01  INFO      Exec block 1/1 …
+2026-03-26 11:26:01  INFO      Output: Cardiovascular section from guideline:
+#### Cardiovascular System (0–5 points) [training knowledge]
+
+The cardiovascular component uses **heart rate (HR)** and **systolic blood pressure (SBP)** jointly. The worst combination determines the score.
+
+| Score | Criteria |
+|-------|----------|
+| 0 | HR 30–139 bpm **AND** SBP 90–239 mmHg |
+| 1 | HR 140–159 bpm **OR** SBP 70–89 mmHg (provided the other variable does not meet a higher-score criterion) |
+| 3 | HR ≥ 160 bpm **OR** HR < 30 bpm **OR** SBP 40
+2026-03-26 11:26:01  INFO      === Iteration 76/100  run=lods  best_qa=0.0% ===
+2026-03-26 11:26:35  INFO      Exec block 1/1 …
+2026-03-26 11:26:35  INFO      Output: Cardiovascular values for stay 37743005:
+            charttime     hr    sbp
+0 2134-02-26 01:27:00    NaN   58.0
+1 2134-02-26 01:05:00    0.0    NaN
+2 2134-02-26 01:21:00    NaN   45.0
+3 2134-02-26 01:20:00  122.0    NaN
+4 2134-02-26 01:10:00  185.0  125.0
+5 2134-02-26 01:17:00    NaN  103.0
+6 2134-02-26 01:25:00   82.0    NaN
+7 2134-02-26 01:15:00    0.0    NaN
+
+HR range: 0.0 - 185.0
+SBP range: 45.0 - 125.0
+
+2026-03-26 11:26:35  INFO      === Iteration 77/100  run=lods  best_qa=0.0% ===
+2026-03-26 11:29:57  INFO      Exec block 1/1 …
+2026-03-26 11:29:57  INFO      Output: Test result for stay_id 37743005 (with invalid HR values filtered):
+  total_score: 3
+  neurologic_score: 0
+  cardiovascular_score: 3
+  renal_score: 0
+  pulmonary_score: 0
+  hematologic_score: 0
+  hepatic_score: 0
+  subject_id: 10050755
+  hadm_id: 20050796
+  stay_id: 37743005
+  intime: 2134-02-26 01:03:02
+  outtime: 2134-02-26 04:27:45
+
+Details:
+  neurologic: {'gcs_total': None, 'score': 0}
+  cardiovascular: {'worst_hr': 185.0, 'worst_sbp': np.float32(45.0), 'score': 3}
+  renal: {'bun_mmol': None
+2026-03-26 11:29:57  INFO      === Iteration 78/100  run=lods  best_qa=0.0% ===
+2026-03-26 11:29:57  INFO      Context approaching limit (21997 tokens, limit=25000) — forcing summarize + compress
+2026-03-26 11:34:24  INFO      Context compressed: 40 messages -> 2 messages
+2026-03-26 11:34:36  INFO      Exec block 1/1 …
+2026-03-26 11:34:36  INFO      Output: ['lods_guideline']
+
+2026-03-26 11:34:36  INFO      === Iteration 79/100  run=lods  best_qa=0.0% ===
+2026-03-26 11:34:40  INFO      Exec block 1/1 …
+2026-03-26 11:34:40  INFO      Output: # LODS — Clinical Guideline
+# Generated by generate_guidelines.py
+# Source articles: 10 (PMID26903335, PMID35967847, PMID39244800, PMID38377099, PMID28011419...)
+############################################################
+
+# Clinical Guideline: Logistic Organ Dysfunction System (LODS)
+
+---
+
+## 1. Definition
+
+The **Logistic Organ Dysfunction System (LODS)** is an ICU severity-of-illness scoring system that quantifies the degree of organ dysfunction across six organ systems. It was developed by *
+2026-03-26 11:34:40  INFO      === Iteration 80/100  run=lods  best_qa=0.0% ===
+2026-03-26 11:34:47  INFO      Exec block 1/1 …
+2026-03-26 11:34:47  INFO      Output: 100: |-------|-------------|---------------------|----------------------|
+101: | 0 | < 6.0 | < 106 | ≥ 750 |
+102: | 1 | 6.0–9.9 | 106–140 | 500–749 |
+103: | 3 | 10.0–19.9 | 141–495 | < 500 |
+104: | 5 | ≥ 20.0 | > 495 | — (covered by BUN/Cr) |
+105: 
+106: > Assign the **maximum score** among the three variables.
+107: 
+108: > **Unit conversions [training knowledge]:**
+109: > - BUN: 1 mg/dL = 0.357 mmol/L (urea nitrogen); multiply mg/dL by 0.357 to obtain mmol/L.
+110: > - Creatinine: 1 mg/dL = 88.4 
+2026-03-26 11:34:47  INFO      === Iteration 81/100  run=lods  best_qa=0.0% ===
+2026-03-26 11:35:06  INFO      Exec block 1/1 …
+2026-03-26 11:35:06  INFO      Output: Current function result:
+Total score: 8
+Neurologic: 1
+Cardiovascular: 1
+Renal: 3
+Pulmonary: 0
+Hematologic: 0
+Hepatic: 3
+
+2026-03-26 11:35:06  INFO      === Iteration 82/100  run=lods  best_qa=0.0% ===
+2026-03-26 11:37:04  INFO      Exec block 1/1 …
+2026-03-26 11:37:05  INFO      Output: 
+Stay 39553978:
+  Total: 8
+  Neurologic: 1 (GCS: 14)
+  CV: 1 (HR: 105.0, SBP: 82.0)
+  Renal: 3 (BUN: 11.780999999999999, Cr: 44.2, UO: 175.0)
+  Pulmonary: 0 (MV: False, P/F: None)
+  Heme: 0 (WBC: 4.1, Plt: 94.0)
+  Hepatic: 3 (Bili: 46.17000000000001, PT: 19.5, PT_ref: 12.5)
+
+Stay 37293400:
+  Total: 15
+  Neurologic: 5 (GCS: 3)
+  CV: 1 (HR: 99.0, SBP: 83.0)
+  Renal: 5 (BUN: 20.349, Cr: 450.84, UO: 1182.0)
+  Pulmonary: 1 (MV: True, P/F: None)
+  Heme: 0 (WBC: 4.1, Plt: 109.0)
+  Hepatic: 3 (Bili: Non
+2026-03-26 11:37:05  INFO      === Iteration 83/100  run=lods  best_qa=0.0% ===
+2026-03-26 11:37:47  INFO      Exec block 1/1 …
+2026-03-26 11:37:47  INFO      Output:    itemid  valuenum  ref_range_upper
+0   51274      19.5             12.5
+1   51274      21.6             12.5
+
+2026-03-26 11:37:47  INFO      === Iteration 84/100  run=lods  best_qa=0.0% ===
+2026-03-26 11:41:25  INFO      Exec block 1/1 …
+2026-03-26 11:41:25  INFO      Output: 
+Stay 39553978:
+  Total: 9
+  Neurologic: 1 (GCS: 14)
+  CV: 1 (HR: 105.0, SBP: 82.0)
+  Renal: 3 (BUN: 11.780999999999999, Cr: 44.2, UO: 175.0)
+  Pulmonary: 0 (MV: False, P/F: None)
+  Heme: 1 (WBC: 4.1, Plt: 94.0)
+  Hepatic: 3 (Bili: 46.17000000000001, PT: 19.5, PT_ref: 12.5)
+
+Stay 37293400:
+  Total: 16
+  Neurologic: 5 (GCS: 3)
+  CV: 1 (HR: 99.0, SBP: 83.0)
+  Renal: 5 (BUN: 20.349, Cr: 450.84, UO: 1182.0)
+  Pulmonary: 1 (MV: True, P/F: None)
+  Heme: 1 (WBC: 4.1, Plt: 109.0)
+  Hepatic: 3 (Bili: Non
+2026-03-26 11:41:25  INFO      === Iteration 85/100  run=lods  best_qa=0.0% ===
+2026-03-26 11:45:06  INFO      Exec block 1/1 …
+2026-03-26 11:45:06  INFO      Output: Code executed successfully (no output).
+2026-03-26 11:45:06  INFO      Debug conversations will be saved to debug_logs
+2026-03-26 11:45:06  INFO      Using question from dataset column: Does this patient have a LODS score of 3 or more?
+2026-03-26 11:45:06  INFO      Answer type for 'lods': numerical (per_row=True)
+2026-03-26 11:45:06  INFO      ReACT iteration 1/5 — 20 active patients
+Rendering conversations:   0%|          | 0/20 [00:00<?, ?it/s]Rendering conversations: 100%|██████████| 20/20 [00:00<00:00, 601.26it/s]
+Processed prompts:   0%|          | 0/20 [00:00<?, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s]Processed prompts:   5%|▌         | 1/20 [00:08<02:32,  8.00s/it, est. speed input: 74.86 toks/s, output: 14.00 toks/s]Processed prompts:  10%|█         | 2/20 [00:08<01:00,  3.38s/it, est. speed input: 147.20 toks/s, output: 27.89 toks/s]Processed prompts:  30%|███       | 6/20 [00:08<00:11,  1.25it/s, est. speed input: 438.75 toks/s, output: 84.00 toks/s]Processed prompts:  40%|████      | 8/20 [00:08<00:06,  1.86it/s, est. speed input: 576.97 toks/s, output: 111.08 toks/s]Processed prompts:  50%|█████     | 10/20 [00:08<00:03,  2.60it/s, est. speed input: 707.81 toks/s, output: 137.55 toks/s]Processed prompts:  60%|██████    | 12/20 [00:09<00:03,  2.35it/s, est. speed input: 757.12 toks/s, output: 154.14 toks/s]Processed prompts:  70%|███████   | 14/20 [00:11<00:03,  1.53it/s, est. speed input: 712.63 toks/s, output: 154.33 toks/s]Processed prompts:  75%|███████▌  | 15/20 [00:12<00:02,  1.73it/s, est. speed input: 749.45 toks/s, output: 168.99 toks/s]Processed prompts:  85%|████████▌ | 17/20 [00:12<00:01,  2.51it/s, est. speed input: 842.71 toks/s, output: 202.61 toks/s]Processed prompts:  95%|█████████▌| 19/20 [00:12<00:00,  3.50it/s, est. speed input: 934.47 toks/s, output: 235.99 toks/s]Processed prompts: 100%|██████████| 20/20 [00:12<00:00,  3.50it/s, est. speed input: 955.68 toks/s, output: 247.31 toks/s]Processed prompts: 100%|██████████| 20/20 [00:12<00:00,  1.57it/s, est. speed input: 955.68 toks/s, output: 247.31 toks/s]
+2026-03-26 11:45:21  INFO      ReACT iteration 2/5 — 20 active patients
+Rendering conversations:   0%|          | 0/20 [00:00<?, ?it/s]Rendering conversations: 100%|██████████| 20/20 [00:00<00:00, 388.88it/s]
+Processed prompts:   0%|          | 0/20 [00:00<?, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s]Processed prompts:   5%|▌         | 1/20 [00:07<02:16,  7.18s/it, est. speed input: 152.56 toks/s, output: 5.29 toks/s]Processed prompts:  10%|█         | 2/20 [00:07<00:59,  3.30s/it, est. speed input: 281.98 toks/s, output: 11.45 toks/s]Processed prompts:  20%|██        | 4/20 [00:07<00:20,  1.28s/it, est. speed input: 555.48 toks/s, output: 24.66 toks/s]Processed prompts:  25%|██▌       | 5/20 [00:08<00:14,  1.01it/s, est. speed input: 667.35 toks/s, output: 31.03 toks/s]Processed prompts:  35%|███▌      | 7/20 [00:08<00:07,  1.81it/s, est. speed input: 920.50 toks/s, output: 45.85 toks/s]Processed prompts:  40%|████      | 8/20 [00:08<00:05,  2.19it/s, est. speed input: 1031.35 toks/s, output: 53.01 toks/s]Processed prompts:  45%|████▌     | 9/20 [00:09<00:05,  1.87it/s, est. speed input: 1068.50 toks/s, output: 58.20 toks/s]Processed prompts:  65%|██████▌   | 13/20 [00:09<00:01,  4.21it/s, est. speed input: 1513.58 toks/s, output: 94.74 toks/s]Processed prompts:  75%|███████▌  | 15/20 [00:10<00:01,  3.43it/s, est. speed input: 1618.93 toks/s, output: 108.45 toks/s]Processed prompts:  80%|████████  | 16/20 [00:11<00:01,  2.31it/s, est. speed input: 1564.54 toks/s, output: 110.27 toks/s]Processed prompts:  85%|████████▌ | 17/20 [00:12<00:02,  1.50it/s, est. speed input: 1460.93 toks/s, output: 110.64 toks/s]Processed prompts:  90%|█████████ | 18/20 [00:13<00:01,  1.40it/s, est. speed input: 1454.71 toks/s, output: 118.57 toks/s]Processed prompts:  95%|█████████▌| 19/20 [00:13<00:00,  1.74it/s, est. speed input: 1522.75 toks/s, output: 132.31 toks/s]Processed prompts: 100%|██████████| 20/20 [00:14<00:00,  2.06it/s, est. speed input: 1579.68 toks/s, output: 145.38 toks/s]Processed prompts: 100%|██████████| 20/20 [00:14<00:00,  2.06it/s, est. speed input: 1579.68 toks/s, output: 145.38 toks/s]Processed prompts: 100%|██████████| 20/20 [00:14<00:00,  1.41it/s, est. speed input: 1579.68 toks/s, output: 145.38 toks/s]
+2026-03-26 11:45:35  INFO      QA accuracy: 65.0%  (correct=13/20, parse_errors=0)
+2026-03-26 11:45:35  INFO      === Iteration 86/100  run=lods  best_qa=65.0% ===
+2026-03-26 11:46:20  INFO      Exec block 1/1 …
+2026-03-26 11:46:20  INFO      Output: 
+Stay 38453736 (subject=17358644, hadm=23396555):
+  Total: 7
+  Neurologic: 3 (GCS: 11)
+  CV: 1 (HR: 122.0, SBP: 83.0)
+  Renal: 1 (BUN: 7.497, Cr: 79.56, UO: 2645.0)
+  Pulmonary: 1 (MV: True, P/F: None)
+  Heme: 0 (WBC: 10.3, Plt: 158.0)
+  Hepatic: 1 (Bili: 53.010000000000005, PT: 13.5, PT_ref: 12.5)
+
+Stay 30011071 (subject=11885477, hadm=20099155):
+  Total: 6
+  Neurologic: 1 (GCS: 14)
+  CV: 0 (HR: 112.0, SBP: 136.0)
+  Renal: 1 (BUN: 6.069, Cr: 123.76, UO: None)
+  Pulmonary: 0 (MV: False, P/F: Non
+2026-03-26 11:46:20  INFO      === Iteration 87/100  run=lods  best_qa=65.0% ===
+2026-03-26 11:46:20  INFO      Context approaching limit (20762 tokens, limit=25000) — forcing summarize + compress
+2026-03-26 11:51:02  INFO      Context compressed: 21 messages -> 2 messages
+(EngineCore_DP0 pid=1026122) /home/v-tiossowski/anaconda3/envs/autoformalization/lib/python3.12/site-packages/vllm/model_executor/layers/fla/ops/utils.py:113: UserWarning: Input tensor shape suggests potential format mismatch: seq_len (28) < num_heads (48). This may indicate the inputs were passed in head-first format [B, H, T, ...] when head_first=False was specified. Please verify your input tensor format matches the expected shape [B, T, H, ...].
+(EngineCore_DP0 pid=1026122)   return fn(*contiguous_args, **contiguous_kwargs)
+2026-03-26 11:51:30  INFO      Exec block 1/1 …
+2026-03-26 11:51:30  INFO      Output: PT/INR items from d_items:
+Empty DataFrame
+Columns: [itemid, label, unitname]
+Index: []
+
+PT/INR items from d_labitems:
+   itemid    label  fluid
+0   51237  INR(PT)  Blood
+1   51274       PT  Blood
+2   51675  INR(PT)  Blood
+3   52923      PTT  Blood
+
+Sample PT data:
+            charttime  valuenum  ref_range_upper
+0 2180-07-24 06:35:00      19.5             12.5
+1 2180-07-25 04:45:00      21.6             12.5
+
+2026-03-26 11:51:30  INFO      === Iteration 88/100  run=lods  best_qa=65.0% ===
+2026-03-26 11:51:48  INFO      Exec block 1/1 …
+2026-03-26 11:51:48  INFO      Output: INR data:
+            charttime  valuenum  ref_range_upper
+0 2180-07-24 06:35:00       1.8              1.1
+1 2180-07-25 04:45:00       2.0              1.1
+
+Ventilator modes:
+                     value
+0                  PRES/AC
+1                    P-CMV
+2                  (S) CMV
+3                 PCV+/PSV
+4                     SIMV
+5     APRV/Biphasic+ApnVol
+6                 SIMV/PSV
+7                   P-SIMV
+8        CPAP/PSV+Apn TCPL
+9            SIMV/AutoFlow
+10              PCV+Assist
+
+2026-03-26 11:51:48  INFO      === Iteration 89/100  run=lods  best_qa=65.0% ===
+2026-03-26 11:52:03  INFO      Exec block 1/1 …
+2026-03-26 11:52:03  INFO      Output: GCS data for 38453736:
+             charttime  itemid  valuenum
+0  2165-07-20 02:00:00  220739       4.0
+1  2165-07-20 02:00:00  223900       1.0
+2  2165-07-20 02:00:00  223901       6.0
+3  2165-07-20 04:00:00  220739       4.0
+4  2165-07-20 04:00:00  223900       1.0
+5  2165-07-20 04:00:00  223901       6.0
+6  2165-07-20 06:00:00  220739       4.0
+7  2165-07-20 06:00:00  223900       1.0
+8  2165-07-20 06:00:00  223901       6.0
+9  2165-07-20 08:33:00  220739       4.0
+10 2165-07-20 08:33:00  22
+2026-03-26 11:52:03  INFO      === Iteration 90/100  run=lods  best_qa=65.0% ===
+2026-03-26 11:52:48  INFO      Exec block 1/1 …
+2026-03-26 11:52:48  INFO      Output: CV data:
+             charttime     hr    sbp
+0  2165-07-20 01:10:00  110.0    NaN
+1  2165-07-20 01:11:00    NaN   83.0
+2  2165-07-20 01:15:00  108.0    NaN
+3  2165-07-20 01:16:00    NaN   93.0
+4  2165-07-20 01:18:00  107.0  100.0
+5  2165-07-20 01:28:00    NaN  141.0
+6  2165-07-20 01:30:00  122.0  147.0
+7  2165-07-20 01:45:00  113.0  114.0
+8  2165-07-20 02:00:00  110.0  105.0
+9  2165-07-20 02:04:00    NaN  101.0
+10 2165-07-20 02:15:00  108.0   90.0
+11 2165-07-20 02:30:00  108.0  101.0
+12 2165-07
+2026-03-26 11:52:48  INFO      === Iteration 91/100  run=lods  best_qa=65.0% ===
+2026-03-26 11:53:27  INFO      Exec block 1/1 …
+2026-03-26 11:53:28  INFO      Output: MV status:
+            charttime       value
+0 2165-07-20 08:00:00    CPAP/PSV
+1 2165-07-20 01:00:00  CMV/ASSIST
+2 2165-07-20 05:00:00     PSV/SBT
+3 2165-07-20 06:00:00    CPAP/PSV
+
+P/F data:
+            charttime   pao2  fio2
+0 2165-07-19 23:19:00  203.0   NaN
+1 2165-07-20 00:14:00  166.0   NaN
+2 2165-07-20 05:28:00  157.0   NaN
+
+Hematologic:
+   itemid              label           charttime  valuenum
+0   51265     Platelet Count 2165-07-20 11:29:00     158.0
+1   51301  White Blood Cells 2165-07
+2026-03-26 11:53:28  INFO      === Iteration 92/100  run=lods  best_qa=65.0% ===
+2026-03-26 11:56:12  INFO      Exec block 1/1 …
+2026-03-26 11:56:12  INFO      Output: GCS by time (sorted):
+itemid               eye  motor  verbal  total
+charttime                                     
+2165-07-20 02:00:00  4.0    6.0     1.0   11.0
+2165-07-20 04:00:00  4.0    6.0     1.0   11.0
+2165-07-20 06:00:00  4.0    6.0     1.0   11.0
+2165-07-20 08:33:00  4.0    6.0     1.0   11.0
+2165-07-20 10:30:00  4.0    6.0     5.0   15.0
+2165-07-20 12:00:00  4.0    6.0     5.0   15.0
+2165-07-20 16:00:00  4.0    6.0     5.0   15.0
+2165-07-20 20:00:00  4.0    6.0     5.0   15.0
+
+Min GCS
+2026-03-26 11:56:12  INFO      === Iteration 93/100  run=lods  best_qa=65.0% ===
+2026-03-26 11:57:05  INFO      Exec block 1/1 …
+2026-03-26 11:57:05  INFO      Output: GCS data:
+             charttime  itemid  valuenum
+0  2165-10-15 08:00:00  220739       4.0
+1  2165-10-15 08:00:00  223900       5.0
+2  2165-10-15 08:00:00  223901       6.0
+3  2165-10-15 12:00:00  220739       4.0
+4  2165-10-15 12:00:00  223900       5.0
+5  2165-10-15 12:00:00  223901       6.0
+6  2165-10-15 16:00:00  220739       4.0
+7  2165-10-15 16:00:00  223900       5.0
+8  2165-10-15 16:00:00  223901       6.0
+9  2165-10-15 01:24:00  220739       4.0
+10 2165-10-15 01:24:00  223900       5.
+2026-03-26 11:57:05  INFO      === Iteration 94/100  run=lods  best_qa=65.0% ===
+2026-03-26 11:58:20  INFO      Exec block 1/1 …
+2026-03-26 11:58:20  INFO      Output: FiO2 data:
+Empty DataFrame
+Columns: [charttime, itemid, valuenum]
+Index: []
+
+PaO2 data:
+            charttime  valuenum
+0 2165-07-19 23:19:00     203.0
+1 2165-07-20 00:14:00     166.0
+2 2165-07-20 05:28:00     157.0
+
+Direct P/F ratio:
+Empty DataFrame
+Columns: [charttime, valuenum]
+Index: []
+
+2026-03-26 11:58:20  INFO      === Iteration 95/100  run=lods  best_qa=65.0% ===
+2026-03-26 11:59:19  INFO      Exec block 1/1 …
+2026-03-26 11:59:20  INFO      Output: PT reference ranges:
+   ref_range_upper
+0             12.5
+1             13.1
+2             13.4
+
+PT details for 33677668:
+            charttime  valuenum  ref_range_upper  pt_above
+0 2165-10-15 02:02:00      16.0             12.5       3.5
+1 2165-10-15 06:40:00      15.4             12.5       2.9
+2 2165-10-16 07:25:00      11.8             12.5      -0.7
+3 2165-10-17 07:12:00      12.1             12.5      -0.4
+4 2165-10-19 06:06:00      11.1             12.5      -1.4
+5 2165-10-20 06:10:00  
+2026-03-26 11:59:20  INFO      === Iteration 96/100  run=lods  best_qa=65.0% ===
+2026-03-26 12:00:05  INFO      Exec block 1/1 …
+2026-03-26 12:00:05  INFO      Output: All ventilator modes:
+  (S) CMV
+  APRV
+  APRV/Biphasic+ApnPress
+  APRV/Biphasic+ApnVol
+  APV (cmv)
+  Ambient
+  Apnea Ventilation
+  CMV
+  CMV/ASSIST
+  CMV/ASSIST/AutoFlow
+  CMV/AutoFlow
+  CPAP
+  CPAP/PPS
+  CPAP/PSV
+  CPAP/PSV+Apn TCPL
+  CPAP/PSV+ApnPres
+  CPAP/PSV+ApnVol
+  DuoPaP
+  MMV
+  MMV/AutoFlow
+  MMV/PSV
+  MMV/PSV/AutoFlow
+  P-CMV
+  P-SIMV
+  PCV+
+  PCV+/PSV
+  PCV+Assist
+  PRES/AC
+  PRVC/AC
+  PRVC/SIMV
+  PSV/SBT
+  SIMV
+  SIMV/AutoFlow
+  SIMV/PRES
+  SIMV/PSV
+  SIMV/PSV/AutoFlow
+  SIMV/VOL
+  S
+2026-03-26 12:00:05  INFO      === Iteration 97/100  run=lods  best_qa=65.0% ===
+2026-03-26 12:00:18  INFO      Exec block 1/1 …
+2026-03-26 12:00:18  INFO      Output: FiO2 related items:
+   itemid                 label unitname
+0  223835  Inspired O2 Fraction     None
+1  223872    Inspired Gas Temp.       °C
+2  227008     Ejection Fraction        %
+
+Specific FiO2 item IDs:
+   itemid              label unitname
+0  226754  FiO2ApacheIIValue        %
+1  227010      FiO2_ApacheIV        %
+2  229841          FiO2 (CH)        %
+
+2026-03-26 12:00:18  INFO      === Iteration 98/100  run=lods  best_qa=65.0% ===
+2026-03-26 12:00:35  INFO      Exec block 1/1 …
+2026-03-26 12:00:35  INFO      Output: LODS guidelines:
+['lods_guideline']
+
+2026-03-26 12:00:35  INFO      === Iteration 99/100  run=lods  best_qa=65.0% ===
+2026-03-26 12:00:43  INFO      Exec block 1/1 …
+2026-03-26 12:00:43  INFO      Output: # LODS — Clinical Guideline
+# Generated by generate_guidelines.py
+# Source articles: 10 (PMID26903335, PMID35967847, PMID39244800, PMID38377099, PMID28011419...)
+############################################################
+
+# Clinical Guideline: Logistic Organ Dysfunction System (LODS)
+
+---
+
+## 1. Definition
+
+The **Logistic Organ Dysfunction System (LODS)** is an ICU severity-of-illness scoring system that quantifies the degree of organ dysfunction across six organ systems. It was developed by *
+2026-03-26 12:00:43  INFO      === Iteration 100/100  run=lods  best_qa=65.0% ===
+2026-03-26 12:03:55  INFO      Exec block 1/1 …
+2026-03-26 12:03:55  INFO      Output: Code executed successfully (no output).
+2026-03-26 12:03:55  INFO      Debug conversations will be saved to debug_logs
+2026-03-26 12:03:55  INFO      Using question from dataset column: Does this patient have a LODS score of 3 or more?
+2026-03-26 12:03:55  INFO      Answer type for 'lods': numerical (per_row=True)
+2026-03-26 12:03:55  INFO      ReACT iteration 1/5 — 20 active patients
+Rendering conversations:   0%|          | 0/20 [00:00<?, ?it/s]Rendering conversations: 100%|██████████| 20/20 [00:00<00:00, 676.56it/s]
+Processed prompts:   0%|          | 0/20 [00:00<?, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s]Processed prompts:   5%|▌         | 1/20 [00:08<02:36,  8.24s/it, est. speed input: 73.79 toks/s, output: 14.20 toks/s]Processed prompts:  40%|████      | 8/20 [00:08<00:09,  1.30it/s, est. speed input: 577.24 toks/s, output: 111.76 toks/s]Processed prompts:  55%|█████▌    | 11/20 [00:09<00:05,  1.59it/s, est. speed input: 701.29 toks/s, output: 140.24 toks/s]Processed prompts:  70%|███████   | 14/20 [00:09<00:02,  2.19it/s, est. speed input: 857.63 toks/s, output: 181.38 toks/s]Processed prompts:  80%|████████  | 16/20 [00:10<00:01,  2.09it/s, est. speed input: 884.32 toks/s, output: 194.80 toks/s]Processed prompts:  85%|████████▌ | 17/20 [00:11<00:01,  2.13it/s, est. speed input: 905.71 toks/s, output: 204.85 toks/s]Processed prompts:  90%|█████████ | 18/20 [00:11<00:00,  2.27it/s, est. speed input: 934.87 toks/s, output: 216.93 toks/s]Processed prompts:  95%|█████████▌| 19/20 [00:12<00:00,  2.35it/s, est. speed input: 956.95 toks/s, output: 227.98 toks/s]Processed prompts: 100%|██████████| 20/20 [00:12<00:00,  2.35it/s, est. speed input: 1004.81 toks/s, output: 244.98 toks/s]Processed prompts: 100%|██████████| 20/20 [00:12<00:00,  1.65it/s, est. speed input: 1004.81 toks/s, output: 244.98 toks/s]
+2026-03-26 12:04:09  INFO      ReACT iteration 2/5 — 20 active patients
+Rendering conversations:   0%|          | 0/20 [00:00<?, ?it/s]Rendering conversations: 100%|██████████| 20/20 [00:00<00:00, 455.16it/s]
+Processed prompts:   0%|          | 0/20 [00:00<?, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s]Processed prompts:   5%|▌         | 1/20 [00:07<02:26,  7.73s/it, est. speed input: 141.70 toks/s, output: 6.59 toks/s]Processed prompts:  15%|█▌        | 3/20 [00:07<00:34,  2.06s/it, est. speed input: 418.88 toks/s, output: 19.95 toks/s]Processed prompts:  20%|██        | 4/20 [00:08<00:23,  1.45s/it, est. speed input: 537.41 toks/s, output: 26.63 toks/s]Processed prompts:  40%|████      | 8/20 [00:08<00:06,  1.81it/s, est. speed input: 1029.17 toks/s, output: 55.20 toks/s]Processed prompts:  55%|█████▌    | 11/20 [00:08<00:03,  2.94it/s, est. speed input: 1402.42 toks/s, output: 79.13 toks/s]Processed prompts:  65%|██████▌   | 13/20 [00:09<00:02,  3.08it/s, est. speed input: 1553.90 toks/s, output: 93.24 toks/s]Processed prompts:  75%|███████▌  | 15/20 [00:09<00:01,  3.94it/s, est. speed input: 1759.85 toks/s, output: 110.65 toks/s]Processed prompts:  85%|████████▌ | 17/20 [00:12<00:02,  1.48it/s, est. speed input: 1470.72 toks/s, output: 105.38 toks/s]Processed prompts:  90%|█████████ | 18/20 [00:13<00:01,  1.59it/s, est. speed input: 1513.92 toks/s, output: 116.51 toks/s]Processed prompts:  95%|█████████▌| 19/20 [00:14<00:00,  1.47it/s, est. speed input: 1500.80 toks/s, output: 124.36 toks/s]Processed prompts: 100%|██████████| 20/20 [00:14<00:00,  1.47it/s, est. speed input: 1573.60 toks/s, output: 138.86 toks/s]Processed prompts: 100%|██████████| 20/20 [00:14<00:00,  1.41it/s, est. speed input: 1573.60 toks/s, output: 138.86 toks/s]
+2026-03-26 12:04:23  INFO      QA accuracy: 65.0%  (correct=13/20, parse_errors=0)
+2026-03-26 12:04:23  INFO      Function code saved to autoformalized_library/functions/lods.py
+2026-03-26 12:04:23  INFO      Summary saved to autoformalized_library/summary.json
+[rank0]:[W326 12:04:23.175387148 ProcessGroupNCCL.cpp:1553] Warning: WARNING: destroy_process_group() was not called before program exit, which can leak resources. For more info, please see https://pytorch.org/docs/stable/distributed.html#shutdown (function operator())
+
+======================================================================
+AUTOFORMALIZATION COMPLETE
+======================================================================
+  Output dir      : autoformalized_library
+  Model           : Qwen/Qwen3.5-27B
+  Dataset         : /home/v-tiossowski/HealthcareAgent/mimic-code/data/MIMICIV_lods_dataset/lods.csv
+  Run name        : lods
+  Status          : FAILED (below threshold)
+  QA accuracy     : 65.0%
+  Iterations      : 100
+  Total tokens    : 39,830  (prompt 34,617 / completion 5,213)
+  LLM calls       : 143
+  SQL queries     : 478
+  Function saved  : autoformalized_library/functions/lods.py
+======================================================================

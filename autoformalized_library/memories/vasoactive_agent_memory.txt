@@ -1,0 +1,14 @@
+=== Step 1 ===
+# Clinical Coding Agent Memory - Vasoactive Agents
+
+## Schema Facts
+
+### Tables
+- **mimiciv_icu.d_items**: itemid, label, category, linksto
+- **mimiciv_icu.inputevents**: subject_id, hadm_id, stay_id, caregiver_id, starttime, endtime, storetime, itemid, amount, amountuom, rate, rateuom, orderid, linkorderid, ordercategoryname, secondaryordercategoryname, ordercomponenttypedescription, ordercategorydescription, patientweight, totalamount, totalamountuom, isopenbag, continueinnextdept, statusdescription, originalamount, originalrate
+
+### Vasoactive Medication ItemIDs
+| itemid | label | category | rateuom |
+|--------|-------|----------|---------|
+| 221289 | Epine
+

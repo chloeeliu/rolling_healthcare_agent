@@ -1,0 +1,47 @@
+{
+  "timestamp": "2026-03-25T08:47:02.379370",
+  "model": "Qwen/Qwen3.5-27B",
+  "db_path": "/home/v-tiossowski/MIMIC-IV/mimic4.db",
+  "qa_dataset": "/home/v-tiossowski/HealthcareAgent/mimic-code/data/MIMICIV_vasopressin_dataset/vasopressin.csv",
+  "match_threshold": 0.9,
+  "run_name": "vasopressin",
+  "success": true,
+  "iterations": 34,
+  "qa_accuracy": 1.0,
+  "stats": {
+    "react": {
+      "prompt_tokens": 0,
+      "completion_tokens": 0,
+      "total_tokens": 0,
+      "llm_calls": 34,
+      "query_count": 34,
+      "query_time_sec": 1.526,
+      "wall_time_sec": 770.929
+    },
+    "qa": {
+      "prompt_tokens": 58736,
+      "completion_tokens": 15577,
+      "total_tokens": 74313,
+      "llm_calls": 46,
+      "query_count": 30,
+      "query_time_sec": 0.063,
+      "eval_wall_time_sec": 346.662,
+      "per_question": {
+        "avg_prompt_tokens": 2936.8,
+        "avg_completion_tokens": 778.9,
+        "avg_llm_calls": 2.3,
+        "avg_query_count": 1.5,
+        "avg_query_time_sec": 0.003,
+        "avg_wall_time_sec": 17.333
+      }
+    },
+    "total": {
+      "prompt_tokens": 58736,
+      "completion_tokens": 15577,
+      "total_tokens": 74313,
+      "llm_calls": 80,
+      "query_count": 64,
+      "query_time_sec": 1.589
+    }
+  }
+}

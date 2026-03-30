@@ -1,0 +1,1061 @@
+2026-03-25 09:49:20  INFO      Using database: /home/v-tiossowski/MIMIC-IV/mimic4.db
+2026-03-25 09:49:20  INFO      No --model_url provided; loading vLLM in-process …
+INFO 03-25 09:49:25 [utils.py:238] non-default args: {'trust_remote_code': True, 'max_model_len': 40000, 'disable_log_stats': True, 'model': 'Qwen/Qwen3.5-27B'}
+The argument `trust_remote_code` is to be used with Auto classes. It has no effect here and is ignored.
+The argument `trust_remote_code` is to be used with Auto classes. It has no effect here and is ignored.
+The argument `trust_remote_code` is to be used with Auto classes. It has no effect here and is ignored.
+INFO 03-25 09:49:26 [model.py:531] Resolved architecture: Qwen3_5ForConditionalGeneration
+INFO 03-25 09:49:26 [model.py:1554] Using max model len 40000
+INFO 03-25 09:49:26 [scheduler.py:231] Chunked prefill is enabled with max_num_batched_tokens=8192.
+INFO 03-25 09:49:27 [config.py:544] Setting attention block size to 784 tokens to ensure that attention page size is >= mamba page size.
+INFO 03-25 09:49:27 [config.py:575] Padding mamba page size by 0.13% to ensure that mamba page size and attention page size are exactly equal.
+INFO 03-25 09:49:27 [vllm.py:747] Asynchronous scheduling is enabled.
+WARNING 03-25 09:49:35 [system_utils.py:152] We must use the `spawn` multiprocessing start method. Overriding VLLM_WORKER_MULTIPROC_METHOD to 'spawn'. See https://docs.vllm.ai/en/latest/usage/troubleshooting.html#python-multiprocessing for more information. Reasons: CUDA is initialized
+(EngineCore_DP0 pid=4071703) INFO 03-25 09:49:40 [core.py:101] Initializing a V1 LLM engine (v0.17.1) with config: model='Qwen/Qwen3.5-27B', speculative_config=None, tokenizer='Qwen/Qwen3.5-27B', skip_tokenizer_init=False, tokenizer_mode=auto, revision=None, tokenizer_revision=None, trust_remote_code=True, dtype=torch.bfloat16, max_seq_len=40000, download_dir=None, load_format=auto, tensor_parallel_size=1, pipeline_parallel_size=1, data_parallel_size=1, disable_custom_all_reduce=False, quantization=None, enforce_eager=False, enable_return_routed_experts=False, kv_cache_dtype=auto, device_config=cuda, structured_outputs_config=StructuredOutputsConfig(backend='auto', disable_fallback=False, disable_any_whitespace=False, disable_additional_properties=False, reasoning_parser='', reasoning_parser_plugin='', enable_in_reasoning=False), observability_config=ObservabilityConfig(show_hidden_metrics_for_version=None, otlp_traces_endpoint=None, collect_detailed_traces=None, kv_cache_metrics=False, kv_cache_metrics_sample=0.01, cudagraph_metrics=False, enable_layerwise_nvtx_tracing=False, enable_mfu_metrics=False, enable_mm_processor_stats=False, enable_logging_iteration_details=False), seed=0, served_model_name=Qwen/Qwen3.5-27B, enable_prefix_caching=False, enable_chunked_prefill=True, pooler_config=None, compilation_config={'level': None, 'mode': <CompilationMode.VLLM_COMPILE: 3>, 'debug_dump_path': None, 'cache_dir': '', 'compile_cache_save_format': 'binary', 'backend': 'inductor', 'custom_ops': ['none'], 'splitting_ops': ['vllm::unified_attention', 'vllm::unified_attention_with_output', 'vllm::unified_mla_attention', 'vllm::unified_mla_attention_with_output', 'vllm::mamba_mixer2', 'vllm::mamba_mixer', 'vllm::short_conv', 'vllm::linear_attention', 'vllm::plamo2_mamba_mixer', 'vllm::gdn_attention_core', 'vllm::kda_attention', 'vllm::sparse_attn_indexer', 'vllm::rocm_aiter_sparse_attn_indexer', 'vllm::unified_kv_cache_update', 'vllm::unified_mla_kv_cache_update'], 'compile_mm_encoder': False, 'compile_sizes': [], 'compile_ranges_split_points': [8192], 'inductor_compile_config': {'enable_auto_functionalized_v2': False, 'combo_kernels': True, 'benchmark_combo_kernel': True}, 'inductor_passes': {}, 'cudagraph_mode': <CUDAGraphMode.FULL_AND_PIECEWISE: (2, 1)>, 'cudagraph_num_of_warmups': 1, 'cudagraph_capture_sizes': [1, 2, 4, 8, 16, 24, 32, 40, 48, 56, 64, 72, 80, 88, 96, 104, 112, 120, 128, 136, 144, 152, 160, 168, 176, 184, 192, 200, 208, 216, 224, 232, 240, 248, 256, 272, 288, 304, 320, 336, 352, 368, 384, 400, 416, 432, 448, 464, 480, 496, 512], 'cudagraph_copy_inputs': False, 'cudagraph_specialize_lora': True, 'use_inductor_graph_partition': False, 'pass_config': {'fuse_norm_quant': False, 'fuse_act_quant': False, 'fuse_attn_quant': False, 'enable_sp': False, 'fuse_gemm_comms': False, 'fuse_allreduce_rms': False}, 'max_cudagraph_capture_size': 512, 'dynamic_shapes_config': {'type': <DynamicShapesType.BACKED: 'backed'>, 'evaluate_guards': False, 'assume_32_bit_indexing': False}, 'local_cache_dir': None, 'fast_moe_cold_start': True, 'static_all_moe_layers': []}
+(EngineCore_DP0 pid=4071703) INFO 03-25 09:49:42 [parallel_state.py:1393] world_size=1 rank=0 local_rank=0 distributed_init_method=tcp://10.8.144.167:42987 backend=nccl
+(EngineCore_DP0 pid=4071703) INFO 03-25 09:49:42 [parallel_state.py:1715] rank 0 in world size 1 is assigned as DP rank 0, PP rank 0, PCP rank 0, TP rank 0, EP rank N/A, EPLB rank N/A
+(EngineCore_DP0 pid=4071703) INFO 03-25 09:49:48 [base.py:106] Offloader set to NoopOffloader
+(EngineCore_DP0 pid=4071703) INFO 03-25 09:49:48 [gpu_model_runner.py:4281] Starting to load model Qwen/Qwen3.5-27B...
+(EngineCore_DP0 pid=4071703) INFO 03-25 09:49:49 [cuda.py:453] Using backend AttentionBackendEnum.FLASH_ATTN for vit attention
+(EngineCore_DP0 pid=4071703) INFO 03-25 09:49:49 [mm_encoder_attention.py:215] Using AttentionBackendEnum.FLASH_ATTN for MMEncoderAttention.
+(EngineCore_DP0 pid=4071703) INFO 03-25 09:49:49 [cuda.py:405] Using FLASH_ATTN attention backend out of potential backends: ['FLASH_ATTN', 'FLASHINFER', 'TRITON_ATTN', 'FLEX_ATTENTION'].
+(EngineCore_DP0 pid=4071703) INFO 03-25 09:49:49 [flash_attn.py:587] Using FlashAttention version 2
+(EngineCore_DP0 pid=4071703) <frozen importlib._bootstrap_external>:1301: FutureWarning: The cuda.cudart module is deprecated and will be removed in a future release, please switch to use the cuda.bindings.runtime module instead.
+(EngineCore_DP0 pid=4071703) <frozen importlib._bootstrap_external>:1301: FutureWarning: The cuda.nvrtc module is deprecated and will be removed in a future release, please switch to use the cuda.bindings.nvrtc module instead.
+(EngineCore_DP0 pid=4071703) Loading safetensors checkpoint shards:   0% Completed | 0/11 [00:00<?, ?it/s]
+(EngineCore_DP0 pid=4071703) Loading safetensors checkpoint shards:   9% Completed | 1/11 [00:00<00:05,  1.87it/s]
+(EngineCore_DP0 pid=4071703) Loading safetensors checkpoint shards:  18% Completed | 2/11 [00:01<00:05,  1.67it/s]
+(EngineCore_DP0 pid=4071703) Loading safetensors checkpoint shards:  27% Completed | 3/11 [00:01<00:05,  1.56it/s]
+(EngineCore_DP0 pid=4071703) Loading safetensors checkpoint shards:  36% Completed | 4/11 [00:02<00:04,  1.51it/s]
+(EngineCore_DP0 pid=4071703) Loading safetensors checkpoint shards:  45% Completed | 5/11 [00:03<00:04,  1.48it/s]
+(EngineCore_DP0 pid=4071703) Loading safetensors checkpoint shards:  55% Completed | 6/11 [00:03<00:03,  1.46it/s]
+(EngineCore_DP0 pid=4071703) Loading safetensors checkpoint shards:  64% Completed | 7/11 [00:04<00:02,  1.44it/s]
+(EngineCore_DP0 pid=4071703) Loading safetensors checkpoint shards:  73% Completed | 8/11 [00:05<00:02,  1.45it/s]
+(EngineCore_DP0 pid=4071703) Loading safetensors checkpoint shards:  82% Completed | 9/11 [00:06<00:01,  1.43it/s]
+(EngineCore_DP0 pid=4071703) Loading safetensors checkpoint shards:  91% Completed | 10/11 [00:06<00:00,  1.43it/s]
+(EngineCore_DP0 pid=4071703) Loading safetensors checkpoint shards: 100% Completed | 11/11 [00:07<00:00,  1.61it/s]
+(EngineCore_DP0 pid=4071703) Loading safetensors checkpoint shards: 100% Completed | 11/11 [00:07<00:00,  1.52it/s]
+(EngineCore_DP0 pid=4071703) 
+(EngineCore_DP0 pid=4071703) INFO 03-25 09:49:57 [default_loader.py:293] Loading weights took 7.29 seconds
+(EngineCore_DP0 pid=4071703) INFO 03-25 09:49:57 [gpu_model_runner.py:4364] Model loading took 51.1 GiB memory and 8.296944 seconds
+(EngineCore_DP0 pid=4071703) INFO 03-25 09:49:58 [gpu_model_runner.py:5280] Encoder cache will be initialized with a budget of 16384 tokens, and profiled with 1 image items of the maximum feature size.
+(EngineCore_DP0 pid=4071703) INFO 03-25 09:50:06 [decorators.py:465] Directly load AOT compilation from path /home/v-tiossowski/.cache/vllm/torch_compile_cache/torch_aot_compile/0232891e22bd4d7db98ac2f43c441f0f81d0a431216053ca49fadeaff23e2af3/rank_0_0/model
+(EngineCore_DP0 pid=4071703) INFO 03-25 09:50:06 [backends.py:916] Using cache directory: /home/v-tiossowski/.cache/vllm/torch_compile_cache/feaf61af16/rank_0_0/backbone for vLLM's torch.compile
+(EngineCore_DP0 pid=4071703) INFO 03-25 09:50:06 [backends.py:976] Dynamo bytecode transform time: 3.53 s
+(EngineCore_DP0 pid=4071703) INFO 03-25 09:50:16 [backends.py:266] Directly load the compiled graph(s) for compile range (1, 8192) from the cache, took 9.410 s
+(EngineCore_DP0 pid=4071703) INFO 03-25 09:50:16 [monitor.py:35] torch.compile takes 13.78 s in total
+(EngineCore_DP0 pid=4071703) INFO 03-25 09:50:17 [gpu_worker.py:424] Available KV cache memory: 18.3 GiB
+(EngineCore_DP0 pid=4071703) INFO 03-25 09:50:17 [kv_cache_utils.py:1314] GPU KV cache size: 74,480 tokens
+(EngineCore_DP0 pid=4071703) INFO 03-25 09:50:17 [kv_cache_utils.py:1319] Maximum concurrency for 40,000 tokens per request: 6.95x
+(EngineCore_DP0 pid=4071703) Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):   0%|          | 0/51 [00:00<?, ?it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):   2%|▏         | 1/51 [00:00<00:08,  5.82it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):   4%|▍         | 2/51 [00:00<00:08,  6.05it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):   6%|▌         | 3/51 [00:00<00:07,  6.13it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):   8%|▊         | 4/51 [00:00<00:07,  6.16it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  10%|▉         | 5/51 [00:00<00:07,  6.20it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  12%|█▏        | 6/51 [00:00<00:07,  6.22it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  14%|█▎        | 7/51 [00:01<00:07,  6.18it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  16%|█▌        | 8/51 [00:01<00:07,  6.14it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  18%|█▊        | 9/51 [00:01<00:06,  6.48it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  20%|█▉        | 10/51 [00:01<00:06,  6.75it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  22%|██▏       | 11/51 [00:01<00:05,  6.77it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  24%|██▎       | 12/51 [00:01<00:05,  6.97it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  25%|██▌       | 13/51 [00:01<00:05,  7.11it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  27%|██▋       | 14/51 [00:02<00:05,  7.20it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  29%|██▉       | 15/51 [00:02<00:04,  7.30it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  31%|███▏      | 16/51 [00:02<00:04,  7.36it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  33%|███▎      | 17/51 [00:02<00:04,  7.66it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  35%|███▌      | 18/51 [00:02<00:04,  7.95it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  37%|███▋      | 19/51 [00:02<00:03,  8.17it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  39%|███▉      | 20/51 [00:02<00:03,  8.24it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  41%|████      | 21/51 [00:02<00:03,  8.33it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  43%|████▎     | 22/51 [00:03<00:03,  8.38it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  45%|████▌     | 23/51 [00:03<00:03,  8.43it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  47%|████▋     | 24/51 [00:03<00:03,  8.51it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  49%|████▉     | 25/51 [00:03<00:03,  8.53it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  51%|█████     | 26/51 [00:03<00:02,  8.53it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  53%|█████▎    | 27/51 [00:03<00:02,  8.56it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  55%|█████▍    | 28/51 [00:03<00:02,  8.53it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  57%|█████▋    | 29/51 [00:03<00:02,  8.58it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  59%|█████▉    | 30/51 [00:04<00:02,  8.59it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  61%|██████    | 31/51 [00:04<00:02,  8.55it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  63%|██████▎   | 32/51 [00:04<00:02,  8.59it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  65%|██████▍   | 33/51 [00:04<00:02,  8.90it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  67%|██████▋   | 34/51 [00:04<00:01,  9.08it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  69%|██████▊   | 35/51 [00:04<00:01,  9.30it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  73%|███████▎  | 37/51 [00:04<00:01,  9.61it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  76%|███████▋  | 39/51 [00:04<00:01,  9.81it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  80%|████████  | 41/51 [00:05<00:01,  9.92it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  84%|████████▍ | 43/51 [00:05<00:00, 10.02it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  88%|████████▊ | 45/51 [00:05<00:00, 10.20it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  92%|█████████▏| 47/51 [00:05<00:00, 10.38it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  96%|█████████▌| 49/51 [00:05<00:00, 10.61it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE): 100%|██████████| 51/51 [00:06<00:00, 10.68it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE): 100%|██████████| 51/51 [00:06<00:00,  8.37it/s]
+(EngineCore_DP0 pid=4071703) Capturing CUDA graphs (decode, FULL):   0%|          | 0/35 [00:00<?, ?it/s]Capturing CUDA graphs (decode, FULL):   3%|▎         | 1/35 [00:00<00:06,  5.61it/s]Capturing CUDA graphs (decode, FULL):   6%|▌         | 2/35 [00:00<00:05,  6.11it/s]Capturing CUDA graphs (decode, FULL):   9%|▊         | 3/35 [00:00<00:05,  6.37it/s]Capturing CUDA graphs (decode, FULL):  11%|█▏        | 4/35 [00:00<00:04,  6.48it/s]Capturing CUDA graphs (decode, FULL):  14%|█▍        | 5/35 [00:00<00:04,  6.52it/s]Capturing CUDA graphs (decode, FULL):  17%|█▋        | 6/35 [00:00<00:04,  6.62it/s]Capturing CUDA graphs (decode, FULL):  20%|██        | 7/35 [00:01<00:04,  6.70it/s]Capturing CUDA graphs (decode, FULL):  23%|██▎       | 8/35 [00:01<00:03,  6.79it/s]Capturing CUDA graphs (decode, FULL):  26%|██▌       | 9/35 [00:01<00:03,  6.84it/s]Capturing CUDA graphs (decode, FULL):  29%|██▊       | 10/35 [00:01<00:03,  6.88it/s]Capturing CUDA graphs (decode, FULL):  31%|███▏      | 11/35 [00:01<00:03,  6.91it/s]Capturing CUDA graphs (decode, FULL):  34%|███▍      | 12/35 [00:01<00:03,  6.96it/s]Capturing CUDA graphs (decode, FULL):  37%|███▋      | 13/35 [00:01<00:03,  6.99it/s]Capturing CUDA graphs (decode, FULL):  40%|████      | 14/35 [00:02<00:03,  6.98it/s]Capturing CUDA graphs (decode, FULL):  43%|████▎     | 15/35 [00:02<00:02,  7.07it/s]Capturing CUDA graphs (decode, FULL):  46%|████▌     | 16/35 [00:02<00:02,  7.15it/s]Capturing CUDA graphs (decode, FULL):  49%|████▊     | 17/35 [00:02<00:02,  7.43it/s]Capturing CUDA graphs (decode, FULL):  51%|█████▏    | 18/35 [00:02<00:02,  7.71it/s]Capturing CUDA graphs (decode, FULL):  54%|█████▍    | 19/35 [00:02<00:02,  7.93it/s]Capturing CUDA graphs (decode, FULL):  57%|█████▋    | 20/35 [00:02<00:01,  8.12it/s]Capturing CUDA graphs (decode, FULL):  60%|██████    | 21/35 [00:02<00:01,  8.24it/s]Capturing CUDA graphs (decode, FULL):  63%|██████▎   | 22/35 [00:03<00:01,  8.32it/s]Capturing CUDA graphs (decode, FULL):  66%|██████▌   | 23/35 [00:03<00:01,  8.32it/s]Capturing CUDA graphs (decode, FULL):  69%|██████▊   | 24/35 [00:03<00:01,  8.34it/s]Capturing CUDA graphs (decode, FULL):  71%|███████▏  | 25/35 [00:03<00:01,  8.32it/s]Capturing CUDA graphs (decode, FULL):  74%|███████▍  | 26/35 [00:03<00:01,  8.34it/s]Capturing CUDA graphs (decode, FULL):  77%|███████▋  | 27/35 [00:03<00:00,  8.41it/s]Capturing CUDA graphs (decode, FULL):  80%|████████  | 28/35 [00:03<00:00,  8.53it/s]Capturing CUDA graphs (decode, FULL):  83%|████████▎ | 29/35 [00:03<00:00,  8.63it/s]Capturing CUDA graphs (decode, FULL):  86%|████████▌ | 30/35 [00:03<00:00,  8.71it/s]Capturing CUDA graphs (decode, FULL):  89%|████████▊ | 31/35 [00:04<00:00,  8.63it/s]Capturing CUDA graphs (decode, FULL):  91%|█████████▏| 32/35 [00:04<00:00,  8.71it/s]Capturing CUDA graphs (decode, FULL):  94%|█████████▍| 33/35 [00:04<00:00,  8.82it/s]Capturing CUDA graphs (decode, FULL):  97%|█████████▋| 34/35 [00:04<00:00,  8.79it/s]Capturing CUDA graphs (decode, FULL): 100%|██████████| 35/35 [00:04<00:00,  8.91it/s]Capturing CUDA graphs (decode, FULL): 100%|██████████| 35/35 [00:04<00:00,  7.68it/s]
+(EngineCore_DP0 pid=4071703) INFO 03-25 09:50:29 [gpu_model_runner.py:5386] Graph capturing finished in 11 secs, took 1.13 GiB
+(EngineCore_DP0 pid=4071703) INFO 03-25 09:50:29 [core.py:282] init engine (profile, create kv cache, warmup model) took 31.22 seconds
+(EngineCore_DP0 pid=4071703) INFO 03-25 09:50:29 [vllm.py:747] Asynchronous scheduling is enabled.
+INFO 03-25 09:50:29 [llm.py:388] Supported tasks: ['generate']
+2026-03-25 09:50:29  INFO      Loading QA dataset from /home/v-tiossowski/HealthcareAgent/mimic-code/data/MIMICIV_code_status_dataset/code_status.csv
+2026-03-25 09:50:29  INFO      Dataset: 1000 rows, columns: ['subject_id', 'hadm_id', 'stay_id', 'intime', 'outtime', 'first_careunit', 'last_careunit', 'gt_label', 'question', 'gt_answer_type', 'split', 'dnr_any', 'dni_any', 'cmo_any', 'fullcode_any']
+2026-03-25 09:50:29  INFO      Filtered to train split: 100 rows
+2026-03-25 09:50:29  INFO      Auto-discovered ground-truth SQL: /home/v-tiossowski/HealthcareAgent/mimic-code/mimic-iv/concepts_duckdb/treatment/code_status.sql
+2026-03-25 09:50:29  INFO      === Iteration 1/100  run=code_status  best_qa=0.0% ===
+INFO 03-25 09:50:31 [hf.py:318] Detected the chat template content format to be 'string'. You can set `--chat-template-content-format` to override this.
+2026-03-25 09:50:46  INFO      Exec block 1/1 …
+2026-03-25 09:50:46  INFO      Output: []
+
+2026-03-25 09:50:46  INFO      === Iteration 2/100  run=code_status  best_qa=0.0% ===
+2026-03-25 09:50:48  INFO      Exec block 1/1 …
+2026-03-25 09:50:48  INFO      Output: []
+
+2026-03-25 09:50:48  INFO      === Iteration 3/100  run=code_status  best_qa=0.0% ===
+2026-03-25 09:50:50  INFO      Exec block 1/1 …
+2026-03-25 09:50:50  INFO      Output: ['acidosis_guideline', 'acute_decompensated_heart_failure_guideline', 'acute_hepatic_failure_guideline', 'adverse_effect_of_anticoagulants_guideline', 'alcohol_withdrawal_syndrome_guideline', 'anemia_icu_critically_ill_hemoglobin_transfusion_guideline', 'apache_iii_guideline', 'atrial_fibrillation_guideline', 'bradycardia_guideline', 'cerebral_infarction_guideline', 'coma_altered_consciousness_icu_guideline', 'copd_exacerbation_guideline', 'coronary_artery_disease_guideline', 'deep_vein_thrombos
+2026-03-25 09:50:50  INFO      === Iteration 4/100  run=code_status  best_qa=0.0% ===
+2026-03-25 09:50:53  INFO      Exec block 1/1 …
+2026-03-25 09:50:53  INFO      Output: ['acei', 'age', 'antibiotic', 'arb', 'bg', 'blood_differential', 'cardiac_marker', 'chemistry', 'coagulation', 'complete_blood_count', 'dobutamine', 'dopamine', 'enzyme', 'epinephrine', 'gcs', 'height', 'icp', 'icustay_detail', 'inflammation', 'kdigo_creatinine', '... (10 more; pass a keyword to filter)']
+
+2026-03-25 09:50:53  INFO      === Iteration 5/100  run=code_status  best_qa=0.0% ===
+2026-03-25 09:50:55  INFO      Exec block 1/1 …
+2026-03-25 09:50:55  INFO      Output: []
+
+2026-03-25 09:50:55  INFO      === Iteration 6/100  run=code_status  best_qa=0.0% ===
+2026-03-25 09:51:01  INFO      Exec block 1/1 …
+2026-03-25 09:51:01  INFO      Output:    itemid                     label          category      linksto
+0  223758               Code Status           General  chartevents
+1  228687              Code Status.  MD Progress Note  chartevents
+2  229784  Code Status (Intubation)        Intubation  chartevents
+
+2026-03-25 09:51:01  INFO      === Iteration 7/100  run=code_status  best_qa=0.0% ===
+2026-03-25 09:51:07  INFO      Exec block 1/1 …
+2026-03-25 09:51:07  INFO      Output:    itemid                                            value  valuenum  num_value
+0  228687                            DNI (do not intubate)       NaN        NaN
+1  228687                            Comfort measures only       NaN        NaN
+2  223758                                        Full code       NaN        NaN
+3  228687                                        Full code       NaN        NaN
+4  223758                            Comfort measures only       NaN        NaN
+5  223758           
+2026-03-25 09:51:07  INFO      === Iteration 8/100  run=code_status  best_qa=0.0% ===
+2026-03-25 09:51:18  INFO      Exec block 1/1 …
+2026-03-25 09:51:19  INFO      Output:    itemid         label                                            value
+0  223758   Code Status                            Comfort measures only
+1  223758   Code Status                            DNI (do not intubate)
+2  223758   Code Status                         DNR (do not resuscitate)
+3  223758   Code Status                                        DNR / DNI
+4  223758   Code Status                                        Full code
+5  228687  Code Status.                            Comfort mea
+2026-03-25 09:51:19  INFO      === Iteration 9/100  run=code_status  best_qa=0.0% ===
+2026-03-25 09:51:24  INFO      Exec block 1/1 …
+2026-03-25 09:51:24  INFO      Output:      stay_id           charttime  itemid                  value
+0   39553978 2180-07-23 14:22:00  223758              Full code
+1   39553978 2180-07-23 14:44:00  223758              Full code
+2   37081114 2150-11-06 08:00:00  223758              DNR / DNI
+3   37081114 2150-11-02 20:12:00  223758              DNR / DNI
+4   37081114 2150-11-03 04:30:00  223758              DNR / DNI
+5   37081114 2150-11-06 16:33:00  223758              DNR / DNI
+6   37081114 2150-11-03 09:50:00  223758            
+2026-03-25 09:51:24  INFO      === Iteration 10/100  run=code_status  best_qa=0.0% ===
+2026-03-25 09:51:33  INFO      Exec block 1/1 …
+2026-03-25 09:51:33  INFO      Output:     stay_id  subject_id   hadm_id              intime             outtime
+0  39553978    10000032  29079034 2180-07-23 14:00:00 2180-07-23 23:50:47
+1  37081114    10000690  25860671 2150-11-02 19:37:00 2150-11-06 17:03:17
+2  39765666    10000980  26913865 2189-06-27 08:42:00 2189-06-27 20:38:27
+3  37067082    10001217  24597018 2157-11-20 19:18:02 2157-11-21 22:08:00
+4  34592300    10001217  27703517 2157-12-19 15:42:24 2157-12-20 14:27:41
+
+2026-03-25 09:51:33  INFO      === Iteration 11/100  run=code_status  best_qa=0.0% ===
+2026-03-25 09:51:46  INFO      Exec block 1/1 …
+2026-03-25 09:51:46  INFO      Output: Empty DataFrame
+Columns: [itemid, label, value]
+Index: []
+
+2026-03-25 09:51:46  INFO      === Iteration 12/100  run=code_status  best_qa=0.0% ===
+2026-03-25 09:52:00  INFO      Exec block 1/1 …
+2026-03-25 09:52:00  INFO      Output:     stay_id           charttime  itemid      value
+0  37081114 2150-11-02 20:12:00  223758  DNR / DNI
+1  37081114 2150-11-03 04:30:00  223758  DNR / DNI
+2  37081114 2150-11-03 09:50:00  223758  DNR / DNI
+3  37081114 2150-11-04 10:10:00  223758  DNR / DNI
+4  37081114 2150-11-06 08:00:00  223758  DNR / DNI
+5  37081114 2150-11-06 12:23:00  223758  DNR / DNI
+6  37081114 2150-11-06 16:33:00  223758  DNR / DNI
+
+2026-03-25 09:52:00  INFO      === Iteration 13/100  run=code_status  best_qa=0.0% ===
+2026-03-25 09:52:14  INFO      Exec block 1/1 …
+2026-03-25 09:52:14  INFO      Output:    itemid                            label                   category
+0  224859  Status and Comfort (Behavioral)  Restraint/Support Systems
+1  227954               Status and Comfort  Restraint/Support Systems
+
+2026-03-25 09:52:14  INFO      === Iteration 14/100  run=code_status  best_qa=0.0% ===
+2026-03-25 09:52:30  INFO      Exec block 1/1 …
+2026-03-25 09:52:30  INFO      Output:     stay_id           charttime  itemid      value
+0  39553978 2180-07-23 14:22:00  223758  Full code
+1  39553978 2180-07-23 14:44:00  223758  Full code
+
+2026-03-25 09:52:30  INFO      === Iteration 15/100  run=code_status  best_qa=0.0% ===
+2026-03-25 09:52:48  INFO      Exec block 1/1 …
+2026-03-25 09:52:48  INFO      Output:     stay_id           charttime  itemid                  value
+0  31090461 2130-09-24 01:36:00  223758              Full code
+1  31090461 2130-09-24 05:17:00  223758  DNI (do not intubate)
+2  31090461 2130-09-27 19:45:00  223758  DNI (do not intubate)
+
+2026-03-25 09:52:48  INFO      === Iteration 16/100  run=code_status  best_qa=0.0% ===
+2026-03-25 09:53:34  INFO      Exec block 1/1 …
+2026-03-25 09:53:34  INFO      Output: Testing stay_id 37081114 (DNR/DNI patient):
+{'has_dnr': False, 'has_dni': False, 'is_full_code': False, 'comfort_measures_only': False, 'code_status_values': ['DNR / DNI', 'DNR / DNI', 'DNR / DNI', 'DNR / DNI', 'DNR / DNI', 'DNR / DNI', 'DNR / DNI'], 'latest_code_status': 'DNR / DNI'}
+
+2026-03-25 09:53:34  INFO      === Iteration 17/100  run=code_status  best_qa=0.0% ===
+2026-03-25 09:53:45  INFO      Exec block 1/1 …
+2026-03-25 09:53:45  INFO      Output: Value: DNR / DNI
+Value lower: dnr / dni
+'DNR' in val.lower(): False
+'dnr' in val.lower(): True
+
+2026-03-25 09:53:45  INFO      === Iteration 18/100  run=code_status  best_qa=0.0% ===
+2026-03-25 09:54:16  INFO      Exec block 1/1 …
+2026-03-25 09:54:16  INFO      Output: Testing stay_id 37081114 (DNR/DNI patient):
+{'has_dnr': True, 'has_dni': True, 'is_full_code': False, 'comfort_measures_only': False, 'code_status_values': ['DNR / DNI', 'DNR / DNI', 'DNR / DNI', 'DNR / DNI', 'DNR / DNI', 'DNR / DNI', 'DNR / DNI'], 'latest_code_status': 'DNR / DNI'}
+
+2026-03-25 09:54:16  INFO      === Iteration 19/100  run=code_status  best_qa=0.0% ===
+2026-03-25 09:54:23  INFO      Exec block 1/1 …
+2026-03-25 09:54:23  INFO      Output: Testing stay_id 39553978 (Full code patient):
+{'has_dnr': False, 'has_dni': False, 'is_full_code': True, 'comfort_measures_only': False, 'code_status_values': ['Full code', 'Full code'], 'latest_code_status': 'Full code'}
+
+Testing stay_id 31090461 (DNI patient):
+{'has_dnr': False, 'has_dni': True, 'is_full_code': True, 'comfort_measures_only': False, 'code_status_values': ['DNI (do not intubate)', 'DNI (do not intubate)', 'Full code'], 'latest_code_status': 'DNI (do not intubate)'}
+
+2026-03-25 09:54:23  INFO      === Iteration 20/100  run=code_status  best_qa=0.0% ===
+2026-03-25 09:54:29  INFO      Exec block 1/1 …
+2026-03-25 09:54:29  INFO      Output:                                              value
+0                            Comfort measures only
+1       DNAR (Do Not Attempt Resuscitation)  [DNR]
+2  DNAR (Do Not Attempt Resuscitation) [DNR] / DNI
+3                            DNI (do not intubate)
+4                         DNR (do not resuscitate)
+5                                        DNR / DNI
+6                                        Full code
+
+2026-03-25 09:54:29  INFO      === Iteration 21/100  run=code_status  best_qa=0.0% ===
+2026-03-25 09:54:36  INFO      Exec block 1/1 …
+2026-03-25 09:54:36  INFO      Output:     stay_id                  value
+0  30932571  Comfort measures only
+1  32371207  Comfort measures only
+2  38406015  Comfort measures only
+3  33563887  Comfort measures only
+4  39658632  Comfort measures only
+
+2026-03-25 09:54:36  INFO      === Iteration 22/100  run=code_status  best_qa=0.0% ===
+2026-03-25 09:54:44  INFO      Exec block 1/1 …
+2026-03-25 09:54:44  INFO      Output: Testing stay_id 30932571 (Comfort measures only patient):
+{'has_dnr': True, 'has_dni': False, 'is_full_code': True, 'comfort_measures_only': True, 'code_status_values': ['Comfort measures only', 'DNR (do not resuscitate)', 'Full code'], 'latest_code_status': 'Comfort measures only'}
+    stay_id                                            value
+0  39543480  DNAR (Do Not Attempt Resuscitation) [DNR] / DNI
+1  39061571       DNAR (Do Not Attempt Resuscitation)  [DNR]
+2  39061571       DNAR (Do Not At
+2026-03-25 09:54:44  INFO      === Iteration 23/100  run=code_status  best_qa=0.0% ===
+2026-03-25 09:54:53  INFO      Exec block 1/1 …
+2026-03-25 09:54:53  INFO      Output: Testing stay_id 39061571 (DNAR patient):
+{'has_dnr': True, 'has_dni': False, 'is_full_code': False, 'comfort_measures_only': False, 'code_status_values': ['DNAR (Do Not Attempt Resuscitation)  [DNR]', 'DNAR (Do Not Attempt Resuscitation)  [DNR]', 'DNAR (Do Not Attempt Resuscitation)  [DNR]'], 'latest_code_status': 'DNAR (Do Not Attempt Resuscitation)  [DNR]'}
+
+Testing stay_id 39543480 (DNAR/DNI patient):
+{'has_dnr': True, 'has_dni': True, 'is_full_code': False, 'comfort_measures_only': False, 'c
+2026-03-25 09:54:53  INFO      === Iteration 24/100  run=code_status  best_qa=0.0% ===
+2026-03-25 09:55:01  INFO      Exec block 1/1 …
+2026-03-25 09:55:01  INFO      Output:     stay_id
+0  30676350
+1  32743332
+2  32669861
+3  35636875
+4  31972725
+
+2026-03-25 09:55:01  INFO      === Iteration 25/100  run=code_status  best_qa=0.0% ===
+2026-03-25 09:55:07  INFO      Exec block 1/1 …
+2026-03-25 09:55:07  INFO      Output: Testing stay_id 30676350 (No code status patient):
+{'has_dnr': False, 'has_dni': False, 'is_full_code': False, 'comfort_measures_only': False, 'code_status_values': [], 'latest_code_status': None}
+
+2026-03-25 09:55:07  INFO      === Iteration 26/100  run=code_status  best_qa=0.0% ===
+2026-03-25 09:55:13  INFO      Exec block 1/1 …
+2026-03-25 09:55:13  INFO      Output:     stay_id                     value
+0  39801884  DNR (do not resuscitate)
+1  31316840  DNR (do not resuscitate)
+2  32359580  DNR (do not resuscitate)
+3  39558308  DNR (do not resuscitate)
+4  39558308  DNR (do not resuscitate)
+
+2026-03-25 09:55:13  INFO      === Iteration 27/100  run=code_status  best_qa=0.0% ===
+2026-03-25 09:55:19  INFO      Exec block 1/1 …
+2026-03-25 09:55:19  INFO      Output: Testing stay_id 39801884 (DNR only patient):
+{'has_dnr': True, 'has_dni': False, 'is_full_code': True, 'comfort_measures_only': False, 'code_status_values': ['DNR (do not resuscitate)', 'Full code', 'Full code'], 'latest_code_status': 'DNR (do not resuscitate)'}
+
+2026-03-25 09:55:19  INFO      === Iteration 28/100  run=code_status  best_qa=0.0% ===
+2026-03-25 09:55:27  INFO      Exec block 1/1 …
+2026-03-25 09:55:27  INFO      Output:     stay_id                  value
+0  31090461  DNI (do not intubate)
+1  31090461  DNI (do not intubate)
+2  31248398  DNI (do not intubate)
+3  33563887  DNI (do not intubate)
+4  33563887  DNI (do not intubate)
+
+2026-03-25 09:55:27  INFO      === Iteration 29/100  run=code_status  best_qa=0.0% ===
+2026-03-25 09:56:22  INFO      Exec block 1/1 …
+2026-03-25 09:56:22  INFO      Output: Code executed successfully (no output).
+2026-03-25 09:56:22  INFO      Debug conversations will be saved to debug_logs
+2026-03-25 09:56:22  INFO      Using question from dataset column: Does this patient have a DNR (do-not-resuscitate) order during their ICU stay?
+2026-03-25 09:56:22  INFO      Answer type for 'code_status': binary (per_row=True)
+2026-03-25 09:56:22  INFO      ReACT iteration 1/5 — 20 active patients
+Rendering conversations:   0%|          | 0/20 [00:00<?, ?it/s]Rendering conversations: 100%|██████████| 20/20 [00:00<00:00, 450.50it/s]
+Processed prompts:   0%|          | 0/20 [00:00<?, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s]Processed prompts:   5%|▌         | 1/20 [00:11<03:46, 11.91s/it, est. speed input: 83.40 toks/s, output: 13.02 toks/s]Processed prompts:  15%|█▌        | 3/20 [00:12<00:54,  3.19s/it, est. speed input: 244.57 toks/s, output: 38.91 toks/s]Processed prompts:  20%|██        | 4/20 [00:12<00:34,  2.13s/it, est. speed input: 322.66 toks/s, output: 51.88 toks/s]Processed prompts:  35%|███▌      | 7/20 [00:12<00:11,  1.13it/s, est. speed input: 559.11 toks/s, output: 91.59 toks/s]Processed prompts:  50%|█████     | 10/20 [00:12<00:04,  2.01it/s, est. speed input: 790.78 toks/s, output: 131.08 toks/s]Processed prompts:  60%|██████    | 12/20 [00:12<00:03,  2.57it/s, est. speed input: 927.67 toks/s, output: 155.44 toks/s]Processed prompts:  70%|███████   | 14/20 [00:13<00:01,  3.19it/s, est. speed input: 1059.19 toks/s, output: 179.91 toks/s]Processed prompts:  80%|████████  | 16/20 [00:13<00:01,  3.93it/s, est. speed input: 1189.23 toks/s, output: 204.86 toks/s]Processed prompts:  90%|█████████ | 18/20 [00:13<00:00,  4.48it/s, est. speed input: 1308.29 toks/s, output: 228.89 toks/s]Processed prompts: 100%|██████████| 20/20 [00:14<00:00,  4.17it/s, est. speed input: 1397.10 toks/s, output: 248.85 toks/s]Processed prompts: 100%|██████████| 20/20 [00:14<00:00,  4.17it/s, est. speed input: 1397.10 toks/s, output: 248.85 toks/s]Processed prompts: 100%|██████████| 20/20 [00:14<00:00,  1.41it/s, est. speed input: 1397.10 toks/s, output: 248.85 toks/s]
+2026-03-25 09:56:36  INFO      ReACT iteration 2/5 — 20 active patients
+Rendering conversations:   0%|          | 0/20 [00:00<?, ?it/s]Rendering conversations: 100%|██████████| 20/20 [00:00<00:00, 391.93it/s]
+Processed prompts:   0%|          | 0/20 [00:00<?, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s]Processed prompts:   5%|▌         | 1/20 [00:08<02:35,  8.17s/it, est. speed input: 137.98 toks/s, output: 7.35 toks/s]Processed prompts:  10%|█         | 2/20 [00:08<01:02,  3.47s/it, est. speed input: 269.57 toks/s, output: 14.85 toks/s]Processed prompts:  35%|███▌      | 7/20 [00:08<00:09,  1.44it/s, est. speed input: 924.16 toks/s, output: 51.98 toks/s]Processed prompts:  45%|████▌     | 9/20 [00:08<00:05,  1.89it/s, est. speed input: 1144.02 toks/s, output: 66.15 toks/s]Processed prompts:  55%|█████▌    | 11/20 [00:09<00:03,  2.48it/s, est. speed input: 1359.14 toks/s, output: 82.14 toks/s]Processed prompts:  65%|██████▌   | 13/20 [00:09<00:02,  3.04it/s, est. speed input: 1555.21 toks/s, output: 98.06 toks/s]Processed prompts:  80%|████████  | 16/20 [00:10<00:01,  2.79it/s, est. speed input: 1693.90 toks/s, output: 115.38 toks/s]Processed prompts:  85%|████████▌ | 17/20 [00:10<00:00,  3.13it/s, est. speed input: 1780.02 toks/s, output: 125.58 toks/s]Processed prompts:  95%|█████████▌| 19/20 [00:11<00:00,  3.45it/s, est. speed input: 1911.41 toks/s, output: 143.59 toks/s]Processed prompts: 100%|██████████| 20/20 [00:14<00:00,  1.30it/s, est. speed input: 1597.46 toks/s, output: 129.04 toks/s]Processed prompts: 100%|██████████| 20/20 [00:14<00:00,  1.30it/s, est. speed input: 1597.46 toks/s, output: 129.04 toks/s]Processed prompts: 100%|██████████| 20/20 [00:14<00:00,  1.42it/s, est. speed input: 1597.46 toks/s, output: 129.04 toks/s]
+2026-03-25 09:56:51  INFO      QA accuracy: 55.0%  (correct=11/20, parse_errors=0)
+2026-03-25 09:56:51  INFO      === Iteration 30/100  run=code_status  best_qa=55.0% ===
+2026-03-25 09:57:05  INFO      Exec block 1/1 …
+2026-03-25 09:57:05  INFO      Output: Empty DataFrame
+Columns: [stay_id, charttime, itemid, value, label]
+Index: []
+
+2026-03-25 09:57:05  INFO      === Iteration 31/100  run=code_status  best_qa=55.0% ===
+2026-03-25 09:57:13  INFO      Exec block 1/1 …
+2026-03-25 09:57:13  INFO      Output:     itemid                                                                               label                 category
+0   222871                                              Mallampati classification (Intubation)               Intubation
+1   223059                                                                Intubation - Details              Respiratory
+2   223758                                                                         Code Status                  General
+3   224385          
+2026-03-25 09:57:13  INFO      === Iteration 32/100  run=code_status  best_qa=55.0% ===
+2026-03-25 09:57:22  INFO      Exec block 1/1 …
+2026-03-25 09:57:22  INFO      Output:    subject_id   hadm_id   stay_id                                    first_careunit                                     last_careunit              intime             outtime       los
+0    14797678  28611329  31233808  Medical/Surgical Intensive Care Unit (MICU/SICU)  Medical/Surgical Intensive Care Unit (MICU/SICU) 2157-01-15 03:52:00 2157-01-16 20:29:05  1.692419
+
+2026-03-25 09:57:22  INFO      === Iteration 33/100  run=code_status  best_qa=55.0% ===
+2026-03-25 09:57:31  INFO      Exec block 1/1 …
+2026-03-25 09:57:31  INFO      Output: Error:
+Traceback (most recent call last):
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 643, in execute
+    _run_with_timeout(_do_execute, timeout)
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 174, in _run_with_timeout
+    raise error[0]
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 156, in target
+    result[0] = func(*args, **kwargs)
+                ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/v-tiossowsk
+2026-03-25 09:57:31  INFO      === Iteration 34/100  run=code_status  best_qa=55.0% ===
+2026-03-25 09:57:38  INFO      Exec block 1/1 …
+2026-03-25 09:57:38  INFO      Output:             table_name
+0           admissions
+1              d_hcpcs
+2      d_icd_diagnoses
+3     d_icd_procedures
+4           d_labitems
+5        diagnoses_icd
+6             drgcodes
+7                 emar
+8          emar_detail
+9          hcpcsevents
+10           labevents
+11  microbiologyevents
+12                 omr
+13            patients
+14            pharmacy
+15                 poe
+16          poe_detail
+17       prescriptions
+18      procedures_icd
+19            provider
+20            ser
+2026-03-25 09:57:38  INFO      === Iteration 35/100  run=code_status  best_qa=55.0% ===
+2026-03-25 09:57:46  INFO      Exec block 1/1 …
+2026-03-25 09:57:46  INFO      Output: Error:
+Traceback (most recent call last):
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 643, in execute
+    _run_with_timeout(_do_execute, timeout)
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 174, in _run_with_timeout
+    raise error[0]
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 156, in target
+    result[0] = func(*args, **kwargs)
+                ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/v-tiossowsk
+2026-03-25 09:57:46  INFO      === Iteration 36/100  run=code_status  best_qa=55.0% ===
+2026-03-25 09:57:52  INFO      Exec block 1/1 …
+2026-03-25 09:57:52  INFO      Output:    subject_id  chartdate  seq_num      result_name result_value
+0    10000032 2180-04-27        1   Blood Pressure       110/65
+1    10000032 2180-04-27        1     Weight (Lbs)           94
+2    10000032 2180-05-07        1      BMI (kg/m2)         18.0
+3    10000032 2180-05-07        1  Height (Inches)           60
+4    10000032 2180-05-07        1     Weight (Lbs)        92.15
+
+2026-03-25 09:57:52  INFO      === Iteration 37/100  run=code_status  best_qa=55.0% ===
+2026-03-25 09:58:01  INFO      Exec block 1/1 …
+2026-03-25 09:58:01  INFO      Output: Empty DataFrame
+Columns: [subject_id, chartdate, seq_num, result_name, result_value]
+Index: []
+
+2026-03-25 09:58:01  INFO      === Iteration 38/100  run=code_status  best_qa=55.0% ===
+2026-03-25 09:58:10  INFO      Exec block 1/1 …
+2026-03-25 09:58:10  INFO      Output: Error:
+Traceback (most recent call last):
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 643, in execute
+    _run_with_timeout(_do_execute, timeout)
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 174, in _run_with_timeout
+    raise error[0]
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 156, in target
+    result[0] = func(*args, **kwargs)
+                ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/v-tiossowsk
+2026-03-25 09:58:10  INFO      === Iteration 39/100  run=code_status  best_qa=55.0% ===
+2026-03-25 09:58:17  INFO      Exec block 1/1 …
+2026-03-25 09:58:17  INFO      Output:          poe_id  poe_seq  subject_id   hadm_id           ordertime    order_type      order_subtype transaction_type discontinue_of_poe_id discontinued_by_poe_id order_provider_id order_status
+0  10000032-100      100    10000032  22841357 2180-06-26 22:09:02   Medications                NaN              New                  None                   None            P992IN     Inactive
+1  10000032-101      101    10000032  22841357 2180-06-26 22:09:02  General Care        Code status              N
+2026-03-25 09:58:17  INFO      === Iteration 40/100  run=code_status  best_qa=55.0% ===
+2026-03-25 09:58:24  INFO      Exec block 1/1 …
+2026-03-25 09:58:24  INFO      Output:          poe_id  poe_seq  subject_id          field_name              field_value
+0  10000032-101      101    10000032         Code status  Resuscitate (Full code)
+1  10000032-109      109    10000032      Admit category       Admit to inpatient
+2  10000032-109      109    10000032            Admit to                 Medicine
+3  10000032-114      114    10000032      Admit category       Admit to inpatient
+4  10000032-114      114    10000032  Discharge Planning                Finalized
+5  10000
+2026-03-25 09:58:24  INFO      === Iteration 41/100  run=code_status  best_qa=55.0% ===
+2026-03-25 09:58:35  INFO      Exec block 1/1 …
+2026-03-25 09:58:35  INFO      Output:          poe_id  poe_seq  subject_id   field_name                         field_value
+0   14797678-85       85    14797678  Code status  Full code  (attempt resuscitation)
+1   14797678-85       85    14797678  Code status  Full code  (attempt resuscitation)
+2  14797678-178      178    14797678  Code status  Full code  (attempt resuscitation)
+3  14797678-235      235    14797678  Code status  Full code  (attempt resuscitation)
+4   14797678-85       85    14797678  Code status  Full code  (attempt
+2026-03-25 09:58:35  INFO      === Iteration 42/100  run=code_status  best_qa=55.0% ===
+2026-03-25 09:58:48  INFO      Exec block 1/1 …
+2026-03-25 09:58:50  INFO      Output:              poe_id  poe_seq  subject_id   field_name                         field_value           ordertime
+0       14797678-85       85    14797678  Code status  Full code  (attempt resuscitation) 2105-10-05 15:53:26
+1      14797678-178      178    14797678  Code status  Full code  (attempt resuscitation) 2105-10-11 17:43:34
+2       14797678-85       85    14797678  Code status  Full code  (attempt resuscitation) 2110-01-11 21:29:24
+3       14797678-85       85    14797678  Code status  Full 
+2026-03-25 09:58:50  INFO      === Iteration 43/100  run=code_status  best_qa=55.0% ===
+2026-03-25 09:59:09  INFO      Exec block 1/1 …
+2026-03-25 09:59:09  INFO      Output:                                                field_value
+0  DNAR (DO NOT attempt resuscitation for cardiac arrest) 
+1                             Do not resuscitate (DNR/DNI)
+2                       Full code  (attempt resuscitation)
+3                                  Resuscitate (Full code)
+
+2026-03-25 09:59:09  INFO      === Iteration 44/100  run=code_status  best_qa=55.0% ===
+2026-03-25 09:59:28  INFO      Exec block 1/1 …
+2026-03-25 09:59:28  INFO      Output:    poe_seq  subject_id                         field_value   hadm_id           ordertime   stay_id              intime             outtime
+0       85    14797678  Full code  (attempt resuscitation)  28611329 2157-01-15 06:06:14  31233808 2157-01-15 03:52:00 2157-01-16 20:29:05
+
+2026-03-25 09:59:28  INFO      === Iteration 45/100  run=code_status  best_qa=55.0% ===
+2026-03-25 09:59:41  INFO      Exec block 1/1 …
+2026-03-25 09:59:41  INFO      Output:    poe_seq  subject_id   hadm_id           ordertime    order_type order_subtype
+0      178    14797678  28611329 2157-01-16 20:30:22  General Care   Code status
+1      235    14797678  28611329 2157-01-20 15:29:37  General Care   Code status
+2       85    14797678  28611329 2157-01-15 06:06:14  General Care   Code status
+
+2026-03-25 09:59:41  INFO      === Iteration 46/100  run=code_status  best_qa=55.0% ===
+2026-03-25 09:59:58  INFO      Exec block 1/1 …
+2026-03-25 09:59:58  INFO      Output:    poe_seq  subject_id                         field_value   hadm_id           ordertime   stay_id              intime             outtime
+0      117    19814116  Full code  (attempt resuscitation)  25590566 2179-10-17 09:09:09  39560723 2179-10-16 18:34:21 2179-10-19 20:43:01
+
+2026-03-25 09:59:58  INFO      === Iteration 47/100  run=code_status  best_qa=55.0% ===
+2026-03-25 10:00:58  INFO      Exec block 1/1 …
+2026-03-25 10:00:59  INFO      Output: Testing stay_id 31233808 (previously misclassified):
+{'has_dnr': True, 'has_dni': True, 'is_full_code': True, 'comfort_measures_only': False, 'code_status_values': ['Full code  (attempt resuscitation)', 'DNAR (DO NOT attempt resuscitation for cardiac arrest) ', 'Full code  (attempt resuscitation)', 'Resuscitate (Full code)', 'Resuscitate (Full code)', 'DNAR (DO NOT attempt resuscitation for cardiac arrest) ', 'Do not resuscitate (DNR/DNI)', 'DNAR (DO NOT attempt resuscitation for cardiac arrest)
+2026-03-25 10:00:59  INFO      === Iteration 48/100  run=code_status  best_qa=55.0% ===
+2026-03-25 10:01:19  INFO      Exec block 1/1 …
+2026-03-25 10:01:19  INFO      Output: Testing stay_id 33235789 (previously misclassified):
+has_dnr: True, has_dni: True, is_full_code: True
+
+Testing stay_id 38113073 (previously misclassified):
+has_dnr: True, has_dni: True, is_full_code: True
+
+Testing stay_id 35159664 (previously misclassified):
+has_dnr: True, has_dni: True, is_full_code: True
+
+2026-03-25 10:01:19  INFO      === Iteration 49/100  run=code_status  best_qa=55.0% ===
+2026-03-25 10:01:45  INFO      Exec block 1/1 …
+2026-03-25 10:01:45  INFO      Output: Testing stay_id 37081114 (DNR/DNI patient):
+has_dnr: True, has_dni: True, is_full_code: True
+
+Testing stay_id 39553978 (Full code patient):
+has_dnr: True, has_dni: True, is_full_code: True
+
+Testing stay_id 31090461 (DNI patient):
+has_dnr: True, has_dni: True, is_full_code: True
+
+Testing stay_id 30932571 (Comfort measures only patient):
+has_dnr: True, has_dni: True, is_full_code: True, comfort_measures_only: True
+
+Testing stay_id 30676350 (No code status patient):
+has_dnr: True, has_dni: True, is
+2026-03-25 10:01:45  INFO      === Iteration 50/100  run=code_status  best_qa=55.0% ===
+2026-03-25 10:01:45  INFO      Context approaching limit (20334 tokens, limit=25000) — forcing summarize + compress
+2026-03-25 10:03:24  INFO      Context compressed: 101 messages -> 2 messages
+2026-03-25 10:03:36  INFO      Exec block 1/1 …
+2026-03-25 10:03:36  INFO      Output: Stay 37081114: {'has_dnr': True, 'has_dni': True, 'is_full_code': True, 'comfort_measures_only': False, 'code_status_values': ['DNR / DNI', 'DNR / DNI', 'Resuscitate (Full code)', 'Full code  (attempt resuscitation)', 'DNAR (DO NOT attempt resuscitation for cardiac arrest) ', 'Full code  (attempt resuscitation)', 'Full code  (attempt resuscitation)', 'Do not resuscitate (DNR/DNI)', 'Full code  (attempt resuscitation)', 'Resuscitate (Full code)', 'Full code  (attempt resuscitation)', 'Do not resu
+2026-03-25 10:03:36  INFO      === Iteration 51/100  run=code_status  best_qa=55.0% ===
+2026-03-25 10:03:48  INFO      Exec block 1/1 …
+2026-03-25 10:03:48  INFO      Output: Stay 39553978:
+  has_dnr: True, has_dni: True
+  is_full_code: True, comfort_measures_only: False
+  latest_code_status: Do not resuscitate (DNR/DNI)
+  num_values: 13711
+
+Stay 31090461:
+  has_dnr: True, has_dni: True
+  is_full_code: True, comfort_measures_only: False
+  latest_code_status: DNI (do not intubate)
+  num_values: 8998
+
+Stay 30932571:
+  has_dnr: True, has_dni: True
+  is_full_code: True, comfort_measures_only: True
+  latest_code_status: Do not resuscitate (DNR/DNI)
+  num_values: 17362
+
+St
+2026-03-25 10:03:48  INFO      === Iteration 52/100  run=code_status  best_qa=55.0% ===
+2026-03-25 10:04:06  INFO      Exec block 1/1 …
+2026-03-25 10:04:06  INFO      Output: Chartevents for stay 30676350:
+Empty DataFrame
+Columns: [charttime, value, itemid]
+Index: []
+Total rows: 0
+
+2026-03-25 10:04:06  INFO      === Iteration 53/100  run=code_status  best_qa=55.0% ===
+2026-03-25 10:04:17  INFO      Exec block 1/1 …
+2026-03-25 10:04:17  INFO      Output: POE for stay 30676350:
+             ordertime  ...   field_name
+0  2175-10-08 19:21:15  ...  Code status
+1  2175-10-08 19:35:26  ...  Code status
+2  2175-10-08 19:35:26  ...  Code status
+3  2175-10-08 19:48:48  ...  Code status
+4  2175-10-08 19:43:15  ...  Code status
+5  2175-10-08 19:48:48  ...  Code status
+6  2175-10-08 19:30:18  ...  Code status
+7  2175-10-08 19:29:34  ...  Code status
+8  2175-10-08 19:35:26  ...  Code status
+9  2175-10-08 19:21:15  ...  Code status
+10 2175-10-08 19:35:26  ..
+2026-03-25 10:04:17  INFO      === Iteration 54/100  run=code_status  best_qa=55.0% ===
+2026-03-25 10:04:32  INFO      Exec block 1/1 …
+2026-03-25 10:04:32  INFO      Output: ICU stays:
+    stay_id  subject_id   hadm_id              intime             outtime
+0  30676350    10003019  22774359 2175-10-08 18:58:00 2175-10-09 11:59:16
+
+POE with field_value:
+            ordertime                                        field_value
+0 2175-10-08 19:43:15  DNAR (DO NOT attempt resuscitation for cardiac...
+1 2175-10-08 19:44:48                       Do not resuscitate (DNR/DNI)
+2 2175-10-08 19:45:03                       Do not resuscitate (DNR/DNI)
+3 2175-10-08 19:45:03     
+2026-03-25 10:04:32  INFO      === Iteration 55/100  run=code_status  best_qa=55.0% ===
+2026-03-25 10:05:02  INFO      Exec block 1/1 …
+2026-03-25 10:05:02  INFO      Output: ICU stay: 2175-10-08 18:58:00 to 2175-10-09 11:59:16
+
+All POE records for this hadm_id:
+             ordertime                                        field_value
+0  2175-10-08 10:18:41  DNAR (DO NOT attempt resuscitation for cardiac...
+1  2175-10-08 10:18:41                            Resuscitate (Full code)
+2  2175-10-08 10:18:41                            Resuscitate (Full code)
+3  2175-10-08 10:18:41                            Resuscitate (Full code)
+4  2175-10-08 10:18:41                 Ful
+2026-03-25 10:05:02  INFO      === Iteration 56/100  run=code_status  best_qa=55.0% ===
+2026-03-25 10:05:27  INFO      Exec block 1/1 …
+2026-03-25 10:05:27  INFO      Output: ICU stay: hadm_id=22774359, intime=2175-10-08 18:58:00, outtime=2175-10-09 11:59:16
+
+Admissions:     hadm_id  subject_id           admittime           dischtime
+0  22774359    10003019 2175-10-08 13:56:00 2175-10-17 17:30:00
+
+POE records within ICU stay time:
+               ordertime                                        field_value
+0    2175-10-08 19:07:46  DNAR (DO NOT attempt resuscitation for cardiac...
+1    2175-10-08 19:07:46                            Resuscitate (Full code)
+2    2175-10
+2026-03-25 10:05:27  INFO      === Iteration 57/100  run=code_status  best_qa=55.0% ===
+2026-03-25 10:05:44  INFO      Exec block 1/1 …
+2026-03-25 10:05:45  INFO      Output: Sample stays:
+     stay_id  subject_id   hadm_id              intime             outtime
+0   39553978    10000032  29079034 2180-07-23 14:00:00 2180-07-23 23:50:47
+1   37081114    10000690  25860671 2150-11-02 19:37:00 2150-11-06 17:03:17
+2   39765666    10000980  26913865 2189-06-27 08:42:00 2189-06-27 20:38:27
+3   37067082    10001217  24597018 2157-11-20 19:18:02 2157-11-21 22:08:00
+4   34592300    10001217  27703517 2157-12-19 15:42:24 2157-12-20 14:27:41
+5   31205490    10001725  25563031 2
+2026-03-25 10:05:45  INFO      === Iteration 58/100  run=code_status  best_qa=55.0% ===
+2026-03-25 10:06:06  INFO      Exec block 1/1 …
+2026-03-25 10:06:06  INFO      Output: Error:
+Traceback (most recent call last):
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 643, in execute
+    _run_with_timeout(_do_execute, timeout)
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 174, in _run_with_timeout
+    raise error[0]
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 156, in target
+    result[0] = func(*args, **kwargs)
+                ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/v-tiossowsk
+2026-03-25 10:06:06  INFO      === Iteration 59/100  run=code_status  best_qa=55.0% ===
+2026-03-25 10:06:18  INFO      Exec block 1/1 …
+2026-03-25 10:06:19  INFO      Output: Stay 39765666: has_any=True, num_values=11338
+Stay 37067082: has_any=True, num_values=7471
+Stay 34592300: has_any=True, num_values=11523
+Stay 31205490: has_any=True, num_values=34119
+Stay 39698942: has_any=True, num_values=39683
+Stay 37510196: has_any=True, num_values=7121
+Stay 39060235: has_any=True, num_values=3203
+Stay 34672098: has_any=True, num_values=78525
+
+2026-03-25 10:06:19  INFO      === Iteration 60/100  run=code_status  best_qa=55.0% ===
+2026-03-25 10:06:28  INFO      Exec block 1/1 …
+2026-03-25 10:06:28  INFO      Output: Non-existent stay 999999999: {'has_dnr': False, 'has_dni': False, 'is_full_code': False, 'comfort_measures_only': False, 'code_status_values': [], 'latest_code_status': None}
+
+2026-03-25 10:06:28  INFO      === Iteration 61/100  run=code_status  best_qa=55.0% ===
+2026-03-25 10:06:52  INFO      Exec block 1/1 …
+2026-03-25 10:06:52  INFO      Output: === Final Verification ===
+
+1. DNR/DNI patient (37081114):
+   has_dnr=True, has_dni=True
+   latest: DNR / DNI
+
+2. Full code patient (39553978):
+   is_full_code=True
+   latest: Full code  (attempt resuscitation)
+
+3. Comfort measures patient (30932571):
+   comfort_measures_only=True
+   latest: Resuscitate (Full code)
+
+4. Non-existent stay (999999999):
+   All False: True
+   latest: None
+
+=== All tests passed ===
+
+2026-03-25 10:06:52  INFO      === Iteration 62/100  run=code_status  best_qa=55.0% ===
+2026-03-25 10:07:44  INFO      Exec block 1/1 …
+2026-03-25 10:07:44  INFO      Output: Code executed successfully (no output).
+2026-03-25 10:07:44  INFO      Debug conversations will be saved to debug_logs
+2026-03-25 10:07:44  INFO      Using question from dataset column: Does this patient have a DNR (do-not-resuscitate) order during their ICU stay?
+2026-03-25 10:07:44  INFO      Answer type for 'code_status': binary (per_row=True)
+2026-03-25 10:07:44  INFO      ReACT iteration 1/5 — 20 active patients
+Rendering conversations:   0%|          | 0/20 [00:00<?, ?it/s]Rendering conversations: 100%|██████████| 20/20 [00:00<00:00, 555.14it/s]
+Processed prompts:   0%|          | 0/20 [00:00<?, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s]Processed prompts:   5%|▌         | 1/20 [00:09<03:00,  9.47s/it, est. speed input: 82.54 toks/s, output: 13.09 toks/s]Processed prompts:  10%|█         | 2/20 [00:11<01:32,  5.13s/it, est. speed input: 135.13 toks/s, output: 25.43 toks/s]Processed prompts:  55%|█████▌    | 11/20 [00:11<00:05,  1.62it/s, est. speed input: 732.85 toks/s, output: 157.34 toks/s]Processed prompts:  70%|███████   | 14/20 [00:12<00:02,  2.08it/s, est. speed input: 895.50 toks/s, output: 195.96 toks/s]Processed prompts:  90%|█████████ | 18/20 [00:12<00:00,  3.11it/s, est. speed input: 1136.73 toks/s, output: 254.31 toks/s]Processed prompts: 100%|██████████| 20/20 [00:14<00:00,  3.11it/s, est. speed input: 1071.37 toks/s, output: 246.62 toks/s]Processed prompts: 100%|██████████| 20/20 [00:14<00:00,  1.37it/s, est. speed input: 1071.37 toks/s, output: 246.62 toks/s]
+2026-03-25 10:07:59  INFO      ReACT iteration 2/5 — 20 active patients
+Rendering conversations:   0%|          | 0/20 [00:00<?, ?it/s]Rendering conversations:  95%|█████████▌| 19/20 [00:00<00:00, 186.97it/s]Rendering conversations: 100%|██████████| 20/20 [00:00<00:00, 187.41it/s]
+Processed prompts:   0%|          | 0/20 [00:00<?, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s]Processed prompts:   5%|▌         | 1/20 [00:19<06:18, 19.90s/it, est. speed input: 164.23 toks/s, output: 4.52 toks/s]Processed prompts:  15%|█▌        | 3/20 [00:20<01:29,  5.27s/it, est. speed input: 458.69 toks/s, output: 13.27 toks/s]Processed prompts:  20%|██        | 4/20 [00:20<00:55,  3.49s/it, est. speed input: 616.66 toks/s, output: 17.85 toks/s]Processed prompts:  35%|███▌      | 7/20 [00:20<00:18,  1.43s/it, est. speed input: 1092.03 toks/s, output: 31.71 toks/s]Processed prompts:  45%|████▌     | 9/20 [00:21<00:12,  1.16s/it, est. speed input: 1319.96 toks/s, output: 41.26 toks/s]Processed prompts:  50%|█████     | 10/20 [00:22<00:09,  1.04it/s, est. speed input: 1453.29 toks/s, output: 47.08 toks/s]Processed prompts:  55%|█████▌    | 11/20 [00:22<00:07,  1.25it/s, est. speed input: 1583.08 toks/s, output: 52.65 toks/s]Processed prompts:  60%|██████    | 12/20 [00:22<00:05,  1.55it/s, est. speed input: 1715.31 toks/s, output: 58.67 toks/s]Processed prompts:  65%|██████▌   | 13/20 [00:22<00:03,  1.96it/s, est. speed input: 1851.64 toks/s, output: 64.73 toks/s]Processed prompts:  70%|███████   | 14/20 [00:22<00:02,  2.46it/s, est. speed input: 1986.10 toks/s, output: 71.12 toks/s]Processed prompts:  75%|███████▌  | 15/20 [00:22<00:01,  3.06it/s, est. speed input: 2116.48 toks/s, output: 77.54 toks/s]Processed prompts:  80%|████████  | 16/20 [00:22<00:01,  3.74it/s, est. speed input: 2248.14 toks/s, output: 83.98 toks/s]Processed prompts:  85%|████████▌ | 17/20 [00:23<00:00,  4.47it/s, est. speed input: 2377.17 toks/s, output: 90.54 toks/s]Processed prompts:  90%|█████████ | 18/20 [00:23<00:00,  4.66it/s, est. speed input: 2499.48 toks/s, output: 96.72 toks/s]Processed prompts:  95%|█████████▌| 19/20 [00:24<00:00,  1.82it/s, est. speed input: 2495.01 toks/s, output: 99.39 toks/s]Processed prompts: 100%|██████████| 20/20 [00:24<00:00,  2.39it/s, est. speed input: 2615.30 toks/s, output: 107.08 toks/s]Processed prompts: 100%|██████████| 20/20 [00:24<00:00,  2.39it/s, est. speed input: 2615.30 toks/s, output: 107.08 toks/s]Processed prompts: 100%|██████████| 20/20 [00:24<00:00,  1.24s/it, est. speed input: 2615.30 toks/s, output: 107.08 toks/s]
+2026-03-25 10:08:24  INFO      QA accuracy: 70.0%  (correct=14/20, parse_errors=0)
+2026-03-25 10:08:24  INFO      === Iteration 63/100  run=code_status  best_qa=70.0% ===
+2026-03-25 10:08:52  INFO      Exec block 1/1 …
+2026-03-25 10:08:52  INFO      Output: 
+Stay 39842495:
+  has_dnr=True, has_dni=True
+  is_full_code=True, comfort_measures_only=False
+  num_values=40142
+  sample values: ['Resuscitate (Full code)', 'Full code  (attempt resuscitation)', 'Resuscitate (Full code)', 'Do not resuscitate (DNR/DNI)', 'Do not resuscitate (DNR/DNI)']
+
+Stay 31895311:
+  has_dnr=True, has_dni=True
+  is_full_code=True, comfort_measures_only=False
+  num_values=37785
+  sample values: ['Resuscitate (Full code)', 'Full code  (attempt resuscitation)', 'Full code  (atte
+2026-03-25 10:08:52  INFO      === Iteration 64/100  run=code_status  best_qa=70.0% ===
+2026-03-25 10:09:18  INFO      Exec block 1/1 …
+2026-03-25 10:09:18  INFO      Output: ICU stay: stay_id                  39842495
+subject_id               19405806
+hadm_id                  27788844
+intime        2156-12-29 09:42:58
+outtime       2156-12-30 11:21:52
+Name: 0, dtype: object
+
+Admissions for hadm_id 27788844:
+    hadm_id  subject_id           admittime           dischtime
+0  27788844    19405806 2156-12-24 13:13:00 2157-01-04 15:18:00
+
+POE records within ICU stay time:
+             ordertime                                        field_value
+0  2156-12-29 09:47:18  DN
+2026-03-25 10:09:18  INFO      === Iteration 65/100  run=code_status  best_qa=70.0% ===
+2026-03-25 10:09:41  INFO      Exec block 1/1 …
+2026-03-25 10:09:41  INFO      Output: Stay 39842495:
+  latest_code_status: Resuscitate (Full code)
+  has_dnr=True, has_dni=True
+  is_full_code=True
+
+Stay 31895311:
+  latest_code_status: Full code  (attempt resuscitation)
+  has_dnr=True, has_dni=True
+  is_full_code=True
+
+Stay 30957600:
+  latest_code_status: Resuscitate (Full code)
+  has_dnr=True, has_dni=True
+  is_full_code=True
+
+Stay 30498702:
+  latest_code_status: Do not resuscitate (DNR/DNI)
+  has_dnr=True, has_dni=True
+  is_full_code=True
+
+Stay 38109814:
+  latest_code_status: Do 
+2026-03-25 10:09:41  INFO      === Iteration 66/100  run=code_status  best_qa=70.0% ===
+2026-03-25 10:10:44  INFO      Exec block 1/1 …
+2026-03-25 10:10:45  INFO      Output: Testing v2 with misclassified cases:
+Stay 39842495: latest=Do not resuscitate (DNR/DNI), has_dnr=True, has_dni=True
+Stay 31895311: latest=DNAR (DO NOT attempt resuscitation for cardiac arrest) , has_dnr=True, has_dni=False
+Stay 30957600: latest=Resuscitate (Full code), has_dnr=False, has_dni=False
+Stay 30498702: latest=DNAR (DO NOT attempt resuscitation for cardiac arrest) , has_dnr=True, has_dni=False
+Stay 38109814: latest=Resuscitate (Full code), has_dnr=False, has_dni=False
+
+Testing v2 with p
+2026-03-25 10:10:45  INFO      === Iteration 67/100  run=code_status  best_qa=70.0% ===
+2026-03-25 10:11:31  INFO      Exec block 1/1 …
+2026-03-25 10:11:31  INFO      Output: ICU stay: 2156-12-29 09:42:58 to 2156-12-30 11:21:52
+
+Chartevents (latest first):
+            charttime      value
+0 2156-12-29 17:26:00  Full code
+1 2156-12-29 12:31:00  Full code
+
+POE (latest first):
+            ordertime                                        field_value
+0 2156-12-30 10:00:43  DNAR (DO NOT attempt resuscitation for cardiac...
+1 2156-12-30 10:00:43                       Do not resuscitate (DNR/DNI)
+2 2156-12-30 10:00:43  DNAR (DO NOT attempt resuscitation for cardiac...
+3 2156
+2026-03-25 10:11:31  INFO      === Iteration 68/100  run=code_status  best_qa=70.0% ===
+2026-03-25 10:12:01  INFO      Exec block 1/1 …
+2026-03-25 10:12:01  INFO      Output: POE with order_subtype:
+    poe_seq  ...                                        field_value
+0       260  ...  DNAR (DO NOT attempt resuscitation for cardiac...
+1       260  ...  DNAR (DO NOT attempt resuscitation for cardiac...
+2       260  ...                 Full code  (attempt resuscitation)
+3       260  ...                            Resuscitate (Full code)
+4       260  ...                 Full code  (attempt resuscitation)
+5       260  ...                            Resuscitate (Full code)
+
+2026-03-25 10:12:01  INFO      === Iteration 69/100  run=code_status  best_qa=70.0% ===
+2026-03-25 10:12:20  INFO      Exec block 1/1 …
+2026-03-25 10:12:20  INFO      Output: Chartevents for stay 39842495:
+            charttime      value  itemid
+0 2156-12-29 17:26:00  Full code  223758
+1 2156-12-29 12:31:00  Full code  223758
+
+Latest chartevent: Full code
+
+2026-03-25 10:12:20  INFO      === Iteration 70/100  run=code_status  best_qa=70.0% ===
+2026-03-25 10:12:52  INFO      Exec block 1/1 …
+2026-03-25 10:12:52  INFO      Output: Stay 39842495:
+  Latest chartevent: Full code
+  Latest POE: Resuscitate (Full code)
+
+Stay 31895311:
+  Latest chartevent: None
+  Latest POE: Full code  (attempt resuscitation)
+
+Stay 30957600:
+  Latest chartevent: None
+  Latest POE: Full code  (attempt resuscitation)
+
+Stay 30498702:
+  Latest chartevent: None
+  Latest POE: Full code  (attempt resuscitation)
+
+Stay 38109814:
+  Latest chartevent: None
+  Latest POE: Full code  (attempt resuscitation)
+
+
+2026-03-25 10:12:52  INFO      === Iteration 71/100  run=code_status  best_qa=70.0% ===
+2026-03-25 10:13:53  INFO      Exec block 1/1 …
+2026-03-25 10:13:53  INFO      Output: Testing v3 with misclassified cases:
+Stay 39842495: latest=Full code, has_dnr=False, has_dni=False
+Stay 31895311: latest=Full code  (attempt resuscitation), has_dnr=False, has_dni=False
+Stay 30957600: latest=Do not resuscitate (DNR/DNI), has_dnr=True, has_dni=True
+Stay 30498702: latest=Full code  (attempt resuscitation), has_dnr=False, has_dni=False
+Stay 38109814: latest=Full code  (attempt resuscitation), has_dnr=False, has_dni=False
+
+Testing v3 with previously correct cases:
+Stay 37081114: lat
+2026-03-25 10:13:53  INFO      === Iteration 72/100  run=code_status  best_qa=70.0% ===
+2026-03-25 10:14:26  INFO      Exec block 1/1 …
+2026-03-25 10:14:26  INFO      Output: ICU stay: 2133-06-16 14:22:04 to 2133-06-22 13:00:43
+
+Chartevents:
+Empty DataFrame
+Columns: [charttime, value]
+Index: []
+
+POE:
+            ordertime                                        field_value
+0 2133-06-22 12:21:42                       Do not resuscitate (DNR/DNI)
+1 2133-06-22 12:21:42                            Resuscitate (Full code)
+2 2133-06-22 12:21:42                 Full code  (attempt resuscitation)
+3 2133-06-22 12:21:42                            Resuscitate (Full code)
+4 2133-0
+2026-03-25 10:14:26  INFO      === Iteration 73/100  run=code_status  best_qa=70.0% ===
+2026-03-25 10:14:50  INFO      Exec block 1/1 …
+2026-03-25 10:14:50  INFO      Output: POE details:
+    poe_seq  ...                                        field_value
+0       342  ...  DNAR (DO NOT attempt resuscitation for cardiac...
+1       342  ...                            Resuscitate (Full code)
+2       342  ...                       Do not resuscitate (DNR/DNI)
+3       342  ...                            Resuscitate (Full code)
+4       342  ...                 Full code  (attempt resuscitation)
+5       342  ...                            Resuscitate (Full code)
+6       342
+2026-03-25 10:14:50  INFO      === Iteration 74/100  run=code_status  best_qa=70.0% ===
+2026-03-25 10:15:20  INFO      Exec block 1/1 …
+2026-03-25 10:15:20  INFO      Output: POE order_subtype values:
+                                        order_subtype
+0                                          Psychiatry
+1                                    Physical Therapy
+2                              NPO/Diet for Procedure
+3                                                 PPN
+4                                            Pheresis
+..                                                ...
+146                                 ETT (Non-Imaging)
+147  3CG or Radiology Tip confirmation OK 
+2026-03-25 10:15:20  INFO      === Iteration 75/100  run=code_status  best_qa=70.0% ===
+2026-03-25 10:15:49  INFO      Exec block 1/1 …
+2026-03-25 10:15:49  INFO      Output: POE table columns:
+               column_name  data_type
+0                   poe_id    VARCHAR
+1                  poe_seq    INTEGER
+2               subject_id    INTEGER
+3                  hadm_id    INTEGER
+4                ordertime  TIMESTAMP
+5               order_type    VARCHAR
+6            order_subtype    VARCHAR
+7         transaction_type    VARCHAR
+8    discontinue_of_poe_id    VARCHAR
+9   discontinued_by_poe_id    VARCHAR
+10       order_provider_id    VARCHAR
+11            order_statu
+2026-03-25 10:15:49  INFO      === Iteration 76/100  run=code_status  best_qa=70.0% ===
+2026-03-25 10:15:49  INFO      Context approaching limit (20026 tokens, limit=25000) — forcing summarize + compress
+2026-03-25 10:17:34  INFO      Context compressed: 55 messages -> 2 messages
+2026-03-25 10:17:48  INFO      Exec block 1/1 …
+2026-03-25 10:17:48  INFO      Output: Chartevents for stay 30957600:
+Empty DataFrame
+Columns: [charttime, itemid, value]
+Index: []
+Count: 0
+
+2026-03-25 10:17:48  INFO      === Iteration 77/100  run=code_status  best_qa=70.0% ===
+2026-03-25 10:17:59  INFO      Exec block 1/1 …
+2026-03-25 10:17:59  INFO      Output: POE data for stay 30957600:
+       poe_seq  ...                                        field_value
+0           45  ...                 Full code  (attempt resuscitation)
+1          141  ...  DNAR (DO NOT attempt resuscitation for cardiac...
+2          173  ...  DNAR (DO NOT attempt resuscitation for cardiac...
+3           65  ...  DNAR (DO NOT attempt resuscitation for cardiac...
+4           86  ...                 Full code  (attempt resuscitation)
+...        ...  ...                           
+2026-03-25 10:17:59  INFO      === Iteration 78/100  run=code_status  best_qa=70.0% ===
+2026-03-25 10:18:10  INFO      Exec block 1/1 …
+2026-03-25 10:18:10  INFO      Output: POE order_status distribution for stay 30957600:
+  order_status     cnt
+0     Inactive  126693
+
+2026-03-25 10:18:10  INFO      === Iteration 79/100  run=code_status  best_qa=70.0% ===
+2026-03-25 10:18:22  INFO      Exec block 1/1 …
+2026-03-25 10:18:22  INFO      Output: Active POE orders for stay 30957600:
+Empty DataFrame
+Columns: [poe_seq, ordertime, order_status, field_value]
+Index: []
+Count: 0
+
+2026-03-25 10:18:22  INFO      === Iteration 80/100  run=code_status  best_qa=70.0% ===
+2026-03-25 10:18:28  INFO      === Iteration 81/100  run=code_status  best_qa=70.0% ===
+2026-03-25 10:19:15  INFO      Exec block 1/1 …
+2026-03-25 10:19:15  INFO      Output: Stay 30957600 (should be no valid code status - all POE inactive):
+{'has_dnr': False, 'has_dni': False, 'is_full_code': False, 'comfort_measures_only': False, 'code_status_values': [], 'latest_code_status': None}
+
+2026-03-25 10:19:15  INFO      === Iteration 82/100  run=code_status  best_qa=70.0% ===
+2026-03-25 10:19:31  INFO      Exec block 1/1 …
+2026-03-25 10:19:31  INFO      Output: Testing all cases with v4 function:
+
+Stay 37081114 (DNR/DNI):
+  has_dnr=True, has_dni=True, is_full_code=False, comfort=False
+  latest_code_status=DNR / DNI
+
+Stay 39553978 (Full code):
+  has_dnr=False, has_dni=False, is_full_code=True, comfort=False
+  latest_code_status=Full code
+
+Stay 31090461 (DNI only):
+  has_dnr=False, has_dni=True, is_full_code=False, comfort=False
+  latest_code_status=DNI (do not intubate)
+
+Stay 30932571 (Comfort measures):
+  has_dnr=False, has_dni=False, is_full_code=Fals
+2026-03-25 10:19:31  INFO      === Iteration 83/100  run=code_status  best_qa=70.0% ===
+2026-03-25 10:19:47  INFO      Exec block 1/1 …
+2026-03-25 10:19:47  INFO      Output: Chartevents for stay 31895311:
+Empty DataFrame
+Columns: [charttime, itemid, value]
+Index: []
+
+2026-03-25 10:19:47  INFO      === Iteration 84/100  run=code_status  best_qa=70.0% ===
+2026-03-25 10:19:59  INFO      Exec block 1/1 …
+2026-03-25 10:19:59  INFO      Output: POE data for stay 31895311:
+    poe_seq  ...                         field_value
+0        75  ...  Full code  (attempt resuscitation)
+1        58  ...  Full code  (attempt resuscitation)
+2        54  ...        Do not resuscitate (DNR/DNI)
+3        50  ...             Resuscitate (Full code)
+4        52  ...             Resuscitate (Full code)
+5        48  ...  Full code  (attempt resuscitation)
+6        88  ...             Resuscitate (Full code)
+7        44  ...  Full code  (attempt resuscitat
+2026-03-25 10:19:59  INFO      === Iteration 85/100  run=code_status  best_qa=70.0% ===
+2026-03-25 10:20:24  INFO      Exec block 1/1 …
+2026-03-25 10:20:24  INFO      Output: Unique POE orders for stay 31895311 (latest first):
+   poe_seq  ...                                        field_value
+0       90  ...  DNAR (DO NOT attempt resuscitation for cardiac...
+1       90  ...                       Do not resuscitate (DNR/DNI)
+2       90  ...                            Resuscitate (Full code)
+3       90  ...                 Full code  (attempt resuscitation)
+4       89  ...                 Full code  (attempt resuscitation)
+5       89  ...  DNAR (DO NOT attempt resuscit
+2026-03-25 10:20:24  INFO      === Iteration 86/100  run=code_status  best_qa=70.0% ===
+2026-03-25 10:20:48  INFO      Exec block 1/1 …
+2026-03-25 10:20:48  INFO      Output: Latest POE order per poe_seq for stay 31895311:
+   poe_seq  ... rn
+0       90  ...  1
+1       89  ...  1
+2       88  ...  1
+3       87  ...  1
+4       69  ...  1
+5       70  ...  1
+6       68  ...  1
+7       86  ...  1
+8       85  ...  1
+9       84  ...  1
+
+[10 rows x 5 columns]
+
+2026-03-25 10:20:48  INFO      === Iteration 87/100  run=code_status  best_qa=70.0% ===
+2026-03-25 10:21:01  INFO      Exec block 1/1 …
+2026-03-25 10:21:01  INFO      Output: Latest POE order per poe_seq for stay 31895311:
+   poe_seq           ordertime order_status                         field_value
+0       90 2127-12-02 16:32:23     Inactive             Resuscitate (Full code)
+1       89 2127-12-02 16:32:12     Inactive  Full code  (attempt resuscitation)
+2       87 2127-12-02 14:26:48     Inactive        Do not resuscitate (DNR/DNI)
+3       88 2127-12-02 14:26:48     Inactive             Resuscitate (Full code)
+4       70 2127-12-02 13:02:57     Inactive        D
+2026-03-25 10:21:01  INFO      === Iteration 88/100  run=code_status  best_qa=70.0% ===
+2026-03-25 10:22:03  INFO      Exec block 1/1 …
+2026-03-25 10:22:03  INFO      Output: Testing all cases with v5 function:
+
+Stay 37081114 (DNR/DNI):
+  has_dnr=True, has_dni=True, is_full_code=False, comfort=False
+  latest_code_status=DNR / DNI
+
+Stay 39553978 (Full code):
+  has_dnr=False, has_dni=False, is_full_code=True, comfort=False
+  latest_code_status=Full code
+
+Stay 31090461 (DNI only):
+  has_dnr=False, has_dni=True, is_full_code=False, comfort=False
+  latest_code_status=DNI (do not intubate)
+
+Stay 30932571 (Comfort measures):
+  has_dnr=False, has_dni=False, is_full_code=Fals
+2026-03-25 10:22:03  INFO      === Iteration 89/100  run=code_status  best_qa=70.0% ===
+2026-03-25 10:22:39  INFO      Exec block 1/1 …
+2026-03-25 10:22:39  INFO      Output: Latest POE orders for stay 30957600:
+   poe_seq           ordertime                         field_value
+0      328 2133-06-22 12:21:42             Resuscitate (Full code)
+1      309 2133-06-22 10:10:06             Resuscitate (Full code)
+2      308 2133-06-22 10:05:47        Do not resuscitate (DNR/DNI)
+3      307 2133-06-22 10:03:53  Full code  (attempt resuscitation)
+4      306 2133-06-22 10:03:53        Do not resuscitate (DNR/DNI)
+
+2026-03-25 10:22:39  INFO      === Iteration 90/100  run=code_status  best_qa=70.0% ===
+2026-03-25 10:23:14  INFO      Exec block 1/1 …
+2026-03-25 10:23:15  INFO      Output: Final verification:
+
+✓ Stay 37081114 (DNR/DNI): dnr=True/True, dni=True/True, full=False/False, comfort=False/False
+✓ Stay 39553978 (Full code): dnr=False/False, dni=False/False, full=True/True, comfort=False/False
+✓ Stay 31090461 (DNI only): dnr=False/False, dni=True/True, full=False/False, comfort=False/False
+✓ Stay 30932571 (Comfort measures): dnr=False/False, dni=False/False, full=False/False, comfort=True/True
+✓ Stay 30676350 (Has code status): dnr=False/False, dni=False/False, full=True/Tr
+2026-03-25 10:23:15  INFO      === Iteration 91/100  run=code_status  best_qa=70.0% ===
+2026-03-25 10:23:30  INFO      Exec block 1/1 …
+2026-03-25 10:23:30  INFO      Output: Latest POE orders for stay 31895311:
+   poe_seq  ...                                        field_value
+0       90  ...                            Resuscitate (Full code)
+1       89  ...                       Do not resuscitate (DNR/DNI)
+2       88  ...  DNAR (DO NOT attempt resuscitation for cardiac...
+3       87  ...                       Do not resuscitate (DNR/DNI)
+4       68  ...                            Resuscitate (Full code)
+
+[5 rows x 3 columns]
+
+2026-03-25 10:23:30  INFO      === Iteration 92/100  run=code_status  best_qa=70.0% ===
+2026-03-25 10:23:42  INFO      Exec block 1/1 …
+2026-03-25 10:23:42  INFO      Output: Stay 31895311 result:
+  latest_code_status: Full code  (attempt resuscitation)
+  code_status_values: ['Full code  (attempt resuscitation)', 'Resuscitate (Full code)', 'Resuscitate (Full code)', 'Resuscitate (Full code)', 'Resuscitate (Full code)']
+
+2026-03-25 10:23:42  INFO      === Iteration 93/100  run=code_status  best_qa=70.0% ===
+2026-03-25 10:24:05  INFO      Exec block 1/1 …
+2026-03-25 10:24:05  INFO      Output: Latest code status: Full code  (attempt resuscitation)
+Lowercase: full code  (attempt resuscitation)
+
+DNR patterns check:
+  'dnr' in latest_lower: False
+  'dnar' in latest_lower: False
+  'do not resuscitate' in latest_lower: False
+  'do not attempt resuscitation' in latest_lower: False
+
+DNI patterns check:
+  'dni' in latest_lower: False
+  'do not intubate' in latest_lower: False
+
+Full code check: True
+
+2026-03-25 10:24:05  INFO      === Iteration 94/100  run=code_status  best_qa=70.0% ===
+2026-03-25 10:24:49  INFO      Exec block 1/1 …
+2026-03-25 10:24:49  INFO      Output: Stay 31895311:
+  has_dnr: False
+  has_dni: False
+  is_full_code: True
+  latest_code_status: Full code  (attempt resuscitation)
+
+2026-03-25 10:24:49  INFO      === Iteration 95/100  run=code_status  best_qa=70.0% ===
+2026-03-25 10:25:14  INFO      Exec block 1/1 …
+2026-03-25 10:25:14  INFO      Output: Final verification:
+
+✓ Stay 37081114 (DNR/DNI): dnr=True/True, dni=True/True, full=False/False, comfort=False/False
+✓ Stay 39553978 (Full code): dnr=False/False, dni=False/False, full=True/True, comfort=False/False
+✓ Stay 31090461 (DNI only): dnr=False/False, dni=True/True, full=False/False, comfort=False/False
+✓ Stay 30932571 (Comfort measures): dnr=False/False, dni=False/False, full=False/False, comfort=True/True
+✗ Stay 30676350 (Has code status): dnr=True/False, dni=False/False, full=False/Tr
+2026-03-25 10:25:14  INFO      === Iteration 96/100  run=code_status  best_qa=70.0% ===
+2026-03-25 10:25:27  INFO      Exec block 1/1 …
+2026-03-25 10:25:27  INFO      Output: Chartevents for stay 30676350:
+Empty DataFrame
+Columns: [charttime, value]
+Index: []
+
+2026-03-25 10:25:27  INFO      === Iteration 97/100  run=code_status  best_qa=70.0% ===
+2026-03-25 10:25:42  INFO      Exec block 1/1 …
+2026-03-25 10:25:42  INFO      Output: POE data for stay 30676350:
+   poe_seq           ordertime                         field_value
+0      606 2175-10-09 11:17:09  Full code  (attempt resuscitation)
+1      575 2175-10-09 07:47:42             Resuscitate (Full code)
+2      574 2175-10-09 07:17:37  Full code  (attempt resuscitation)
+3      573 2175-10-09 05:40:58        Do not resuscitate (DNR/DNI)
+4      572 2175-10-09 05:40:58        Do not resuscitate (DNR/DNI)
+
+2026-03-25 10:25:42  INFO      === Iteration 98/100  run=code_status  best_qa=70.0% ===
+2026-03-25 10:26:01  INFO      Exec block 1/1 …
+2026-03-25 10:26:01  INFO      Output: Stay 30676350 result:
+  latest_code_status: Do not resuscitate (DNR/DNI)
+  has_dnr: True
+  is_full_code: True
+  code_status_values: ['Do not resuscitate (DNR/DNI)', 'Full code  (attempt resuscitation)', 'Full code  (attempt resuscitation)', 'Resuscitate (Full code)', 'DNAR (DO NOT attempt resuscitation for cardiac arrest) ']
+
+2026-03-25 10:26:01  INFO      === Iteration 99/100  run=code_status  best_qa=70.0% ===
+2026-03-25 10:26:33  INFO      Exec block 1/1 …
+2026-03-25 10:26:33  INFO      Output: POE query results for stay 30676350:
+            eventtime                         code_status
+0 2175-10-09 11:17:09             Resuscitate (Full code)
+1 2175-10-09 07:47:42  Full code  (attempt resuscitation)
+2 2175-10-09 07:17:37             Resuscitate (Full code)
+3 2175-10-09 05:40:58             Resuscitate (Full code)
+4 2175-10-09 05:40:58             Resuscitate (Full code)
+5 2175-10-09 00:39:15             Resuscitate (Full code)
+6 2175-10-08 21:59:28             Resuscitate (Full code)
+2026-03-25 10:26:33  INFO      === Iteration 100/100  run=code_status  best_qa=70.0% ===
+2026-03-25 10:27:43  INFO      Exec block 1/1 …
+2026-03-25 10:27:43  INFO      Output: Code executed successfully (no output).
+2026-03-25 10:27:43  INFO      Debug conversations will be saved to debug_logs
+2026-03-25 10:27:43  INFO      Using question from dataset column: Does this patient have a DNR (do-not-resuscitate) order during their ICU stay?
+2026-03-25 10:27:43  INFO      Answer type for 'code_status': binary (per_row=True)
+2026-03-25 10:27:43  INFO      ReACT iteration 1/5 — 20 active patients
+Rendering conversations:   0%|          | 0/20 [00:00<?, ?it/s]Rendering conversations: 100%|██████████| 20/20 [00:00<00:00, 579.55it/s]
+Processed prompts:   0%|          | 0/20 [00:00<?, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s]Processed prompts:   5%|▌         | 1/20 [00:08<02:49,  8.91s/it, est. speed input: 88.30 toks/s, output: 12.45 toks/s]Processed prompts:  20%|██        | 4/20 [00:11<00:37,  2.37s/it, est. speed input: 275.24 toks/s, output: 43.92 toks/s]Processed prompts:  35%|███▌      | 7/20 [00:11<00:14,  1.12s/it, est. speed input: 476.26 toks/s, output: 87.55 toks/s]Processed prompts:  45%|████▌     | 9/20 [00:11<00:08,  1.29it/s, est. speed input: 601.16 toks/s, output: 115.73 toks/s]Processed prompts:  60%|██████    | 12/20 [00:12<00:04,  1.99it/s, est. speed input: 777.11 toks/s, output: 156.46 toks/s]Processed prompts:  80%|████████  | 16/20 [00:12<00:01,  3.37it/s, est. speed input: 1023.09 toks/s, output: 215.27 toks/s]Processed prompts:  90%|█████████ | 18/20 [00:12<00:00,  4.11it/s, est. speed input: 1136.83 toks/s, output: 243.56 toks/s]Processed prompts: 100%|██████████| 20/20 [00:13<00:00,  3.57it/s, est. speed input: 1189.17 toks/s, output: 260.12 toks/s]Processed prompts: 100%|██████████| 20/20 [00:13<00:00,  3.57it/s, est. speed input: 1189.17 toks/s, output: 260.12 toks/s]Processed prompts: 100%|██████████| 20/20 [00:13<00:00,  1.51it/s, est. speed input: 1189.17 toks/s, output: 260.12 toks/s]
+2026-03-25 10:27:57  INFO      ReACT iteration 2/5 — 20 active patients
+Rendering conversations:   0%|          | 0/20 [00:00<?, ?it/s]Rendering conversations: 100%|██████████| 20/20 [00:00<00:00, 370.33it/s]
+Processed prompts:   0%|          | 0/20 [00:00<?, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s]Processed prompts:   5%|▌         | 1/20 [00:08<02:44,  8.64s/it, est. speed input: 107.39 toks/s, output: 4.98 toks/s]Processed prompts:  15%|█▌        | 3/20 [00:08<00:38,  2.29s/it, est. speed input: 315.94 toks/s, output: 15.38 toks/s]Processed prompts:  20%|██        | 4/20 [00:09<00:27,  1.69s/it, est. speed input: 397.17 toks/s, output: 20.69 toks/s]Processed prompts:  25%|██▌       | 5/20 [00:09<00:18,  1.22s/it, est. speed input: 483.24 toks/s, output: 26.70 toks/s]Processed prompts:  30%|███       | 6/20 [00:10<00:17,  1.23s/it, est. speed input: 728.09 toks/s, output: 32.31 toks/s]Processed prompts:  40%|████      | 8/20 [00:10<00:08,  1.49it/s, est. speed input: 889.14 toks/s, output: 49.27 toks/s]Processed prompts:  45%|████▌     | 9/20 [00:11<00:06,  1.62it/s, est. speed input: 1050.66 toks/s, output: 56.82 toks/s]Processed prompts:  55%|█████▌    | 11/20 [00:12<00:04,  1.91it/s, est. speed input: 1137.10 toks/s, output: 72.48 toks/s]Processed prompts:  60%|██████    | 12/20 [00:14<00:07,  1.13it/s, est. speed input: 1073.53 toks/s, output: 74.45 toks/s]Processed prompts:  65%|██████▌   | 13/20 [00:15<00:06,  1.03it/s, est. speed input: 1085.86 toks/s, output: 81.99 toks/s]Processed prompts:  70%|███████   | 14/20 [00:16<00:06,  1.05s/it, est. speed input: 1080.82 toks/s, output: 90.15 toks/s]Processed prompts:  75%|███████▌  | 15/20 [00:26<00:17,  3.42s/it, est. speed input: 735.78 toks/s, output: 75.40 toks/s] Processed prompts:  80%|████████  | 16/20 [00:28<00:11,  2.91s/it, est. speed input: 738.02 toks/s, output: 89.87 toks/s]Processed prompts:  85%|████████▌ | 17/20 [00:29<00:07,  2.41s/it, est. speed input: 757.16 toks/s, output: 105.39 toks/s]Processed prompts:  90%|█████████ | 18/20 [00:31<00:04,  2.46s/it, est. speed input: 753.40 toks/s, output: 116.50 toks/s]Processed prompts:  95%|█████████▌| 19/20 [00:35<00:02,  2.73s/it, est. speed input: 730.71 toks/s, output: 125.59 toks/s]Processed prompts: 100%|██████████| 20/20 [00:37<00:00,  2.60s/it, est. speed input: 726.01 toks/s, output: 138.63 toks/s]Processed prompts: 100%|██████████| 20/20 [00:37<00:00,  2.60s/it, est. speed input: 726.01 toks/s, output: 138.63 toks/s]Processed prompts: 100%|██████████| 20/20 [00:37<00:00,  1.88s/it, est. speed input: 726.01 toks/s, output: 138.63 toks/s]
+2026-03-25 10:28:35  INFO      QA accuracy: 65.0%  (correct=13/20, parse_errors=0)
+2026-03-25 10:28:35  INFO      Function code saved to autoformalized_library/functions/code_status.py
+2026-03-25 10:28:35  INFO      Summary saved to autoformalized_library/summary.json
+[rank0]:[W325 10:28:35.674433015 ProcessGroupNCCL.cpp:1553] Warning: WARNING: destroy_process_group() was not called before program exit, which can leak resources. For more info, please see https://pytorch.org/docs/stable/distributed.html#shutdown (function operator())
+
+======================================================================
+AUTOFORMALIZATION COMPLETE
+======================================================================
+  Output dir      : autoformalized_library
+  Model           : Qwen/Qwen3.5-27B
+  Dataset         : /home/v-tiossowski/HealthcareAgent/mimic-code/data/MIMICIV_code_status_dataset/code_status.csv
+  Run name        : code_status
+  Status          : FAILED (below threshold)
+  QA accuracy     : 70.0%
+  Iterations      : 100
+  Total tokens    : 86,471  (prompt 80,229 / completion 6,242)
+  LLM calls       : 142
+  SQL queries     : 361
+  Function saved  : autoformalized_library/functions/code_status.py
+======================================================================

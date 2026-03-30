@@ -1,0 +1,248 @@
+2026-03-24 05:17:32  INFO      Using database: /home/v-tiossowski/MIMIC-IV/mimic4.db
+2026-03-24 05:17:32  INFO      No --model_url provided; loading vLLM in-process …
+INFO 03-24 05:17:37 [utils.py:238] non-default args: {'trust_remote_code': True, 'max_model_len': 40000, 'disable_log_stats': True, 'model': 'Qwen/Qwen3.5-27B'}
+The argument `trust_remote_code` is to be used with Auto classes. It has no effect here and is ignored.
+The argument `trust_remote_code` is to be used with Auto classes. It has no effect here and is ignored.
+The argument `trust_remote_code` is to be used with Auto classes. It has no effect here and is ignored.
+INFO 03-24 05:17:37 [model.py:531] Resolved architecture: Qwen3_5ForConditionalGeneration
+INFO 03-24 05:17:37 [model.py:1554] Using max model len 40000
+INFO 03-24 05:17:37 [scheduler.py:231] Chunked prefill is enabled with max_num_batched_tokens=8192.
+INFO 03-24 05:17:39 [config.py:544] Setting attention block size to 784 tokens to ensure that attention page size is >= mamba page size.
+INFO 03-24 05:17:39 [config.py:575] Padding mamba page size by 0.13% to ensure that mamba page size and attention page size are exactly equal.
+INFO 03-24 05:17:39 [vllm.py:747] Asynchronous scheduling is enabled.
+WARNING 03-24 05:17:46 [system_utils.py:152] We must use the `spawn` multiprocessing start method. Overriding VLLM_WORKER_MULTIPROC_METHOD to 'spawn'. See https://docs.vllm.ai/en/latest/usage/troubleshooting.html#python-multiprocessing for more information. Reasons: CUDA is initialized
+(EngineCore_DP0 pid=3184095) INFO 03-24 05:17:51 [core.py:101] Initializing a V1 LLM engine (v0.17.1) with config: model='Qwen/Qwen3.5-27B', speculative_config=None, tokenizer='Qwen/Qwen3.5-27B', skip_tokenizer_init=False, tokenizer_mode=auto, revision=None, tokenizer_revision=None, trust_remote_code=True, dtype=torch.bfloat16, max_seq_len=40000, download_dir=None, load_format=auto, tensor_parallel_size=1, pipeline_parallel_size=1, data_parallel_size=1, disable_custom_all_reduce=False, quantization=None, enforce_eager=False, enable_return_routed_experts=False, kv_cache_dtype=auto, device_config=cuda, structured_outputs_config=StructuredOutputsConfig(backend='auto', disable_fallback=False, disable_any_whitespace=False, disable_additional_properties=False, reasoning_parser='', reasoning_parser_plugin='', enable_in_reasoning=False), observability_config=ObservabilityConfig(show_hidden_metrics_for_version=None, otlp_traces_endpoint=None, collect_detailed_traces=None, kv_cache_metrics=False, kv_cache_metrics_sample=0.01, cudagraph_metrics=False, enable_layerwise_nvtx_tracing=False, enable_mfu_metrics=False, enable_mm_processor_stats=False, enable_logging_iteration_details=False), seed=0, served_model_name=Qwen/Qwen3.5-27B, enable_prefix_caching=False, enable_chunked_prefill=True, pooler_config=None, compilation_config={'level': None, 'mode': <CompilationMode.VLLM_COMPILE: 3>, 'debug_dump_path': None, 'cache_dir': '', 'compile_cache_save_format': 'binary', 'backend': 'inductor', 'custom_ops': ['none'], 'splitting_ops': ['vllm::unified_attention', 'vllm::unified_attention_with_output', 'vllm::unified_mla_attention', 'vllm::unified_mla_attention_with_output', 'vllm::mamba_mixer2', 'vllm::mamba_mixer', 'vllm::short_conv', 'vllm::linear_attention', 'vllm::plamo2_mamba_mixer', 'vllm::gdn_attention_core', 'vllm::kda_attention', 'vllm::sparse_attn_indexer', 'vllm::rocm_aiter_sparse_attn_indexer', 'vllm::unified_kv_cache_update', 'vllm::unified_mla_kv_cache_update'], 'compile_mm_encoder': False, 'compile_sizes': [], 'compile_ranges_split_points': [8192], 'inductor_compile_config': {'enable_auto_functionalized_v2': False, 'combo_kernels': True, 'benchmark_combo_kernel': True}, 'inductor_passes': {}, 'cudagraph_mode': <CUDAGraphMode.FULL_AND_PIECEWISE: (2, 1)>, 'cudagraph_num_of_warmups': 1, 'cudagraph_capture_sizes': [1, 2, 4, 8, 16, 24, 32, 40, 48, 56, 64, 72, 80, 88, 96, 104, 112, 120, 128, 136, 144, 152, 160, 168, 176, 184, 192, 200, 208, 216, 224, 232, 240, 248, 256, 272, 288, 304, 320, 336, 352, 368, 384, 400, 416, 432, 448, 464, 480, 496, 512], 'cudagraph_copy_inputs': False, 'cudagraph_specialize_lora': True, 'use_inductor_graph_partition': False, 'pass_config': {'fuse_norm_quant': False, 'fuse_act_quant': False, 'fuse_attn_quant': False, 'enable_sp': False, 'fuse_gemm_comms': False, 'fuse_allreduce_rms': False}, 'max_cudagraph_capture_size': 512, 'dynamic_shapes_config': {'type': <DynamicShapesType.BACKED: 'backed'>, 'evaluate_guards': False, 'assume_32_bit_indexing': False}, 'local_cache_dir': None, 'fast_moe_cold_start': True, 'static_all_moe_layers': []}
+(EngineCore_DP0 pid=3184095) INFO 03-24 05:17:53 [parallel_state.py:1393] world_size=1 rank=0 local_rank=0 distributed_init_method=tcp://10.8.144.167:39381 backend=nccl
+(EngineCore_DP0 pid=3184095) INFO 03-24 05:17:53 [parallel_state.py:1715] rank 0 in world size 1 is assigned as DP rank 0, PP rank 0, PCP rank 0, TP rank 0, EP rank N/A, EPLB rank N/A
+(EngineCore_DP0 pid=3184095) INFO 03-24 05:17:59 [base.py:106] Offloader set to NoopOffloader
+(EngineCore_DP0 pid=3184095) INFO 03-24 05:17:59 [gpu_model_runner.py:4281] Starting to load model Qwen/Qwen3.5-27B...
+(EngineCore_DP0 pid=3184095) INFO 03-24 05:18:00 [cuda.py:453] Using backend AttentionBackendEnum.FLASH_ATTN for vit attention
+(EngineCore_DP0 pid=3184095) INFO 03-24 05:18:00 [mm_encoder_attention.py:215] Using AttentionBackendEnum.FLASH_ATTN for MMEncoderAttention.
+(EngineCore_DP0 pid=3184095) INFO 03-24 05:18:00 [cuda.py:405] Using FLASH_ATTN attention backend out of potential backends: ['FLASH_ATTN', 'FLASHINFER', 'TRITON_ATTN', 'FLEX_ATTENTION'].
+(EngineCore_DP0 pid=3184095) INFO 03-24 05:18:00 [flash_attn.py:587] Using FlashAttention version 2
+(EngineCore_DP0 pid=3184095) <frozen importlib._bootstrap_external>:1301: FutureWarning: The cuda.cudart module is deprecated and will be removed in a future release, please switch to use the cuda.bindings.runtime module instead.
+(EngineCore_DP0 pid=3184095) <frozen importlib._bootstrap_external>:1301: FutureWarning: The cuda.nvrtc module is deprecated and will be removed in a future release, please switch to use the cuda.bindings.nvrtc module instead.
+(EngineCore_DP0 pid=3184095) Loading safetensors checkpoint shards:   0% Completed | 0/11 [00:00<?, ?it/s]
+(EngineCore_DP0 pid=3184095) Loading safetensors checkpoint shards:   9% Completed | 1/11 [00:00<00:05,  1.85it/s]
+(EngineCore_DP0 pid=3184095) Loading safetensors checkpoint shards:  18% Completed | 2/11 [00:01<00:05,  1.66it/s]
+(EngineCore_DP0 pid=3184095) Loading safetensors checkpoint shards:  27% Completed | 3/11 [00:01<00:05,  1.56it/s]
+(EngineCore_DP0 pid=3184095) Loading safetensors checkpoint shards:  36% Completed | 4/11 [00:02<00:04,  1.48it/s]
+(EngineCore_DP0 pid=3184095) Loading safetensors checkpoint shards:  45% Completed | 5/11 [00:03<00:04,  1.44it/s]
+(EngineCore_DP0 pid=3184095) Loading safetensors checkpoint shards:  55% Completed | 6/11 [00:04<00:03,  1.42it/s]
+(EngineCore_DP0 pid=3184095) Loading safetensors checkpoint shards:  64% Completed | 7/11 [00:04<00:02,  1.41it/s]
+(EngineCore_DP0 pid=3184095) Loading safetensors checkpoint shards:  73% Completed | 8/11 [00:05<00:02,  1.43it/s]
+(EngineCore_DP0 pid=3184095) Loading safetensors checkpoint shards:  82% Completed | 9/11 [00:06<00:01,  1.42it/s]
+(EngineCore_DP0 pid=3184095) Loading safetensors checkpoint shards:  91% Completed | 10/11 [00:06<00:00,  1.43it/s]
+(EngineCore_DP0 pid=3184095) Loading safetensors checkpoint shards: 100% Completed | 11/11 [00:07<00:00,  1.58it/s]
+(EngineCore_DP0 pid=3184095) Loading safetensors checkpoint shards: 100% Completed | 11/11 [00:07<00:00,  1.50it/s]
+(EngineCore_DP0 pid=3184095) 
+(EngineCore_DP0 pid=3184095) INFO 03-24 05:18:08 [default_loader.py:293] Loading weights took 7.39 seconds
+(EngineCore_DP0 pid=3184095) INFO 03-24 05:18:08 [gpu_model_runner.py:4364] Model loading took 51.1 GiB memory and 8.488740 seconds
+(EngineCore_DP0 pid=3184095) INFO 03-24 05:18:09 [gpu_model_runner.py:5280] Encoder cache will be initialized with a budget of 16384 tokens, and profiled with 1 image items of the maximum feature size.
+(EngineCore_DP0 pid=3184095) INFO 03-24 05:18:17 [decorators.py:465] Directly load AOT compilation from path /home/v-tiossowski/.cache/vllm/torch_compile_cache/torch_aot_compile/0232891e22bd4d7db98ac2f43c441f0f81d0a431216053ca49fadeaff23e2af3/rank_0_0/model
+(EngineCore_DP0 pid=3184095) INFO 03-24 05:18:17 [backends.py:916] Using cache directory: /home/v-tiossowski/.cache/vllm/torch_compile_cache/feaf61af16/rank_0_0/backbone for vLLM's torch.compile
+(EngineCore_DP0 pid=3184095) INFO 03-24 05:18:17 [backends.py:976] Dynamo bytecode transform time: 3.52 s
+(EngineCore_DP0 pid=3184095) INFO 03-24 05:18:27 [backends.py:266] Directly load the compiled graph(s) for compile range (1, 8192) from the cache, took 9.076 s
+(EngineCore_DP0 pid=3184095) INFO 03-24 05:18:27 [monitor.py:35] torch.compile takes 13.47 s in total
+(EngineCore_DP0 pid=3184095) INFO 03-24 05:18:28 [gpu_worker.py:424] Available KV cache memory: 18.3 GiB
+(EngineCore_DP0 pid=3184095) INFO 03-24 05:18:28 [kv_cache_utils.py:1314] GPU KV cache size: 74,480 tokens
+(EngineCore_DP0 pid=3184095) INFO 03-24 05:18:28 [kv_cache_utils.py:1319] Maximum concurrency for 40,000 tokens per request: 6.95x
+(EngineCore_DP0 pid=3184095) Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):   0%|          | 0/51 [00:00<?, ?it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):   2%|▏         | 1/51 [00:00<00:08,  5.76it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):   4%|▍         | 2/51 [00:00<00:08,  6.02it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):   6%|▌         | 3/51 [00:00<00:07,  6.12it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):   8%|▊         | 4/51 [00:00<00:07,  6.10it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  10%|▉         | 5/51 [00:00<00:07,  6.15it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  12%|█▏        | 6/51 [00:00<00:07,  6.22it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  14%|█▎        | 7/51 [00:01<00:07,  6.23it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  16%|█▌        | 8/51 [00:01<00:06,  6.24it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  18%|█▊        | 9/51 [00:01<00:06,  6.58it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  20%|█▉        | 10/51 [00:01<00:05,  6.85it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  22%|██▏       | 11/51 [00:01<00:05,  6.80it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  24%|██▎       | 12/51 [00:01<00:05,  6.99it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  25%|██▌       | 13/51 [00:01<00:05,  7.11it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  27%|██▋       | 14/51 [00:02<00:05,  7.26it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  29%|██▉       | 15/51 [00:02<00:04,  7.37it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  31%|███▏      | 16/51 [00:02<00:04,  7.43it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  33%|███▎      | 17/51 [00:02<00:04,  7.69it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  35%|███▌      | 18/51 [00:02<00:04,  7.94it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  37%|███▋      | 19/51 [00:02<00:03,  8.16it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  39%|███▉      | 20/51 [00:02<00:03,  8.35it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  41%|████      | 21/51 [00:02<00:03,  8.46it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  43%|████▎     | 22/51 [00:03<00:03,  8.57it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  45%|████▌     | 23/51 [00:03<00:03,  8.62it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  47%|████▋     | 24/51 [00:03<00:03,  8.56it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  49%|████▉     | 25/51 [00:03<00:03,  8.60it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  51%|█████     | 26/51 [00:03<00:02,  8.63it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  53%|█████▎    | 27/51 [00:03<00:02,  8.73it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  55%|█████▍    | 28/51 [00:03<00:02,  8.77it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  57%|█████▋    | 29/51 [00:03<00:02,  8.70it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  59%|█████▉    | 30/51 [00:03<00:02,  8.63it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  61%|██████    | 31/51 [00:04<00:02,  8.60it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  63%|██████▎   | 32/51 [00:04<00:02,  8.60it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  65%|██████▍   | 33/51 [00:04<00:02,  8.96it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  67%|██████▋   | 34/51 [00:04<00:01,  9.19it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  71%|███████   | 36/51 [00:04<00:01,  9.60it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  75%|███████▍  | 38/51 [00:04<00:01,  9.75it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  76%|███████▋  | 39/51 [00:04<00:01,  9.77it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  80%|████████  | 41/51 [00:05<00:01,  9.99it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  84%|████████▍ | 43/51 [00:05<00:00, 10.16it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  88%|████████▊ | 45/51 [00:05<00:00, 10.41it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  92%|█████████▏| 47/51 [00:05<00:00, 10.63it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  96%|█████████▌| 49/51 [00:05<00:00, 10.76it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE): 100%|██████████| 51/51 [00:06<00:00, 10.74it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE): 100%|██████████| 51/51 [00:06<00:00,  8.44it/s]
+(EngineCore_DP0 pid=3184095) Capturing CUDA graphs (decode, FULL):   0%|          | 0/35 [00:00<?, ?it/s]Capturing CUDA graphs (decode, FULL):   3%|▎         | 1/35 [00:00<00:05,  5.81it/s]Capturing CUDA graphs (decode, FULL):   6%|▌         | 2/35 [00:00<00:05,  6.27it/s]Capturing CUDA graphs (decode, FULL):   9%|▊         | 3/35 [00:00<00:04,  6.50it/s]Capturing CUDA graphs (decode, FULL):  11%|█▏        | 4/35 [00:00<00:04,  6.60it/s]Capturing CUDA graphs (decode, FULL):  14%|█▍        | 5/35 [00:00<00:04,  6.60it/s]Capturing CUDA graphs (decode, FULL):  17%|█▋        | 6/35 [00:00<00:04,  6.65it/s]Capturing CUDA graphs (decode, FULL):  20%|██        | 7/35 [00:01<00:04,  6.75it/s]Capturing CUDA graphs (decode, FULL):  23%|██▎       | 8/35 [00:01<00:03,  6.82it/s]Capturing CUDA graphs (decode, FULL):  26%|██▌       | 9/35 [00:01<00:03,  6.89it/s]Capturing CUDA graphs (decode, FULL):  29%|██▊       | 10/35 [00:01<00:03,  6.97it/s]Capturing CUDA graphs (decode, FULL):  31%|███▏      | 11/35 [00:01<00:03,  7.02it/s]Capturing CUDA graphs (decode, FULL):  34%|███▍      | 12/35 [00:01<00:03,  7.09it/s]Capturing CUDA graphs (decode, FULL):  37%|███▋      | 13/35 [00:01<00:03,  7.08it/s]Capturing CUDA graphs (decode, FULL):  40%|████      | 14/35 [00:02<00:02,  7.09it/s]Capturing CUDA graphs (decode, FULL):  43%|████▎     | 15/35 [00:02<00:02,  7.13it/s]Capturing CUDA graphs (decode, FULL):  46%|████▌     | 16/35 [00:02<00:02,  7.23it/s]Capturing CUDA graphs (decode, FULL):  49%|████▊     | 17/35 [00:02<00:02,  7.50it/s]Capturing CUDA graphs (decode, FULL):  51%|█████▏    | 18/35 [00:02<00:02,  7.76it/s]Capturing CUDA graphs (decode, FULL):  54%|█████▍    | 19/35 [00:02<00:02,  7.94it/s]Capturing CUDA graphs (decode, FULL):  57%|█████▋    | 20/35 [00:02<00:01,  8.06it/s]Capturing CUDA graphs (decode, FULL):  60%|██████    | 21/35 [00:02<00:01,  8.19it/s]Capturing CUDA graphs (decode, FULL):  63%|██████▎   | 22/35 [00:03<00:01,  8.19it/s]Capturing CUDA graphs (decode, FULL):  66%|██████▌   | 23/35 [00:03<00:01,  8.25it/s]Capturing CUDA graphs (decode, FULL):  69%|██████▊   | 24/35 [00:03<00:01,  8.33it/s]Capturing CUDA graphs (decode, FULL):  71%|███████▏  | 25/35 [00:03<00:01,  8.37it/s]Capturing CUDA graphs (decode, FULL):  74%|███████▍  | 26/35 [00:03<00:01,  8.43it/s]Capturing CUDA graphs (decode, FULL):  77%|███████▋  | 27/35 [00:03<00:00,  8.50it/s]Capturing CUDA graphs (decode, FULL):  80%|████████  | 28/35 [00:03<00:00,  8.60it/s]Capturing CUDA graphs (decode, FULL):  83%|████████▎ | 29/35 [00:03<00:00,  8.56it/s]Capturing CUDA graphs (decode, FULL):  86%|████████▌ | 30/35 [00:03<00:00,  8.67it/s]Capturing CUDA graphs (decode, FULL):  89%|████████▊ | 31/35 [00:04<00:00,  8.86it/s]Capturing CUDA graphs (decode, FULL):  91%|█████████▏| 32/35 [00:04<00:00,  8.94it/s]Capturing CUDA graphs (decode, FULL):  94%|█████████▍| 33/35 [00:04<00:00,  9.07it/s]Capturing CUDA graphs (decode, FULL):  97%|█████████▋| 34/35 [00:04<00:00,  9.15it/s]Capturing CUDA graphs (decode, FULL): 100%|██████████| 35/35 [00:04<00:00,  9.20it/s]Capturing CUDA graphs (decode, FULL): 100%|██████████| 35/35 [00:04<00:00,  7.77it/s]
+(EngineCore_DP0 pid=3184095) INFO 03-24 05:18:39 [gpu_model_runner.py:5386] Graph capturing finished in 11 secs, took 1.13 GiB
+(EngineCore_DP0 pid=3184095) INFO 03-24 05:18:39 [core.py:282] init engine (profile, create kv cache, warmup model) took 30.74 seconds
+(EngineCore_DP0 pid=3184095) INFO 03-24 05:18:40 [vllm.py:747] Asynchronous scheduling is enabled.
+INFO 03-24 05:18:40 [llm.py:388] Supported tasks: ['generate']
+2026-03-24 05:18:40  INFO      Loading QA dataset from /home/v-tiossowski/HealthcareAgent/mimic-code/data/MIMICIV_icustay_detail_dataset/icustay_detail.csv
+2026-03-24 05:18:40  INFO      Dataset: 1000 rows, columns: ['subject_id', 'hadm_id', 'stay_id', 'intime', 'outtime', 'first_careunit', 'last_careunit', 'gt_label', 'question', 'gt_answer_type', 'split', 'hospital_expire_flag', 'los_icu', 'los_hospital', 'first_icu_stay', 'gender', 'admission_age']
+2026-03-24 05:18:40  INFO      Filtered to train split: 100 rows
+2026-03-24 05:18:40  INFO      Auto-discovered ground-truth SQL: /home/v-tiossowski/HealthcareAgent/mimic-code/mimic-iv/concepts_duckdb/demographics/icustay_detail.sql
+2026-03-24 05:18:40  INFO      === Iteration 1/100  run=icustay_detail  best_qa=0.0% ===
+INFO 03-24 05:18:42 [hf.py:318] Detected the chat template content format to be 'string'. You can set `--chat-template-content-format` to override this.
+2026-03-24 05:18:57  INFO      Exec block 1/1 …
+2026-03-24 05:18:57  INFO      Output: Guidelines found: []
+
+2026-03-24 05:18:57  INFO      === Iteration 2/100  run=icustay_detail  best_qa=0.0% ===
+2026-03-24 05:19:02  INFO      Exec block 1/1 …
+2026-03-24 05:19:02  INFO      Output: ICU guidelines: ['anemia_icu_critically_ill_hemoglobin_transfusion_guideline', 'coma_altered_consciousness_icu_guideline', 'icu_delirium_guideline', 'phosphorus_electrolyte_disorder_icu_guideline', 'supraventricular_tachycardia_guideline']
+Stay guidelines: []
+All guidelines: ['acidosis_guideline', 'acute_decompensated_heart_failure_guideline', 'acute_hepatic_failure_guideline', 'adverse_effect_of_anticoagulants_guideline', 'alcohol_withdrawal_syndrome_guideline', 'anemia_icu_critically_ill_hemog
+2026-03-24 05:19:02  INFO      === Iteration 3/100  run=icustay_detail  best_qa=0.0% ===
+2026-03-24 05:19:05  INFO      Exec block 1/1 …
+2026-03-24 05:19:05  INFO      Output: Available functions: ['age']
+
+2026-03-24 05:19:05  INFO      === Iteration 4/100  run=icustay_detail  best_qa=0.0% ===
+2026-03-24 05:19:12  INFO      Exec block 1/1 …
+2026-03-24 05:19:12  INFO      Output: Age function info: def get_patient_age(subject_id, hadm_id, stay_id):
+    """
+    Calculate patient age at hospital admission.
+
+    This function retrieves patient age information from the MIMIC-IV database
+    and calculates the precise age at the time of hospital admission.
+
+    The age calculation uses the anchor_age and anchor_year from the patients
+    table, adjusted by the number of days from the anchor date to the admission
+    date, divided by 365.242 (the average length of a year in th
+2026-03-24 05:19:12  INFO      === Iteration 5/100  run=icustay_detail  best_qa=0.0% ===
+2026-03-24 05:19:22  INFO      Exec block 1/1 …
+2026-03-24 05:19:22  INFO      Output: ICU Stays columns:
+      column_name  data_type is_nullable
+0      subject_id    INTEGER          NO
+1         hadm_id    INTEGER          NO
+2         stay_id    INTEGER          NO
+3  first_careunit    VARCHAR         YES
+4   last_careunit    VARCHAR         YES
+5          intime  TIMESTAMP         YES
+6         outtime  TIMESTAMP         YES
+7             los      FLOAT         YES
+
+Admissions columns:
+             column_name  data_type is_nullable
+0             subject_id    INTEGER        
+2026-03-24 05:19:22  INFO      === Iteration 6/100  run=icustay_detail  best_qa=0.0% ===
+2026-03-24 05:19:37  INFO      Exec block 1/1 …
+2026-03-24 05:19:37  INFO      Output: Sample ICU stays:
+   subject_id   hadm_id  ...             outtime       los
+0    10000032  29079034  ... 2180-07-23 23:50:47  0.410266
+1    10000690  25860671  ... 2150-11-06 17:03:17  3.893252
+2    10000980  26913865  ... 2189-06-27 20:38:27  0.497535
+3    10001217  24597018  ... 2157-11-21 22:08:00  1.118032
+4    10001217  27703517  ... 2157-12-20 14:27:41  0.948113
+5    10001725  25563031  ... 2110-04-12 23:59:56  1.338588
+6    10001843  26133978  ... 2134-12-06 14:38:26  0.825266
+7    10001
+2026-03-24 05:19:37  INFO      === Iteration 7/100  run=icustay_detail  best_qa=0.0% ===
+2026-03-24 05:19:57  INFO      Exec block 1/1 …
+2026-03-24 05:19:57  INFO      Output: Sample admissions with death:
+   subject_id   hadm_id  ...           deathtime hospital_expire_flag
+0    10001843  26133978  ... 2134-12-06 12:54:00                    1
+1    10001884  26184834  ... 2131-01-20 05:15:00                    1
+2    10002155  20345487  ... 2131-03-10 21:53:00                    1
+3    10003400  23559586  ... 2137-09-02 17:05:00                    1
+4    10003637  28317408  ... 2150-05-22 16:25:00                    1
+5    10004401  25777141  ... 2144-06-18 21:30:00  
+2026-03-24 05:19:57  INFO      === Iteration 8/100  run=icustay_detail  best_qa=0.0% ===
+2026-03-24 05:20:17  INFO      Exec block 1/1 …
+2026-03-24 05:20:17  INFO      Output: Error:
+Traceback (most recent call last):
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 643, in execute
+    _run_with_timeout(_do_execute, timeout)
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 174, in _run_with_timeout
+    raise error[0]
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 156, in target
+    result[0] = func(*args, **kwargs)
+                ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/v-tiossowsk
+2026-03-24 05:20:17  INFO      === Iteration 9/100  run=icustay_detail  best_qa=0.0% ===
+2026-03-24 05:20:26  INFO      Exec block 1/1 …
+2026-03-24 05:20:26  INFO      Output: Patients columns:
+         column_name data_type is_nullable
+0         subject_id   INTEGER          NO
+1             gender   VARCHAR          NO
+2         anchor_age  SMALLINT         YES
+3        anchor_year  SMALLINT          NO
+4  anchor_year_group   VARCHAR          NO
+5                dod      DATE         YES
+
+Sample patients:
+   subject_id gender        dod  anchor_age  anchor_year anchor_year_group
+0    10000032      F 2180-09-09          52         2180       2014 - 2016
+1    10000048
+2026-03-24 05:20:26  INFO      === Iteration 10/100  run=icustay_detail  best_qa=0.0% ===
+2026-03-24 05:20:56  INFO      Exec block 1/1 …
+2026-03-24 05:20:56  INFO      Output: Test stay details:
+   subject_id   hadm_id   stay_id  ... hospital_expire_flag gender anchor_age
+0    10000032  29079034  39553978  ...                    0      F         52
+
+[1 rows x 14 columns]
+
+ICU stays for this admission (ordered by time):
+    stay_id              intime
+0  39553978 2180-07-23 14:00:00
+
+2026-03-24 05:20:56  INFO      === Iteration 11/100  run=icustay_detail  best_qa=0.0% ===
+2026-03-24 05:21:10  INFO      Exec block 1/1 …
+2026-03-24 05:21:10  INFO      Output: Multiple ICU stays for hadm_id 26525796:
+    stay_id   hadm_id              intime  stay_order
+0  39359480  26525796 2188-01-02 07:38:00           1
+1  31776655  26525796 2188-01-06 22:49:10           2
+
+Testing second stay_id: 31776655
+
+2026-03-24 05:21:10  INFO      === Iteration 12/100  run=icustay_detail  best_qa=0.0% ===
+2026-03-24 05:22:01  INFO      Exec block 1/1 …
+2026-03-24 05:22:01  INFO      Output: Testing icustay_detail function:
+
+Test 1: stay_id 39553978 (first ICU stay)
+{'subject_id': 10000032, 'hadm_id': 29079034, 'stay_id': 39553978, 'first_careunit': 'Medical Intensive Care Unit (MICU)', 'last_careunit': 'Medical Intensive Care Unit (MICU)', 'intime': Timestamp('2180-07-23 14:00:00'), 'outtime': Timestamp('2180-07-23 23:50:47'), 'icu_los_days': 0.4102661907672882, 'died_during_admission': False, 'deathtime': NaT, 'is_first_icu_stay': True, 'icu_stay_order': 1, 'gender': 'F', 'anchor_
+2026-03-24 05:22:01  INFO      === Iteration 13/100  run=icustay_detail  best_qa=0.0% ===
+2026-03-24 05:23:00  INFO      Exec block 1/1 …
+2026-03-24 05:23:00  INFO      Output: Testing fixed icustay_detail function:
+
+Test 1: stay_id 39553978 (first ICU stay)
+{'subject_id': 10000032, 'hadm_id': 29079034, 'stay_id': 39553978, 'first_careunit': 'Medical Intensive Care Unit (MICU)', 'last_careunit': 'Medical Intensive Care Unit (MICU)', 'intime': Timestamp('2180-07-23 14:00:00'), 'outtime': Timestamp('2180-07-23 23:50:47'), 'icu_los_days': 0.4102661907672882, 'died_during_admission': False, 'deathtime': NaT, 'is_first_icu_stay': True, 'icu_stay_order': 1, 'gender': 'F', 'a
+2026-03-24 05:23:00  INFO      === Iteration 14/100  run=icustay_detail  best_qa=0.0% ===
+2026-03-24 05:23:21  INFO      Exec block 1/1 …
+2026-03-24 05:23:21  INFO      Output: Testing additional edge cases:
+
+Test with invalid stay_id 999999999:
+Result: None
+
+Test with hadm_id 23761571 (5 ICU stays):
+All ICU stays for this admission:
+    stay_id              intime  stay_order
+0  34799425 2157-01-13 19:06:24           1
+1  34567445 2157-01-21 21:20:45           2
+2  31319524 2157-02-25 12:04:22           3
+3  30939671 2157-04-18 03:44:47           4
+4  35569283 2157-05-07 19:21:55           5
+
+Testing 3rd stay_id 31319524:
+is_first_icu_stay: False
+icu_stay_order: 3
+
+2026-03-24 05:23:21  INFO      === Iteration 15/100  run=icustay_detail  best_qa=0.0% ===
+2026-03-24 05:24:14  INFO      Exec block 1/1 …
+2026-03-24 05:24:14  INFO      Output: Code executed successfully (no output).
+2026-03-24 05:24:14  INFO      Debug conversations will be saved to debug_logs
+2026-03-24 05:24:14  INFO      Using question from dataset column: Did this patient die during their hospital admission?
+2026-03-24 05:24:14  INFO      Answer type for 'icustay_detail': numerical (per_row=True)
+2026-03-24 05:24:14  INFO      ReACT iteration 1/10 — 100 active patients
+Rendering conversations:   0%|          | 0/100 [00:00<?, ?it/s]Rendering conversations:  79%|███████▉  | 79/100 [00:00<00:00, 785.30it/s]Rendering conversations: 100%|██████████| 100/100 [00:00<00:00, 782.91it/s]
+Processed prompts:   0%|          | 0/100 [00:00<?, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s]Processed prompts:   1%|          | 1/100 [00:15<25:17, 15.33s/it, est. speed input: 26.68 toks/s, output: 5.41 toks/s]Processed prompts:   3%|▎         | 3/100 [00:15<06:35,  4.07s/it, est. speed input: 78.66 toks/s, output: 15.96 toks/s]Processed prompts:   4%|▍         | 4/100 [00:16<04:33,  2.85s/it, est. speed input: 101.35 toks/s, output: 20.75 toks/s]Processed prompts:   5%|▌         | 5/100 [00:17<03:29,  2.21s/it, est. speed input: 119.92 toks/s, output: 25.39 toks/s]Processed prompts:   6%|▌         | 6/100 [00:17<02:25,  1.55s/it, est. speed input: 142.73 toks/s, output: 30.88 toks/s]Processed prompts:   7%|▋         | 7/100 [00:17<01:44,  1.13s/it, est. speed input: 164.52 toks/s, output: 36.15 toks/s]Processed prompts:  14%|█▍        | 14/100 [00:17<00:24,  3.49it/s, est. speed input: 326.45 toks/s, output: 74.97 toks/s]Processed prompts:  17%|█▋        | 17/100 [00:17<00:18,  4.60it/s, est. speed input: 391.84 toks/s, output: 91.13 toks/s]Processed prompts:  20%|██        | 20/100 [00:17<00:13,  6.11it/s, est. speed input: 457.49 toks/s, output: 108.05 toks/s]Processed prompts:  22%|██▏       | 22/100 [00:18<00:11,  7.07it/s, est. speed input: 499.50 toks/s, output: 119.07 toks/s]Processed prompts:  24%|██▍       | 24/100 [00:18<00:16,  4.54it/s, est. speed input: 518.17 toks/s, output: 125.48 toks/s]Processed prompts:  26%|██▌       | 26/100 [00:19<00:18,  3.90it/s, est. speed input: 540.82 toks/s, output: 134.01 toks/s]Processed prompts:  28%|██▊       | 28/100 [00:20<00:19,  3.75it/s, est. speed input: 565.60 toks/s, output: 143.67 toks/s]Processed prompts:  29%|██▉       | 29/100 [00:20<00:17,  4.09it/s, est. speed input: 581.92 toks/s, output: 149.86 toks/s]Processed prompts:  32%|███▏      | 32/100 [00:20<00:11,  5.84it/s, est. speed input: 635.68 toks/s, output: 169.57 toks/s]Processed prompts:  34%|███▍      | 34/100 [00:20<00:09,  7.07it/s, est. speed input: 670.99 toks/s, output: 182.60 toks/s]Processed prompts:  36%|███▌      | 36/100 [00:20<00:07,  8.36it/s, est. speed input: 706.54 toks/s, output: 196.10 toks/s]Processed prompts:  46%|████▌     | 46/100 [00:20<00:02, 20.99it/s, est. speed input: 898.91 toks/s, output: 267.42 toks/s]Processed prompts:  59%|█████▉    | 59/100 [00:21<00:01, 38.41it/s, est. speed input: 1149.19 toks/s, output: 360.15 toks/s]Processed prompts:  69%|██████▉   | 69/100 [00:21<00:00, 45.31it/s, est. speed input: 1335.82 toks/s, output: 429.69 toks/s]Processed prompts:  75%|███████▌  | 75/100 [00:21<00:00, 26.28it/s, est. speed input: 1415.94 toks/s, output: 464.36 toks/s]Processed prompts:  80%|████████  | 80/100 [00:21<00:00, 26.40it/s, est. speed input: 1496.95 toks/s, output: 499.53 toks/s]Processed prompts:  85%|████████▌ | 85/100 [00:22<00:00, 28.36it/s, est. speed input: 1580.05 toks/s, output: 536.11 toks/s]Processed prompts:  90%|█████████ | 90/100 [00:22<00:00, 30.65it/s, est. speed input: 1663.00 toks/s, output: 572.91 toks/s]Processed prompts:  94%|█████████▍| 94/100 [00:22<00:00, 27.19it/s, est. speed input: 1720.66 toks/s, output: 596.46 toks/s]Processed prompts:  98%|█████████▊| 98/100 [00:24<00:00,  6.15it/s, est. speed input: 1633.73 toks/s, output: 568.55 toks/s]Processed prompts: 100%|██████████| 100/100 [00:26<00:00,  6.15it/s, est. speed input: 1544.14 toks/s, output: 543.88 toks/s]Processed prompts: 100%|██████████| 100/100 [00:26<00:00,  3.77it/s, est. speed input: 1544.14 toks/s, output: 543.88 toks/s]
+2026-03-24 05:24:41  INFO      ReACT iteration 2/10 — 100 active patients
+Rendering conversations:   0%|          | 0/100 [00:00<?, ?it/s]Rendering conversations:  70%|███████   | 70/100 [00:00<00:00, 691.59it/s]Rendering conversations: 100%|██████████| 100/100 [00:00<00:00, 688.49it/s]
+Processed prompts:   0%|          | 0/100 [00:00<?, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s]Processed prompts:   1%|          | 1/100 [00:20<34:34, 20.96s/it, est. speed input: 23.47 toks/s, output: 6.49 toks/s]Processed prompts:   2%|▏         | 2/100 [00:21<14:35,  8.94s/it, est. speed input: 45.81 toks/s, output: 12.66 toks/s]Processed prompts:   3%|▎         | 3/100 [00:21<08:00,  4.95s/it, est. speed input: 68.03 toks/s, output: 18.85 toks/s]Processed prompts:   4%|▍         | 4/100 [00:23<05:37,  3.52s/it, est. speed input: 85.56 toks/s, output: 24.51 toks/s]Processed prompts:   8%|▊         | 8/100 [00:23<01:43,  1.13s/it, est. speed input: 169.13 toks/s, output: 50.84 toks/s]Processed prompts:  11%|█         | 11/100 [00:23<01:00,  1.47it/s, est. speed input: 247.57 toks/s, output: 70.13 toks/s]Processed prompts:  25%|██▌       | 25/100 [00:23<00:13,  5.43it/s, est. speed input: 537.91 toks/s, output: 161.56 toks/s]Processed prompts:  33%|███▎      | 33/100 [00:23<00:08,  7.86it/s, est. speed input: 696.45 toks/s, output: 211.88 toks/s]Processed prompts:  37%|███▋      | 37/100 [00:25<00:12,  4.85it/s, est. speed input: 718.21 toks/s, output: 222.56 toks/s]Processed prompts:  43%|████▎     | 43/100 [00:26<00:08,  6.76it/s, est. speed input: 828.05 toks/s, output: 266.40 toks/s]Processed prompts:  49%|████▉     | 49/100 [00:26<00:05,  9.23it/s, est. speed input: 936.96 toks/s, output: 310.23 toks/s]Processed prompts:  56%|█████▌    | 56/100 [00:26<00:03, 12.98it/s, est. speed input: 1064.11 toks/s, output: 361.25 toks/s]Processed prompts:  65%|██████▌   | 65/100 [00:26<00:01, 19.18it/s, est. speed input: 1225.81 toks/s, output: 427.78 toks/s]Processed prompts:  71%|███████   | 71/100 [00:26<00:01, 17.06it/s, est. speed input: 1313.83 toks/s, output: 466.43 toks/s]Processed prompts:  76%|███████▌  | 76/100 [00:27<00:01, 15.94it/s, est. speed input: 1385.20 toks/s, output: 499.05 toks/s]Processed prompts:  80%|████████  | 80/100 [00:27<00:01, 11.91it/s, est. speed input: 1421.97 toks/s, output: 519.95 toks/s]Processed prompts:  87%|████████▋ | 87/100 [00:27<00:00, 16.35it/s, est. speed input: 1537.47 toks/s, output: 576.05 toks/s]Processed prompts:  91%|█████████ | 91/100 [00:28<00:00, 11.24it/s, est. speed input: 1565.92 toks/s, output: 595.49 toks/s]Processed prompts:  94%|█████████▍| 94/100 [00:29<00:00,  9.73it/s, est. speed input: 1590.74 toks/s, output: 612.48 toks/s]Processed prompts:  96%|█████████▌| 96/100 [00:30<00:00,  6.16it/s, est. speed input: 1572.01 toks/s, output: 606.91 toks/s]Processed prompts:  98%|█████████▊| 98/100 [00:31<00:00,  3.61it/s, est. speed input: 1524.28 toks/s, output: 587.50 toks/s]Processed prompts: 100%|██████████| 100/100 [00:34<00:00,  1.85it/s, est. speed input: 1416.83 toks/s, output: 549.64 toks/s]Processed prompts: 100%|██████████| 100/100 [00:34<00:00,  1.85it/s, est. speed input: 1416.83 toks/s, output: 549.64 toks/s]Processed prompts: 100%|██████████| 100/100 [00:34<00:00,  2.87it/s, est. speed input: 1416.83 toks/s, output: 549.64 toks/s]
+2026-03-24 05:25:17  INFO      ReACT iteration 3/10 — 100 active patients
+Rendering conversations:   0%|          | 0/100 [00:00<?, ?it/s]Rendering conversations:  45%|████▌     | 45/100 [00:00<00:00, 442.20it/s]Rendering conversations:  90%|█████████ | 90/100 [00:00<00:00, 440.49it/s]Rendering conversations: 100%|██████████| 100/100 [00:00<00:00, 445.80it/s]
+Processed prompts:   0%|          | 0/100 [00:00<?, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s]Processed prompts:   1%|          | 1/100 [00:24<41:01, 24.86s/it, est. speed input: 51.40 toks/s, output: 3.26 toks/s]Processed prompts:   2%|▏         | 2/100 [00:25<17:01, 10.42s/it, est. speed input: 101.52 toks/s, output: 6.43 toks/s]Processed prompts:   3%|▎         | 3/100 [00:26<09:57,  6.15s/it, est. speed input: 146.04 toks/s, output: 9.26 toks/s]Processed prompts:   4%|▍         | 4/100 [00:26<06:16,  3.92s/it, est. speed input: 191.08 toks/s, output: 12.52 toks/s]Processed prompts:   5%|▌         | 5/100 [00:27<04:09,  2.62s/it, est. speed input: 236.04 toks/s, output: 15.70 toks/s]Processed prompts:   7%|▋         | 7/100 [00:27<02:15,  1.46s/it, est. speed input: 309.01 toks/s, output: 21.93 toks/s]Processed prompts:   8%|▊         | 8/100 [00:27<01:44,  1.14s/it, est. speed input: 351.71 toks/s, output: 25.01 toks/s]Processed prompts:   9%|▉         | 9/100 [00:28<01:32,  1.02s/it, est. speed input: 367.14 toks/s, output: 27.85 toks/s]Processed prompts:  12%|█▏        | 12/100 [00:29<00:48,  1.80it/s, est. speed input: 472.08 toks/s, output: 37.03 toks/s]Processed prompts:  18%|█▊        | 18/100 [00:30<00:27,  2.93it/s, est. speed input: 656.27 toks/s, output: 54.16 toks/s]Processed prompts:  21%|██        | 21/100 [00:31<00:28,  2.78it/s, est. speed input: 705.20 toks/s, output: 61.33 toks/s]Processed prompts:  22%|██▏       | 22/100 [00:32<00:31,  2.50it/s, est. speed input: 710.71 toks/s, output: 63.10 toks/s]Processed prompts:  23%|██▎       | 23/100 [00:32<00:28,  2.66it/s, est. speed input: 726.74 toks/s, output: 65.56 toks/s]Processed prompts:  24%|██▍       | 24/100 [00:32<00:25,  3.01it/s, est. speed input: 744.20 toks/s, output: 68.48 toks/s]Processed prompts:  26%|██▌       | 26/100 [00:32<00:17,  4.11it/s, est. speed input: 790.62 toks/s, output: 74.44 toks/s]Processed prompts:  30%|███       | 30/100 [00:32<00:09,  7.13it/s, est. speed input: 877.48 toks/s, output: 86.53 toks/s]Processed prompts:  33%|███▎      | 33/100 [00:33<00:07,  9.30it/s, est. speed input: 950.79 toks/s, output: 95.73 toks/s]Processed prompts:  36%|███▌      | 36/100 [00:33<00:05, 11.51it/s, est. speed input: 1052.42 toks/s, output: 105.50 toks/s]Processed prompts:  40%|████      | 40/100 [00:33<00:03, 15.24it/s, est. speed input: 1186.32 toks/s, output: 118.42 toks/s]Processed prompts:  44%|████▍     | 44/100 [00:33<00:02, 18.82it/s, est. speed input: 1299.24 toks/s, output: 131.29 toks/s]Processed prompts:  51%|█████     | 51/100 [00:33<00:01, 27.71it/s, est. speed input: 1546.72 toks/s, output: 154.28 toks/s]Processed prompts:  56%|█████▌    | 56/100 [00:33<00:01, 28.20it/s, est. speed input: 1702.22 toks/s, output: 170.45 toks/s]Processed prompts:  60%|██████    | 60/100 [00:34<00:02, 16.77it/s, est. speed input: 1788.83 toks/s, output: 182.28 toks/s]Processed prompts:  63%|██████▎   | 63/100 [00:34<00:02, 15.99it/s, est. speed input: 1870.40 toks/s, output: 191.49 toks/s]Processed prompts:  66%|██████▌   | 66/100 [00:34<00:02, 13.63it/s, est. speed input: 1927.74 toks/s, output: 201.25 toks/s]Processed prompts:  68%|██████▊   | 68/100 [00:35<00:04,  6.49it/s, est. speed input: 1928.48 toks/s, output: 202.39 toks/s]Processed prompts:  70%|███████   | 70/100 [00:36<00:05,  5.44it/s, est. speed input: 1946.27 toks/s, output: 208.23 toks/s]Processed prompts:  72%|███████▏  | 72/100 [00:36<00:04,  5.90it/s, est. speed input: 1973.76 toks/s, output: 216.16 toks/s]Processed prompts:  73%|███████▎  | 73/100 [00:37<00:06,  4.39it/s, est. speed input: 1977.42 toks/s, output: 215.19 toks/s]Processed prompts:  74%|███████▍  | 74/100 [00:37<00:05,  4.35it/s, est. speed input: 1998.87 toks/s, output: 216.27 toks/s]Processed prompts:  75%|███████▌  | 75/100 [00:37<00:05,  4.50it/s, est. speed input: 2007.04 toks/s, output: 217.78 toks/s]Processed prompts:  77%|███████▋  | 77/100 [00:37<00:03,  5.94it/s, est. speed input: 2045.74 toks/s, output: 224.74 toks/s]Processed prompts:  78%|███████▊  | 78/100 [00:37<00:03,  5.82it/s, est. speed input: 2069.41 toks/s, output: 226.59 toks/s]Processed prompts:  79%|███████▉  | 79/100 [00:38<00:03,  6.08it/s, est. speed input: 2095.39 toks/s, output: 228.68 toks/s]Processed prompts:  80%|████████  | 80/100 [00:38<00:03,  5.54it/s, est. speed input: 2107.87 toks/s, output: 230.41 toks/s]Processed prompts:  82%|████████▏ | 82/100 [00:38<00:02,  7.43it/s, est. speed input: 2149.89 toks/s, output: 235.70 toks/s]Processed prompts:  85%|████████▌ | 85/100 [00:39<00:04,  3.68it/s, est. speed input: 2143.64 toks/s, output: 237.58 toks/s]Processed prompts:  86%|████████▌ | 86/100 [00:42<00:10,  1.32it/s, est. speed input: 2014.17 toks/s, output: 228.47 toks/s]Processed prompts:  88%|████████▊ | 88/100 [00:43<00:07,  1.63it/s, est. speed input: 2017.06 toks/s, output: 239.66 toks/s]Processed prompts:  89%|████████▉ | 89/100 [00:43<00:05,  1.88it/s, est. speed input: 2024.41 toks/s, output: 246.04 toks/s]Processed prompts:  92%|█████████▏| 92/100 [00:44<00:03,  2.28it/s, est. speed input: 2042.15 toks/s, output: 261.37 toks/s]Processed prompts:  93%|█████████▎| 93/100 [00:44<00:02,  2.52it/s, est. speed input: 2054.19 toks/s, output: 266.14 toks/s]Processed prompts:  94%|█████████▍| 94/100 [00:44<00:02,  2.81it/s, est. speed input: 2066.34 toks/s, output: 270.99 toks/s]Processed prompts:  95%|█████████▌| 95/100 [00:46<00:03,  1.48it/s, est. speed input: 2005.98 toks/s, output: 269.53 toks/s]Processed prompts:  97%|█████████▋| 97/100 [00:47<00:01,  1.78it/s, est. speed input: 2007.12 toks/s, output: 280.95 toks/s]Processed prompts:  98%|█████████▊| 98/100 [00:47<00:00,  2.02it/s, est. speed input: 2011.54 toks/s, output: 286.76 toks/s]Processed prompts:  99%|█████████▉| 99/100 [00:48<00:00,  1.64it/s, est. speed input: 1987.86 toks/s, output: 288.62 toks/s]Processed prompts: 100%|██████████| 100/100 [00:49<00:00,  1.49it/s, est. speed input: 1968.76 toks/s, output: 291.56 toks/s]Processed prompts: 100%|██████████| 100/100 [00:49<00:00,  1.49it/s, est. speed input: 1968.76 toks/s, output: 291.56 toks/s]Processed prompts: 100%|██████████| 100/100 [00:49<00:00,  2.02it/s, est. speed input: 1968.76 toks/s, output: 291.56 toks/s]
+2026-03-24 05:26:07  INFO      ReACT iteration 4/10 — 61 active patients
+Rendering conversations:   0%|          | 0/61 [00:00<?, ?it/s]Rendering conversations:  57%|█████▋    | 35/61 [00:00<00:00, 348.84it/s]Rendering conversations: 100%|██████████| 61/61 [00:00<00:00, 338.84it/s]
+Processed prompts:   0%|          | 0/61 [00:00<?, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s]Processed prompts:   2%|▏         | 1/61 [00:24<24:54, 24.90s/it, est. speed input: 40.76 toks/s, output: 2.77 toks/s]Processed prompts:   5%|▍         | 3/61 [00:25<06:17,  6.50s/it, est. speed input: 125.12 toks/s, output: 8.23 toks/s]Processed prompts:   8%|▊         | 5/61 [00:25<03:00,  3.22s/it, est. speed input: 229.97 toks/s, output: 13.97 toks/s]Processed prompts:  11%|█▏        | 7/61 [00:25<01:41,  1.88s/it, est. speed input: 353.09 toks/s, output: 19.97 toks/s]Processed prompts:  23%|██▎       | 14/61 [00:25<00:28,  1.62it/s, est. speed input: 763.37 toks/s, output: 40.30 toks/s]Processed prompts:  30%|██▉       | 18/61 [00:25<00:17,  2.40it/s, est. speed input: 963.38 toks/s, output: 51.79 toks/s]Processed prompts:  34%|███▍      | 21/61 [00:26<00:13,  3.01it/s, est. speed input: 1112.78 toks/s, output: 60.41 toks/s]Processed prompts:  39%|███▉      | 24/61 [00:26<00:09,  4.02it/s, est. speed input: 1257.01 toks/s, output: 69.93 toks/s]Processed prompts:  44%|████▍     | 27/61 [00:26<00:07,  4.36it/s, est. speed input: 1393.45 toks/s, output: 79.50 toks/s]Processed prompts:  48%|████▊     | 29/61 [00:26<00:06,  5.22it/s, est. speed input: 1470.52 toks/s, output: 86.78 toks/s]Processed prompts:  54%|█████▍    | 33/61 [00:26<00:03,  7.52it/s, est. speed input: 1680.39 toks/s, output: 101.23 toks/s]Processed prompts:  61%|██████    | 37/61 [00:27<00:02,  8.95it/s, est. speed input: 1841.78 toks/s, output: 115.26 toks/s]Processed prompts:  64%|██████▍   | 39/61 [00:27<00:02,  7.86it/s, est. speed input: 1922.35 toks/s, output: 122.18 toks/s]Processed prompts:  67%|██████▋   | 41/61 [00:27<00:02,  8.36it/s, est. speed input: 2006.71 toks/s, output: 130.20 toks/s]Processed prompts:  80%|████████  | 49/61 [00:27<00:00, 16.13it/s, est. speed input: 2416.46 toks/s, output: 164.17 toks/s]Processed prompts:  85%|████████▌ | 52/61 [00:28<00:00, 17.44it/s, est. speed input: 2558.85 toks/s, output: 176.53 toks/s]Processed prompts:  90%|█████████ | 55/61 [00:28<00:00, 18.80it/s, est. speed input: 2708.30 toks/s, output: 189.55 toks/s]Processed prompts:  95%|█████████▌| 58/61 [00:28<00:00, 12.94it/s, est. speed input: 2802.96 toks/s, output: 200.94 toks/s]Processed prompts: 100%|██████████| 61/61 [00:31<00:00,  2.81it/s, est. speed input: 2626.22 toks/s, output: 197.25 toks/s]Processed prompts: 100%|██████████| 61/61 [00:31<00:00,  2.81it/s, est. speed input: 2626.22 toks/s, output: 197.25 toks/s]Processed prompts: 100%|██████████| 61/61 [00:31<00:00,  1.91it/s, est. speed input: 2626.22 toks/s, output: 197.25 toks/s]
+2026-03-24 05:26:40  INFO      ReACT iteration 5/10 — 4 active patients
+Rendering conversations:   0%|          | 0/4 [00:00<?, ?it/s]Rendering conversations: 100%|██████████| 4/4 [00:00<00:00, 301.55it/s]
+Processed prompts:   0%|          | 0/4 [00:00<?, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s]Processed prompts:  25%|██▌       | 1/4 [00:05<00:15,  5.06s/it, est. speed input: 284.01 toks/s, output: 18.58 toks/s]Processed prompts:  50%|█████     | 2/4 [00:06<00:05,  2.88s/it, est. speed input: 450.21 toks/s, output: 34.88 toks/s]Processed prompts:  75%|███████▌  | 3/4 [00:06<00:01,  1.69s/it, est. speed input: 667.25 toks/s, output: 54.17 toks/s]Processed prompts: 100%|██████████| 4/4 [00:10<00:00,  2.39s/it, est. speed input: 578.25 toks/s, output: 58.40 toks/s]Processed prompts: 100%|██████████| 4/4 [00:10<00:00,  2.39s/it, est. speed input: 578.25 toks/s, output: 58.40 toks/s]Processed prompts: 100%|██████████| 4/4 [00:10<00:00,  2.54s/it, est. speed input: 578.25 toks/s, output: 58.40 toks/s]
+2026-03-24 05:26:50  INFO      ReACT iteration 6/10 — 1 active patients
+Rendering conversations:   0%|          | 0/1 [00:00<?, ?it/s]Rendering conversations: 100%|██████████| 1/1 [00:00<00:00, 274.57it/s]
+Processed prompts:   0%|          | 0/1 [00:00<?, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s]Processed prompts: 100%|██████████| 1/1 [00:03<00:00,  3.15s/it, est. speed input: 500.59 toks/s, output: 23.47 toks/s]Processed prompts: 100%|██████████| 1/1 [00:03<00:00,  3.15s/it, est. speed input: 500.59 toks/s, output: 23.47 toks/s]Processed prompts: 100%|██████████| 1/1 [00:03<00:00,  3.15s/it, est. speed input: 500.59 toks/s, output: 23.47 toks/s]
+2026-03-24 05:26:53  INFO      QA accuracy: 100.0%  (correct=100/100, parse_errors=0)
+2026-03-24 05:26:53  INFO      SUCCESS: 100.0% QA accuracy for 'icustay_detail' at iteration 15
+2026-03-24 05:26:53  INFO      Function code saved to autoformalized_library/functions/icustay_detail.py
+2026-03-24 05:26:53  INFO      Summary saved to autoformalized_library/summary.json
+[rank0]:[W324 05:26:53.064576056 ProcessGroupNCCL.cpp:1553] Warning: WARNING: destroy_process_group() was not called before program exit, which can leak resources. For more info, please see https://pytorch.org/docs/stable/distributed.html#shutdown (function operator())
+
+======================================================================
+AUTOFORMALIZATION COMPLETE
+======================================================================
+  Output dir      : autoformalized_library
+  Model           : Qwen/Qwen3.5-27B
+  Dataset         : /home/v-tiossowski/HealthcareAgent/mimic-code/data/MIMICIV_icustay_detail_dataset/icustay_detail.csv
+  Run name        : icustay_detail
+  Status          : SUCCESS
+  QA accuracy     : 100.0%
+  Iterations      : 15
+  Total tokens    : 334,388  (prompt 279,359 / completion 55,029)
+  LLM calls       : 381
+  SQL queries     : 129
+  Function saved  : autoformalized_library/functions/icustay_detail.py
+======================================================================

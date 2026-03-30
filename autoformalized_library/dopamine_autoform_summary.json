@@ -1,0 +1,47 @@
+{
+  "timestamp": "2026-03-25T07:28:29.283853",
+  "model": "Qwen/Qwen3.5-27B",
+  "db_path": "/home/v-tiossowski/MIMIC-IV/mimic4.db",
+  "qa_dataset": "/home/v-tiossowski/HealthcareAgent/mimic-code/data/MIMICIV_dopamine_dataset/dopamine.csv",
+  "match_threshold": 0.9,
+  "run_name": "dopamine",
+  "success": true,
+  "iterations": 24,
+  "qa_accuracy": 0.95,
+  "stats": {
+    "react": {
+      "prompt_tokens": 0,
+      "completion_tokens": 0,
+      "total_tokens": 0,
+      "llm_calls": 24,
+      "query_count": 16,
+      "query_time_sec": 1.36,
+      "wall_time_sec": 287.778
+    },
+    "qa": {
+      "prompt_tokens": 49176,
+      "completion_tokens": 7827,
+      "total_tokens": 57003,
+      "llm_calls": 46,
+      "query_count": 21,
+      "query_time_sec": 0.068,
+      "eval_wall_time_sec": 66.974,
+      "per_question": {
+        "avg_prompt_tokens": 2458.8,
+        "avg_completion_tokens": 391.4,
+        "avg_llm_calls": 2.3,
+        "avg_query_count": 1.05,
+        "avg_query_time_sec": 0.003,
+        "avg_wall_time_sec": 3.349
+      }
+    },
+    "total": {
+      "prompt_tokens": 49176,
+      "completion_tokens": 7827,
+      "total_tokens": 57003,
+      "llm_calls": 70,
+      "query_count": 37,
+      "query_time_sec": 1.428
+    }
+  }
+}

@@ -1,0 +1,952 @@
+2026-03-26 12:46:32  INFO      Using database: /home/v-tiossowski/MIMIC-IV/mimic4.db
+2026-03-26 12:46:32  INFO      No --model_url provided; loading vLLM in-process …
+INFO 03-26 12:46:37 [utils.py:238] non-default args: {'trust_remote_code': True, 'max_model_len': 40000, 'disable_log_stats': True, 'model': 'Qwen/Qwen3.5-27B'}
+The argument `trust_remote_code` is to be used with Auto classes. It has no effect here and is ignored.
+The argument `trust_remote_code` is to be used with Auto classes. It has no effect here and is ignored.
+The argument `trust_remote_code` is to be used with Auto classes. It has no effect here and is ignored.
+INFO 03-26 12:46:38 [model.py:531] Resolved architecture: Qwen3_5ForConditionalGeneration
+INFO 03-26 12:46:38 [model.py:1554] Using max model len 40000
+INFO 03-26 12:46:38 [scheduler.py:231] Chunked prefill is enabled with max_num_batched_tokens=8192.
+INFO 03-26 12:46:39 [config.py:544] Setting attention block size to 784 tokens to ensure that attention page size is >= mamba page size.
+INFO 03-26 12:46:39 [config.py:575] Padding mamba page size by 0.13% to ensure that mamba page size and attention page size are exactly equal.
+INFO 03-26 12:46:39 [vllm.py:747] Asynchronous scheduling is enabled.
+WARNING 03-26 12:46:47 [system_utils.py:152] We must use the `spawn` multiprocessing start method. Overriding VLLM_WORKER_MULTIPROC_METHOD to 'spawn'. See https://docs.vllm.ai/en/latest/usage/troubleshooting.html#python-multiprocessing for more information. Reasons: CUDA is initialized
+(EngineCore_DP0 pid=1070330) INFO 03-26 12:46:51 [core.py:101] Initializing a V1 LLM engine (v0.17.1) with config: model='Qwen/Qwen3.5-27B', speculative_config=None, tokenizer='Qwen/Qwen3.5-27B', skip_tokenizer_init=False, tokenizer_mode=auto, revision=None, tokenizer_revision=None, trust_remote_code=True, dtype=torch.bfloat16, max_seq_len=40000, download_dir=None, load_format=auto, tensor_parallel_size=1, pipeline_parallel_size=1, data_parallel_size=1, disable_custom_all_reduce=False, quantization=None, enforce_eager=False, enable_return_routed_experts=False, kv_cache_dtype=auto, device_config=cuda, structured_outputs_config=StructuredOutputsConfig(backend='auto', disable_fallback=False, disable_any_whitespace=False, disable_additional_properties=False, reasoning_parser='', reasoning_parser_plugin='', enable_in_reasoning=False), observability_config=ObservabilityConfig(show_hidden_metrics_for_version=None, otlp_traces_endpoint=None, collect_detailed_traces=None, kv_cache_metrics=False, kv_cache_metrics_sample=0.01, cudagraph_metrics=False, enable_layerwise_nvtx_tracing=False, enable_mfu_metrics=False, enable_mm_processor_stats=False, enable_logging_iteration_details=False), seed=0, served_model_name=Qwen/Qwen3.5-27B, enable_prefix_caching=False, enable_chunked_prefill=True, pooler_config=None, compilation_config={'level': None, 'mode': <CompilationMode.VLLM_COMPILE: 3>, 'debug_dump_path': None, 'cache_dir': '', 'compile_cache_save_format': 'binary', 'backend': 'inductor', 'custom_ops': ['none'], 'splitting_ops': ['vllm::unified_attention', 'vllm::unified_attention_with_output', 'vllm::unified_mla_attention', 'vllm::unified_mla_attention_with_output', 'vllm::mamba_mixer2', 'vllm::mamba_mixer', 'vllm::short_conv', 'vllm::linear_attention', 'vllm::plamo2_mamba_mixer', 'vllm::gdn_attention_core', 'vllm::kda_attention', 'vllm::sparse_attn_indexer', 'vllm::rocm_aiter_sparse_attn_indexer', 'vllm::unified_kv_cache_update', 'vllm::unified_mla_kv_cache_update'], 'compile_mm_encoder': False, 'compile_sizes': [], 'compile_ranges_split_points': [8192], 'inductor_compile_config': {'enable_auto_functionalized_v2': False, 'combo_kernels': True, 'benchmark_combo_kernel': True}, 'inductor_passes': {}, 'cudagraph_mode': <CUDAGraphMode.FULL_AND_PIECEWISE: (2, 1)>, 'cudagraph_num_of_warmups': 1, 'cudagraph_capture_sizes': [1, 2, 4, 8, 16, 24, 32, 40, 48, 56, 64, 72, 80, 88, 96, 104, 112, 120, 128, 136, 144, 152, 160, 168, 176, 184, 192, 200, 208, 216, 224, 232, 240, 248, 256, 272, 288, 304, 320, 336, 352, 368, 384, 400, 416, 432, 448, 464, 480, 496, 512], 'cudagraph_copy_inputs': False, 'cudagraph_specialize_lora': True, 'use_inductor_graph_partition': False, 'pass_config': {'fuse_norm_quant': False, 'fuse_act_quant': False, 'fuse_attn_quant': False, 'enable_sp': False, 'fuse_gemm_comms': False, 'fuse_allreduce_rms': False}, 'max_cudagraph_capture_size': 512, 'dynamic_shapes_config': {'type': <DynamicShapesType.BACKED: 'backed'>, 'evaluate_guards': False, 'assume_32_bit_indexing': False}, 'local_cache_dir': None, 'fast_moe_cold_start': True, 'static_all_moe_layers': []}
+(EngineCore_DP0 pid=1070330) INFO 03-26 12:46:54 [parallel_state.py:1393] world_size=1 rank=0 local_rank=0 distributed_init_method=tcp://10.8.144.167:46261 backend=nccl
+(EngineCore_DP0 pid=1070330) INFO 03-26 12:46:54 [parallel_state.py:1715] rank 0 in world size 1 is assigned as DP rank 0, PP rank 0, PCP rank 0, TP rank 0, EP rank N/A, EPLB rank N/A
+(EngineCore_DP0 pid=1070330) INFO 03-26 12:47:00 [base.py:106] Offloader set to NoopOffloader
+(EngineCore_DP0 pid=1070330) INFO 03-26 12:47:01 [gpu_model_runner.py:4281] Starting to load model Qwen/Qwen3.5-27B...
+(EngineCore_DP0 pid=1070330) INFO 03-26 12:47:01 [cuda.py:453] Using backend AttentionBackendEnum.FLASH_ATTN for vit attention
+(EngineCore_DP0 pid=1070330) INFO 03-26 12:47:01 [mm_encoder_attention.py:215] Using AttentionBackendEnum.FLASH_ATTN for MMEncoderAttention.
+(EngineCore_DP0 pid=1070330) INFO 03-26 12:47:01 [cuda.py:405] Using FLASH_ATTN attention backend out of potential backends: ['FLASH_ATTN', 'FLASHINFER', 'TRITON_ATTN', 'FLEX_ATTENTION'].
+(EngineCore_DP0 pid=1070330) INFO 03-26 12:47:01 [flash_attn.py:587] Using FlashAttention version 2
+(EngineCore_DP0 pid=1070330) <frozen importlib._bootstrap_external>:1301: FutureWarning: The cuda.cudart module is deprecated and will be removed in a future release, please switch to use the cuda.bindings.runtime module instead.
+(EngineCore_DP0 pid=1070330) <frozen importlib._bootstrap_external>:1301: FutureWarning: The cuda.nvrtc module is deprecated and will be removed in a future release, please switch to use the cuda.bindings.nvrtc module instead.
+(EngineCore_DP0 pid=1070330) Loading safetensors checkpoint shards:   0% Completed | 0/11 [00:00<?, ?it/s]
+(EngineCore_DP0 pid=1070330) Loading safetensors checkpoint shards:   9% Completed | 1/11 [00:00<00:05,  1.85it/s]
+(EngineCore_DP0 pid=1070330) Loading safetensors checkpoint shards:  18% Completed | 2/11 [00:01<00:05,  1.66it/s]
+(EngineCore_DP0 pid=1070330) Loading safetensors checkpoint shards:  27% Completed | 3/11 [00:01<00:05,  1.56it/s]
+(EngineCore_DP0 pid=1070330) Loading safetensors checkpoint shards:  36% Completed | 4/11 [00:02<00:04,  1.51it/s]
+(EngineCore_DP0 pid=1070330) Loading safetensors checkpoint shards:  45% Completed | 5/11 [00:03<00:04,  1.47it/s]
+(EngineCore_DP0 pid=1070330) Loading safetensors checkpoint shards:  55% Completed | 6/11 [00:03<00:03,  1.46it/s]
+(EngineCore_DP0 pid=1070330) Loading safetensors checkpoint shards:  64% Completed | 7/11 [00:04<00:02,  1.44it/s]
+(EngineCore_DP0 pid=1070330) Loading safetensors checkpoint shards:  73% Completed | 8/11 [00:05<00:02,  1.45it/s]
+(EngineCore_DP0 pid=1070330) Loading safetensors checkpoint shards:  82% Completed | 9/11 [00:06<00:01,  1.44it/s]
+(EngineCore_DP0 pid=1070330) Loading safetensors checkpoint shards:  91% Completed | 10/11 [00:06<00:00,  1.44it/s]
+(EngineCore_DP0 pid=1070330) Loading safetensors checkpoint shards: 100% Completed | 11/11 [00:07<00:00,  1.61it/s]
+(EngineCore_DP0 pid=1070330) Loading safetensors checkpoint shards: 100% Completed | 11/11 [00:07<00:00,  1.52it/s]
+(EngineCore_DP0 pid=1070330) 
+(EngineCore_DP0 pid=1070330) INFO 03-26 12:47:09 [default_loader.py:293] Loading weights took 7.28 seconds
+(EngineCore_DP0 pid=1070330) INFO 03-26 12:47:10 [gpu_model_runner.py:4364] Model loading took 51.1 GiB memory and 8.349810 seconds
+(EngineCore_DP0 pid=1070330) INFO 03-26 12:47:10 [gpu_model_runner.py:5280] Encoder cache will be initialized with a budget of 16384 tokens, and profiled with 1 image items of the maximum feature size.
+(EngineCore_DP0 pid=1070330) INFO 03-26 12:47:18 [decorators.py:465] Directly load AOT compilation from path /home/v-tiossowski/.cache/vllm/torch_compile_cache/torch_aot_compile/0232891e22bd4d7db98ac2f43c441f0f81d0a431216053ca49fadeaff23e2af3/rank_0_0/model
+(EngineCore_DP0 pid=1070330) INFO 03-26 12:47:18 [backends.py:916] Using cache directory: /home/v-tiossowski/.cache/vllm/torch_compile_cache/feaf61af16/rank_0_0/backbone for vLLM's torch.compile
+(EngineCore_DP0 pid=1070330) INFO 03-26 12:47:18 [backends.py:976] Dynamo bytecode transform time: 3.50 s
+(EngineCore_DP0 pid=1070330) INFO 03-26 12:47:28 [backends.py:266] Directly load the compiled graph(s) for compile range (1, 8192) from the cache, took 9.408 s
+(EngineCore_DP0 pid=1070330) INFO 03-26 12:47:28 [monitor.py:35] torch.compile takes 13.74 s in total
+(EngineCore_DP0 pid=1070330) INFO 03-26 12:47:29 [gpu_worker.py:424] Available KV cache memory: 18.3 GiB
+(EngineCore_DP0 pid=1070330) INFO 03-26 12:47:29 [kv_cache_utils.py:1314] GPU KV cache size: 74,480 tokens
+(EngineCore_DP0 pid=1070330) INFO 03-26 12:47:29 [kv_cache_utils.py:1319] Maximum concurrency for 40,000 tokens per request: 6.95x
+(EngineCore_DP0 pid=1070330) Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):   0%|          | 0/51 [00:00<?, ?it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):   2%|▏         | 1/51 [00:00<00:08,  5.78it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):   4%|▍         | 2/51 [00:00<00:08,  6.01it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):   6%|▌         | 3/51 [00:00<00:07,  6.10it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):   8%|▊         | 4/51 [00:00<00:07,  6.14it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  10%|▉         | 5/51 [00:00<00:07,  6.19it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  12%|█▏        | 6/51 [00:00<00:07,  6.22it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  14%|█▎        | 7/51 [00:01<00:07,  6.23it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  16%|█▌        | 8/51 [00:01<00:06,  6.22it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  18%|█▊        | 9/51 [00:01<00:06,  6.55it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  20%|█▉        | 10/51 [00:01<00:06,  6.79it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  22%|██▏       | 11/51 [00:01<00:05,  6.77it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  24%|██▎       | 12/51 [00:01<00:05,  6.96it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  25%|██▌       | 13/51 [00:01<00:05,  7.07it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  27%|██▋       | 14/51 [00:02<00:05,  7.15it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  29%|██▉       | 15/51 [00:02<00:04,  7.26it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  31%|███▏      | 16/51 [00:02<00:04,  7.35it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  33%|███▎      | 17/51 [00:02<00:04,  7.67it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  35%|███▌      | 18/51 [00:02<00:04,  7.87it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  37%|███▋      | 19/51 [00:02<00:03,  8.09it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  39%|███▉      | 20/51 [00:02<00:03,  8.25it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  41%|████      | 21/51 [00:02<00:03,  8.38it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  43%|████▎     | 22/51 [00:03<00:03,  8.50it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  45%|████▌     | 23/51 [00:03<00:03,  8.54it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  47%|████▋     | 24/51 [00:03<00:03,  8.57it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  49%|████▉     | 25/51 [00:03<00:03,  8.56it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  51%|█████     | 26/51 [00:03<00:02,  8.61it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  53%|█████▎    | 27/51 [00:03<00:02,  8.65it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  55%|█████▍    | 28/51 [00:03<00:02,  8.68it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  57%|█████▋    | 29/51 [00:03<00:02,  8.69it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  59%|█████▉    | 30/51 [00:04<00:02,  8.70it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  61%|██████    | 31/51 [00:04<00:02,  8.74it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  63%|██████▎   | 32/51 [00:04<00:02,  8.72it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  67%|██████▋   | 34/51 [00:04<00:01,  9.26it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  71%|███████   | 36/51 [00:04<00:01,  9.56it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  75%|███████▍  | 38/51 [00:04<00:01,  9.68it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  76%|███████▋  | 39/51 [00:04<00:01,  9.69it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  80%|████████  | 41/51 [00:05<00:01,  9.84it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  84%|████████▍ | 43/51 [00:05<00:00, 10.07it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  88%|████████▊ | 45/51 [00:05<00:00, 10.27it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  92%|█████████▏| 47/51 [00:05<00:00, 10.48it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  96%|█████████▌| 49/51 [00:05<00:00, 10.52it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE): 100%|██████████| 51/51 [00:06<00:00, 10.56it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE): 100%|██████████| 51/51 [00:06<00:00,  8.40it/s]
+(EngineCore_DP0 pid=1070330) Capturing CUDA graphs (decode, FULL):   0%|          | 0/35 [00:00<?, ?it/s]Capturing CUDA graphs (decode, FULL):   3%|▎         | 1/35 [00:00<00:06,  5.63it/s]Capturing CUDA graphs (decode, FULL):   6%|▌         | 2/35 [00:00<00:05,  6.17it/s]Capturing CUDA graphs (decode, FULL):   9%|▊         | 3/35 [00:00<00:04,  6.43it/s]Capturing CUDA graphs (decode, FULL):  11%|█▏        | 4/35 [00:00<00:04,  6.58it/s]Capturing CUDA graphs (decode, FULL):  14%|█▍        | 5/35 [00:00<00:04,  6.63it/s]Capturing CUDA graphs (decode, FULL):  17%|█▋        | 6/35 [00:00<00:04,  6.63it/s]Capturing CUDA graphs (decode, FULL):  20%|██        | 7/35 [00:01<00:04,  6.69it/s]Capturing CUDA graphs (decode, FULL):  23%|██▎       | 8/35 [00:01<00:03,  6.76it/s]Capturing CUDA graphs (decode, FULL):  26%|██▌       | 9/35 [00:01<00:03,  6.84it/s]Capturing CUDA graphs (decode, FULL):  29%|██▊       | 10/35 [00:01<00:03,  6.85it/s]Capturing CUDA graphs (decode, FULL):  31%|███▏      | 11/35 [00:01<00:03,  6.90it/s]Capturing CUDA graphs (decode, FULL):  34%|███▍      | 12/35 [00:01<00:03,  7.00it/s]Capturing CUDA graphs (decode, FULL):  37%|███▋      | 13/35 [00:01<00:03,  7.07it/s]Capturing CUDA graphs (decode, FULL):  40%|████      | 14/35 [00:02<00:02,  7.15it/s]Capturing CUDA graphs (decode, FULL):  43%|████▎     | 15/35 [00:02<00:02,  7.21it/s]Capturing CUDA graphs (decode, FULL):  46%|████▌     | 16/35 [00:02<00:02,  7.18it/s]Capturing CUDA graphs (decode, FULL):  49%|████▊     | 17/35 [00:02<00:02,  7.47it/s]Capturing CUDA graphs (decode, FULL):  51%|█████▏    | 18/35 [00:02<00:02,  7.71it/s]Capturing CUDA graphs (decode, FULL):  54%|█████▍    | 19/35 [00:02<00:02,  7.93it/s]Capturing CUDA graphs (decode, FULL):  57%|█████▋    | 20/35 [00:02<00:01,  8.10it/s]Capturing CUDA graphs (decode, FULL):  60%|██████    | 21/35 [00:02<00:01,  8.26it/s]Capturing CUDA graphs (decode, FULL):  63%|██████▎   | 22/35 [00:03<00:01,  8.34it/s]Capturing CUDA graphs (decode, FULL):  66%|██████▌   | 23/35 [00:03<00:01,  8.47it/s]Capturing CUDA graphs (decode, FULL):  69%|██████▊   | 24/35 [00:03<00:01,  8.55it/s]Capturing CUDA graphs (decode, FULL):  71%|███████▏  | 25/35 [00:03<00:01,  8.73it/s]Capturing CUDA graphs (decode, FULL):  74%|███████▍  | 26/35 [00:03<00:01,  8.84it/s]Capturing CUDA graphs (decode, FULL):  77%|███████▋  | 27/35 [00:03<00:00,  8.94it/s]Capturing CUDA graphs (decode, FULL):  80%|████████  | 28/35 [00:03<00:00,  8.95it/s]Capturing CUDA graphs (decode, FULL):  83%|████████▎ | 29/35 [00:03<00:00,  8.92it/s]Capturing CUDA graphs (decode, FULL):  86%|████████▌ | 30/35 [00:03<00:00,  8.90it/s]Capturing CUDA graphs (decode, FULL):  89%|████████▊ | 31/35 [00:04<00:00,  9.00it/s]Capturing CUDA graphs (decode, FULL):  91%|█████████▏| 32/35 [00:04<00:00,  9.10it/s]Capturing CUDA graphs (decode, FULL):  94%|█████████▍| 33/35 [00:04<00:00,  9.03it/s]Capturing CUDA graphs (decode, FULL):  97%|█████████▋| 34/35 [00:04<00:00,  9.01it/s]Capturing CUDA graphs (decode, FULL): 100%|██████████| 35/35 [00:04<00:00,  9.15it/s]Capturing CUDA graphs (decode, FULL): 100%|██████████| 35/35 [00:04<00:00,  7.81it/s]
+(EngineCore_DP0 pid=1070330) INFO 03-26 12:47:41 [gpu_model_runner.py:5386] Graph capturing finished in 11 secs, took 1.13 GiB
+(EngineCore_DP0 pid=1070330) INFO 03-26 12:47:41 [core.py:282] init engine (profile, create kv cache, warmup model) took 31.15 seconds
+(EngineCore_DP0 pid=1070330) INFO 03-26 12:47:41 [vllm.py:747] Asynchronous scheduling is enabled.
+INFO 03-26 12:47:41 [llm.py:388] Supported tasks: ['generate']
+2026-03-26 12:47:41  INFO      Loading QA dataset from /home/v-tiossowski/HealthcareAgent/mimic-code/data/MIMICIV_sapsii_dataset/sapsii.csv
+2026-03-26 12:47:41  INFO      Dataset: 1000 rows, columns: ['subject_id', 'hadm_id', 'stay_id', 'intime', 'outtime', 'first_careunit', 'last_careunit', 'gt_label', 'question', 'gt_answer_type', 'split', 'sapsii', 'age_score', 'hr_score', 'sysbp_score', 'temp_score', 'pao2fio2_score', 'uo_score', 'bun_score', 'wbc_score', 'potassium_score', 'sodium_score', 'bicarbonate_score', 'bilirubin_score', 'gcs_score', 'comorbidity_score', 'admissiontype_score']
+2026-03-26 12:47:41  INFO      Filtered to train split: 100 rows
+2026-03-26 12:47:41  INFO      Auto-discovered ground-truth SQL: /home/v-tiossowski/HealthcareAgent/mimic-code/mimic-iv/concepts_duckdb/score/sapsii.sql
+2026-03-26 12:47:41  INFO      === Iteration 1/100  run=sapsii  best_qa=0.0% ===
+INFO 03-26 12:47:43 [hf.py:318] Detected the chat template content format to be 'string'. You can set `--chat-template-content-format` to override this.
+2026-03-26 12:48:00  INFO      Exec block 1/1 …
+2026-03-26 12:48:00  INFO      Output: ['saps-ii_guideline', 'saps-iii_guideline']
+
+2026-03-26 12:48:00  INFO      === Iteration 2/100  run=sapsii  best_qa=0.0% ===
+2026-03-26 12:48:03  INFO      Exec block 1/1 …
+2026-03-26 12:48:03  INFO      Output: '# SAPS-II — Clinical Guideline\n# Generated by generate_guidelines.py\n# Source articles: 10 (PMID35967847, PMID37658375, PMID38377099, PMID28804005, PMID34938790...)\n############################################################\n\n# SAPS-II (Simplified Acute Physiology Score II) — Clinical Guideline\n\n---\n\n## 1. Definition\n\nThe **Simplified Acute Physiology Score II (SAPS-II)** is a severity-of-illness scoring system designed to estimate the probability of in-hospital mortality for adult 
+2026-03-26 12:48:03  INFO      === Iteration 3/100  run=sapsii  best_qa=0.0% ===
+2026-03-26 12:48:06  INFO      Exec block 1/1 …
+2026-03-26 12:48:06  INFO      Output: ['acei', 'age', 'aki', 'antibiotic', 'apsiii', 'arb', 'bg', 'blood_differential', 'cardiac_marker', 'charlson', 'chemistry', 'coagulation', 'code_status', 'complete_blood_count', 'creatinine_baseline', 'crrt', 'dobutamine', 'dopamine', 'enzyme', 'epinephrine', '... (40 more; pass a keyword to filter)']
+
+2026-03-26 12:48:06  INFO      === Iteration 4/100  run=sapsii  best_qa=0.0% ===
+2026-03-26 12:48:11  INFO      Exec block 1/1 …
+2026-03-26 12:48:11  INFO      Output: []
+
+2026-03-26 12:48:11  INFO      === Iteration 5/100  run=sapsii  best_qa=0.0% ===
+2026-03-26 12:48:15  INFO      Exec block 1/1 …
+2026-03-26 12:48:15  INFO      Output: []
+
+2026-03-26 12:48:15  INFO      === Iteration 6/100  run=sapsii  best_qa=0.0% ===
+2026-03-26 12:48:20  INFO      Exec block 1/1 …
+2026-03-26 12:48:20  INFO      Output:     table_schema          table_name
+0   mimiciv_hosp          admissions
+1   mimiciv_hosp             d_hcpcs
+2   mimiciv_hosp     d_icd_diagnoses
+3   mimiciv_hosp    d_icd_procedures
+4   mimiciv_hosp          d_labitems
+5   mimiciv_hosp       diagnoses_icd
+6   mimiciv_hosp            drgcodes
+7   mimiciv_hosp                emar
+8   mimiciv_hosp         emar_detail
+9   mimiciv_hosp         hcpcsevents
+10  mimiciv_hosp           labevents
+11  mimiciv_hosp  microbiologyevents
+12  mimiciv_hosp   
+2026-03-26 12:48:20  INFO      === Iteration 7/100  run=sapsii  best_qa=0.0% ===
+2026-03-26 12:48:29  INFO      Exec block 1/1 …
+2026-03-26 12:48:29  INFO      Output:    subject_id   hadm_id   stay_id                       first_careunit                        last_careunit              intime             outtime       los
+0    10000032  29079034  39553978   Medical Intensive Care Unit (MICU)   Medical Intensive Care Unit (MICU) 2180-07-23 14:00:00 2180-07-23 23:50:47  0.410266
+1    10000690  25860671  37081114   Medical Intensive Care Unit (MICU)   Medical Intensive Care Unit (MICU) 2150-11-02 19:37:00 2150-11-06 17:03:17  3.893252
+2    10000980  26913865  3
+2026-03-26 12:48:29  INFO      === Iteration 8/100  run=sapsii  best_qa=0.0% ===
+2026-03-26 12:48:33  INFO      Exec block 1/1 …
+2026-03-26 12:48:33  INFO      Output:    subject_id   hadm_id           admittime           dischtime deathtime  admission_type admit_provider_id      admission_location discharge_location insurance language marital_status   race           edregtime           edouttime  hospital_expire_flag
+0    10000032  22595853 2180-05-06 22:23:00 2180-05-07 17:15:00       NaT          URGENT            P49AFC  TRANSFER FROM HOSPITAL               HOME  Medicaid  English        WIDOWED  WHITE 2180-05-06 19:17:00 2180-05-06 23:30:00               
+2026-03-26 12:48:33  INFO      === Iteration 9/100  run=sapsii  best_qa=0.0% ===
+2026-03-26 12:48:42  INFO      Exec block 1/1 …
+2026-03-26 12:48:42  INFO      Output:    subject_id   hadm_id   stay_id  caregiver_id           charttime           storetime  itemid              value    valuenum valueuom  warning
+0    10000032  29079034  39553978         18704 2180-07-23 12:36:00 2180-07-23 14:45:00  226512               39.4   39.400002       kg        0
+1    10000032  29079034  39553978         18704 2180-07-23 12:36:00 2180-07-23 14:45:00  226707                 60   60.000000     Inch        0
+2    10000032  29079034  39553978         18704 2180-07-23 12:36:
+2026-03-26 12:48:42  INFO      === Iteration 10/100  run=sapsii  best_qa=0.0% ===
+2026-03-26 12:48:48  INFO      Exec block 1/1 …
+2026-03-26 12:48:48  INFO      Output:     itemid                                               label                 category unitname
+0   220050                    Arterial Blood Pressure systolic      Routine Vital Signs     mmHg
+1   220059                  Pulmonary Artery Pressure systolic             Hemodynamics     mmHg
+2   220179                Non Invasive Blood Pressure systolic      Routine Vital Signs     mmHg
+3   223764                                Orthostatic HR lying      Routine Vital Signs      bpm
+4   223765     
+2026-03-26 12:48:48  INFO      === Iteration 11/100  run=sapsii  best_qa=0.0% ===
+2026-03-26 12:48:53  INFO      Exec block 1/1 …
+2026-03-26 12:48:53  INFO      Output:     itemid                                    label                category unitname
+0   220045                               Heart Rate     Routine Vital Signs      bpm
+1   220047                   Heart Rate Alarm - Low                  Alarms      bpm
+2   223764                     Orthostatic HR lying     Routine Vital Signs      bpm
+3   223765                   Orthostatic HR sitting     Routine Vital Signs      bpm
+4   224647                  Orthostatic HR standing     Routine Vital Signs
+2026-03-26 12:48:53  INFO      === Iteration 12/100  run=sapsii  best_qa=0.0% ===
+2026-03-26 12:48:59  INFO      Exec block 1/1 …
+2026-03-26 12:48:59  INFO      Output:     itemid                                               label                 category unitname
+0   223761                              Temperature Fahrenheit      Routine Vital Signs       °F
+1   223762                                 Temperature Celsius      Routine Vital Signs       °C
+2   224027                                    Skin Temperature        Skin - Assessment      NaN
+3   224351     Number of attempts required to place line (CVL)            CVL Insertion      NaN
+4   224584    N
+2026-03-26 12:48:59  INFO      === Iteration 13/100  run=sapsii  best_qa=0.0% ===
+2026-03-26 12:49:06  INFO      Exec block 1/1 …
+2026-03-26 12:49:06  INFO      Output:    itemid                               label                category unitname
+0  220739                   GCS - Eye Opening            Neurological     None
+1  223900               GCS - Verbal Response            Neurological     None
+2  223901                GCS - Motor Response            Neurological     None
+3  226756                 GCSEyeApacheIIValue      Scores - APACHE II     None
+4  226757               GCSMotorApacheIIValue      Scores - APACHE II     None
+5  226758              GCS
+2026-03-26 12:49:06  INFO      === Iteration 14/100  run=sapsii  best_qa=0.0% ===
+2026-03-26 12:49:13  INFO      Exec block 1/1 …
+2026-03-26 12:49:13  INFO      Output: Empty DataFrame
+Columns: [itemid, label, category, unitname]
+Index: []
+
+2026-03-26 12:49:13  INFO      === Iteration 15/100  run=sapsii  best_qa=0.0% ===
+2026-03-26 12:49:18  INFO      Exec block 1/1 …
+2026-03-26 12:49:18  INFO      Output:    itemid                               label                category unitname
+0  220739                   GCS - Eye Opening            Neurological     None
+1  223900               GCS - Verbal Response            Neurological     None
+2  223901                GCS - Motor Response            Neurological     None
+3  226756                 GCSEyeApacheIIValue      Scores - APACHE II     None
+4  226757               GCSMotorApacheIIValue      Scores - APACHE II     None
+5  226758              GCS
+2026-03-26 12:49:18  INFO      === Iteration 16/100  run=sapsii  best_qa=0.0% ===
+2026-03-26 12:49:24  INFO      Exec block 1/1 …
+2026-03-26 12:49:24  INFO      Output:    labevent_id  subject_id  hadm_id  specimen_id  itemid order_provider_id           charttime           storetime value  valuenum valueuom  ref_range_lower  ref_range_upper  flag priority                                                                                                           comments
+0            1    10000032     <NA>      2704548   50931            P69FQC 2180-03-23 11:51:00 2180-03-23 15:56:00   ___      95.0    mg/dL             70.0            100.0  None  ROUTINE        
+2026-03-26 12:49:24  INFO      === Iteration 17/100  run=sapsii  best_qa=0.0% ===
+2026-03-26 12:49:32  INFO      Exec block 1/1 …
+2026-03-26 12:49:32  INFO      Output: Error:
+Traceback (most recent call last):
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 643, in execute
+    _run_with_timeout(_do_execute, timeout)
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 174, in _run_with_timeout
+    raise error[0]
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 156, in target
+    result[0] = func(*args, **kwargs)
+                ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/v-tiossowsk
+2026-03-26 12:49:32  INFO      === Iteration 18/100  run=sapsii  best_qa=0.0% ===
+2026-03-26 12:49:36  INFO      Exec block 1/1 …
+2026-03-26 12:49:36  INFO      Output:    itemid                                label  fluid   category
+0   50801           Alveolar-arterial Gradient  Blood  Blood Gas
+1   50802                          Base Excess  Blood  Blood Gas
+2   50803  Calculated Bicarbonate, Whole Blood  Blood  Blood Gas
+3   50804                 Calculated Total CO2  Blood  Blood Gas
+4   50805                    Carboxyhemoglobin  Blood  Blood Gas
+
+2026-03-26 12:49:36  INFO      === Iteration 19/100  run=sapsii  best_qa=0.0% ===
+2026-03-26 12:49:44  INFO      Exec block 1/1 …
+2026-03-26 12:49:44  INFO      Output:    itemid       label  fluid    category
+0   51300   WBC Count  Blood  Hematology
+1   51516         WBC  Urine  Hematology
+2   51517   WBC Casts  Urine  Hematology
+3   51518  WBC Clumps  Urine  Hematology
+4   52219     WBCScat  Blood  Hematology
+5   52407         WBC  Stool  Hematology
+
+2026-03-26 12:49:44  INFO      === Iteration 20/100  run=sapsii  best_qa=0.0% ===
+2026-03-26 12:49:51  INFO      Exec block 1/1 …
+2026-03-26 12:49:51  INFO      Output: Empty DataFrame
+Columns: [itemid, label, fluid, category]
+Index: []
+
+2026-03-26 12:49:51  INFO      === Iteration 21/100  run=sapsii  best_qa=0.0% ===
+2026-03-26 12:49:59  INFO      Exec block 1/1 …
+2026-03-26 12:49:59  INFO      Output:     itemid                                label             fluid   category
+0    50803  Calculated Bicarbonate, Whole Blood             Blood  Blood Gas
+1    50822               Potassium, Whole Blood             Blood  Blood Gas
+2    50824                  Sodium, Whole Blood             Blood  Blood Gas
+3    50833                            Potassium  Other Body Fluid  Blood Gas
+4    50834                   Sodium, Body Fluid  Other Body Fluid  Blood Gas
+5    50837                 Bicarbonate
+2026-03-26 12:49:59  INFO      === Iteration 22/100  run=sapsii  best_qa=0.0% ===
+2026-03-26 12:50:08  INFO      Exec block 1/1 …
+2026-03-26 12:50:08  INFO      Output:     itemid                                label  fluid    category
+0    50803  Calculated Bicarbonate, Whole Blood  Blood   Blood Gas
+1    50822               Potassium, Whole Blood  Blood   Blood Gas
+2    50824                  Sodium, Whole Blood  Blood   Blood Gas
+3    50882                          Bicarbonate  Blood   Chemistry
+4    50883                    Bilirubin, Direct  Blood   Chemistry
+5    50884                  Bilirubin, Indirect  Blood   Chemistry
+6    50885                     
+2026-03-26 12:50:08  INFO      === Iteration 23/100  run=sapsii  best_qa=0.0% ===
+2026-03-26 12:50:18  INFO      Exec block 1/1 …
+2026-03-26 12:50:18  INFO      Output:     itemid                 label             fluid   category
+0    50804  Calculated Total CO2             Blood  Blood Gas
+1    50815               O2 Flow             Blood  Blood Gas
+2    50816                Oxygen             Blood  Blood Gas
+3    50817     Oxygen Saturation             Blood  Blood Gas
+4    50818                  pCO2             Blood  Blood Gas
+5    50821                   pO2             Blood  Blood Gas
+6    50823           Required O2             Blood  Blood Gas
+7   
+2026-03-26 12:50:18  INFO      === Iteration 24/100  run=sapsii  best_qa=0.0% ===
+2026-03-26 12:50:26  INFO      Exec block 1/1 …
+2026-03-26 12:50:26  INFO      Output:     itemid                         label                category unitname
+0   223848               Ventilator Type             Respiratory      NaN
+1   223849               Ventilator Mode             Respiratory      NaN
+2   225302  Pre-Oxygentated (Intubation)              Intubation      NaN
+3   226754             FiO2ApacheIIValue      Scores - APACHE II        %
+4   226767           OxygenApacheIIScore      Scores - APACHE II     None
+5   227009             FiO2_ApacheIV_old  Scores - APACH
+2026-03-26 12:50:26  INFO      === Iteration 25/100  run=sapsii  best_qa=0.0% ===
+2026-03-26 12:50:32  INFO      Exec block 1/1 …
+2026-03-26 12:50:32  INFO      Output:    itemid                  label                category unitname
+0  226754      FiO2ApacheIIValue      Scores - APACHE II        %
+1  227009      FiO2_ApacheIV_old  Scores - APACHE IV (2)     None
+2  227010          FiO2_ApacheIV  Scores - APACHE IV (2)        %
+3  229238         FiO2 Challenge            Hemodynamics      NaN
+4  229239  FiO2 Challenge Result            Hemodynamics      NaN
+5  229280            FiO2 (ECMO)                    ECMO        %
+6  229841              FiO2 (CH)      
+2026-03-26 12:50:32  INFO      === Iteration 26/100  run=sapsii  best_qa=0.0% ===
+2026-03-26 12:50:39  INFO      Exec block 1/1 …
+2026-03-26 12:50:39  INFO      Output:    itemid                  label                category unitname
+0  229239  FiO2 Challenge Result            Hemodynamics      NaN
+1  227010          FiO2_ApacheIV  Scores - APACHE IV (2)        %
+2  227009      FiO2_ApacheIV_old  Scores - APACHE IV (2)     None
+3  229841              FiO2 (CH)                    ECMO        %
+4  229238         FiO2 Challenge            Hemodynamics      NaN
+5  226754      FiO2ApacheIIValue      Scores - APACHE II        %
+6  229280            FiO2 (ECMO)      
+2026-03-26 12:50:39  INFO      === Iteration 27/100  run=sapsii  best_qa=0.0% ===
+2026-03-26 12:50:46  INFO      Exec block 1/1 …
+2026-03-26 12:50:46  INFO      Output:     itemid                         label                category unitname
+0   227009             FiO2_ApacheIV_old  Scores - APACHE IV (2)     None
+1   228192         Oxygenator Sweep Rate            Tandem Heart    L/min
+2   229274     Oxygenator visible (ECMO)                    ECMO      NaN
+3   228232         PAR-Oxygen saturation     Routine Vital Signs      NaN
+4   229238                FiO2 Challenge            Hemodynamics      NaN
+5   229786   Preoxygenation (Intubation)              In
+2026-03-26 12:50:46  INFO      === Iteration 28/100  run=sapsii  best_qa=0.0% ===
+2026-03-26 12:50:54  INFO      Exec block 1/1 …
+2026-03-26 12:50:54  INFO      Output:    itemid                        label                category unitname
+0  227009            FiO2_ApacheIV_old  Scores - APACHE IV (2)     None
+1  229841                    FiO2 (CH)                    ECMO        %
+2  229239        FiO2 Challenge Result            Hemodynamics      NaN
+3  229238               FiO2 Challenge            Hemodynamics      NaN
+4  229786  Preoxygenation (Intubation)              Intubation      NaN
+5  229280                  FiO2 (ECMO)                    ECMO      
+2026-03-26 12:50:54  INFO      === Iteration 29/100  run=sapsii  best_qa=0.0% ===
+2026-03-26 12:51:00  INFO      Exec block 1/1 …
+2026-03-26 12:51:00  INFO      Output:    itemid                  label                category unitname
+0  227009      FiO2_ApacheIV_old  Scores - APACHE IV (2)     None
+1  226754      FiO2ApacheIIValue      Scores - APACHE II        %
+2  229841              FiO2 (CH)                    ECMO        %
+3  229280            FiO2 (ECMO)                    ECMO        %
+4  229239  FiO2 Challenge Result            Hemodynamics      NaN
+5  229238         FiO2 Challenge            Hemodynamics      NaN
+6  227010          FiO2_ApacheIV  Scor
+2026-03-26 12:51:00  INFO      === Iteration 30/100  run=sapsii  best_qa=0.0% ===
+2026-03-26 12:51:08  INFO      Exec block 1/1 …
+2026-03-26 12:51:08  INFO      Output:    itemid                  label                category unitname
+0  227009      FiO2_ApacheIV_old  Scores - APACHE IV (2)     None
+1  229238         FiO2 Challenge            Hemodynamics      NaN
+2  226754      FiO2ApacheIIValue      Scores - APACHE II        %
+3  229280            FiO2 (ECMO)                    ECMO        %
+4  229841              FiO2 (CH)                    ECMO        %
+5  227010          FiO2_ApacheIV  Scores - APACHE IV (2)        %
+6  229239  FiO2 Challenge Result      
+2026-03-26 12:51:08  INFO      === Iteration 31/100  run=sapsii  best_qa=0.0% ===
+2026-03-26 12:51:16  INFO      Exec block 1/1 …
+2026-03-26 12:51:16  INFO      Output:     itemid                         label                category unitname
+0   227009             FiO2_ApacheIV_old  Scores - APACHE IV (2)     None
+1   229274     Oxygenator visible (ECMO)                    ECMO      NaN
+2   227035          OxygenScore_ApacheIV  Scores - APACHE IV (2)     None
+3   229235      Brain Tissue Oxygenation            Hemodynamics     mmHg
+4   225302  Pre-Oxygentated (Intubation)              Intubation      NaN
+5   226767           OxygenApacheIIScore      Scores - A
+2026-03-26 12:51:16  INFO      === Iteration 32/100  run=sapsii  best_qa=0.0% ===
+(EngineCore_DP0 pid=1070330) /home/v-tiossowski/anaconda3/envs/autoformalization/lib/python3.12/site-packages/vllm/model_executor/layers/fla/ops/utils.py:113: UserWarning: Input tensor shape suggests potential format mismatch: seq_len (20) < num_heads (48). This may indicate the inputs were passed in head-first format [B, H, T, ...] when head_first=False was specified. Please verify your input tensor format matches the expected shape [B, T, H, ...].
+(EngineCore_DP0 pid=1070330)   return fn(*contiguous_args, **contiguous_kwargs)
+2026-03-26 12:51:28  INFO      Exec block 1/1 …
+2026-03-26 12:51:28  INFO      Output:    itemid                  label                category unitname
+0  229841              FiO2 (CH)                    ECMO        %
+1  227009      FiO2_ApacheIV_old  Scores - APACHE IV (2)     None
+2  229239  FiO2 Challenge Result            Hemodynamics      NaN
+3  227010          FiO2_ApacheIV  Scores - APACHE IV (2)        %
+4  229280            FiO2 (ECMO)                    ECMO        %
+5  226754      FiO2ApacheIIValue      Scores - APACHE II        %
+6  229238         FiO2 Challenge      
+2026-03-26 12:51:28  INFO      === Iteration 33/100  run=sapsii  best_qa=0.0% ===
+2026-03-26 12:51:36  INFO      Exec block 1/1 …
+2026-03-26 12:51:36  INFO      Output:     itemid                       label                category unitname
+0   227009           FiO2_ApacheIV_old  Scores - APACHE IV (2)     None
+1   227010               FiO2_ApacheIV  Scores - APACHE IV (2)        %
+2   229841                   FiO2 (CH)                    ECMO        %
+3   227565          Ventilator Tank #1             Respiratory     None
+4   229239       FiO2 Challenge Result            Hemodynamics      NaN
+5   223849             Ventilator Mode             Respiratory      
+2026-03-26 12:51:36  INFO      === Iteration 34/100  run=sapsii  best_qa=0.0% ===
+2026-03-26 12:51:45  INFO      Exec block 1/1 …
+2026-03-26 12:51:45  INFO      Output:    itemid                  label                category unitname
+0  229841              FiO2 (CH)                    ECMO        %
+1  227009      FiO2_ApacheIV_old  Scores - APACHE IV (2)     None
+2  229238         FiO2 Challenge            Hemodynamics      NaN
+3  229239  FiO2 Challenge Result            Hemodynamics      NaN
+4  227010          FiO2_ApacheIV  Scores - APACHE IV (2)        %
+5  226754      FiO2ApacheIIValue      Scores - APACHE II        %
+6  229280            FiO2 (ECMO)      
+2026-03-26 12:51:45  INFO      === Iteration 35/100  run=sapsii  best_qa=0.0% ===
+2026-03-26 12:51:54  INFO      Exec block 1/1 …
+2026-03-26 12:51:54  INFO      Output:    itemid                  label                category unitname
+0  227009      FiO2_ApacheIV_old  Scores - APACHE IV (2)     None
+1  229239  FiO2 Challenge Result            Hemodynamics      NaN
+2  229841              FiO2 (CH)                    ECMO        %
+3  229238         FiO2 Challenge            Hemodynamics      NaN
+4  226754      FiO2ApacheIIValue      Scores - APACHE II        %
+5  227010          FiO2_ApacheIV  Scores - APACHE IV (2)        %
+6  229280            FiO2 (ECMO)      
+2026-03-26 12:51:54  INFO      === Iteration 36/100  run=sapsii  best_qa=0.0% ===
+2026-03-26 12:52:04  INFO      Exec block 1/1 …
+2026-03-26 12:52:04  INFO      Output:    itemid                  label                category unitname
+0  227009      FiO2_ApacheIV_old  Scores - APACHE IV (2)     None
+1  229280            FiO2 (ECMO)                    ECMO        %
+2  227010          FiO2_ApacheIV  Scores - APACHE IV (2)        %
+3  229841              FiO2 (CH)                    ECMO        %
+4  229238         FiO2 Challenge            Hemodynamics      NaN
+5  229239  FiO2 Challenge Result            Hemodynamics      NaN
+6  226754      FiO2ApacheIIValue      
+2026-03-26 12:52:04  INFO      === Iteration 37/100  run=sapsii  best_qa=0.0% ===
+2026-03-26 12:52:14  INFO      Exec block 1/1 …
+2026-03-26 12:52:14  INFO      Output:    itemid                  label                category unitname
+0  229280            FiO2 (ECMO)                    ECMO        %
+1  227009      FiO2_ApacheIV_old  Scores - APACHE IV (2)     None
+2  229841              FiO2 (CH)                    ECMO        %
+3  229239  FiO2 Challenge Result            Hemodynamics      NaN
+4  229238         FiO2 Challenge            Hemodynamics      NaN
+5  227010          FiO2_ApacheIV  Scores - APACHE IV (2)        %
+6  226754      FiO2ApacheIIValue      
+2026-03-26 12:52:14  INFO      === Iteration 38/100  run=sapsii  best_qa=0.0% ===
+2026-03-26 12:52:24  INFO      Exec block 1/1 …
+2026-03-26 12:52:24  INFO      Output:    itemid                  label                category unitname
+0  227009      FiO2_ApacheIV_old  Scores - APACHE IV (2)     None
+1  229239  FiO2 Challenge Result            Hemodynamics      NaN
+2  229280            FiO2 (ECMO)                    ECMO        %
+3  227010          FiO2_ApacheIV  Scores - APACHE IV (2)        %
+4  229841              FiO2 (CH)                    ECMO        %
+5  229238         FiO2 Challenge            Hemodynamics      NaN
+6  226754      FiO2ApacheIIValue      
+2026-03-26 12:52:24  INFO      === Iteration 39/100  run=sapsii  best_qa=0.0% ===
+2026-03-26 12:52:35  INFO      Exec block 1/1 …
+2026-03-26 12:52:35  INFO      Output:    itemid                  label                category unitname
+0  227009      FiO2_ApacheIV_old  Scores - APACHE IV (2)     None
+1  229841              FiO2 (CH)                    ECMO        %
+2  229238         FiO2 Challenge            Hemodynamics      NaN
+3  229239  FiO2 Challenge Result            Hemodynamics      NaN
+4  226754      FiO2ApacheIIValue      Scores - APACHE II        %
+5  227010          FiO2_ApacheIV  Scores - APACHE IV (2)        %
+6  229280            FiO2 (ECMO)      
+2026-03-26 12:52:35  INFO      === Iteration 40/100  run=sapsii  best_qa=0.0% ===
+2026-03-26 12:52:46  INFO      Exec block 1/1 …
+2026-03-26 12:52:46  INFO      Output:    itemid                  label                category unitname
+0  227009      FiO2_ApacheIV_old  Scores - APACHE IV (2)     None
+1  229841              FiO2 (CH)                    ECMO        %
+2  229239  FiO2 Challenge Result            Hemodynamics      NaN
+3  227010          FiO2_ApacheIV  Scores - APACHE IV (2)        %
+4  226754      FiO2ApacheIIValue      Scores - APACHE II        %
+5  229238         FiO2 Challenge            Hemodynamics      NaN
+6  229280            FiO2 (ECMO)      
+2026-03-26 12:52:46  INFO      === Iteration 41/100  run=sapsii  best_qa=0.0% ===
+2026-03-26 12:52:57  INFO      Exec block 1/1 …
+2026-03-26 12:52:57  INFO      Output:    itemid                  label                category unitname
+0  227009      FiO2_ApacheIV_old  Scores - APACHE IV (2)     None
+1  229239  FiO2 Challenge Result            Hemodynamics      NaN
+2  229841              FiO2 (CH)                    ECMO        %
+3  229238         FiO2 Challenge            Hemodynamics      NaN
+4  229280            FiO2 (ECMO)                    ECMO        %
+5  226754      FiO2ApacheIIValue      Scores - APACHE II        %
+6  227010          FiO2_ApacheIV  Scor
+2026-03-26 12:52:57  INFO      === Iteration 42/100  run=sapsii  best_qa=0.0% ===
+2026-03-26 12:53:10  INFO      Exec block 1/1 …
+2026-03-26 12:53:10  INFO      Output:    itemid                  label                category unitname
+0  227009      FiO2_ApacheIV_old  Scores - APACHE IV (2)     None
+1  229238         FiO2 Challenge            Hemodynamics      NaN
+2  227010          FiO2_ApacheIV  Scores - APACHE IV (2)        %
+3  229841              FiO2 (CH)                    ECMO        %
+4  229239  FiO2 Challenge Result            Hemodynamics      NaN
+5  229280            FiO2 (ECMO)                    ECMO        %
+6  226754      FiO2ApacheIIValue      
+2026-03-26 12:53:10  INFO      === Iteration 43/100  run=sapsii  best_qa=0.0% ===
+2026-03-26 12:53:18  INFO      Exec block 1/1 …
+2026-03-26 12:53:18  INFO      Output:    itemid                  label                category unitname
+0  227009      FiO2_ApacheIV_old  Scores - APACHE IV (2)     None
+1  229239  FiO2 Challenge Result            Hemodynamics      NaN
+2  229280            FiO2 (ECMO)                    ECMO        %
+3  229841              FiO2 (CH)                    ECMO        %
+4  229238         FiO2 Challenge            Hemodynamics      NaN
+5  227010          FiO2_ApacheIV  Scores - APACHE IV (2)        %
+6  226754      FiO2ApacheIIValue      
+2026-03-26 12:53:18  INFO      === Iteration 44/100  run=sapsii  best_qa=0.0% ===
+2026-03-26 12:53:31  INFO      Exec block 1/1 …
+2026-03-26 12:53:31  INFO      Output:    itemid                  label                category unitname
+0  227009      FiO2_ApacheIV_old  Scores - APACHE IV (2)     None
+1  229238         FiO2 Challenge            Hemodynamics      NaN
+2  227010          FiO2_ApacheIV  Scores - APACHE IV (2)        %
+3  229841              FiO2 (CH)                    ECMO        %
+4  229280            FiO2 (ECMO)                    ECMO        %
+5  229239  FiO2 Challenge Result            Hemodynamics      NaN
+6  226754      FiO2ApacheIIValue      
+2026-03-26 12:53:31  INFO      === Iteration 45/100  run=sapsii  best_qa=0.0% ===
+2026-03-26 12:53:44  INFO      Exec block 1/1 …
+2026-03-26 12:53:44  INFO      Output:    itemid                  label                category unitname
+0  229239  FiO2 Challenge Result            Hemodynamics      NaN
+1  229280            FiO2 (ECMO)                    ECMO        %
+2  227009      FiO2_ApacheIV_old  Scores - APACHE IV (2)     None
+3  229841              FiO2 (CH)                    ECMO        %
+4  229238         FiO2 Challenge            Hemodynamics      NaN
+5  226754      FiO2ApacheIIValue      Scores - APACHE II        %
+6  227010          FiO2_ApacheIV  Scor
+2026-03-26 12:53:44  INFO      === Iteration 46/100  run=sapsii  best_qa=0.0% ===
+2026-03-26 12:53:57  INFO      Exec block 1/1 …
+2026-03-26 12:53:57  INFO      Output:    itemid                  label                category unitname
+0  227009      FiO2_ApacheIV_old  Scores - APACHE IV (2)     None
+1  229238         FiO2 Challenge            Hemodynamics      NaN
+2  226754      FiO2ApacheIIValue      Scores - APACHE II        %
+3  229280            FiO2 (ECMO)                    ECMO        %
+4  229841              FiO2 (CH)                    ECMO        %
+5  229239  FiO2 Challenge Result            Hemodynamics      NaN
+6  227010          FiO2_ApacheIV  Scor
+2026-03-26 12:53:57  INFO      === Iteration 47/100  run=sapsii  best_qa=0.0% ===
+2026-03-26 12:54:10  INFO      Exec block 1/1 …
+2026-03-26 12:54:10  INFO      Output:    itemid                  label                category unitname
+0  229841              FiO2 (CH)                    ECMO        %
+1  229238         FiO2 Challenge            Hemodynamics      NaN
+2  227009      FiO2_ApacheIV_old  Scores - APACHE IV (2)     None
+3  229280            FiO2 (ECMO)                    ECMO        %
+4  227010          FiO2_ApacheIV  Scores - APACHE IV (2)        %
+5  226754      FiO2ApacheIIValue      Scores - APACHE II        %
+6  229239  FiO2 Challenge Result      
+2026-03-26 12:54:10  INFO      === Iteration 48/100  run=sapsii  best_qa=0.0% ===
+2026-03-26 12:54:25  INFO      Exec block 1/1 …
+2026-03-26 12:54:25  INFO      Output:    itemid                  label                category unitname
+0  227009      FiO2_ApacheIV_old  Scores - APACHE IV (2)     None
+1  229239  FiO2 Challenge Result            Hemodynamics      NaN
+2  229841              FiO2 (CH)                    ECMO        %
+3  229280            FiO2 (ECMO)                    ECMO        %
+4  227010          FiO2_ApacheIV  Scores - APACHE IV (2)        %
+5  229238         FiO2 Challenge            Hemodynamics      NaN
+6  226754      FiO2ApacheIIValue      
+2026-03-26 12:54:25  INFO      === Iteration 49/100  run=sapsii  best_qa=0.0% ===
+2026-03-26 12:54:34  INFO      Exec block 1/1 …
+2026-03-26 12:54:34  INFO      Output:    itemid                  label                category unitname
+0  229238         FiO2 Challenge            Hemodynamics      NaN
+1  227009      FiO2_ApacheIV_old  Scores - APACHE IV (2)     None
+2  229239  FiO2 Challenge Result            Hemodynamics      NaN
+3  229280            FiO2 (ECMO)                    ECMO        %
+4  229841              FiO2 (CH)                    ECMO        %
+5  226754      FiO2ApacheIIValue      Scores - APACHE II        %
+6  227010          FiO2_ApacheIV  Scor
+2026-03-26 12:54:34  INFO      === Iteration 50/100  run=sapsii  best_qa=0.0% ===
+2026-03-26 12:54:50  INFO      Exec block 1/1 …
+2026-03-26 12:54:50  INFO      Output:    itemid                  label                category unitname
+0  227009      FiO2_ApacheIV_old  Scores - APACHE IV (2)     None
+1  229238         FiO2 Challenge            Hemodynamics      NaN
+2  226754      FiO2ApacheIIValue      Scores - APACHE II        %
+3  229239  FiO2 Challenge Result            Hemodynamics      NaN
+4  229841              FiO2 (CH)                    ECMO        %
+5  229280            FiO2 (ECMO)                    ECMO        %
+6  227010          FiO2_ApacheIV  Scor
+2026-03-26 12:54:50  INFO      === Iteration 51/100  run=sapsii  best_qa=0.0% ===
+2026-03-26 12:55:06  INFO      Exec block 1/1 …
+2026-03-26 12:55:06  INFO      Output:    itemid                  label                category unitname
+0  229239  FiO2 Challenge Result            Hemodynamics      NaN
+1  229238         FiO2 Challenge            Hemodynamics      NaN
+2  227009      FiO2_ApacheIV_old  Scores - APACHE IV (2)     None
+3  229841              FiO2 (CH)                    ECMO        %
+4  229280            FiO2 (ECMO)                    ECMO        %
+5  227010          FiO2_ApacheIV  Scores - APACHE IV (2)        %
+6  226754      FiO2ApacheIIValue      
+2026-03-26 12:55:06  INFO      === Iteration 52/100  run=sapsii  best_qa=0.0% ===
+2026-03-26 12:55:22  INFO      Exec block 1/1 …
+2026-03-26 12:55:22  INFO      Output:    itemid                  label                category unitname
+0  227009      FiO2_ApacheIV_old  Scores - APACHE IV (2)     None
+1  229239  FiO2 Challenge Result            Hemodynamics      NaN
+2  229841              FiO2 (CH)                    ECMO        %
+3  229280            FiO2 (ECMO)                    ECMO        %
+4  226754      FiO2ApacheIIValue      Scores - APACHE II        %
+5  229238         FiO2 Challenge            Hemodynamics      NaN
+6  227010          FiO2_ApacheIV  Scor
+2026-03-26 12:55:22  INFO      === Iteration 53/100  run=sapsii  best_qa=0.0% ===
+2026-03-26 12:55:33  INFO      Exec block 1/1 …
+2026-03-26 12:55:33  INFO      Output:    itemid                  label                category unitname
+0  229239  FiO2 Challenge Result            Hemodynamics      NaN
+1  227009      FiO2_ApacheIV_old  Scores - APACHE IV (2)     None
+2  229841              FiO2 (CH)                    ECMO        %
+3  229280            FiO2 (ECMO)                    ECMO        %
+4  226754      FiO2ApacheIIValue      Scores - APACHE II        %
+5  227010          FiO2_ApacheIV  Scores - APACHE IV (2)        %
+6  229238         FiO2 Challenge      
+2026-03-26 12:55:33  INFO      === Iteration 54/100  run=sapsii  best_qa=0.0% ===
+2026-03-26 12:55:43  INFO      Exec block 1/1 …
+2026-03-26 12:55:43  INFO      Output:     itemid                         label                category unitname
+0   227009             FiO2_ApacheIV_old  Scores - APACHE IV (2)     None
+1   229841                     FiO2 (CH)                    ECMO        %
+2   229875       Oxygenator visible (CH)                    ECMO      NaN
+3   229239         FiO2 Challenge Result            Hemodynamics      NaN
+4   229280                   FiO2 (ECMO)                    ECMO        %
+5   225302  Pre-Oxygentated (Intubation)              In
+2026-03-26 12:55:43  INFO      === Iteration 55/100  run=sapsii  best_qa=0.0% ===
+2026-03-26 12:55:53  INFO      Exec block 1/1 …
+2026-03-26 12:55:53  INFO      Output: Empty DataFrame
+Columns: [itemid, label, category, unitname]
+Index: []
+
+2026-03-26 12:55:53  INFO      === Iteration 56/100  run=sapsii  best_qa=0.0% ===
+2026-03-26 12:56:04  INFO      Exec block 1/1 …
+2026-03-26 12:56:04  INFO      Output: Empty DataFrame
+Columns: [itemid, label, category, unitname]
+Index: []
+
+2026-03-26 12:56:04  INFO      === Iteration 57/100  run=sapsii  best_qa=0.0% ===
+(EngineCore_DP0 pid=1070330) /home/v-tiossowski/anaconda3/envs/autoformalization/lib/python3.12/site-packages/vllm/model_executor/layers/fla/ops/utils.py:113: UserWarning: Input tensor shape suggests potential format mismatch: seq_len (42) < num_heads (48). This may indicate the inputs were passed in head-first format [B, H, T, ...] when head_first=False was specified. Please verify your input tensor format matches the expected shape [B, T, H, ...].
+(EngineCore_DP0 pid=1070330)   return fn(*contiguous_args, **contiguous_kwargs)
+2026-03-26 12:56:14  INFO      Exec block 1/1 …
+2026-03-26 12:56:14  INFO      Output:    itemid                        label     category unitname
+0  220277  O2 saturation pulseoxymetry  Respiratory        %
+1  224704                        ATC %  Respiratory        %
+
+2026-03-26 12:56:14  INFO      === Iteration 58/100  run=sapsii  best_qa=0.0% ===
+2026-03-26 12:56:25  INFO      Exec block 1/1 …
+2026-03-26 12:56:25  INFO      Output:     itemid                             label     category         unitname
+0   220277       O2 saturation pulseoxymetry  Respiratory                %
+1   223835              Inspired O2 Fraction  Respiratory             None
+2   223837                     ETT Size (ID)  Respiratory              NaN
+3   224421                          Spont Vt  Respiratory               mL
+4   224685           Tidal Volume (observed)  Respiratory               mL
+5   224688            Respiratory Rate (Set)  Resp
+2026-03-26 12:56:25  INFO      === Iteration 59/100  run=sapsii  best_qa=0.0% ===
+2026-03-26 12:56:37  INFO      Exec block 1/1 …
+2026-03-26 12:56:37  INFO      Output:     itemid                            label                            category unitname
+0   220473                          Taurine  Ingredients - general (Not In Use)       mg
+1   226627                         OR Urine                              Output       mL
+2   227059              UrineScore_ApacheIV              Scores - APACHE IV (2)     None
+3   229897    Cardiac Output (CO) (Impella)                             Impella    L/min
+4   226631                       PACU Urine            
+2026-03-26 12:56:37  INFO      === Iteration 60/100  run=sapsii  best_qa=0.0% ===
+2026-03-26 12:56:37  INFO      Context approaching limit (20367 tokens, limit=25000) — forcing summarize + compress
+2026-03-26 12:58:23  INFO      Context compressed: 120 messages -> 2 messages
+2026-03-26 12:58:35  INFO      Exec block 1/1 …
+2026-03-26 12:58:35  INFO      Output: ['icustay_detail']
+
+2026-03-26 12:58:35  INFO      === Iteration 61/100  run=sapsii  best_qa=0.0% ===
+2026-03-26 12:58:37  INFO      Exec block 1/1 …
+2026-03-26 12:58:37  INFO      Output: 'def icustay_detail(stay_id):\n    """\n    Extract critical clinical information for an ICU stay.\n\n    This function retrieves comprehensive details about a specific ICU stay,\n    including mortality status, length of stay, and whether this is the first\n    ICU admission during the hospitalization.\n\n    Parameters\n    ----------\n    stay_id : int\n        The ICU stay identifier.\n\n    Returns\n    -------\n    dict or None\n        A dictionary containing the following keys:\n        
+2026-03-26 12:58:37  INFO      === Iteration 62/100  run=sapsii  best_qa=0.0% ===
+2026-03-26 12:58:47  INFO      Exec block 1/1 …
+2026-03-26 12:58:47  INFO      Output:    itemid                                 label             category unitname
+0  220045                            Heart Rate  Routine Vital Signs      bpm
+1  220050      Arterial Blood Pressure systolic  Routine Vital Signs     mmHg
+2  220179  Non Invasive Blood Pressure systolic  Routine Vital Signs     mmHg
+3  220739                     GCS - Eye Opening         Neurological      NaN
+4  223762                   Temperature Celsius  Routine Vital Signs       °C
+5  223835                  Inspi
+2026-03-26 12:58:47  INFO      === Iteration 63/100  run=sapsii  best_qa=0.0% ===
+2026-03-26 12:58:53  INFO      Exec block 1/1 …
+2026-03-26 12:58:53  INFO      Output: Error:
+Traceback (most recent call last):
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 643, in execute
+    _run_with_timeout(_do_execute, timeout)
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 174, in _run_with_timeout
+    raise error[0]
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 156, in target
+    result[0] = func(*args, **kwargs)
+                ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/v-tiossowsk
+2026-03-26 12:58:53  INFO      === Iteration 64/100  run=sapsii  best_qa=0.0% ===
+2026-03-26 12:58:57  INFO      Exec block 1/1 …
+2026-03-26 12:58:57  INFO      Output:    itemid                       label  fluid   category
+0   50801  Alveolar-arterial Gradient  Blood  Blood Gas
+
+2026-03-26 12:58:57  INFO      === Iteration 65/100  run=sapsii  best_qa=0.0% ===
+2026-03-26 12:59:04  INFO      Exec block 1/1 …
+2026-03-26 12:59:04  INFO      Output:     itemid  valuenum valueuom
+0    50824     146.0    mEq/L
+1    50821     247.0    mm Hg
+2    50822       3.7    mEq/L
+3    51006      31.0    mg/dL
+4    50821     343.0    mm Hg
+5    50821     150.0    mm Hg
+6    50821     148.0    mm Hg
+7    50821      43.0    mm Hg
+8    51006       4.0    mg/dL
+9    50821     393.0    mm Hg
+10   50821     108.0    mm Hg
+11   50821      78.0    mm Hg
+12   51006      42.0    mg/dL
+13   51006      59.0    mg/dL
+14   51006      76.0    mg/dL
+15   51006      68.0
+2026-03-26 12:59:04  INFO      === Iteration 66/100  run=sapsii  best_qa=0.0% ===
+2026-03-26 12:59:10  INFO      Exec block 1/1 …
+2026-03-26 12:59:10  INFO      Output:    itemid                      label  category unitname
+0  226457       Ultrafiltrate Output  Dialysis       mL
+1  226499        Hemodialysis Output  Dialysis       mL
+2  226566  Urine and GU Irrigant Out    Output       mL
+3  226627                   OR Urine    Output       mL
+4  226631                 PACU Urine    Output       mL
+
+2026-03-26 12:59:10  INFO      === Iteration 67/100  run=sapsii  best_qa=0.0% ===
+2026-03-26 12:59:24  INFO      Exec block 1/1 …
+2026-03-26 12:59:24  INFO      Output: Error:
+Traceback (most recent call last):
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 643, in execute
+    _run_with_timeout(_do_execute, timeout)
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 174, in _run_with_timeout
+    raise error[0]
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 156, in target
+    result[0] = func(*args, **kwargs)
+                ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/v-tiossowsk
+2026-03-26 12:59:24  INFO      === Iteration 68/100  run=sapsii  best_qa=0.0% ===
+2026-03-26 12:59:28  INFO      Exec block 1/1 …
+2026-03-26 12:59:28  INFO      Output:    subject_id gender  anchor_age  anchor_year anchor_year_group        dod
+0    10000032      F          52         2180       2014 - 2016 2180-09-09
+
+2026-03-26 12:59:28  INFO      === Iteration 69/100  run=sapsii  best_qa=0.0% ===
+2026-03-26 12:59:32  INFO      Exec block 1/1 …
+2026-03-26 12:59:32  INFO      Output:    subject_id   hadm_id           admittime           dischtime deathtime admission_type admit_provider_id      admission_location discharge_location insurance language marital_status   race           edregtime           edouttime  hospital_expire_flag
+0    10000032  22595853 2180-05-06 22:23:00 2180-05-07 17:15:00       NaT         URGENT            P49AFC  TRANSFER FROM HOSPITAL               HOME  Medicaid  English        WIDOWED  WHITE 2180-05-06 19:17:00 2180-05-06 23:30:00                 
+2026-03-26 12:59:32  INFO      === Iteration 70/100  run=sapsii  best_qa=0.0% ===
+2026-03-26 13:02:47  INFO      Exec block 1/1 …
+2026-03-26 13:02:47  INFO      Output: Error:
+Traceback (most recent call last):
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 643, in execute
+    _run_with_timeout(_do_execute, timeout)
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 174, in _run_with_timeout
+    raise error[0]
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 156, in target
+    result[0] = func(*args, **kwargs)
+                ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/v-tiossowsk
+2026-03-26 13:02:47  INFO      === Iteration 71/100  run=sapsii  best_qa=0.0% ===
+2026-03-26 13:02:53  INFO      Exec block 1/1 …
+2026-03-26 13:02:53  INFO      Output: Error:
+Traceback (most recent call last):
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 643, in execute
+    _run_with_timeout(_do_execute, timeout)
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 174, in _run_with_timeout
+    raise error[0]
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 156, in target
+    result[0] = func(*args, **kwargs)
+                ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/v-tiossowsk
+2026-03-26 13:02:53  INFO      === Iteration 72/100  run=sapsii  best_qa=0.0% ===
+2026-03-26 13:06:14  INFO      Exec block 1/1 …
+2026-03-26 13:06:14  INFO      Output: Error:
+Traceback (most recent call last):
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 643, in execute
+    _run_with_timeout(_do_execute, timeout)
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 174, in _run_with_timeout
+    raise error[0]
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 156, in target
+    result[0] = func(*args, **kwargs)
+                ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/v-tiossowsk
+2026-03-26 13:06:14  INFO      === Iteration 73/100  run=sapsii  best_qa=0.0% ===
+2026-03-26 13:06:22  INFO      Exec block 1/1 …
+2026-03-26 13:06:22  INFO      Output:    subject_id   hadm_id  seq_num icd_code  icd_version
+0    10000032  22595853        1     5723            9
+
+2026-03-26 13:06:22  INFO      === Iteration 74/100  run=sapsii  best_qa=0.0% ===
+2026-03-26 13:09:46  INFO      Exec block 1/1 …
+2026-03-26 13:09:46  INFO      Output: {'saps_ii_score': 44, 'predicted_mortality': np.float64(0.3263639453322035), 'components': {'age': 7, 'heart_rate': 0, 'systolic_bp': 5, 'temperature': 0, 'gcs': 0, 'wbc': 0, 'potassium': 3, 'sodium': 0, 'bicarbonate': 0, 'bilirubin': 0, 'bun': 6, 'pof2_ratio': 0, 'urine_output': 0, 'admission_type': 6, 'chronic_disease': 17}, 'values': {'age': 52, 'heart_rate': 91.0, 'systolic_bp': 84.0, 'temperature': None, 'gcs': 14, 'wbc': None, 'potassium': 5.0, 'sodium': 132.0, 'bicarbonate': 21.0, 'biliru
+2026-03-26 13:09:46  INFO      === Iteration 75/100  run=sapsii  best_qa=0.0% ===
+2026-03-26 13:09:58  INFO      Exec block 1/1 …
+2026-03-26 13:09:58  INFO      Output:                 admission_type
+0           DIRECT OBSERVATION
+1                     ELECTIVE
+2                       URGENT
+3            OBSERVATION ADMIT
+4                     EW EMER.
+5       AMBULATORY OBSERVATION
+6                 DIRECT EMER.
+7               EU OBSERVATION
+8  SURGICAL SAME DAY ADMISSION
+
+2026-03-26 13:09:58  INFO      === Iteration 76/100  run=sapsii  best_qa=0.0% ===
+2026-03-26 13:10:11  INFO      Exec block 1/1 …
+2026-03-26 13:10:11  INFO      Output:    subject_id   hadm_id  seq_num  chartdate icd_code  icd_version
+0    10000032  22595853        1 2180-05-07     5491            9
+1    10000032  22841357        1 2180-06-27     5491            9
+2    10000032  25742920        1 2180-08-06     5491            9
+3    10000068  25022803        1 2160-03-03     8938            9
+4    10000117  27988844        1 2183-09-19  0QS734Z           10
+
+2026-03-26 13:10:11  INFO      === Iteration 77/100  run=sapsii  best_qa=0.0% ===
+2026-03-26 13:10:24  INFO      Exec block 1/1 …
+2026-03-26 13:10:24  INFO      Output:    itemid                        label                category unitname
+0  223761       Temperature Fahrenheit     Routine Vital Signs       °F
+1  223762          Temperature Celsius     Routine Vital Signs       °C
+2  224027             Skin Temperature       Skin - Assessment      NaN
+3  224642             Temperature Site     Routine Vital Signs      NaN
+4  224674       Changes in Temperature              Toxicology      NaN
+5  226329    Blood Temperature CCO (C)     Routine Vital Signs      
+2026-03-26 13:10:24  INFO      === Iteration 78/100  run=sapsii  best_qa=0.0% ===
+2026-03-26 13:10:40  INFO      Exec block 1/1 …
+2026-03-26 13:10:40  INFO      Output: None
+
+2026-03-26 13:10:40  INFO      === Iteration 79/100  run=sapsii  best_qa=0.0% ===
+2026-03-26 13:10:50  INFO      Exec block 1/1 …
+2026-03-26 13:10:50  INFO      Output: Empty DataFrame
+Columns: [subject_id, hadm_id, stay_id, first_careunit, last_careunit, intime, outtime, los]
+Index: []
+
+2026-03-26 13:10:50  INFO      === Iteration 80/100  run=sapsii  best_qa=0.0% ===
+2026-03-26 13:11:01  INFO      Exec block 1/1 …
+2026-03-26 13:11:01  INFO      Output: Empty DataFrame
+Columns: [subject_id, hadm_id, stay_id]
+Index: []
+
+2026-03-26 13:11:01  INFO      === Iteration 81/100  run=sapsii  best_qa=0.0% ===
+2026-03-26 13:11:11  INFO      Exec block 1/1 …
+2026-03-26 13:11:11  INFO      Output:    subject_id   hadm_id   stay_id
+0    10000032  29079034  39553978
+1    10000690  25860671  37081114
+2    10000980  26913865  39765666
+3    10001217  24597018  37067082
+4    10001217  27703517  34592300
+5    10001725  25563031  31205490
+6    10001843  26133978  39698942
+7    10001884  26184834  37510196
+8    10002013  23581541  39060235
+9    10002114  27793700  34672098
+
+2026-03-26 13:11:11  INFO      === Iteration 82/100  run=sapsii  best_qa=0.0% ===
+2026-03-26 13:11:20  INFO      Exec block 1/1 …
+2026-03-26 13:11:20  INFO      Output: {'saps_ii_score': 36, 'predicted_mortality': np.float64(0.18101976158594288), 'components': {'age': 18, 'heart_rate': 2, 'systolic_bp': 5, 'temperature': 0, 'gcs': 5, 'wbc': 0, 'potassium': 0, 'sodium': 0, 'bicarbonate': 0, 'bilirubin': 0, 'bun': 0, 'pof2_ratio': 0, 'urine_output': 0, 'admission_type': 6, 'chronic_disease': 0}, 'values': {'age': 86, 'heart_rate': 62.0, 'systolic_bp': 99.0, 'temperature': None, 'gcs': 12, 'wbc': None, 'potassium': 4.4, 'sodium': 137.0, 'bicarbonate': 26.0, 'bilir
+2026-03-26 13:11:20  INFO      === Iteration 83/100  run=sapsii  best_qa=0.0% ===
+2026-03-26 13:11:38  INFO      Exec block 1/1 …
+2026-03-26 13:11:38  INFO      Output: Empty DataFrame
+Columns: [charttime, valuenum]
+Index: []
+
+2026-03-26 13:11:38  INFO      === Iteration 84/100  run=sapsii  best_qa=0.0% ===
+2026-03-26 13:11:50  INFO      Exec block 1/1 …
+2026-03-26 13:11:50  INFO      Output:             charttime   valuenum
+0 2180-07-23 14:00:00  98.699997
+1 2180-07-23 17:00:00  98.699997
+2 2180-07-23 20:00:00  99.500000
+
+2026-03-26 13:11:50  INFO      === Iteration 85/100  run=sapsii  best_qa=0.0% ===
+2026-03-26 13:15:26  INFO      Exec block 1/1 …
+2026-03-26 13:15:26  INFO      Output: {'saps_ii_score': 44, 'predicted_mortality': 0.3263639453322035, 'components': {'age': 7, 'heart_rate': 0, 'systolic_bp': 5, 'temperature': 0, 'gcs': 0, 'wbc': 0, 'potassium': 3, 'sodium': 0, 'bicarbonate': 0, 'bilirubin': 0, 'bun': 6, 'pof2_ratio': 0, 'urine_output': 0, 'admission_type': 6, 'chronic_disease': 17}, 'values': {'age': 52, 'heart_rate': 91.0, 'systolic_bp': 84.0, 'temperature': 37.05555386013455, 'gcs': 14, 'wbc': None, 'potassium': 5.0, 'sodium': 132.0, 'bicarbonate': 21.0, 'bilir
+2026-03-26 13:15:26  INFO      === Iteration 86/100  run=sapsii  best_qa=0.0% ===
+2026-03-26 13:15:26  INFO      Context approaching limit (24448 tokens, limit=25000) — forcing summarize + compress
+2026-03-26 13:20:51  INFO      Context compressed: 54 messages -> 2 messages
+2026-03-26 13:21:24  INFO      Exec block 1/1 …
+2026-03-26 13:21:24  INFO      Output: Error:
+Traceback (most recent call last):
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 643, in execute
+    _run_with_timeout(_do_execute, timeout)
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 174, in _run_with_timeout
+    raise error[0]
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 156, in target
+    result[0] = func(*args, **kwargs)
+                ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/v-tiossowsk
+2026-03-26 13:21:24  INFO      === Iteration 87/100  run=sapsii  best_qa=0.0% ===
+2026-03-26 13:21:32  INFO      Exec block 1/1 …
+2026-03-26 13:21:32  INFO      Output: ICU stays for patient 10000001:
+Empty DataFrame
+Columns: [stay_id, intime, outtime]
+Index: []
+
+2026-03-26 13:21:32  INFO      === Iteration 88/100  run=sapsii  best_qa=0.0% ===
+2026-03-26 13:21:41  INFO      Exec block 1/1 …
+2026-03-26 13:21:41  INFO      Output: Patients with ICU stays:
+   subject_id   hadm_id   stay_id
+0    10000690  25860671  37081114
+1    10000032  29079034  39553978
+
+2026-03-26 13:21:41  INFO      === Iteration 89/100  run=sapsii  best_qa=0.0% ===
+2026-03-26 13:21:55  INFO      Exec block 1/1 …
+2026-03-26 13:21:55  INFO      Output: Patient 10000032:
+  SAPS II Score: 44
+  Predicted Mortality: 32.64%
+  Components: {'age': 7, 'heart_rate': 0, 'systolic_bp': 5, 'temperature': 0, 'gcs': 0, 'wbc': 0, 'potassium': 3, 'sodium': 0, 'bicarbonate': 0, 'bilirubin': 0, 'bun': 6, 'pof2_ratio': 0, 'urine_output': 0, 'admission_type': 6, 'chronic_disease': 17}
+  Values: {'age': 52, 'heart_rate': 91.0, 'systolic_bp': 84.0, 'temperature': 37.05555386013455, 'gcs': 14, 'wbc': None, 'potassium': 5.0, 'sodium': 132.0, 'bicarbonate': 21.0, 'bil
+2026-03-26 13:21:55  INFO      === Iteration 90/100  run=sapsii  best_qa=0.0% ===
+2026-03-26 13:22:30  INFO      Exec block 1/1 …
+2026-03-26 13:22:30  INFO      Output: Procedures for patient 10000690:
+   subject_id   hadm_id  seq_num  chartdate icd_code  icd_version
+0    10000690  25860671        1 2150-11-08     3893            9
+
+2026-03-26 13:22:30  INFO      === Iteration 91/100  run=sapsii  best_qa=0.0% ===
+2026-03-26 13:23:01  INFO      Exec block 1/1 …
+2026-03-26 13:23:01  INFO      Output: Admission types:
+                admission_type
+0                 DIRECT EMER.
+1       AMBULATORY OBSERVATION
+2                     ELECTIVE
+3                     EW EMER.
+4                       URGENT
+5            OBSERVATION ADMIT
+6           DIRECT OBSERVATION
+7               EU OBSERVATION
+8  SURGICAL SAME DAY ADMISSION
+
+2026-03-26 13:23:01  INFO      === Iteration 92/100  run=sapsii  best_qa=0.0% ===
+2026-03-26 13:23:17  INFO      Exec block 1/1 …
+2026-03-26 13:23:17  INFO      Output: Urine output for patient 10000032:
+   subject_id   hadm_id   stay_id  ...  itemid  value valueuom
+0    10000032  29079034  39553978  ...  226560  175.0       mL
+
+[1 rows x 9 columns]
+
+2026-03-26 13:23:17  INFO      === Iteration 93/100  run=sapsii  best_qa=0.0% ===
+2026-03-26 13:23:25  INFO      Exec block 1/1 …
+2026-03-26 13:23:25  INFO      Output: Urine output items:
+    itemid                         label                            category
+0   225454                 Urine Culture                          6-Cultures
+1   227471      Specific Gravity (urine)                                Labs
+2   227489  GU Irrigant/Urine Volume Out                              Output
+3   227519         Urine output_ApacheIV              Scores - APACHE IV (2)
+4   227059           UrineScore_ApacheIV              Scores - APACHE IV (2)
+5   220799     ZSp
+2026-03-26 13:23:25  INFO      === Iteration 94/100  run=sapsii  best_qa=0.0% ===
+2026-03-26 13:23:39  INFO      Exec block 1/1 …
+2026-03-26 13:23:39  INFO      Output: All output events for patient 10000032:
+   itemid  value           charttime
+0  226560  175.0 2180-07-23 15:00:00
+
+2026-03-26 13:23:39  INFO      === Iteration 95/100  run=sapsii  best_qa=0.0% ===
+2026-03-26 13:23:50  INFO      Exec block 1/1 …
+2026-03-26 13:23:50  INFO      Output: Output itemids for patient 10000032:
+   itemid
+0  226560
+
+Item 226560:
+   itemid label category
+0  226560  Void   Output
+
+2026-03-26 13:23:50  INFO      === Iteration 96/100  run=sapsii  best_qa=0.0% ===
+2026-03-26 13:23:58  INFO      Exec block 1/1 …
+2026-03-26 13:23:58  INFO      Output: All output items:
+    itemid                            label category
+0   226557                 R Ureteral Stent   Output
+1   226558                 L Ureteral Stent   Output
+2   226559                            Foley   Output
+3   226560                             Void   Output
+4   226561                      Condom Cath   Output
+5   226563                       Suprapubic   Output
+6   226564                    R Nephrostomy   Output
+7   226565                    L Nephrostomy   Output
+8   2
+2026-03-26 13:23:58  INFO      === Iteration 97/100  run=sapsii  best_qa=0.0% ===
+2026-03-26 13:24:22  INFO      Exec block 1/1 …
+2026-03-26 13:24:22  INFO      Output: Urine output itemids in data:
+   itemid
+0  227489
+1  226631
+2  226567
+3  226584
+4  226561
+5  226560
+6  226563
+7  226627
+8  226559
+
+2026-03-26 13:24:22  INFO      === Iteration 98/100  run=sapsii  best_qa=0.0% ===
+2026-03-26 13:25:01  INFO      Exec block 1/1 …
+2026-03-26 13:25:01  INFO      Output: PaO2 for patient 10000032:
+Empty DataFrame
+Columns: [charttime, valuenum]
+Index: []
+
+FiO2 for patient 10000032:
+Empty DataFrame
+Columns: [charttime, valuenum]
+Index: []
+
+2026-03-26 13:25:01  INFO      === Iteration 99/100  run=sapsii  best_qa=0.0% ===
+2026-03-26 13:25:16  INFO      Exec block 1/1 …
+2026-03-26 13:25:16  INFO      Output: Admission type for patient 10000032:
+  admission_type
+0       EW EMER.
+
+Procedures for patient 10000032:
+Empty DataFrame
+Columns: [subject_id, hadm_id, seq_num, chartdate, icd_code, icd_version]
+Index: []
+
+2026-03-26 13:25:16  INFO      === Iteration 100/100  run=sapsii  best_qa=0.0% ===
+2026-03-26 13:28:49  INFO      Exec block 1/1 …
+2026-03-26 13:28:49  INFO      Output: Code executed successfully (no output).
+2026-03-26 13:28:49  INFO      Debug conversations will be saved to debug_logs
+2026-03-26 13:28:49  INFO      Using question from dataset column: Does this patient have a SAPS II score of 30 or more?
+2026-03-26 13:28:49  INFO      Answer type for 'sapsii': numerical (per_row=True)
+2026-03-26 13:28:49  INFO      ReACT iteration 1/5 — 20 active patients
+Rendering conversations:   0%|          | 0/20 [00:00<?, ?it/s]Rendering conversations: 100%|██████████| 20/20 [00:00<00:00, 681.41it/s]
+Processed prompts:   0%|          | 0/20 [00:00<?, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s]Processed prompts:   5%|▌         | 1/20 [00:10<03:19, 10.49s/it, est. speed input: 57.50 toks/s, output: 15.83 toks/s]Processed prompts:  20%|██        | 4/20 [00:10<00:33,  2.07s/it, est. speed input: 224.66 toks/s, output: 62.20 toks/s]Processed prompts:  30%|███       | 6/20 [00:11<00:18,  1.29s/it, est. speed input: 321.26 toks/s, output: 90.88 toks/s]Processed prompts:  40%|████      | 8/20 [00:11<00:09,  1.21it/s, est. speed input: 422.54 toks/s, output: 122.28 toks/s]Processed prompts:  90%|█████████ | 18/20 [00:13<00:00,  2.70it/s, est. speed input: 811.99 toks/s, output: 248.08 toks/s]Processed prompts: 100%|██████████| 20/20 [00:13<00:00,  2.70it/s, est. speed input: 900.25 toks/s, output: 283.34 toks/s]Processed prompts: 100%|██████████| 20/20 [00:13<00:00,  1.47it/s, est. speed input: 900.25 toks/s, output: 283.34 toks/s]
+2026-03-26 13:29:04  INFO      ReACT iteration 2/5 — 20 active patients
+Rendering conversations:   0%|          | 0/20 [00:00<?, ?it/s]Rendering conversations: 100%|██████████| 20/20 [00:00<00:00, 476.53it/s]
+Processed prompts:   0%|          | 0/20 [00:00<?, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s]Processed prompts:   5%|▌         | 1/20 [00:06<02:11,  6.90s/it, est. speed input: 156.18 toks/s, output: 5.22 toks/s]Processed prompts:  25%|██▌       | 5/20 [00:07<00:15,  1.06s/it, est. speed input: 766.06 toks/s, output: 26.00 toks/s]Processed prompts:  35%|███▌      | 7/20 [00:08<00:11,  1.09it/s, est. speed input: 901.03 toks/s, output: 38.47 toks/s]Processed prompts:  45%|████▌     | 9/20 [00:08<00:06,  1.62it/s, est. speed input: 1137.51 toks/s, output: 54.80 toks/s]Processed prompts:  55%|█████▌    | 11/20 [00:09<00:04,  1.80it/s, est. speed input: 1262.16 toks/s, output: 69.73 toks/s]Processed prompts:  60%|██████    | 12/20 [00:09<00:04,  1.92it/s, est. speed input: 1324.61 toks/s, output: 77.75 toks/s]Processed prompts:  75%|███████▌  | 15/20 [00:09<00:01,  3.30it/s, est. speed input: 1635.77 toks/s, output: 108.58 toks/s]Processed prompts:  85%|████████▌ | 17/20 [00:11<00:01,  2.50it/s, est. speed input: 1648.04 toks/s, output: 121.38 toks/s]Processed prompts:  95%|█████████▌| 19/20 [00:12<00:00,  2.42it/s, est. speed input: 1704.53 toks/s, output: 137.31 toks/s]Processed prompts: 100%|██████████| 20/20 [00:12<00:00,  2.73it/s, est. speed input: 1773.73 toks/s, output: 149.20 toks/s]Processed prompts: 100%|██████████| 20/20 [00:12<00:00,  2.73it/s, est. speed input: 1773.73 toks/s, output: 149.20 toks/s]Processed prompts: 100%|██████████| 20/20 [00:12<00:00,  1.64it/s, est. speed input: 1773.73 toks/s, output: 149.20 toks/s]
+2026-03-26 13:29:16  INFO      QA accuracy: 85.0%  (correct=17/20, parse_errors=0)
+2026-03-26 13:29:16  INFO      Function code saved to autoformalized_library/functions/sapsii.py
+2026-03-26 13:29:16  INFO      Summary saved to autoformalized_library/summary.json
+[rank0]:[W326 13:29:16.846656087 ProcessGroupNCCL.cpp:1553] Warning: WARNING: destroy_process_group() was not called before program exit, which can leak resources. For more info, please see https://pytorch.org/docs/stable/distributed.html#shutdown (function operator())
+
+======================================================================
+AUTOFORMALIZATION COMPLETE
+======================================================================
+  Output dir      : autoformalized_library
+  Model           : Qwen/Qwen3.5-27B
+  Dataset         : /home/v-tiossowski/HealthcareAgent/mimic-code/data/MIMICIV_sapsii_dataset/sapsii.csv
+  Run name        : sapsii
+  Status          : FAILED (below threshold)
+  QA accuracy     : 85.0%
+  Iterations      : 100
+  Total tokens    : 39,504  (prompt 33,834 / completion 5,670)
+  LLM calls       : 142
+  SQL queries     : 559
+  Function saved  : autoformalized_library/functions/sapsii.py
+======================================================================

@@ -1,0 +1,47 @@
+{
+  "timestamp": "2026-03-25T16:54:31.610980",
+  "model": "Qwen/Qwen3.5-27B",
+  "db_path": "/home/v-tiossowski/MIMIC-IV/mimic4.db",
+  "qa_dataset": "/home/v-tiossowski/HealthcareAgent/mimic-code/data/MIMICIV_vasoactive_agent_dataset/vasoactive_agent.csv",
+  "match_threshold": 0.9,
+  "run_name": "vasoactive_agent",
+  "success": true,
+  "iterations": 62,
+  "qa_accuracy": 0.9,
+  "stats": {
+    "react": {
+      "prompt_tokens": 0,
+      "completion_tokens": 0,
+      "total_tokens": 0,
+      "llm_calls": 54,
+      "query_count": 42,
+      "query_time_sec": 0.254,
+      "wall_time_sec": 1010.273
+    },
+    "qa": {
+      "prompt_tokens": 81356,
+      "completion_tokens": 19681,
+      "total_tokens": 101037,
+      "llm_calls": 57,
+      "query_count": 26,
+      "query_time_sec": 0.123,
+      "eval_wall_time_sec": 181.474,
+      "per_question": {
+        "avg_prompt_tokens": 4067.8,
+        "avg_completion_tokens": 984.0,
+        "avg_llm_calls": 2.85,
+        "avg_query_count": 1.3,
+        "avg_query_time_sec": 0.006,
+        "avg_wall_time_sec": 9.074
+      }
+    },
+    "total": {
+      "prompt_tokens": 81356,
+      "completion_tokens": 19681,
+      "total_tokens": 101037,
+      "llm_calls": 111,
+      "query_count": 68,
+      "query_time_sec": 0.377
+    }
+  }
+}

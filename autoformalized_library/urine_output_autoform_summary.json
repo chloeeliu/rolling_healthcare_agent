@@ -1,0 +1,47 @@
+{
+  "timestamp": "2026-03-25T05:07:53.351095",
+  "model": "Qwen/Qwen3.5-27B",
+  "db_path": "/home/v-tiossowski/MIMIC-IV/mimic4.db",
+  "qa_dataset": "/home/v-tiossowski/HealthcareAgent/mimic-code/data/MIMICIV_urine_output_dataset/urine_output.csv",
+  "match_threshold": 0.9,
+  "run_name": "urine_output",
+  "success": false,
+  "iterations": 100,
+  "qa_accuracy": 0.7,
+  "stats": {
+    "react": {
+      "prompt_tokens": 0,
+      "completion_tokens": 0,
+      "total_tokens": 0,
+      "llm_calls": 103,
+      "query_count": 177,
+      "query_time_sec": 0.597,
+      "wall_time_sec": 4462.279
+    },
+    "qa": {
+      "prompt_tokens": 55099,
+      "completion_tokens": 6722,
+      "total_tokens": 61821,
+      "llm_calls": 40,
+      "query_count": 20,
+      "query_time_sec": 0.071,
+      "eval_wall_time_sec": 37.053,
+      "per_question": {
+        "avg_prompt_tokens": 2754.9,
+        "avg_completion_tokens": 336.1,
+        "avg_llm_calls": 2.0,
+        "avg_query_count": 1.0,
+        "avg_query_time_sec": 0.004,
+        "avg_wall_time_sec": 1.853
+      }
+    },
+    "total": {
+      "prompt_tokens": 55099,
+      "completion_tokens": 6722,
+      "total_tokens": 61821,
+      "llm_calls": 143,
+      "query_count": 197,
+      "query_time_sec": 0.668
+    }
+  }
+}

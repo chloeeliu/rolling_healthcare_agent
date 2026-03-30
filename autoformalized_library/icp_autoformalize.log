@@ -1,0 +1,276 @@
+2026-03-25 02:49:34  INFO      Using database: /home/v-tiossowski/MIMIC-IV/mimic4.db
+2026-03-25 02:49:34  INFO      No --model_url provided; loading vLLM in-process …
+INFO 03-25 02:49:39 [utils.py:238] non-default args: {'trust_remote_code': True, 'max_model_len': 40000, 'disable_log_stats': True, 'model': 'Qwen/Qwen3.5-27B'}
+The argument `trust_remote_code` is to be used with Auto classes. It has no effect here and is ignored.
+The argument `trust_remote_code` is to be used with Auto classes. It has no effect here and is ignored.
+The argument `trust_remote_code` is to be used with Auto classes. It has no effect here and is ignored.
+INFO 03-25 02:49:39 [model.py:531] Resolved architecture: Qwen3_5ForConditionalGeneration
+INFO 03-25 02:49:39 [model.py:1554] Using max model len 40000
+INFO 03-25 02:49:39 [scheduler.py:231] Chunked prefill is enabled with max_num_batched_tokens=8192.
+INFO 03-25 02:49:41 [config.py:544] Setting attention block size to 784 tokens to ensure that attention page size is >= mamba page size.
+INFO 03-25 02:49:41 [config.py:575] Padding mamba page size by 0.13% to ensure that mamba page size and attention page size are exactly equal.
+INFO 03-25 02:49:41 [vllm.py:747] Asynchronous scheduling is enabled.
+WARNING 03-25 02:49:48 [system_utils.py:152] We must use the `spawn` multiprocessing start method. Overriding VLLM_WORKER_MULTIPROC_METHOD to 'spawn'. See https://docs.vllm.ai/en/latest/usage/troubleshooting.html#python-multiprocessing for more information. Reasons: CUDA is initialized
+(EngineCore_DP0 pid=3861898) INFO 03-25 02:49:53 [core.py:101] Initializing a V1 LLM engine (v0.17.1) with config: model='Qwen/Qwen3.5-27B', speculative_config=None, tokenizer='Qwen/Qwen3.5-27B', skip_tokenizer_init=False, tokenizer_mode=auto, revision=None, tokenizer_revision=None, trust_remote_code=True, dtype=torch.bfloat16, max_seq_len=40000, download_dir=None, load_format=auto, tensor_parallel_size=1, pipeline_parallel_size=1, data_parallel_size=1, disable_custom_all_reduce=False, quantization=None, enforce_eager=False, enable_return_routed_experts=False, kv_cache_dtype=auto, device_config=cuda, structured_outputs_config=StructuredOutputsConfig(backend='auto', disable_fallback=False, disable_any_whitespace=False, disable_additional_properties=False, reasoning_parser='', reasoning_parser_plugin='', enable_in_reasoning=False), observability_config=ObservabilityConfig(show_hidden_metrics_for_version=None, otlp_traces_endpoint=None, collect_detailed_traces=None, kv_cache_metrics=False, kv_cache_metrics_sample=0.01, cudagraph_metrics=False, enable_layerwise_nvtx_tracing=False, enable_mfu_metrics=False, enable_mm_processor_stats=False, enable_logging_iteration_details=False), seed=0, served_model_name=Qwen/Qwen3.5-27B, enable_prefix_caching=False, enable_chunked_prefill=True, pooler_config=None, compilation_config={'level': None, 'mode': <CompilationMode.VLLM_COMPILE: 3>, 'debug_dump_path': None, 'cache_dir': '', 'compile_cache_save_format': 'binary', 'backend': 'inductor', 'custom_ops': ['none'], 'splitting_ops': ['vllm::unified_attention', 'vllm::unified_attention_with_output', 'vllm::unified_mla_attention', 'vllm::unified_mla_attention_with_output', 'vllm::mamba_mixer2', 'vllm::mamba_mixer', 'vllm::short_conv', 'vllm::linear_attention', 'vllm::plamo2_mamba_mixer', 'vllm::gdn_attention_core', 'vllm::kda_attention', 'vllm::sparse_attn_indexer', 'vllm::rocm_aiter_sparse_attn_indexer', 'vllm::unified_kv_cache_update', 'vllm::unified_mla_kv_cache_update'], 'compile_mm_encoder': False, 'compile_sizes': [], 'compile_ranges_split_points': [8192], 'inductor_compile_config': {'enable_auto_functionalized_v2': False, 'combo_kernels': True, 'benchmark_combo_kernel': True}, 'inductor_passes': {}, 'cudagraph_mode': <CUDAGraphMode.FULL_AND_PIECEWISE: (2, 1)>, 'cudagraph_num_of_warmups': 1, 'cudagraph_capture_sizes': [1, 2, 4, 8, 16, 24, 32, 40, 48, 56, 64, 72, 80, 88, 96, 104, 112, 120, 128, 136, 144, 152, 160, 168, 176, 184, 192, 200, 208, 216, 224, 232, 240, 248, 256, 272, 288, 304, 320, 336, 352, 368, 384, 400, 416, 432, 448, 464, 480, 496, 512], 'cudagraph_copy_inputs': False, 'cudagraph_specialize_lora': True, 'use_inductor_graph_partition': False, 'pass_config': {'fuse_norm_quant': False, 'fuse_act_quant': False, 'fuse_attn_quant': False, 'enable_sp': False, 'fuse_gemm_comms': False, 'fuse_allreduce_rms': False}, 'max_cudagraph_capture_size': 512, 'dynamic_shapes_config': {'type': <DynamicShapesType.BACKED: 'backed'>, 'evaluate_guards': False, 'assume_32_bit_indexing': False}, 'local_cache_dir': None, 'fast_moe_cold_start': True, 'static_all_moe_layers': []}
+(EngineCore_DP0 pid=3861898) INFO 03-25 02:49:55 [parallel_state.py:1393] world_size=1 rank=0 local_rank=0 distributed_init_method=tcp://10.8.144.167:47469 backend=nccl
+(EngineCore_DP0 pid=3861898) INFO 03-25 02:49:55 [parallel_state.py:1715] rank 0 in world size 1 is assigned as DP rank 0, PP rank 0, PCP rank 0, TP rank 0, EP rank N/A, EPLB rank N/A
+(EngineCore_DP0 pid=3861898) INFO 03-25 02:50:01 [base.py:106] Offloader set to NoopOffloader
+(EngineCore_DP0 pid=3861898) INFO 03-25 02:50:02 [gpu_model_runner.py:4281] Starting to load model Qwen/Qwen3.5-27B...
+(EngineCore_DP0 pid=3861898) INFO 03-25 02:50:02 [cuda.py:453] Using backend AttentionBackendEnum.FLASH_ATTN for vit attention
+(EngineCore_DP0 pid=3861898) INFO 03-25 02:50:02 [mm_encoder_attention.py:215] Using AttentionBackendEnum.FLASH_ATTN for MMEncoderAttention.
+(EngineCore_DP0 pid=3861898) INFO 03-25 02:50:02 [cuda.py:405] Using FLASH_ATTN attention backend out of potential backends: ['FLASH_ATTN', 'FLASHINFER', 'TRITON_ATTN', 'FLEX_ATTENTION'].
+(EngineCore_DP0 pid=3861898) INFO 03-25 02:50:02 [flash_attn.py:587] Using FlashAttention version 2
+(EngineCore_DP0 pid=3861898) <frozen importlib._bootstrap_external>:1301: FutureWarning: The cuda.cudart module is deprecated and will be removed in a future release, please switch to use the cuda.bindings.runtime module instead.
+(EngineCore_DP0 pid=3861898) <frozen importlib._bootstrap_external>:1301: FutureWarning: The cuda.nvrtc module is deprecated and will be removed in a future release, please switch to use the cuda.bindings.nvrtc module instead.
+(EngineCore_DP0 pid=3861898) Loading safetensors checkpoint shards:   0% Completed | 0/11 [00:00<?, ?it/s]
+(EngineCore_DP0 pid=3861898) Loading safetensors checkpoint shards:   9% Completed | 1/11 [00:00<00:05,  1.87it/s]
+(EngineCore_DP0 pid=3861898) Loading safetensors checkpoint shards:  18% Completed | 2/11 [00:01<00:05,  1.65it/s]
+(EngineCore_DP0 pid=3861898) Loading safetensors checkpoint shards:  27% Completed | 3/11 [00:01<00:05,  1.55it/s]
+(EngineCore_DP0 pid=3861898) Loading safetensors checkpoint shards:  36% Completed | 4/11 [00:02<00:04,  1.50it/s]
+(EngineCore_DP0 pid=3861898) Loading safetensors checkpoint shards:  45% Completed | 5/11 [00:03<00:04,  1.48it/s]
+(EngineCore_DP0 pid=3861898) Loading safetensors checkpoint shards:  55% Completed | 6/11 [00:03<00:03,  1.45it/s]
+(EngineCore_DP0 pid=3861898) Loading safetensors checkpoint shards:  64% Completed | 7/11 [00:04<00:02,  1.44it/s]
+(EngineCore_DP0 pid=3861898) Loading safetensors checkpoint shards:  73% Completed | 8/11 [00:05<00:02,  1.46it/s]
+(EngineCore_DP0 pid=3861898) Loading safetensors checkpoint shards:  82% Completed | 9/11 [00:06<00:01,  1.46it/s]
+(EngineCore_DP0 pid=3861898) Loading safetensors checkpoint shards:  91% Completed | 10/11 [00:06<00:00,  1.45it/s]
+(EngineCore_DP0 pid=3861898) Loading safetensors checkpoint shards: 100% Completed | 11/11 [00:07<00:00,  1.63it/s]
+(EngineCore_DP0 pid=3861898) Loading safetensors checkpoint shards: 100% Completed | 11/11 [00:07<00:00,  1.53it/s]
+(EngineCore_DP0 pid=3861898) 
+(EngineCore_DP0 pid=3861898) INFO 03-25 02:50:10 [default_loader.py:293] Loading weights took 7.25 seconds
+(EngineCore_DP0 pid=3861898) INFO 03-25 02:50:11 [gpu_model_runner.py:4364] Model loading took 51.1 GiB memory and 8.291536 seconds
+(EngineCore_DP0 pid=3861898) INFO 03-25 02:50:11 [gpu_model_runner.py:5280] Encoder cache will be initialized with a budget of 16384 tokens, and profiled with 1 image items of the maximum feature size.
+(EngineCore_DP0 pid=3861898) INFO 03-25 02:50:19 [decorators.py:465] Directly load AOT compilation from path /home/v-tiossowski/.cache/vllm/torch_compile_cache/torch_aot_compile/0232891e22bd4d7db98ac2f43c441f0f81d0a431216053ca49fadeaff23e2af3/rank_0_0/model
+(EngineCore_DP0 pid=3861898) INFO 03-25 02:50:19 [backends.py:916] Using cache directory: /home/v-tiossowski/.cache/vllm/torch_compile_cache/feaf61af16/rank_0_0/backbone for vLLM's torch.compile
+(EngineCore_DP0 pid=3861898) INFO 03-25 02:50:19 [backends.py:976] Dynamo bytecode transform time: 3.45 s
+(EngineCore_DP0 pid=3861898) INFO 03-25 02:50:29 [backends.py:266] Directly load the compiled graph(s) for compile range (1, 8192) from the cache, took 9.486 s
+(EngineCore_DP0 pid=3861898) INFO 03-25 02:50:29 [monitor.py:35] torch.compile takes 13.81 s in total
+(EngineCore_DP0 pid=3861898) INFO 03-25 02:50:30 [gpu_worker.py:424] Available KV cache memory: 18.3 GiB
+(EngineCore_DP0 pid=3861898) INFO 03-25 02:50:30 [kv_cache_utils.py:1314] GPU KV cache size: 74,480 tokens
+(EngineCore_DP0 pid=3861898) INFO 03-25 02:50:30 [kv_cache_utils.py:1319] Maximum concurrency for 40,000 tokens per request: 6.95x
+(EngineCore_DP0 pid=3861898) Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):   0%|          | 0/51 [00:00<?, ?it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):   2%|▏         | 1/51 [00:00<00:08,  5.67it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):   4%|▍         | 2/51 [00:00<00:08,  5.99it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):   6%|▌         | 3/51 [00:00<00:07,  6.06it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):   8%|▊         | 4/51 [00:00<00:07,  6.09it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  10%|▉         | 5/51 [00:00<00:07,  6.17it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  12%|█▏        | 6/51 [00:00<00:07,  6.22it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  14%|█▎        | 7/51 [00:01<00:07,  6.25it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  16%|█▌        | 8/51 [00:01<00:06,  6.25it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  18%|█▊        | 9/51 [00:01<00:06,  6.53it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  20%|█▉        | 10/51 [00:01<00:06,  6.83it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  22%|██▏       | 11/51 [00:01<00:05,  6.85it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  24%|██▎       | 12/51 [00:01<00:05,  6.97it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  25%|██▌       | 13/51 [00:01<00:05,  7.08it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  27%|██▋       | 14/51 [00:02<00:05,  7.20it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  29%|██▉       | 15/51 [00:02<00:04,  7.28it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  31%|███▏      | 16/51 [00:02<00:04,  7.34it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  33%|███▎      | 17/51 [00:02<00:04,  7.62it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  35%|███▌      | 18/51 [00:02<00:04,  7.90it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  37%|███▋      | 19/51 [00:02<00:03,  8.14it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  39%|███▉      | 20/51 [00:02<00:03,  8.21it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  41%|████      | 21/51 [00:02<00:03,  8.32it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  43%|████▎     | 22/51 [00:03<00:03,  8.43it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  45%|████▌     | 23/51 [00:03<00:03,  8.51it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  47%|████▋     | 24/51 [00:03<00:03,  8.54it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  49%|████▉     | 25/51 [00:03<00:03,  8.57it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  51%|█████     | 26/51 [00:03<00:02,  8.60it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  53%|█████▎    | 27/51 [00:03<00:02,  8.62it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  55%|█████▍    | 28/51 [00:03<00:02,  8.62it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  57%|█████▋    | 29/51 [00:03<00:02,  8.65it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  59%|█████▉    | 30/51 [00:04<00:02,  8.65it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  61%|██████    | 31/51 [00:04<00:02,  8.61it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  63%|██████▎   | 32/51 [00:04<00:02,  8.64it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  65%|██████▍   | 33/51 [00:04<00:02,  8.96it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  67%|██████▋   | 34/51 [00:04<00:01,  9.14it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  69%|██████▊   | 35/51 [00:04<00:01,  9.24it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  71%|███████   | 36/51 [00:04<00:01,  9.37it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  73%|███████▎  | 37/51 [00:04<00:01,  9.49it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  75%|███████▍  | 38/51 [00:04<00:01,  9.62it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  76%|███████▋  | 39/51 [00:04<00:01,  9.67it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  78%|███████▊  | 40/51 [00:05<00:01,  9.71it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  82%|████████▏ | 42/51 [00:05<00:00,  9.94it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  86%|████████▋ | 44/51 [00:05<00:00, 10.13it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  90%|█████████ | 46/51 [00:05<00:00, 10.21it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  94%|█████████▍| 48/51 [00:05<00:00, 10.38it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  98%|█████████▊| 50/51 [00:06<00:00, 10.54it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE): 100%|██████████| 51/51 [00:06<00:00,  8.34it/s]
+(EngineCore_DP0 pid=3861898) Capturing CUDA graphs (decode, FULL):   0%|          | 0/35 [00:00<?, ?it/s]Capturing CUDA graphs (decode, FULL):   3%|▎         | 1/35 [00:00<00:06,  5.66it/s]Capturing CUDA graphs (decode, FULL):   6%|▌         | 2/35 [00:00<00:05,  6.14it/s]Capturing CUDA graphs (decode, FULL):   9%|▊         | 3/35 [00:00<00:05,  6.33it/s]Capturing CUDA graphs (decode, FULL):  11%|█▏        | 4/35 [00:00<00:04,  6.49it/s]Capturing CUDA graphs (decode, FULL):  14%|█▍        | 5/35 [00:00<00:04,  6.50it/s]Capturing CUDA graphs (decode, FULL):  17%|█▋        | 6/35 [00:00<00:04,  6.60it/s]Capturing CUDA graphs (decode, FULL):  20%|██        | 7/35 [00:01<00:04,  6.68it/s]Capturing CUDA graphs (decode, FULL):  23%|██▎       | 8/35 [00:01<00:03,  6.75it/s]Capturing CUDA graphs (decode, FULL):  26%|██▌       | 9/35 [00:01<00:03,  6.79it/s]Capturing CUDA graphs (decode, FULL):  29%|██▊       | 10/35 [00:01<00:03,  6.84it/s]Capturing CUDA graphs (decode, FULL):  31%|███▏      | 11/35 [00:01<00:03,  6.88it/s]Capturing CUDA graphs (decode, FULL):  34%|███▍      | 12/35 [00:01<00:03,  6.93it/s]Capturing CUDA graphs (decode, FULL):  37%|███▋      | 13/35 [00:01<00:03,  6.94it/s]Capturing CUDA graphs (decode, FULL):  40%|████      | 14/35 [00:02<00:02,  7.02it/s]Capturing CUDA graphs (decode, FULL):  43%|████▎     | 15/35 [00:02<00:02,  7.08it/s]Capturing CUDA graphs (decode, FULL):  46%|████▌     | 16/35 [00:02<00:02,  7.09it/s]Capturing CUDA graphs (decode, FULL):  49%|████▊     | 17/35 [00:02<00:02,  7.36it/s]Capturing CUDA graphs (decode, FULL):  51%|█████▏    | 18/35 [00:02<00:02,  7.64it/s]Capturing CUDA graphs (decode, FULL):  54%|█████▍    | 19/35 [00:02<00:02,  7.88it/s]Capturing CUDA graphs (decode, FULL):  57%|█████▋    | 20/35 [00:02<00:01,  8.04it/s]Capturing CUDA graphs (decode, FULL):  60%|██████    | 21/35 [00:02<00:01,  8.16it/s]Capturing CUDA graphs (decode, FULL):  63%|██████▎   | 22/35 [00:03<00:01,  8.23it/s]Capturing CUDA graphs (decode, FULL):  66%|██████▌   | 23/35 [00:03<00:01,  8.36it/s]Capturing CUDA graphs (decode, FULL):  69%|██████▊   | 24/35 [00:03<00:01,  8.45it/s]Capturing CUDA graphs (decode, FULL):  71%|███████▏  | 25/35 [00:03<00:01,  8.50it/s]Capturing CUDA graphs (decode, FULL):  74%|███████▍  | 26/35 [00:03<00:01,  8.43it/s]Capturing CUDA graphs (decode, FULL):  77%|███████▋  | 27/35 [00:03<00:00,  8.65it/s]Capturing CUDA graphs (decode, FULL):  80%|████████  | 28/35 [00:03<00:00,  8.76it/s]Capturing CUDA graphs (decode, FULL):  83%|████████▎ | 29/35 [00:03<00:00,  8.86it/s]Capturing CUDA graphs (decode, FULL):  86%|████████▌ | 30/35 [00:03<00:00,  8.76it/s]Capturing CUDA graphs (decode, FULL):  89%|████████▊ | 31/35 [00:04<00:00,  8.91it/s]Capturing CUDA graphs (decode, FULL):  91%|█████████▏| 32/35 [00:04<00:00,  9.03it/s]Capturing CUDA graphs (decode, FULL):  94%|█████████▍| 33/35 [00:04<00:00,  9.16it/s]Capturing CUDA graphs (decode, FULL):  97%|█████████▋| 34/35 [00:04<00:00,  9.18it/s]Capturing CUDA graphs (decode, FULL): 100%|██████████| 35/35 [00:04<00:00,  9.11it/s]Capturing CUDA graphs (decode, FULL): 100%|██████████| 35/35 [00:04<00:00,  7.73it/s]
+(EngineCore_DP0 pid=3861898) INFO 03-25 02:50:42 [gpu_model_runner.py:5386] Graph capturing finished in 11 secs, took 1.13 GiB
+(EngineCore_DP0 pid=3861898) INFO 03-25 02:50:42 [core.py:282] init engine (profile, create kv cache, warmup model) took 31.21 seconds
+(EngineCore_DP0 pid=3861898) INFO 03-25 02:50:42 [vllm.py:747] Asynchronous scheduling is enabled.
+INFO 03-25 02:50:42 [llm.py:388] Supported tasks: ['generate']
+2026-03-25 02:50:42  INFO      Loading QA dataset from /home/v-tiossowski/HealthcareAgent/mimic-code/data/MIMICIV_icp_dataset/icp.csv
+2026-03-25 02:50:42  INFO      Dataset: 1000 rows, columns: ['subject_id', 'hadm_id', 'stay_id', 'intime', 'outtime', 'first_careunit', 'last_careunit', 'gt_label', 'question', 'gt_answer_type', 'split', 'icp_max']
+2026-03-25 02:50:42  INFO      Filtered to train split: 100 rows
+2026-03-25 02:50:42  INFO      Auto-discovered ground-truth SQL: /home/v-tiossowski/HealthcareAgent/mimic-code/mimic-iv/concepts_duckdb/measurement/icp.sql
+2026-03-25 02:50:42  INFO      === Iteration 1/100  run=icp  best_qa=0.0% ===
+INFO 03-25 02:50:45 [hf.py:318] Detected the chat template content format to be 'string'. You can set `--chat-template-content-format` to override this.
+2026-03-25 02:50:59  INFO      Exec block 1/1 …
+2026-03-25 02:50:59  INFO      Output: []
+
+2026-03-25 02:50:59  INFO      === Iteration 2/100  run=icp  best_qa=0.0% ===
+2026-03-25 02:51:02  INFO      Exec block 1/1 …
+2026-03-25 02:51:02  INFO      Output: []
+
+2026-03-25 02:51:02  INFO      === Iteration 3/100  run=icp  best_qa=0.0% ===
+2026-03-25 02:51:04  INFO      Exec block 1/1 …
+2026-03-25 02:51:04  INFO      Output: ['age', 'bg', 'blood_differential', 'cardiac_marker', 'chemistry', 'coagulation', 'complete_blood_count', 'enzyme', 'gcs', 'height', 'icustay_detail', 'weight_durations']
+
+2026-03-25 02:51:04  INFO      === Iteration 4/100  run=icp  best_qa=0.0% ===
+2026-03-25 02:51:08  INFO      Exec block 1/1 …
+2026-03-25 02:51:08  INFO      Output: 'def gcs(stay_id):\n    """\n    Extract Glasgow Coma Scale (GCS) information for a patient\'s ICU stay.\n\n    This function retrieves all GCS component scores (Eye Opening, Verbal Response,\n    Motor Response) recorded during an ICU stay and calculates the total GCS score.\n\n    The primary numerical output is the minimum GCS score when the patient was\n    not intubated (verbal response > 1), as intubation artificially lowers GCS.\n\n    Parameters\n    ----------\n    stay_id : int\n      
+2026-03-25 02:51:08  INFO      === Iteration 5/100  run=icp  best_qa=0.0% ===
+2026-03-25 02:51:14  INFO      Exec block 1/1 …
+2026-03-25 02:51:14  INFO      Output: Error:
+Traceback (most recent call last):
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 643, in execute
+    _run_with_timeout(_do_execute, timeout)
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 174, in _run_with_timeout
+    raise error[0]
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 156, in target
+    result[0] = func(*args, **kwargs)
+                ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/v-tiossowsk
+2026-03-25 02:51:14  INFO      === Iteration 6/100  run=icp  best_qa=0.0% ===
+2026-03-25 02:51:19  INFO      Exec block 1/1 …
+2026-03-25 02:51:19  INFO      Output:     itemid                                     label             category unitname
+0   220050          Arterial Blood Pressure systolic  Routine Vital Signs     mmHg
+1   220051         Arterial Blood Pressure diastolic  Routine Vital Signs     mmHg
+2   220052              Arterial Blood Pressure mean  Routine Vital Signs     mmHg
+3   220056       Arterial Blood Pressure Alarm - Low               Alarms     mmHg
+4   220058      Arterial Blood Pressure Alarm - High               Alarms     mmHg
+5 
+2026-03-25 02:51:19  INFO      === Iteration 7/100  run=icp  best_qa=0.0% ===
+2026-03-25 02:51:26  INFO      Exec block 1/1 …
+2026-03-25 02:51:26  INFO      Output:     subject_id   hadm_id   stay_id  caregiver_id           charttime           storetime  itemid value  valuenum valueuom  warning
+0     10025463  24470193  38275267         29886 2137-10-09 02:54:00 2137-10-09 03:29:00  220765    36      36.0     mmHg        0
+1     10025463  24470193  38275267         29886 2137-10-09 03:15:00 2137-10-09 03:28:00  220765    10      10.0     mmHg        0
+2     10025463  24470193  38275267         29886 2137-10-09 04:00:00 2137-10-09 04:28:00  220765    10     
+2026-03-25 02:51:26  INFO      === Iteration 8/100  run=icp  best_qa=0.0% ===
+2026-03-25 02:51:33  INFO      Exec block 1/1 …
+2026-03-25 02:51:33  INFO      Output:     subject_id   hadm_id   stay_id           charttime  valuenum
+0     17346220  21459373  39937494 2125-05-03 05:09:00     381.0
+1     15188030  24357743  34930539 2138-09-21 10:00:00     332.0
+2     15188030  24357743  34930539 2138-09-21 10:33:00     329.0
+3     19912119  24915102  36731827 2140-07-16 19:00:00     287.0
+4     19912119  24915102  36731827 2140-07-16 20:00:00     283.0
+5     19912119  24915102  36731827 2140-07-16 21:00:00     278.0
+6     19912119  24915102  36731827 2140-07-16
+2026-03-25 02:51:33  INFO      === Iteration 9/100  run=icp  best_qa=0.0% ===
+2026-03-25 02:51:42  INFO      Exec block 1/1 …
+2026-03-25 02:51:43  INFO      Output:    total_records  min_icp  max_icp   avg_icp  median_icp
+0         242758    -41.0    381.0  9.399701         8.0
+
+2026-03-25 02:51:43  INFO      === Iteration 10/100  run=icp  best_qa=0.0% ===
+2026-03-25 02:51:53  INFO      Exec block 1/1 …
+2026-03-25 02:51:53  INFO      Output:    total_records  min_icp  max_icp   avg_icp  median_icp
+0         234531      0.0    100.0  9.805338         9.0
+
+2026-03-25 02:51:53  INFO      === Iteration 11/100  run=icp  best_qa=0.0% ===
+2026-03-25 02:52:00  INFO      Exec block 1/1 …
+2026-03-25 02:52:00  INFO      Output: 'def icustay_detail(stay_id):\n    """\n    Extract critical clinical information for an ICU stay.\n\n    This function retrieves comprehensive details about a specific ICU stay,\n    including mortality status, length of stay, and whether this is the first\n    ICU admission during the hospitalization.\n\n    Parameters\n    ----------\n    stay_id : int\n        The ICU stay identifier.\n\n    Returns\n    -------\n    dict or None\n        A dictionary containing the following keys:\n        
+2026-03-25 02:52:00  INFO      === Iteration 12/100  run=icp  best_qa=0.0% ===
+2026-03-25 02:52:14  INFO      Exec block 1/1 …
+2026-03-25 02:52:14  INFO      Output:     subject_id   hadm_id   stay_id           charttime  valuenum
+0     17346220  21459373  39937494 2125-05-03 05:09:00     381.0
+1     17346220  21459373  39937494 2125-05-03 05:15:00      58.0
+2     17346220  21459373  39937494 2125-05-03 06:00:00       0.0
+3     17346220  21459373  39937494 2125-05-03 07:00:00       4.0
+4     17346220  21459373  39937494 2125-05-03 08:00:00       6.0
+5     17346220  21459373  39937494 2125-05-03 09:00:00       7.0
+6     17346220  21459373  39937494 2125-05-03
+2026-03-25 02:52:14  INFO      === Iteration 13/100  run=icp  best_qa=0.0% ===
+2026-03-25 02:52:27  INFO      Exec block 1/1 …
+2026-03-25 02:52:27  INFO      Output:     subject_id   hadm_id   stay_id           charttime  valuenum
+0     14799373  21265029  38927468 2157-06-05 05:09:00      99.0
+1     11391730  23074463  32278753 2141-01-29 20:00:00      99.0
+2     10516113  26537748  34798575 2185-06-27 13:00:00      99.0
+3     18148239  22606590  36323093 2124-12-15 21:55:00      99.0
+4     10516113  26537748  34798575 2185-06-27 10:00:00      99.0
+5     11848487  23163209  37834186 2152-01-10 05:37:00      99.0
+6     15415949  26782841  38878235 2167-02-04
+2026-03-25 02:52:27  INFO      === Iteration 14/100  run=icp  best_qa=0.0% ===
+2026-03-25 02:53:37  INFO      Exec block 1/1 …
+2026-03-25 02:53:37  INFO      Output: Error:
+Traceback (most recent call last):
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 643, in execute
+    _run_with_timeout(_do_execute, timeout)
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 174, in _run_with_timeout
+    raise error[0]
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 156, in target
+    result[0] = func(*args, **kwargs)
+                ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/v-tiossowsk
+2026-03-25 02:53:37  INFO      === Iteration 15/100  run=icp  best_qa=0.0% ===
+2026-03-25 02:53:44  INFO      Exec block 1/1 …
+2026-03-25 02:53:44  INFO      Output: "Functions from 'gcs' loaded successfully."
+
+2026-03-25 02:53:44  INFO      === Iteration 16/100  run=icp  best_qa=0.0% ===
+2026-03-25 02:54:48  INFO      Exec block 1/1 …
+2026-03-25 02:54:48  INFO      Output: Stay ID: 39937494
+Subject ID: 17346220
+Max ICP: 58.0 mmHg
+Min ICP: 0.0 mmHg
+Mean ICP: 6.49397611618042 mmHg
+Has elevated ICP (>20): True
+Has refractory hypertension (>25): True
+Total measurements: 83
+
+2026-03-25 02:54:48  INFO      === Iteration 17/100  run=icp  best_qa=0.0% ===
+2026-03-25 02:55:15  INFO      Exec block 1/1 …
+2026-03-25 02:55:15  INFO      Output: 
+=== Test 1: Patient with high ICP ===
+Stay ID: 38927468
+Max ICP: 99.0 mmHg
+Has elevated ICP (>20): True
+Has refractory hypertension (>25): True
+Elevated count: 2
+Refractory count: 2
+
+=== Test 2: Patient with normal ICP ===
+Stay ID: 32391858
+Max ICP: 18.0 mmHg
+Min ICP: 0.0 mmHg
+Has elevated ICP (>20): False
+Has refractory hypertension (>25): False
+Total measurements: 281
+
+=== Test 3: Patient with no ICP data ===
+Stay ID: 99999999
+Max ICP: None
+Has elevated ICP (>20): False
+Total measurements: 0
+
+2026-03-25 02:55:15  INFO      === Iteration 18/100  run=icp  best_qa=0.0% ===
+2026-03-25 02:55:27  INFO      Exec block 1/1 …
+2026-03-25 02:55:27  INFO      Output:    subject_id   hadm_id   stay_id           charttime  valuenum
+0    10078115  28052678  36265401 2147-12-04 23:00:00      22.0
+1    10078115  28052678  36265401 2147-11-23 20:00:00      21.0
+2    10078115  28052678  36265401 2147-11-23 04:00:00      21.0
+3    10078115  28052678  36265401 2147-11-27 12:00:00      22.0
+4    10078115  28052678  36265401 2147-11-27 14:00:00      21.0
+5    10078115  28052678  36265401 2147-11-27 15:00:00      24.0
+6    10078115  28052678  36265401 2147-11-27 16:00:0
+2026-03-25 02:55:27  INFO      === Iteration 19/100  run=icp  best_qa=0.0% ===
+2026-03-25 02:55:42  INFO      Exec block 1/1 …
+2026-03-25 02:55:42  INFO      Output: 
+=== Test 4: Patient with elevated but not refractory ICP ===
+Stay ID: 36265401
+Max ICP: 50.0 mmHg
+Has elevated ICP (>20): True
+Has refractory hypertension (>25): True
+Elevated count: 97
+Refractory count: 42
+Total measurements: 463
+
+2026-03-25 02:55:42  INFO      === Iteration 20/100  run=icp  best_qa=0.0% ===
+2026-03-25 02:56:41  INFO      Exec block 1/1 …
+2026-03-25 02:56:41  INFO      Output: Code executed successfully (no output).
+2026-03-25 02:56:41  INFO      Debug conversations will be saved to debug_logs
+2026-03-25 02:56:41  INFO      Using question from dataset column: Does this patient have elevated intracranial pressure (ICP > 20 mmHg) during their ICU stay?
+2026-03-25 02:56:41  INFO      Answer type for 'icp': binary (per_row=True)
+2026-03-25 02:56:41  INFO      ReACT iteration 1/10 — 20 active patients
+Rendering conversations:   0%|          | 0/20 [00:00<?, ?it/s]Rendering conversations: 100%|██████████| 20/20 [00:00<00:00, 473.47it/s]
+Processed prompts:   0%|          | 0/20 [00:00<?, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s]Processed prompts:   5%|▌         | 1/20 [00:12<03:58, 12.53s/it, est. speed input: 85.56 toks/s, output: 12.85 toks/s]Processed prompts:  10%|█         | 2/20 [00:13<01:48,  6.02s/it, est. speed input: 153.15 toks/s, output: 25.16 toks/s]Processed prompts:  20%|██        | 4/20 [00:14<00:38,  2.42s/it, est. speed input: 294.22 toks/s, output: 51.80 toks/s]Processed prompts:  30%|███       | 6/20 [00:14<00:18,  1.33s/it, est. speed input: 434.59 toks/s, output: 79.31 toks/s]Processed prompts:  50%|█████     | 10/20 [00:14<00:05,  1.72it/s, est. speed input: 717.06 toks/s, output: 135.24 toks/s]Processed prompts:  60%|██████    | 12/20 [00:15<00:03,  2.26it/s, est. speed input: 849.32 toks/s, output: 162.09 toks/s]Processed prompts:  70%|███████   | 14/20 [00:15<00:02,  2.39it/s, est. speed input: 946.26 toks/s, output: 184.13 toks/s]Processed prompts:  80%|████████  | 16/20 [00:16<00:01,  2.79it/s, est. speed input: 1053.18 toks/s, output: 209.00 toks/s]Processed prompts:  85%|████████▌ | 17/20 [00:16<00:01,  2.92it/s, est. speed input: 1100.98 toks/s, output: 220.93 toks/s]Processed prompts:  90%|█████████ | 18/20 [00:16<00:00,  2.99it/s, est. speed input: 1144.94 toks/s, output: 232.50 toks/s]Processed prompts: 100%|██████████| 20/20 [00:16<00:00,  4.28it/s, est. speed input: 1264.00 toks/s, output: 262.06 toks/s]Processed prompts: 100%|██████████| 20/20 [00:16<00:00,  4.28it/s, est. speed input: 1264.00 toks/s, output: 262.06 toks/s]Processed prompts: 100%|██████████| 20/20 [00:16<00:00,  1.18it/s, est. speed input: 1264.00 toks/s, output: 262.06 toks/s]
+2026-03-25 02:56:58  INFO      ReACT iteration 2/10 — 20 active patients
+Rendering conversations:   0%|          | 0/20 [00:00<?, ?it/s]Rendering conversations: 100%|██████████| 20/20 [00:00<00:00, 303.58it/s]
+Processed prompts:   0%|          | 0/20 [00:00<?, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s]Processed prompts:   5%|▌         | 1/20 [00:13<04:08, 13.08s/it, est. speed input: 151.87 toks/s, output: 7.26 toks/s]Processed prompts:  10%|█         | 2/20 [00:13<01:38,  5.47s/it, est. speed input: 301.89 toks/s, output: 14.44 toks/s]Processed prompts:  20%|██        | 4/20 [00:13<00:33,  2.10s/it, est. speed input: 596.33 toks/s, output: 29.16 toks/s]Processed prompts:  30%|███       | 6/20 [00:13<00:16,  1.17s/it, est. speed input: 826.24 toks/s, output: 44.04 toks/s]Processed prompts:  40%|████      | 8/20 [00:13<00:08,  1.38it/s, est. speed input: 1057.57 toks/s, output: 59.49 toks/s]Processed prompts:  50%|█████     | 10/20 [00:13<00:04,  2.04it/s, est. speed input: 1279.93 toks/s, output: 75.16 toks/s]Processed prompts:  60%|██████    | 12/20 [00:14<00:02,  2.85it/s, est. speed input: 1447.62 toks/s, output: 90.74 toks/s]Processed prompts:  70%|███████   | 14/20 [00:16<00:03,  1.61it/s, est. speed input: 1442.99 toks/s, output: 97.27 toks/s]Processed prompts:  75%|███████▌  | 15/20 [00:17<00:03,  1.48it/s, est. speed input: 1442.94 toks/s, output: 103.72 toks/s]Processed prompts:  85%|████████▌ | 17/20 [00:17<00:01,  2.06it/s, est. speed input: 1569.96 toks/s, output: 125.34 toks/s]Processed prompts:  95%|█████████▌| 19/20 [00:18<00:00,  2.47it/s, est. speed input: 1854.79 toks/s, output: 145.49 toks/s]Processed prompts: 100%|██████████| 20/20 [00:19<00:00,  1.48it/s, est. speed input: 1785.59 toks/s, output: 145.66 toks/s]Processed prompts: 100%|██████████| 20/20 [00:19<00:00,  1.48it/s, est. speed input: 1785.59 toks/s, output: 145.66 toks/s]Processed prompts: 100%|██████████| 20/20 [00:19<00:00,  1.00it/s, est. speed input: 1785.59 toks/s, output: 145.66 toks/s]
+2026-03-25 02:57:18  INFO      ReACT iteration 3/10 — 5 active patients
+Rendering conversations:   0%|          | 0/5 [00:00<?, ?it/s]Rendering conversations: 100%|██████████| 5/5 [00:00<00:00, 305.90it/s]
+Processed prompts:   0%|          | 0/5 [00:00<?, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s]Processed prompts:  20%|██        | 1/5 [00:07<00:28,  7.24s/it, est. speed input: 242.04 toks/s, output: 17.81 toks/s]Processed prompts:  40%|████      | 2/5 [00:07<00:09,  3.28s/it, est. speed input: 457.35 toks/s, output: 35.01 toks/s]Processed prompts:  60%|██████    | 3/5 [00:15<00:10,  5.31s/it, est. speed input: 342.25 toks/s, output: 39.89 toks/s]Processed prompts:  80%|████████  | 4/5 [00:15<00:03,  3.30s/it, est. speed input: 448.98 toks/s, output: 61.75 toks/s]Processed prompts: 100%|██████████| 5/5 [00:15<00:00,  2.22s/it, est. speed input: 550.00 toks/s, output: 83.19 toks/s]Processed prompts: 100%|██████████| 5/5 [00:15<00:00,  2.22s/it, est. speed input: 550.00 toks/s, output: 83.19 toks/s]Processed prompts: 100%|██████████| 5/5 [00:15<00:00,  3.20s/it, est. speed input: 550.00 toks/s, output: 83.19 toks/s]
+2026-03-25 02:57:34  INFO      ReACT iteration 4/10 — 4 active patients
+Rendering conversations:   0%|          | 0/4 [00:00<?, ?it/s]Rendering conversations: 100%|██████████| 4/4 [00:00<00:00, 259.19it/s]
+Processed prompts:   0%|          | 0/4 [00:00<?, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s]Processed prompts:  25%|██▌       | 1/4 [00:06<00:18,  6.17s/it, est. speed input: 315.68 toks/s, output: 17.83 toks/s]Processed prompts:  50%|█████     | 2/4 [00:09<00:09,  4.66s/it, est. speed input: 429.63 toks/s, output: 32.24 toks/s]Processed prompts:  75%|███████▌  | 3/4 [00:15<00:05,  5.26s/it, est. speed input: 386.27 toks/s, output: 43.22 toks/s]Processed prompts: 100%|██████████| 4/4 [00:17<00:00,  3.85s/it, est. speed input: 460.59 toks/s, output: 62.63 toks/s]Processed prompts: 100%|██████████| 4/4 [00:17<00:00,  3.85s/it, est. speed input: 460.59 toks/s, output: 62.63 toks/s]Processed prompts: 100%|██████████| 4/4 [00:17<00:00,  4.36s/it, est. speed input: 460.59 toks/s, output: 62.63 toks/s]
+2026-03-25 02:57:52  INFO      ReACT iteration 5/10 — 4 active patients
+Rendering conversations:   0%|          | 0/4 [00:00<?, ?it/s]Rendering conversations: 100%|██████████| 4/4 [00:00<00:00, 210.56it/s]
+Processed prompts:   0%|          | 0/4 [00:00<?, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s]Processed prompts:  25%|██▌       | 1/4 [00:09<00:27,  9.27s/it, est. speed input: 220.15 toks/s, output: 19.32 toks/s]Processed prompts:  50%|█████     | 2/4 [00:11<00:10,  5.25s/it, est. speed input: 409.65 toks/s, output: 36.07 toks/s]Processed prompts:  75%|███████▌  | 3/4 [00:18<00:06,  6.10s/it, est. speed input: 384.87 toks/s, output: 45.48 toks/s]Processed prompts: 100%|██████████| 4/4 [05:07<00:00, 117.62s/it, est. speed input: 31.60 toks/s, output: 29.44 toks/s]Processed prompts: 100%|██████████| 4/4 [05:07<00:00, 117.62s/it, est. speed input: 31.60 toks/s, output: 29.44 toks/s]Processed prompts: 100%|██████████| 4/4 [05:07<00:00, 76.85s/it, est. speed input: 31.60 toks/s, output: 29.44 toks/s] 
+2026-03-25 03:03:00  INFO      ReACT iteration 6/10 — 4 active patients
+Rendering conversations:   0%|          | 0/4 [00:00<?, ?it/s]Rendering conversations: 100%|██████████| 4/4 [00:00<00:00, 98.60it/s]
+Processed prompts:   0%|          | 0/4 [00:00<?, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s]Processed prompts:  25%|██▌       | 1/4 [00:17<00:53, 17.85s/it, est. speed input: 167.94 toks/s, output: 17.37 toks/s]Processed prompts:  50%|█████     | 2/4 [00:19<00:16,  8.21s/it, est. speed input: 304.27 toks/s, output: 34.07 toks/s]Processed prompts:  75%|███████▌  | 3/4 [00:24<00:07,  7.00s/it, est. speed input: 338.52 toks/s, output: 46.34 toks/s]Processed prompts: 100%|██████████| 4/4 [00:33<00:00,  7.51s/it, est. speed input: 684.04 toks/s, output: 56.37 toks/s]Processed prompts: 100%|██████████| 4/4 [00:33<00:00,  7.51s/it, est. speed input: 684.04 toks/s, output: 56.37 toks/s]Processed prompts: 100%|██████████| 4/4 [00:33<00:00,  8.29s/it, est. speed input: 684.04 toks/s, output: 56.37 toks/s]
+2026-03-25 03:03:33  INFO      ReACT iteration 7/10 — 3 active patients
+Rendering conversations:   0%|          | 0/3 [00:00<?, ?it/s]Rendering conversations: 100%|██████████| 3/3 [00:00<00:00, 88.93it/s]
+Processed prompts:   0%|          | 0/3 [00:00<?, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s]Processed prompts:  33%|███▎      | 1/3 [00:10<00:21, 10.65s/it, est. speed input: 320.49 toks/s, output: 12.87 toks/s]Processed prompts:  67%|██████▋   | 2/3 [00:11<00:04,  4.99s/it, est. speed input: 1527.56 toks/s, output: 25.88 toks/s]Processed prompts: 100%|██████████| 3/3 [00:16<00:00,  4.77s/it, est. speed input: 1282.41 toks/s, output: 36.33 toks/s]Processed prompts: 100%|██████████| 3/3 [00:16<00:00,  4.77s/it, est. speed input: 1282.41 toks/s, output: 36.33 toks/s]Processed prompts: 100%|██████████| 3/3 [00:16<00:00,  5.39s/it, est. speed input: 1282.41 toks/s, output: 36.33 toks/s]
+2026-03-25 03:03:49  INFO      ReACT iteration 8/10 — 2 active patients
+Rendering conversations:   0%|          | 0/2 [00:00<?, ?it/s]Rendering conversations: 100%|██████████| 2/2 [00:00<00:00, 69.51it/s]
+Processed prompts:   0%|          | 0/2 [00:00<?, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s]Processed prompts:  50%|█████     | 1/2 [00:12<00:12, 12.20s/it, est. speed input: 1182.88 toks/s, output: 16.06 toks/s]Processed prompts: 100%|██████████| 2/2 [00:14<00:00,  6.47s/it, est. speed input: 1263.76 toks/s, output: 31.19 toks/s]Processed prompts: 100%|██████████| 2/2 [00:14<00:00,  6.47s/it, est. speed input: 1263.76 toks/s, output: 31.19 toks/s]Processed prompts: 100%|██████████| 2/2 [00:14<00:00,  7.33s/it, est. speed input: 1263.76 toks/s, output: 31.19 toks/s]
+2026-03-25 03:04:04  INFO      ReACT iteration 9/10 — 2 active patients
+Rendering conversations:   0%|          | 0/2 [00:00<?, ?it/s]Rendering conversations: 100%|██████████| 2/2 [00:00<00:00, 59.56it/s]
+Processed prompts:   0%|          | 0/2 [00:00<?, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s]Processed prompts:  50%|█████     | 1/2 [00:13<00:13, 13.23s/it, est. speed input: 1092.34 toks/s, output: 16.70 toks/s]Processed prompts: 100%|██████████| 2/2 [00:24<00:00, 11.80s/it, est. speed input: 783.17 toks/s, output: 30.46 toks/s] Processed prompts: 100%|██████████| 2/2 [00:24<00:00, 11.80s/it, est. speed input: 783.17 toks/s, output: 30.46 toks/s]Processed prompts: 100%|██████████| 2/2 [00:24<00:00, 12.02s/it, est. speed input: 783.17 toks/s, output: 30.46 toks/s]
+2026-03-25 03:04:28  INFO      ReACT iteration 10/10 — 1 active patients
+Rendering conversations:   0%|          | 0/1 [00:00<?, ?it/s]Rendering conversations: 100%|██████████| 1/1 [00:00<00:00, 44.57it/s]
+Processed prompts:   0%|          | 0/1 [00:00<?, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s]Processed prompts: 100%|██████████| 1/1 [00:04<00:00,  4.37s/it, est. speed input: 3313.91 toks/s, output: 3.43 toks/s]Processed prompts: 100%|██████████| 1/1 [00:04<00:00,  4.37s/it, est. speed input: 3313.91 toks/s, output: 3.43 toks/s]Processed prompts: 100%|██████████| 1/1 [00:04<00:00,  4.37s/it, est. speed input: 3313.91 toks/s, output: 3.43 toks/s]
+2026-03-25 03:04:33  INFO      QA accuracy: 100.0%  (correct=20/20, parse_errors=0)
+2026-03-25 03:04:33  INFO      SUCCESS: 100.0% QA accuracy for 'icp' at iteration 20
+2026-03-25 03:04:33  INFO      Function code saved to autoformalized_library/functions/icp.py
+2026-03-25 03:04:33  INFO      Summary saved to autoformalized_library/summary.json
+[rank0]:[W325 03:04:33.544750590 ProcessGroupNCCL.cpp:1553] Warning: WARNING: destroy_process_group() was not called before program exit, which can leak resources. For more info, please see https://pytorch.org/docs/stable/distributed.html#shutdown (function operator())
+
+======================================================================
+AUTOFORMALIZATION COMPLETE
+======================================================================
+  Output dir      : autoformalized_library
+  Model           : Qwen/Qwen3.5-27B
+  Dataset         : /home/v-tiossowski/HealthcareAgent/mimic-code/data/MIMICIV_icp_dataset/icp.csv
+  Run name        : icp
+  Status          : SUCCESS
+  QA accuracy     : 100.0%
+  Iterations      : 20
+  Total tokens    : 201,288  (prompt 178,816 / completion 22,472)
+  LLM calls       : 85
+  SQL queries     : 51
+  Function saved  : autoformalized_library/functions/icp.py
+======================================================================

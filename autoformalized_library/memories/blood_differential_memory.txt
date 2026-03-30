@@ -1,0 +1,1463 @@
+=== Step 1 ===
+# Clinical Coding Agent - Rolling Memory
+
+## Key Schema Facts
+
+### Tables
+- **mimiciv_hosp.labevents**: labevent_id, subject_id, hadm_id, specimen_id, itemid, order_provider_id, charttime, storetime, value, valuenum, valueuom, ref_range_lower, ref_range_upper, flag, priority, comments
+- **mimiciv_hosp.d_labitems**: itemid, label, fluid, category
+- **mimiciv_icu.icustays**: subject_id, hadm_id, stay_id, first_careunit, last_careunit, intime, outtime, los
+- **mimiciv_icu.chartevents**: subject_id, hadm_id, stay_id, itemid, charttime, valuenum, valueuom
+- **mimiciv_icu.d_items**: itemid, label, abbreviation, linksto, category, unitname, param_type, lownormalvalue, highnormalvalue
+
+### Key Item IDs (Blood Hematology)
+| Item ID | Label | Fluid | Category |
+|---------|-------|-------|----------|
+| 51300 | WBC Count | Blood | Hematology |
+| 51144 | Bands | Blood | Hematology |
+| 51256 | Neutrophils | Blood | Hematology |
+| 51244 | Lymphocytes | Blood | Hematology |
+| 51254 | Monocytes | Blood | Hematology |
+| 51200 | Eosinophils | Blood | Hematology |
+| 51146 | Basophils | Blood | Hematology |
+| 52075 | Absolute Neutrophil Count | Blood | Hematology |
+| 51133 | Absolute Lymphocyte Count | Blood | Hematology |
+| 52074 | Absolute Monocyte Count | Blood | Hematology |
+| 52073 | Absolute Eosinophil Count | Blood | Hematology |
+| 52069 | Absolute Basophil Count | Blood | Hematology |
+
+### Clinical Thresholds
+- **Leukocytosis (adult)**: WBC > 11.0 × 10⁹/L (> 11,000 cells/µL)
+- **Normal WBC range**: 4.5–11.0 × 10⁹/L
+- **SIRS WBC criterion**: > 12,000 cells/μL OR < 4,000 cells/μL OR > 10% bands
+- **Left shift**: Bands > 10%
+
+### Existing Functions
+- `age()` - Patient age
+- `bg()` - Blood glucose
+- `icustay_detail(stay_id)` - ICU stay details
+- `weight_durations()` - Weight measurements
+
+---
+
+## Function Source Code
+
+### blood_differential()
+
+```python
+import pandas as pd
+from typing import Optional, Dict, Any, Union
+
+def blood_differential(stay_id: Optional[int] = None, 
+                       subject_id: Optional[int] = None,
+                       hadm_id: Optional[int] = None) -> Dict[str, Any]:
+    """
+    Extract blood differential information for a patient's ICU stay.
+    
+    This function retrieves comprehensive blood differential data including WBC count,
+    band neutrophils, and other differential components (neutrophils, lymphocytes, 
+    monocytes, eosinophils, basophils) during an ICU stay.
+    
+    Parameters
+    ----------
+    stay_id : int, optional
+        The ICU stay identifier. If provided, data is filtered to this specific stay.
+    subject_id : int, optional
+        The patient identifier. Can be used alone or with hadm_id.
+    hadm_id : int, optional
+        The hospital admission identifier. Used with subject_id if stay_id not provided.
+    
+    Returns
+    -------
+    dict
+        A dictionary containing the following keys:
+        - 'subject_id': patient identifier (int or None)
+        - 'hadm_id': hospital admission identifier (int or None)
+        - 'stay_id': ICU stay identifier (int or None)
+        - 'wbc_count': list of WBC count values during stay (list of float)
+        - 'max_wbc_count': maximum WBC count during stay (float or None)
+        - 'min_wbc_count': minimum WBC count during stay (float or None)
+        - 'has_elevated_wbc': boolean indicating if WBC > 12 K/uL at any point
+        - 'band_percent': list of band neutrophil percentages during stay (list of float)
+        - 'max_band_percent': maximum band percentage during stay (float or None)
+        - 'has_left_shift': boolean indicating if bands > 10% at any point
+        - 'neutrophil_percent': list of neutrophil percentages (list of float)
+        - 'lymphocyte_percent': list of lymphocyte percentages (list of float)
+        - 'monocyte_percent': list of monocyte percentages (list of float)
+        - 'eosinophil_percent': list of eosinophil percentages (list of float)
+        - 'basophil_percent': list of basophil percentages (list of float)
+        - 'absolute_neutrophil_count': list of absolute neutrophil counts (list of float)
+        - 'absolute_lymphocyte_count': list of absolute lymphocyte counts (list of float)
+        - 'absolute_monocyte_count': list of absolute monocyte counts (list of float)
+        - 'absolute_eosinophil_count': list of absolute eosinophil counts (list of float)
+        - 'absolute_basophil_count': list of absolute basophil counts (list of float)
+    
+    Raises
+    ------
+    ValueError
+        If no patient identifier is provided.
+    
+    Examples
+    --------
+    >>> blood_differential(stay_id=34477328)
+    {'subject_id': 18871238, 'hadm_id': 27601223, 'stay_id': 34477328,
+     'wbc_count': [15.4], 'max_wbc_count': 15.4, 'min_wbc_count': 15.4,
+     'has_elevated_wbc': True, 'band_percent': [], 'max_band_percent': None,
+     'has_left_shift': False, ...}
+    """
+    
+    # Validate input
+    if stay_id is None and subject_id is None and hadm_id is None:
+        raise ValueError("At least one of stay_id, subject_id, or hadm_id must be provided")
+    
+    # Define item IDs for blood differential components
+    # From d_labitems table
+    WBC_COUNT = 51300
+    BANDS = 51144
+    NEUTROPHILS = 51256
+    LYMPHOCYTES = 51244
+    MONOCYTES = 51254
+    EOSINOPHILS = 51200
+    BASOPHILS = 51146
+    ABS_NEUTROPHIL = 52075
+    ABS_LYMPHOCYTE = 51133
+    ABS_MONOCYTE = 52074
+    ABS_EOSINOPHIL = 52073
+    ABS_BASOPHIL = 52069
+    
+    # Build the base query
+    if stay_id is not None:
+        # Query with stay_id - join with icustays to get time window
+        sql = f"""
+        SELECT 
+            icu.subject_id,
+            icu.hadm_id,
+            icu.stay_id,
+            le.itemid,
+            dl.label,
+            le.charttime,
+            le.valuenum,
+            le.valueuom
+        FROM mimiciv_hosp.labevents le
+        JOIN mimiciv_hosp.d_labitems dl ON le.itemid = dl.itemid
+        JOIN mimiciv_icu.icustays icu ON le.hadm_id = icu.hadm_id
+        WHERE icu.stay_id = {stay_id}
+        AND le.itemid IN ({WBC_COUNT}, {BANDS}, {NEUTROPHILS}, {LYMPHOCYTES}, {MONOCYTES}, 
+                          {EOSINOPHILS}, {BASOPHILS}, {ABS_NEUTROPHIL}, {ABS_LYMPHOCYTE},
+                          {ABS_MONOCYTE}, {ABS_EOSINOPHIL}, {ABS_BASOPHIL})
+        AND le.charttime >= icu.intime
+        AND le.charttime <= icu.outtime
+        ORDER BY le.charttime, le.itemid
+        """
+    elif subject_id is not None and hadm_id is not None:
+        # Query with subject_id and hadm_id - get all ICU stays for this admission
+        sql = f"""
+        SELECT 
+            icu.subject_id,
+            icu.hadm_id,
+            icu.stay_id,
+            le.itemid,
+            dl.label,
+            le.charttime,
+            le.valuenum,
+            le.valueuom
+        FROM mimiciv_hosp.labevents le
+        JOIN mimiciv_hosp.d_labitems dl ON le.itemid = dl.itemid
+        JOIN mimiciv_icu.icustays icu ON le.hadm_id = icu.hadm_id
+        WHERE icu.subject_id = {subject_id}
+        AND icu.hadm_id = {hadm_id}
+        AND le.itemid IN ({WBC_COUNT}, {BANDS}, {NEUTROPHILS}, {LYMPHOCYTES}, {MONOCYTES}, 
+                          {EOSINOPHILS}, {BASOPHILS}, {ABS_NEUTROPHIL}, {ABS_LYMPHOCYTE},
+                          {ABS_MONOCYTE}, {ABS_EOSINOPHIL}, {ABS_BASOPHIL})
+        AND le.charttime >= icu.intime
+        AND le.charttime <= icu.outtime
+        ORDER BY le.charttime, le.itemid
+        """
+    elif subject_id is not None:
+        # Query with subject_id only - get all ICU stays for this patient
+        sql = f"""
+        SELECT 
+            icu.subject_id,
+            icu.hadm_id,
+            icu.stay_id,
+            le.itemid,
+            dl.label,
+            le.charttime,
+            le.valuenum,
+            le.valueuom
+        FROM mimiciv_hosp.labevents le
+        JOIN mimiciv_hosp.d_labitems dl ON le.itemid = dl.itemid
+        JOIN mimiciv_icu.icustays icu ON le.hadm_id = icu.hadm_id
+        WHERE icu.subject_id = {subject_id}
+        AND le.itemid IN ({WBC_COUNT}, {BANDS}, {NEUTROPHILS}, {LYMPHOCYTES}, {MONOCYTES}, 
+                          {EOSINOPHILS}, {BASOPHILS}, {ABS_NEUTROPHIL}, {ABS_LYMPHOCYTE},
+                          {ABS_MONOCYTE}, {ABS_EOSINOPHIL}, {ABS_BASOPHIL})
+        AND le.charttime >= icu.intime
+        AND le.charttime <= icu.outtime
+        ORDER BY le.charttime, le.itemid
+        """
+    else:
+        # Query with hadm_id only
+        sql = f"""
+        SELECT 
+            icu.subject_id,
+            icu.hadm_id,
+            icu.stay_id,
+            le.itemid,
+            dl.label,
+            le.charttime,
+            le.valuenum,
+            le.valueuom
+        FROM mimiciv_hosp.labevents le
+        JOIN mimiciv_hosp.d_labitems dl ON le.itemid = dl.itemid
+        JOIN mimiciv_icu.icustays icu ON le.hadm_id = icu.hadm_id
+        WHERE icu.hadm_id = {hadm_id}
+        AND le.itemid IN ({WBC_COUNT}, {BANDS}, {NEUTROPHILS}, {LYMPHOCYTES}, {MONOCYTES}, 
+                          {EOSINOPHILS}, {BASOPHILS}, {ABS_NEUTROPHIL}, {ABS_LYMPHOCYTE},
+                          {ABS_MONOCYTE}, {ABS_EOSINOPHIL}, {ABS_BASOPHIL})
+        AND le.charttime >= icu.intime
+        AND le.charttime <= icu.outtime
+        ORDER BY le.charttime, le.itemid
+        """
+    
+    # Execute query
+    df = query_db(sql)
+    
+    # Initialize result dictionary
+    result = {
+        'subject_id': None,
+        'hadm_id': None,
+        'stay_id': None,
+        'wbc_count': [],
+        'max_wbc_count': None,
+        'min_wbc_count': None,
+        'has_elevated_wbc': False,
+        'band_percent': [],
+        'max_band_percent': None,
+        'has_left_shift': False,
+        'neutrophil_percent': [],
+        'lymphocyte_percent': [],
+        'monocyte_percent': [],
+        'eosinophil_percent': [],
+        'basophil_percent': [],
+        'absolute_neutrophil_count': [],
+        'absolute_lymphocyte_count': [],
+        'absolute_monocyte_count': [],
+        'absolute_eosinophil_count': [],
+        'absolute_basophil_count': []
+    }
+    
+    if df.empty:
+        return result
+    
+    # Extract identifiers from first row
+    result['subject_id'] = int(df['subject_id'].iloc[0])
+    result['hadm_id'] = int(df['hadm_id'].iloc[0])
+    result['stay_id'] = int(df['stay_id'].iloc[0])
+    
+    # Extract values by itemid
+    wbc_data = df[df['itemid'] == WBC_COUNT]['valuenum'].dropna().tolist()
+    band_data = df[df['itemid'] == BANDS]['valuenum'].dropna().tolist()
+    neutrophil_data = df[df['itemid'] == NEUTROPHILS]['valuenum'].dropna().tolist()
+    lymphocyte_data = df[df['itemid'] == LYMPHOCYTES]['valuenum'].dropna().tolist()
+    monocyte_data = df[df['itemid'] == MONOCYTES]['valuenum'].dropna().tolist()
+    eosinophil_data = df[df['itemid'] == EOSINOPHILS]['valuenum'].dropna().tolist()
+    basophil_data = df[df['itemid'] == BASOPHILS]['valuenum'].dropna().tolist()
+    abs_neutrophil_data = df[df['itemid'] == ABS_NEUTROPHIL]['valuenum'].dropna().tolist()
+    abs_lymphocyte_data = df[df['itemid'] == ABS_LYMPHOCYTE]['valuenum'].dropna().tolist()
+    abs_monocyte_data = df[df['itemid'] == ABS_MONOCYTE]['valuenum'].dropna().tolist()
+    abs_eosinophil_data = df[df['itemid'] == ABS_EOSINOPHIL]['valuenum'].dropna().tolist()
+    abs_basophil_data = df[df['itemid'] == ABS_BASOPHIL]['valuenum'].dropna().tolist()
+    
+    # Populate result
+    result['wbc_count'] = wbc_data
+    if wbc_data:
+        result['max_wbc_count'] = float(max(wbc_data))
+        result['min_wbc_count'] = float(min(wbc_data))
+        result['has_elevated_wbc'] = any(w > 12.0 for w in wbc_data)
+    
+    result['band_percent'] = band_data
+    if band_data:
+        result['max_band_percent'] = float(max(band_data))
+        result['has_left_shift'] = any(b > 10.0 for b in band_data)
+    
+    result['neutrophil_percent'] = neutrophil_data
+    result['lymphocyte_percent'] = lymphocyte_data
+    result['monocyte_percent'] = monocyte_data
+    result['eosinophil_percent'] = eosinophil_data
+    result['basophil_percent'] = basophil_data
+    result['absolute_neutrophil_count'] = abs_neutrophil_data
+    result['absolute_lymphocyte_count'] = abs_lymphocyte_data
+    result['absolute_monocyte_count'] = abs_monocyte_data
+    result['absolute_eosinophil_count'] = abs_eosinophil_data
+    result['absolute_basophil_count'] = abs_basophil_data
+    
+    return result
+```
+
+---
+
+## Test Results & Error Fixes
+
+### Step 36 - Error
+- **Error**: `NameError: name 'ABS_MONOCYTES' is not defined`
+- **Cause**: Typo in SQL query - used `ABS_MONOCYTES` instead of `ABS_MONOCYTE`
+- **Fix**: Corrected variable name in all SQL queries
+
+### Step 37 - Success
+- **Test**: `blood_differential(stay_id=34477328)`
+- **Result**: 
+  ```python
+  {'subject_id': 18871238, 'hadm_id': 27601223, 'stay_id': 34477328, 
+   'wbc_count': [15.4], 'max_wbc_count': 15.4, 'min_wbc_count': 15.4, 
+   'has_elevated_wbc': True, 'band_percent': [], 'max_band_percent': None, 
+   'has_left_shift': False, 'neutrophil_percent': [68.9], 
+   'lymphocyte_percent': [24.9], 'monocyte_percent': [5.7], 
+   'eosinophil_percent': [0.1], 'basophil_percent': [0.3], 
+   'absolute_neutrophil_count': [], 'absolute_lymphocyte_count': [], 
+   'absolute_monocyte_count': [], 'absolute_eosinophil_count': [], 
+   'absolute_basophil_count': []}
+  ```
+- **Status**: Function works correctly
+
+### Step 27 - SQL Syntax Error
+- **Error**: `_duckdb.ParserException: Parser Error: syntax error at or near "DISTINCT"`
+- **Cause**: Invalid SQL syntax - `SELECT COUNT(*) as cnt, DISTINCT le.itemid`
+- **Fix**: Removed DISTINCT, used GROUP BY instead
+
+### Step 30 - Column Binding Error
+- **Error**: `_duckdb.BinderException: Binder Error: Table "le" does not have a column named "stay_id"`
+- **Cause**: `labevents` table doesn't have `stay_id` column
+- **Fix**: Changed query to select `icu.stay_id` from joined `icustays` table
+
+---
+
+## Guidelines Retrieved
+
+1. **elevated_white_blood_cell_count_guideline** - Leukocytosis definition, thresholds, severity classification
+2. **sirs_guideline** - SIRS criteria including WBC > 12,000 cells/μL or < 4,000 cells/μL or > 10% bands
+
+=== Step 2 ===
+# Clinical Coding Agent - Rolling Memory
+
+## Key Schema Facts
+
+### Tables
+- **mimiciv_hosp.labevents**: labevent_id, subject_id, hadm_id, specimen_id, itemid, order_provider_id, charttime, storetime, value, valuenum, valueuom, ref_range_lower, ref_range_upper, flag, priority, comments
+- **mimiciv_hosp.d_labitems**: itemid, label, fluid, category
+- **mimiciv_icu.icustays**: subject_id, hadm_id, stay_id, first_careunit, last_careunit, intime, outtime, los
+- **mimiciv_icu.chartevents**: subject_id, hadm_id, stay_id, itemid, charttime, valuenum, valueuom
+- **mimiciv_icu.d_items**: itemid, label, abbreviation, linksto, category, unitname, param_type, lownormalvalue, highnormalvalue
+- **mimiciv_hosp.admissions**: hadm_id, subject_id, admittime, dischtime
+
+### Key Item IDs (Blood Hematology)
+| Item ID | Label | Fluid | Category |
+|---------|-------|-------|----------|
+| 51300 | WBC Count | Blood | Hematology |
+| 51301 | White Blood Cells | Blood | Hematology |
+| 51144 | Bands | Blood | Hematology |
+| 51256 | Neutrophils | Blood | Hematology |
+| 51244 | Lymphocytes | Blood | Hematology |
+| 51254 | Monocytes | Blood | Hematology |
+| 51200 | Eosinophils | Blood | Hematology |
+| 51146 | Basophils | Blood | Hematology |
+| 52075 | Absolute Neutrophil Count | Blood | Hematology |
+| 51133 | Absolute Lymphocyte Count | Blood | Hematology |
+| 52769 | Absolute Lymphocyte Count | Blood | Hematology |
+| 52074 | Absolute Monocyte Count | Blood | Hematology |
+| 52073 | Absolute Eosinophil Count | Blood | Hematology |
+| 52069 | Absolute Basophil Count | Blood | Hematology |
+
+### Clinical Thresholds
+- **Leukocytosis (adult)**: WBC > 11.0 × 10⁹/L (> 11,000 cells/µL)
+- **Normal WBC range**: 4.5–11.0 × 10⁹/L
+- **SIRS WBC criterion**: > 12,000 cells/μL OR < 4,000 cells/μL OR > 10% bands
+- **Left shift**: Bands > 10%
+
+### Existing Functions
+- `age()` - Patient age
+- `bg()` - Blood glucose
+- `icustay_detail(stay_id)` - ICU stay details
+- `weight_durations()` - Weight measurements
+- `blood_differential()` - Blood differential data extraction
+
+---
+
+## Function Source Code
+
+### blood_differential()
+
+```python
+import pandas as pd
+from typing import Optional, Dict, Any, Union
+
+def blood_differential(stay_id: Optional[int] = None, 
+                       subject_id: Optional[int] = None,
+                       hadm_id: Optional[int] = None) -> Dict[str, Any]:
+    """
+    Extract blood differential information for a patient's ICU stay.
+    
+    This function retrieves comprehensive blood differential data including WBC count,
+    band neutrophils, and other differential components (neutrophils, lymphocytes, 
+    monocytes, eosinophils, basophils) during an ICU stay.
+    
+    Parameters
+    ----------
+    stay_id : int, optional
+        The ICU stay identifier. If provided, data is filtered to this specific stay.
+    subject_id : int, optional
+        The patient identifier. Can be used alone or with hadm_id.
+    hadm_id : int, optional
+        The hospital admission identifier. Used with subject_id if stay_id not provided.
+    
+    Returns
+    -------
+    dict
+        A dictionary containing the following keys:
+        - 'subject_id': patient identifier (int or None)
+        - 'hadm_id': hospital admission identifier (int or None)
+        - 'stay_id': ICU stay identifier (int or None)
+        - 'wbc_count': list of WBC count values during stay (list of float)
+        - 'max_wbc_count': maximum WBC count during stay (float or None)
+        - 'min_wbc_count': minimum WBC count during stay (float or None)
+        - 'has_elevated_wbc': boolean indicating if WBC > 12 K/uL at any point
+        - 'band_percent': list of band neutrophil percentages during stay (list of float)
+        - 'max_band_percent': maximum band percentage during stay (float or None)
+        - 'has_left_shift': boolean indicating if bands > 10% at any point
+        - 'neutrophil_percent': list of neutrophil percentages (list of float)
+        - 'lymphocyte_percent': list of lymphocyte percentages (list of float)
+        - 'monocyte_percent': list of monocyte percentages (list of float)
+        - 'eosinophil_percent': list of eosinophil percentages (list of float)
+        - 'basophil_percent': list of basophil percentages (list of float)
+        - 'absolute_neutrophil_count': list of absolute neutrophil counts (list of float)
+        - 'absolute_lymphocyte_count': list of absolute lymphocyte counts (list of float)
+        - 'absolute_monocyte_count': list of absolute monocyte counts (list of float)
+        - 'absolute_eosinophil_count': list of absolute eosinophil counts (list of float)
+        - 'absolute_basophil_count': list of absolute basophil counts (list of float)
+    
+    Raises
+    ------
+    ValueError
+        If no patient identifier is provided.
+    
+    Examples
+    --------
+    >>> blood_differential(stay_id=34477328)
+    {'subject_id': 18871238, 'hadm_id': 27601223, 'stay_id': 34477328,
+     'wbc_count': [15.4], 'max_wbc_count': 15.4, 'min_wbc_count': 15.4,
+     'has_elevated_wbc': True, 'band_percent': [], 'max_band_percent': None,
+     'has_left_shift': False, ...}
+    """
+    
+    # Validate input
+    if stay_id is None and subject_id is None and hadm_id is None:
+        raise ValueError("At least one of stay_id, subject_id, or hadm_id must be provided")
+    
+    # Define item IDs for blood differential components
+    # From d_labitems table
+    WBC_COUNT = 51300
+    WBC_COUNT_ALT = 51301  # "White Blood Cells" - alternative WBC item
+    BANDS = 51144
+    NEUTROPHILS = 51256
+    LYMPHOCYTES = 51244
+    MONOCYTES = 51254
+    EOSINOPHILS = 51200
+    BASOPHILS = 51146
+    ABS_NEUTROPHIL = 52075
+    ABS_LYMPHOCYTE = 51133
+    ABS_LYMPHOCYTE_ALT = 52769  # Alternative Absolute Lymphocyte Count
+    ABS_MONOCYTE = 52074
+    ABS_EOSINOPHIL = 52073
+    ABS_BASOPHIL = 52069
+    
+    # Build the base query
+    if stay_id is not None:
+        # Query with stay_id - join with icustays to get time window
+        sql = f"""
+        SELECT 
+            icu.subject_id,
+            icu.hadm_id,
+            icu.stay_id,
+            le.itemid,
+            dl.label,
+            le.charttime,
+            le.valuenum,
+            le.valueuom
+        FROM mimiciv_hosp.labevents le
+        JOIN mimiciv_hosp.d_labitems dl ON le.itemid = dl.itemid
+        JOIN mimiciv_icu.icustays icu ON le.hadm_id = icu.hadm_id
+        WHERE icu.stay_id = {stay_id}
+        AND le.itemid IN ({WBC_COUNT}, {WBC_COUNT_ALT}, {BANDS}, {NEUTROPHILS}, {LYMPHOCYTES}, {MONOCYTES}, 
+                          {EOSINOPHILS}, {BASOPHILS}, {ABS_NEUTROPHIL}, {ABS_LYMPHOCYTE}, {ABS_LYMPHOCYTE_ALT},
+                          {ABS_MONOCYTE}, {ABS_EOSINOPHIL}, {ABS_BASOPHIL})
+        AND le.charttime >= icu.intime
+        AND le.charttime <= icu.outtime
+        ORDER BY le.charttime, le.itemid
+        """
+    elif subject_id is not None and hadm_id is not None:
+        # Query with subject_id and hadm_id - get all ICU stays for this admission
+        sql = f"""
+        SELECT 
+            icu.subject_id,
+            icu.hadm_id,
+            icu.stay_id,
+            le.itemid,
+            dl.label,
+            le.charttime,
+            le.valuenum,
+            le.valueuom
+        FROM mimiciv_hosp.labevents le
+        JOIN mimiciv_hosp.d_labitems dl ON le.itemid = dl.itemid
+        JOIN mimiciv_icu.icustays icu ON le.hadm_id = icu.hadm_id
+        WHERE icu.subject_id = {subject_id}
+        AND icu.hadm_id = {hadm_id}
+        AND le.itemid IN ({WBC_COUNT}, {WBC_COUNT_ALT}, {BANDS}, {NEUTROPHILS}, {LYMPHOCYTES}, {MONOCYTES}, 
+                          {EOSINOPHILS}, {BASOPHILS}, {ABS_NEUTROPHIL}, {ABS_LYMPHOCYTE}, {ABS_LYMPHOCYTE_ALT},
+                          {ABS_MONOCYTE}, {ABS_EOSINOPHIL}, {ABS_BASOPHIL})
+        AND le.charttime >= icu.intime
+        AND le.charttime <= icu.outtime
+        ORDER BY le.charttime, le.itemid
+        """
+    elif subject_id is not None:
+        # Query with subject_id only - get all ICU stays for this patient
+        sql = f"""
+        SELECT 
+            icu.subject_id,
+            icu.hadm_id,
+            icu.stay_id,
+            le.itemid,
+            dl.label,
+            le.charttime,
+            le.valuenum,
+            le.valueuom
+        FROM mimiciv_hosp.labevents le
+        JOIN mimiciv_hosp.d_labitems dl ON le.itemid = dl.itemid
+        JOIN mimiciv_icu.icustays icu ON le.hadm_id = icu.hadm_id
+        WHERE icu.subject_id = {subject_id}
+        AND le.itemid IN ({WBC_COUNT}, {WBC_COUNT_ALT}, {BANDS}, {NEUTROPHILS}, {LYMPHOCYTES}, {MONOCYTES}, 
+                          {EOSINOPHILS}, {BASOPHILS}, {ABS_NEUTROPHIL}, {ABS_LYMPHOCYTE}, {ABS_LYMPHOCYTE_ALT},
+                          {ABS_MONOCYTE}, {ABS_EOSINOPHIL}, {ABS_BASOPHIL})
+        AND le.charttime >= icu.intime
+        AND le.charttime <= icu.outtime
+        ORDER BY le.charttime, le.itemid
+        """
+    else:
+        # Query with hadm_id only
+        sql = f"""
+        SELECT 
+            icu.subject_id,
+            icu.hadm_id,
+            icu.stay_id,
+            le.itemid,
+            dl.label,
+            le.charttime,
+            le.valuenum,
+            le.valueuom
+        FROM mimiciv_hosp.labevents le
+        JOIN mimiciv_hosp.d_labitems dl ON le.itemid = dl.itemid
+        JOIN mimiciv_icu.icustays icu ON le.hadm_id = icu.hadm_id
+        WHERE icu.hadm_id = {hadm_id}
+        AND le.itemid IN ({WBC_COUNT}, {WBC_COUNT_ALT}, {BANDS}, {NEUTROPHILS}, {LYMPHOCYTES}, {MONOCYTES}, 
+                          {EOSINOPHILS}, {BASOPHILS}, {ABS_NEUTROPHIL}, {ABS_LYMPHOCYTE}, {ABS_LYMPHOCYTE_ALT},
+                          {ABS_MONOCYTE}, {ABS_EOSINOPHIL}, {ABS_BASOPHIL})
+        AND le.charttime >= icu.intime
+        AND le.charttime <= icu.outtime
+        ORDER BY le.charttime, le.itemid
+        """
+    
+    # Execute query
+    df = query_db(sql)
+    
+    # Initialize result dictionary
+    result = {
+        'subject_id': None,
+        'hadm_id': None,
+        'stay_id': None,
+        'wbc_count': [],
+        'max_wbc_count': None,
+        'min_wbc_count': None,
+        'has_elevated_wbc': False,
+        'band_percent': [],
+        'max_band_percent': None,
+        'has_left_shift': False,
+        'neutrophil_percent': [],
+        'lymphocyte_percent': [],
+        'monocyte_percent': [],
+        'eosinophil_percent': [],
+        'basophil_percent': [],
+        'absolute_neutrophil_count': [],
+        'absolute_lymphocyte_count': [],
+        'absolute_monocyte_count': [],
+        'absolute_eosinophil_count': [],
+        'absolute_basophil_count': []
+    }
+    
+    if df.empty:
+        return result
+    
+    # Extract identifiers from first row
+    result['subject_id'] = int(df['subject_id'].iloc[0])
+    result['hadm_id'] = int(df['hadm_id'].iloc[0])
+    result['stay_id'] = int(df['stay_id'].iloc[0])
+    
+    # Extract values by itemid - combine both WBC item IDs
+    wbc_data = df[df['itemid'].isin([WBC_COUNT, WBC_COUNT_ALT])]['valuenum'].dropna().tolist()
+    band_data = df[df['itemid'] == BANDS]['valuenum'].dropna().tolist()
+    neutrophil_data = df[df['itemid'] == NEUTROPHILS]['valuenum'].dropna().tolist()
+    lymphocyte_data = df[df['itemid'] == LYMPHOCYTES]['valuenum'].dropna().tolist()
+    monocyte_data = df[df['itemid'] == MONOCYTES]['valuenum'].dropna().tolist()
+    eosinophil_data = df[df['itemid'] == EOSINOPHILS]['valuenum'].dropna().tolist()
+    basophil_data = df[df['itemid'] == BASOPHILS]['valuenum'].dropna().tolist()
+    abs_neutrophil_data = df[df['itemid'] == ABS_NEUTROPHIL]['valuenum'].dropna().tolist()
+    abs_lymphocyte_data = df[df['itemid'].isin([ABS_LYMPHOCYTE, ABS_LYMPHOCYTE_ALT])]['valuenum'].dropna().tolist()
+    abs_monocyte_data = df[df['itemid'] == ABS_MONOCYTE]['valuenum'].dropna().tolist()
+    abs_eosinophil_data = df[df['itemid'] == ABS_EOSINOPHIL]['valuenum'].dropna().tolist()
+    abs_basophil_data = df[df['itemid'] == ABS_BASOPHIL]['valuenum'].dropna().tolist()
+    
+    # Populate result
+    result['wbc_count'] = wbc_data
+    if wbc_data:
+        result['max_wbc_count'] = float(max(wbc_data))
+        result['min_wbc_count'] = float(min(wbc_data))
+        result['has_elevated_wbc'] = any(w > 12.0 for w in wbc_data)
+    
+    result['band_percent'] = band_data
+    if band_data:
+        result['max_band_percent'] = float(max(band_data))
+        result['has_left_shift'] = any(b > 10.0 for b in band_data)
+    
+    result['neutrophil_percent'] = neutrophil_data
+    result['lymphocyte_percent'] = lymphocyte_data
+    result['monocyte_percent'] = monocyte_data
+    result['eosinophil_percent'] = eosinophil_data
+    result['basophil_percent'] = basophil_data
+    result['absolute_neutrophil_count'] = abs_neutrophil_data
+    result['absolute_lymphocyte_count'] = abs_lymphocyte_data
+    result['absolute_monocyte_count'] = abs_monocyte_data
+    result['absolute_eosinophil_count'] = abs_eosinophil_data
+    result['absolute_basophil_count'] = abs_basophil_data
+    
+    return result
+```
+
+---
+
+## Test Results & Error Fixes
+
+### Step 36 - Error
+- **Error**: `NameError: name 'ABS_MONOCYTES' is not defined`
+- **Cause**: Typo in SQL query - used `ABS_MONOCYTES` instead of `ABS_MONOCYTE`
+- **Fix**: Corrected variable name in all SQL queries
+
+### Step 37 - Success
+- **Test**: `blood_differential(stay_id=34477328)`
+- **Result**: Function works correctly with WBC count 15.4, has_elevated_wbc=True
+
+### Step 27 - SQL Syntax Error
+- **Error**: `_duckdb.ParserException: Parser Error: syntax error at or near "DISTINCT"`
+- **Cause**: Invalid SQL syntax - `SELECT COUNT(*) as cnt, DISTINCT le.itemid`
+- **Fix**: Removed DISTINCT, used GROUP BY instead
+
+### Step 30 - Column Binding Error
+- **Error**: `_duckdb.BinderException: Binder Error: Table "le" does not have a column named "stay_id"`
+- **Cause**: `labevents` table doesn't have `stay_id` column
+- **Fix**: Changed query to select `icu.stay_id` from joined `icustays` table
+
+### Step 6 - Error Handling Test
+- **Test**: `blood_differential()` with no identifiers
+- **Result**: Correctly raised ValueError
+
+### Step 7 - Multiple WBC Measurements Test
+- **Test**: `blood_differential(stay_id=35177744)`
+- **Result**: wbc_count=[16.0, 10.2], max_wbc_count=16.0, min_wbc_count=10.2
+
+### Step 8 - Band Measurements Test
+- **Test**: `blood_differential(stay_id=36753294)`
+- **Result**: band_percent=[10.0], max_band_percent=10.0, has_left_shift=False (exactly 10%, not >10%)
+
+### Step 9 - Left Shift Test
+- **Test**: `blood_differential(stay_id=37190362)`
+- **Result**: band_percent=[20.0, 16.0], max_band_percent=20.0, has_left_shift=True
+
+### Step 16-20 - Critical Discovery
+- **Issue**: Function was missing WBC data for many patients
+- **Root Cause**: Only queried item 51300 "WBC Count", but many patients have item 51301 "White Blood Cells"
+- **Example**: subject_id=10436108 had WBC values 12.6, 10.9, 14.0, 21.4, 20.0, 14.7, 19.5, 15.0, 12.2, 12.2, 8.6, 5.1, 6.8, 4.1 using item 51301
+- **Fix**: Added item 51301 to WBC_COUNT_ALT and combined both in query
+
+### Step 21 - Additional Item Discovery
+- **Finding**: Item 52769 "Absolute Lymphocyte Count" is another variant alongside 51133
+- **Fix**: Added ABS_LYMPHOCYTE_ALT = 52769 to function
+
+### Guidelines Retrieved
+1. **elevated_white_blood_cell_count_guideline** - Leukocytosis definition, thresholds, severity classification
+2. **sirs_guideline** - SIRS criteria including WBC > 12,000 cells/μL or < 4,000 cells/μL or > 10% bands
+
+=== Step 3 ===
+# Clinical Coding Agent - Rolling Memory
+
+## Key Schema Facts
+
+### Tables
+- **mimiciv_hosp.labevents**: labevent_id, subject_id, hadm_id, specimen_id, itemid, order_provider_id, charttime, storetime, value, valuenum, valueuom, ref_range_lower, ref_range_upper, flag, priority, comments
+- **mimiciv_hosp.d_labitems**: itemid, label, fluid, category
+- **mimiciv_icu.icustays**: subject_id, hadm_id, stay_id, first_careunit, last_careunit, intime, outtime, los
+- **mimiciv_icu.chartevents**: subject_id, hadm_id, stay_id, itemid, charttime, valuenum, valueuom
+- **mimiciv_icu.d_items**: itemid, label, abbreviation, linksto, category, unitname, param_type, lownormalvalue, highnormalvalue
+- **mimiciv_hosp.admissions**: hadm_id, subject_id, admittime, dischtime
+
+### Key Item IDs (Blood Hematology)
+| Item ID | Label | Fluid | Category |
+|---------|-------|-------|----------|
+| 51300 | WBC Count | Blood | Hematology |
+| 51301 | White Blood Cells | Blood | Hematology |
+| 51144 | Bands | Blood | Hematology |
+| 51256 | Neutrophils | Blood | Hematology |
+| 51244 | Lymphocytes | Blood | Hematology |
+| 51254 | Monocytes | Blood | Hematology |
+| 51200 | Eosinophils | Blood | Hematology |
+| 51146 | Basophils | Blood | Hematology |
+| 52075 | Absolute Neutrophil Count | Blood | Hematology |
+| 51133 | Absolute Lymphocyte Count | Blood | Hematology |
+| 52769 | Absolute Lymphocyte Count | Blood | Hematology |
+| 52074 | Absolute Monocyte Count | Blood | Hematology |
+| 52073 | Absolute Eosinophil Count | Blood | Hematology |
+| 52069 | Absolute Basophil Count | Blood | Hematology |
+
+### Clinical Thresholds
+- **Leukocytosis (adult)**: WBC > 11.0 × 10⁹/L (> 11,000 cells/µL)
+- **Normal WBC range**: 4.5–11.0 × 10⁹/L
+- **SIRS WBC criterion**: > 12,000 cells/μL OR < 4,000 cells/μL OR > 10% bands
+- **Left shift**: Bands > 10%
+
+---
+
+## Function Source Code
+
+### blood_differential()
+
+```python
+import pandas as pd
+from typing import Optional, Dict, Any
+
+def blood_differential(stay_id: Optional[int] = None, 
+                       subject_id: Optional[int] = None,
+                       hadm_id: Optional[int] = None) -> Dict[str, Any]:
+    """
+    Extract blood differential information for a patient's ICU stay.
+    
+    This function retrieves comprehensive blood differential data including WBC count,
+    band neutrophils, and other differential components (neutrophils, lymphocytes, 
+    monocytes, eosinophils, basophils) during an ICU stay.
+    
+    Parameters
+    ----------
+    stay_id : int, optional
+        The ICU stay identifier. If provided, data is filtered to this specific stay.
+    subject_id : int, optional
+        The patient identifier. Can be used alone or with hadm_id.
+    hadm_id : int, optional
+        The hospital admission identifier. Used with subject_id if stay_id not provided.
+    
+    Returns
+    -------
+    dict
+        A dictionary containing the following keys:
+        - 'subject_id': patient identifier (int or None)
+        - 'hadm_id': hospital admission identifier (int or None)
+        - 'stay_id': ICU stay identifier (int or None)
+        - 'wbc_count': list of WBC count values during stay (list of float)
+        - 'max_wbc_count': maximum WBC count during stay (float or None)
+        - 'min_wbc_count': minimum WBC count during stay (float or None)
+        - 'has_elevated_wbc': boolean indicating if WBC > 12 K/uL at any point
+        - 'band_percent': list of band neutrophil percentages during stay (list of float)
+        - 'max_band_percent': maximum band percentage during stay (float or None)
+        - 'has_left_shift': boolean indicating if bands > 10% at any point
+        - 'neutrophil_percent': list of neutrophil percentages (list of float)
+        - 'lymphocyte_percent': list of lymphocyte percentages (list of float)
+        - 'monocyte_percent': list of monocyte percentages (list of float)
+        - 'eosinophil_percent': list of eosinophil percentages (list of float)
+        - 'basophil_percent': list of basophil percentages (list of float)
+        - 'absolute_neutrophil_count': list of absolute neutrophil counts (list of float)
+        - 'absolute_lymphocyte_count': list of absolute lymphocyte counts (list of float)
+        - 'absolute_monocyte_count': list of absolute monocyte counts (list of float)
+        - 'absolute_eosinophil_count': list of absolute eosinophil counts (list of float)
+        - 'absolute_basophil_count': list of absolute basophil counts (list of float)
+    
+    Raises
+    ------
+    ValueError
+        If no patient identifier is provided.
+    
+    Examples
+    --------
+    >>> blood_differential(stay_id=34477328)
+    {'subject_id': 18871238, 'hadm_id': 27601223, 'stay_id': 34477328,
+     'wbc_count': [15.4], 'max_wbc_count': 15.4, 'min_wbc_count': 15.4,
+     'has_elevated_wbc': True, 'band_percent': [], 'max_band_percent': None,
+     'has_left_shift': False, ...}
+    """
+    
+    # Validate input
+    if stay_id is None and subject_id is None and hadm_id is None:
+        raise ValueError("At least one of stay_id, subject_id, or hadm_id must be provided")
+    
+    # Define item IDs for blood differential components
+    # From d_labitems table
+    WBC_COUNT = 51300
+    WBC_COUNT_ALT = 51301  # "White Blood Cells" - alternative WBC item
+    BANDS = 51144
+    NEUTROPHILS = 51256
+    LYMPHOCYTES = 51244
+    MONOCYTES = 51254
+    EOSINOPHILS = 51200
+    BASOPHILS = 51146
+    ABS_NEUTROPHIL = 52075
+    ABS_LYMPHOCYTE = 51133
+    ABS_LYMPHOCYTE_ALT = 52769  # Alternative Absolute Lymphocyte Count
+    ABS_MONOCYTE = 52074
+    ABS_EOSINOPHIL = 52073
+    ABS_BASOPHIL = 52069
+    
+    # Build the base query
+    if stay_id is not None:
+        # Query with stay_id - join with icustays to get time window
+        sql = f"""
+        SELECT 
+            icu.subject_id,
+            icu.hadm_id,
+            icu.stay_id,
+            le.itemid,
+            dl.label,
+            le.charttime,
+            le.valuenum,
+            le.valueuom
+        FROM mimiciv_hosp.labevents le
+        JOIN mimiciv_hosp.d_labitems dl ON le.itemid = dl.itemid
+        JOIN mimiciv_icu.icustays icu ON le.hadm_id = icu.hadm_id
+        WHERE icu.stay_id = {stay_id}
+        AND le.itemid IN ({WBC_COUNT}, {WBC_COUNT_ALT}, {BANDS}, {NEUTROPHILS}, {LYMPHOCYTES}, {MONOCYTES}, 
+                          {EOSINOPHILS}, {BASOPHILS}, {ABS_NEUTROPHIL}, {ABS_LYMPHOCYTE}, {ABS_LYMPHOCYTE_ALT},
+                          {ABS_MONOCYTE}, {ABS_EOSINOPHIL}, {ABS_BASOPHIL})
+        AND le.charttime >= icu.intime
+        AND le.charttime <= icu.outtime
+        ORDER BY le.charttime, le.itemid
+        """
+    elif subject_id is not None and hadm_id is not None:
+        # Query with subject_id and hadm_id - get all ICU stays for this admission
+        sql = f"""
+        SELECT 
+            icu.subject_id,
+            icu.hadm_id,
+            icu.stay_id,
+            le.itemid,
+            dl.label,
+            le.charttime,
+            le.valuenum,
+            le.valueuom
+        FROM mimiciv_hosp.labevents le
+        JOIN mimiciv_hosp.d_labitems dl ON le.itemid = dl.itemid
+        JOIN mimiciv_icu.icustays icu ON le.hadm_id = icu.hadm_id
+        WHERE icu.subject_id = {subject_id}
+        AND icu.hadm_id = {hadm_id}
+        AND le.itemid IN ({WBC_COUNT}, {WBC_COUNT_ALT}, {BANDS}, {NEUTROPHILS}, {LYMPHOCYTES}, {MONOCYTES}, 
+                          {EOSINOPHILS}, {BASOPHILS}, {ABS_NEUTROPHIL}, {ABS_LYMPHOCYTE}, {ABS_LYMPHOCYTE_ALT},
+                          {ABS_MONOCYTE}, {ABS_EOSINOPHIL}, {ABS_BASOPHIL})
+        AND le.charttime >= icu.intime
+        AND le.charttime <= icu.outtime
+        ORDER BY le.charttime, le.itemid
+        """
+    elif subject_id is not None:
+        # Query with subject_id only - get all ICU stays for this patient
+        sql = f"""
+        SELECT 
+            icu.subject_id,
+            icu.hadm_id,
+            icu.stay_id,
+            le.itemid,
+            dl.label,
+            le.charttime,
+            le.valuenum,
+            le.valueuom
+        FROM mimiciv_hosp.labevents le
+        JOIN mimiciv_hosp.d_labitems dl ON le.itemid = dl.itemid
+        JOIN mimiciv_icu.icustays icu ON le.hadm_id = icu.hadm_id
+        WHERE icu.subject_id = {subject_id}
+        AND le.itemid IN ({WBC_COUNT}, {WBC_COUNT_ALT}, {BANDS}, {NEUTROPHILS}, {LYMPHOCYTES}, {MONOCYTES}, 
+                          {EOSINOPHILS}, {BASOPHILS}, {ABS_NEUTROPHIL}, {ABS_LYMPHOCYTE}, {ABS_LYMPHOCYTE_ALT},
+                          {ABS_MONOCYTE}, {ABS_EOSINOPHIL}, {ABS_BASOPHIL})
+        AND le.charttime >= icu.intime
+        AND le.charttime <= icu.outtime
+        ORDER BY le.charttime, le.itemid
+        """
+    else:
+        # Query with hadm_id only
+        sql = f"""
+        SELECT 
+            icu.subject_id,
+            icu.hadm_id,
+            icu.stay_id,
+            le.itemid,
+            dl.label,
+            le.charttime,
+            le.valuenum,
+            le.valueuom
+        FROM mimiciv_hosp.labevents le
+        JOIN mimiciv_hosp.d_labitems dl ON le.itemid = dl.itemid
+        JOIN mimiciv_icu.icustays icu ON le.hadm_id = icu.hadm_id
+        WHERE icu.hadm_id = {hadm_id}
+        AND le.itemid IN ({WBC_COUNT}, {WBC_COUNT_ALT}, {BANDS}, {NEUTROPHILS}, {LYMPHOCYTES}, {MONOCYTES}, 
+                          {EOSINOPHILS}, {BASOPHILS}, {ABS_NEUTROPHIL}, {ABS_LYMPHOCYTE}, {ABS_LYMPHOCYTE_ALT},
+                          {ABS_MONOCYTE}, {ABS_EOSINOPHIL}, {ABS_BASOPHIL})
+        AND le.charttime >= icu.intime
+        AND le.charttime <= icu.outtime
+        ORDER BY le.charttime, le.itemid
+        """
+    
+    # Execute query
+    df = query_db(sql)
+    
+    # Initialize result dictionary
+    result = {
+        'subject_id': None,
+        'hadm_id': None,
+        'stay_id': None,
+        'wbc_count': [],
+        'max_wbc_count': None,
+        'min_wbc_count': None,
+        'has_elevated_wbc': False,
+        'band_percent': [],
+        'max_band_percent': None,
+        'has_left_shift': False,
+        'neutrophil_percent': [],
+        'lymphocyte_percent': [],
+        'monocyte_percent': [],
+        'eosinophil_percent': [],
+        'basophil_percent': [],
+        'absolute_neutrophil_count': [],
+        'absolute_lymphocyte_count': [],
+        'absolute_monocyte_count': [],
+        'absolute_eosinophil_count': [],
+        'absolute_basophil_count': []
+    }
+    
+    if df.empty:
+        return result
+    
+    # Extract identifiers from first row
+    result['subject_id'] = int(df['subject_id'].iloc[0])
+    result['hadm_id'] = int(df['hadm_id'].iloc[0])
+    result['stay_id'] = int(df['stay_id'].iloc[0])
+    
+    # Extract values by itemid - combine both WBC item IDs
+    wbc_data = df[df['itemid'].isin([WBC_COUNT, WBC_COUNT_ALT])]['valuenum'].dropna().tolist()
+    band_data = df[df['itemid'] == BANDS]['valuenum'].dropna().tolist()
+    neutrophil_data = df[df['itemid'] == NEUTROPHILS]['valuenum'].dropna().tolist()
+    lymphocyte_data = df[df['itemid'] == LYMPHOCYTES]['valuenum'].dropna().tolist()
+    monocyte_data = df[df['itemid'] == MONOCYTES]['valuenum'].dropna().tolist()
+    eosinophil_data = df[df['itemid'] == EOSINOPHILS]['valuenum'].dropna().tolist()
+    basophil_data = df[df['itemid'] == BASOPHILS]['valuenum'].dropna().tolist()
+    abs_neutrophil_data = df[df['itemid'] == ABS_NEUTROPHIL]['valuenum'].dropna().tolist()
+    abs_lymphocyte_data = df[df['itemid'].isin([ABS_LYMPHOCYTE, ABS_LYMPHOCYTE_ALT])]['valuenum'].dropna().tolist()
+    abs_monocyte_data = df[df['itemid'] == ABS_MONOCYTE]['valuenum'].dropna().tolist()
+    abs_eosinophil_data = df[df['itemid'] == ABS_EOSINOPHIL]['valuenum'].dropna().tolist()
+    abs_basophil_data = df[df['itemid'] == ABS_BASOPHIL]['valuenum'].dropna().tolist()
+    
+    # Populate result
+    result['wbc_count'] = wbc_data
+    if wbc_data:
+        result['max_wbc_count'] = float(max(wbc_data))
+        result['min_wbc_count'] = float(min(wbc_data))
+        result['has_elevated_wbc'] = any(w > 12.0 for w in wbc_data)
+    
+    result['band_percent'] = band_data
+    if band_data:
+        result['max_band_percent'] = float(max(band_data))
+        result['has_left_shift'] = any(b > 10.0 for b in band_data)
+    
+    result['neutrophil_percent'] = neutrophil_data
+    result['lymphocyte_percent'] = lymphocyte_data
+    result['monocyte_percent'] = monocyte_data
+    result['eosinophil_percent'] = eosinophil_data
+    result['basophil_percent'] = basophil_data
+    result['absolute_neutrophil_count'] = abs_neutrophil_data
+    result['absolute_lymphocyte_count'] = abs_lymphocyte_data
+    result['absolute_monocyte_count'] = abs_monocyte_data
+    result['absolute_eosinophil_count'] = abs_eosinophil_data
+    result['absolute_basophil_count'] = abs_basophil_data
+    
+    return result
+```
+
+---
+
+## Test Results & Error Fixes
+
+### Step 3 - Input Combination Tests
+- **Test 1**: `stay_id=35177744` - wbc_count=[16.0, 10.2], max=16.0, min=10.2 ✓
+- **Test 2**: `stay_id=36753294` - band_percent=[10.0], has_left_shift=False (exactly 10%, not >10%) ✓
+- **Test 3**: `stay_id=37190362` - band_percent=[20.0, 16.0], has_left_shift=True ✓
+- **Test 4**: `subject_id=10436108` - Initially returned empty (bug discovered)
+
+### Step 17-18 - Comprehensive Tests (After Function Rewrite)
+- **Test 1**: `stay_id=34477328` - wbc_count=[15.4, 15.4], has_elevated_wbc=True ✓
+- **Test 2**: `hadm_id=23433094` - subject_id=10436108, wbc_count=[19.5, 15.0, 12.2], has_elevated_wbc=True ✓
+- **Test 3**: `subject_id=10436108` - wbc_count=[19.5, 15.0, 12.2], has_elevated_wbc=True ✓
+- **Test 4**: `stay_id=35177744` - 34 WBC values, max=16.0, min=2.8 ✓
+- **Test 5**: `stay_id=36753294` - band_percent=[10.0], has_left_shift=False ✓
+- **Test 6**: `stay_id=37190362` - band_percent=[20.0, 16.0], has_left_shift=True ✓
+- **Test 7**: `subject_id=10436108, hadm_id=23433094` - wbc_count=[19.5, 15.0, 12.2] ✓
+- **Test 8**: `stay_id=99999999` (no data) - subject_id=None, wbc_count=[] ✓
+- **Test 9**: No parameters - Correctly raised ValueError ✓
+
+### Step 21 - Low WBC Test
+- **Test**: `subject_id=10429025, hadm_id=25475193` - wbc_count=[1.4, 9.8, 10.7], min=1.4, has_elevated_wbc=False ✓
+
+### Step 22 - Differential Components Test
+- **Test**: `stay_id=35177744` - All components extracted correctly:
+  - wbc_count: 34 values
+  - neutrophil_percent: 3 values
+  - lymphocyte_percent: 3 values
+  - monocyte_percent: 3 values
+  - eosinophil_percent: 3 values
+  - basophil_percent: 3 values
+  - absolute_neutrophil_count: 3 values
+  - absolute_lymphocyte_count: 5 values
+  - absolute_monocyte_count: 3 values
+  - absolute_eosinophil_count: 3 values
+  - absolute_basophil_count: 3 values
+
+### Step 24-36 - Case Investigations
+- **Case 1**: `stay_id=37701853` - wbc_count=[7.0], has_elevated_wbc=False ✓
+- **Case 2**: `stay_id=34870227` - wbc_count=[7.9, 9.5, 12.0, 9.5, 18.4, 20.0, ...], max=20.0, has_elevated_wbc=True ✓
+- **Case 3**: `stay_id=34843199` - wbc_count=[5.6, 7.8, 6.6], max=7.8, has_elevated_wbc=False ✓
+- **Case 4**: `stay_id=34823722` - wbc_count=[14.6, 13.9, 12.9], max=14.6, has_elevated_wbc=True ✓
+
+### Step 36 - Error
+- **Error**: `NameError: name 'ABS_MONOCYTES' is not defined`
+- **Cause**: Typo in SQL query - used `ABS_MONOCYTES` instead of `ABS_MONOCYTE`
+- **Fix**: Corrected variable name in all SQL queries
+
+### Step 27 - SQL Syntax Error
+- **Error**: `_duckdb.ParserException: Parser Error: syntax error at or near "DISTINCT"`
+- **Cause**: Invalid SQL syntax - `SELECT COUNT(*) as cnt, DISTINCT le.itemid`
+- **Fix**: Removed DISTINCT, used GROUP BY instead
+
+### Step 30 - Column Binding Error
+- **Error**: `_duckdb.BinderException: Binder Error: Table "le" does not have a column named "stay_id"`
+- **Cause**: `labevents` table doesn't have `stay_id` column
+- **Fix**: Changed query to select `icu.stay_id` from joined `icustays` table
+
+### Step 6 - Error Handling Test
+- **Test**: `blood_differential()` with no identifiers
+- **Result**: Correctly raised ValueError
+
+### Step 16-20 - Critical Discovery
+- **Issue**: Function was missing WBC data for many patients
+- **Root Cause**: Only queried item 51300 "WBC Count", but many patients have item 51301 "White Blood Cells"
+- **Example**: subject_id=10436108 had WBC values 12.6, 10.9, 14.0, 21.4, 20.0, 14.7, 19.5, 15.0, 12.2, 12.2, 8.6, 5.1, 6.8, 4.1 using item 51301
+- **Fix**: Added item 51301 to WBC_COUNT_ALT and combined both in query
+
+### Step 21 - Additional Item Discovery
+- **Finding**: Item 52769 "Absolute Lymphocyte Count" is another variant alongside 51133
+- **Fix**: Added ABS_LYMPHOCYTE_ALT = 52769 to function
+
+### Guidelines Retrieved
+1. **elevated_white_blood_cell_count_guideline** - Leukocytosis definition, thresholds, severity classification
+2. **sirs_guideline** - SIRS criteria including WBC > 12,000 cells/μL or < 4,000 cells/μL or > 10% bands
+
+=== Step 4 ===
+# Clinical Coding Agent - Rolling Memory
+
+## Key Schema Facts
+
+### Tables
+- **mimiciv_hosp.labevents**: labevent_id, subject_id, hadm_id, specimen_id, itemid, order_provider_id, charttime, storetime, value, valuenum, valueuom, ref_range_lower, ref_range_upper, flag, priority, comments
+- **mimiciv_hosp.d_labitems**: itemid, label, fluid, category
+- **mimiciv_icu.icustays**: subject_id, hadm_id, stay_id, first_careunit, last_careunit, intime, outtime, los
+- **mimiciv_icu.chartevents**: subject_id, hadm_id, stay_id, itemid, charttime, valuenum, valueuom
+- **mimiciv_icu.d_items**: itemid, label, abbreviation, linksto, category, unitname, param_type, lownormalvalue, highnormalvalue
+- **mimiciv_hosp.admissions**: hadm_id, subject_id, admittime, dischtime
+
+### Key Item IDs (Blood Hematology)
+| Item ID | Label | Fluid | Category |
+|---------|-------|-------|----------|
+| 51300 | WBC Count | Blood | Hematology |
+| 51301 | White Blood Cells | Blood | Hematology |
+| 51144 | Bands | Blood | Hematology |
+| 51256 | Neutrophils | Blood | Hematology |
+| 51244 | Lymphocytes | Blood | Hematology |
+| 51254 | Monocytes | Blood | Hematology |
+| 51200 | Eosinophils | Blood | Hematology |
+| 51146 | Basophils | Blood | Hematology |
+| 52075 | Absolute Neutrophil Count | Blood | Hematology |
+| 51133 | Absolute Lymphocyte Count | Blood | Hematology |
+| 52769 | Absolute Lymphocyte Count | Blood | Hematology |
+| 52074 | Absolute Monocyte Count | Blood | Hematology |
+| 52073 | Absolute Eosinophil Count | Blood | Hematology |
+| 52069 | Absolute Basophil Count | Blood | Hematology |
+
+### Clinical Thresholds
+- **Leukocytosis (adult)**: WBC > 11.0 × 10⁹/L (> 11,000 cells/µL)
+- **Normal WBC range**: 4.5–11.0 × 10⁹/L
+- **SIRS WBC criterion**: > 12,000 cells/μL OR < 4,000 cells/μL OR > 10% bands
+- **Left shift**: Bands > 10%
+
+---
+
+## Function Source Code
+
+### blood_differential()
+
+```python
+import pandas as pd
+from typing import Optional, Dict, Any
+
+def blood_differential(stay_id: Optional[int] = None, 
+                       subject_id: Optional[int] = None,
+                       hadm_id: Optional[int] = None) -> Dict[str, Any]:
+    """
+    Extract blood differential information for a patient's ICU stay.
+    
+    This function retrieves comprehensive blood differential data including WBC count,
+    band neutrophils, and other differential components (neutrophils, lymphocytes, 
+    monocytes, eosinophils, basophils) during an ICU stay.
+    
+    Parameters
+    ----------
+    stay_id : int, optional
+        The ICU stay identifier. If provided, data is filtered to this specific stay.
+    subject_id : int, optional
+        The patient identifier. Can be used alone or with hadm_id.
+    hadm_id : int, optional
+        The hospital admission identifier. Used with subject_id if stay_id not provided.
+    
+    Returns
+    -------
+    dict
+        A dictionary containing the following keys:
+        - 'subject_id': patient identifier (int or None)
+        - 'hadm_id': hospital admission identifier (int or None)
+        - 'stay_id': ICU stay identifier (int or None)
+        - 'wbc_count': list of WBC count values during stay (list of float)
+        - 'max_wbc_count': maximum WBC count during stay (float or None)
+        - 'min_wbc_count': minimum WBC count during stay (float or None)
+        - 'has_elevated_wbc': boolean indicating if WBC > 12 K/uL at any point
+        - 'band_percent': list of band neutrophil percentages during stay (list of float)
+        - 'max_band_percent': maximum band percentage during stay (float or None)
+        - 'has_left_shift': boolean indicating if bands > 10% at any point
+        - 'neutrophil_percent': list of neutrophil percentages (list of float)
+        - 'lymphocyte_percent': list of lymphocyte percentages (list of float)
+        - 'monocyte_percent': list of monocyte percentages (list of float)
+        - 'eosinophil_percent': list of eosinophil percentages (list of float)
+        - 'basophil_percent': list of basophil percentages (list of float)
+        - 'absolute_neutrophil_count': list of absolute neutrophil counts (list of float)
+        - 'absolute_lymphocyte_count': list of absolute lymphocyte counts (list of float)
+        - 'absolute_monocyte_count': list of absolute monocyte counts (list of float)
+        - 'absolute_eosinophil_count': list of absolute eosinophil counts (list of float)
+        - 'absolute_basophil_count': list of absolute basophil counts (list of float)
+    
+    Raises
+    ------
+    ValueError
+        If no patient identifier is provided.
+    
+    Examples
+    --------
+    >>> blood_differential(stay_id=34477328)
+    {'subject_id': 18871238, 'hadm_id': 27601223, 'stay_id': 34477328,
+     'wbc_count': [15.4], 'max_wbc_count': 15.4, 'min_wbc_count': 15.4,
+     'has_elevated_wbc': True, 'band_percent': [], 'max_band_percent': None,
+     'has_left_shift': False, ...}
+    """
+    
+    # Validate input
+    if stay_id is None and subject_id is None and hadm_id is None:
+        raise ValueError("At least one of stay_id, subject_id, or hadm_id must be provided")
+    
+    # Define item IDs for blood differential components
+    # From d_labitems table
+    WBC_COUNT = 51300
+    WBC_COUNT_ALT = 51301  # "White Blood Cells" - alternative WBC item
+    BANDS = 51144
+    NEUTROPHILS = 51256
+    LYMPHOCYTES = 51244
+    MONOCYTES = 51254
+    EOSINOPHILS = 51200
+    BASOPHILS = 51146
+    ABS_NEUTROPHIL = 52075
+    ABS_LYMPHOCYTE = 51133
+    ABS_LYMPHOCYTE_ALT = 52769  # Alternative Absolute Lymphocyte Count
+    ABS_MONOCYTE = 52074
+    ABS_EOSINOPHIL = 52073
+    ABS_BASOPHIL = 52069
+    
+    # Build the base query
+    if stay_id is not None:
+        # Query with stay_id - join with icustays to get time window
+        sql = f"""
+        SELECT 
+            icu.subject_id,
+            icu.hadm_id,
+            icu.stay_id,
+            le.itemid,
+            dl.label,
+            le.charttime,
+            le.valuenum,
+            le.valueuom
+        FROM mimiciv_hosp.labevents le
+        JOIN mimiciv_hosp.d_labitems dl ON le.itemid = dl.itemid
+        JOIN mimiciv_icu.icustays icu ON le.hadm_id = icu.hadm_id
+        WHERE icu.stay_id = {stay_id}
+        AND le.itemid IN ({WBC_COUNT}, {WBC_COUNT_ALT}, {BANDS}, {NEUTROPHILS}, {LYMPHOCYTES}, {MONOCYTES}, 
+                          {EOSINOPHILS}, {BASOPHILS}, {ABS_NEUTROPHIL}, {ABS_LYMPHOCYTE}, {ABS_LYMPHOCYTE_ALT},
+                          {ABS_MONOCYTE}, {ABS_EOSINOPHIL}, {ABS_BASOPHIL})
+        AND le.charttime >= icu.intime
+        AND le.charttime <= icu.outtime
+        ORDER BY le.charttime, le.itemid
+        """
+    elif subject_id is not None and hadm_id is not None:
+        # Query with subject_id and hadm_id - get all ICU stays for this admission
+        sql = f"""
+        SELECT 
+            icu.subject_id,
+            icu.hadm_id,
+            icu.stay_id,
+            le.itemid,
+            dl.label,
+            le.charttime,
+            le.valuenum,
+            le.valueuom
+        FROM mimiciv_hosp.labevents le
+        JOIN mimiciv_hosp.d_labitems dl ON le.itemid = dl.itemid
+        JOIN mimiciv_icu.icustays icu ON le.hadm_id = icu.hadm_id
+        WHERE icu.subject_id = {subject_id}
+        AND icu.hadm_id = {hadm_id}
+        AND le.itemid IN ({WBC_COUNT}, {WBC_COUNT_ALT}, {BANDS}, {NEUTROPHILS}, {LYMPHOCYTES}, {MONOCYTES}, 
+                          {EOSINOPHILS}, {BASOPHILS}, {ABS_NEUTROPHIL}, {ABS_LYMPHOCYTE}, {ABS_LYMPHOCYTE_ALT},
+                          {ABS_MONOCYTE}, {ABS_EOSINOPHIL}, {ABS_BASOPHIL})
+        AND le.charttime >= icu.intime
+        AND le.charttime <= icu.outtime
+        ORDER BY le.charttime, le.itemid
+        """
+    elif subject_id is not None:
+        # Query with subject_id only - get all ICU stays for this patient
+        sql = f"""
+        SELECT 
+            icu.subject_id,
+            icu.hadm_id,
+            icu.stay_id,
+            le.itemid,
+            dl.label,
+            le.charttime,
+            le.valuenum,
+            le.valueuom
+        FROM mimiciv_hosp.labevents le
+        JOIN mimiciv_hosp.d_labitems dl ON le.itemid = dl.itemid
+        JOIN mimiciv_icu.icustays icu ON le.hadm_id = icu.hadm_id
+        WHERE icu.subject_id = {subject_id}
+        AND le.itemid IN ({WBC_COUNT}, {WBC_COUNT_ALT}, {BANDS}, {NEUTROPHILS}, {LYMPHOCYTES}, {MONOCYTES}, 
+                          {EOSINOPHILS}, {BASOPHILS}, {ABS_NEUTROPHIL}, {ABS_LYMPHOCYTE}, {ABS_LYMPHOCYTE_ALT},
+                          {ABS_MONOCYTE}, {ABS_EOSINOPHIL}, {ABS_BASOPHIL})
+        AND le.charttime >= icu.intime
+        AND le.charttime <= icu.outtime
+        ORDER BY le.charttime, le.itemid
+        """
+    else:
+        # Query with hadm_id only
+        sql = f"""
+        SELECT 
+            icu.subject_id,
+            icu.hadm_id,
+            icu.stay_id,
+            le.itemid,
+            dl.label,
+            le.charttime,
+            le.valuenum,
+            le.valueuom
+        FROM mimiciv_hosp.labevents le
+        JOIN mimiciv_hosp.d_labitems dl ON le.itemid = dl.itemid
+        JOIN mimiciv_icu.icustays icu ON le.hadm_id = icu.hadm_id
+        WHERE icu.hadm_id = {hadm_id}
+        AND le.itemid IN ({WBC_COUNT}, {WBC_COUNT_ALT}, {BANDS}, {NEUTROPHILS}, {LYMPHOCYTES}, {MONOCYTES}, 
+                          {EOSINOPHILS}, {BASOPHILS}, {ABS_NEUTROPHIL}, {ABS_LYMPHOCYTE}, {ABS_LYMPHOCYTE_ALT},
+                          {ABS_MONOCYTE}, {ABS_EOSINOPHIL}, {ABS_BASOPHIL})
+        AND le.charttime >= icu.intime
+        AND le.charttime <= icu.outtime
+        ORDER BY le.charttime, le.itemid
+        """
+    
+    # Execute query
+    df = query_db(sql)
+    
+    # Initialize result dictionary
+    result = {
+        'subject_id': None,
+        'hadm_id': None,
+        'stay_id': None,
+        'wbc_count': [],
+        'max_wbc_count': None,
+        'min_wbc_count': None,
+        'has_elevated_wbc': False,
+        'band_percent': [],
+        'max_band_percent': None,
+        'has_left_shift': False,
+        'neutrophil_percent': [],
+        'lymphocyte_percent': [],
+        'monocyte_percent': [],
+        'eosinophil_percent': [],
+        'basophil_percent': [],
+        'absolute_neutrophil_count': [],
+        'absolute_lymphocyte_count': [],
+        'absolute_monocyte_count': [],
+        'absolute_eosinophil_count': [],
+        'absolute_basophil_count': []
+    }
+    
+    if df.empty:
+        return result
+    
+    # Extract identifiers from first row
+    result['subject_id'] = int(df['subject_id'].iloc[0])
+    result['hadm_id'] = int(df['hadm_id'].iloc[0])
+    result['stay_id'] = int(df['stay_id'].iloc[0])
+    
+    # Extract values by itemid - combine both WBC item IDs
+    wbc_data = df[df['itemid'].isin([WBC_COUNT, WBC_COUNT_ALT])]['valuenum'].dropna().tolist()
+    band_data = df[df['itemid'] == BANDS]['valuenum'].dropna().tolist()
+    neutrophil_data = df[df['itemid'] == NEUTROPHILS]['valuenum'].dropna().tolist()
+    lymphocyte_data = df[df['itemid'] == LYMPHOCYTES]['valuenum'].dropna().tolist()
+    monocyte_data = df[df['itemid'] == MONOCYTES]['valuenum'].dropna().tolist()
+    eosinophil_data = df[df['itemid'] == EOSINOPHILS]['valuenum'].dropna().tolist()
+    basophil_data = df[df['itemid'] == BASOPHILS]['valuenum'].dropna().tolist()
+    abs_neutrophil_data = df[df['itemid'] == ABS_NEUTROPHIL]['valuenum'].dropna().tolist()
+    abs_lymphocyte_data = df[df['itemid'].isin([ABS_LYMPHOCYTE, ABS_LYMPHOCYTE_ALT])]['valuenum'].dropna().tolist()
+    abs_monocyte_data = df[df['itemid'] == ABS_MONOCYTE]['valuenum'].dropna().tolist()
+    abs_eosinophil_data = df[df['itemid'] == ABS_EOSINOPHIL]['valuenum'].dropna().tolist()
+    abs_basophil_data = df[df['itemid'] == ABS_BASOPHIL]['valuenum'].dropna().tolist()
+    
+    # Populate result
+    result['wbc_count'] = wbc_data
+    if wbc_data:
+        result['max_wbc_count'] = float(max(wbc_data))
+        result['min_wbc_count'] = float(min(wbc_data))
+        result['has_elevated_wbc'] = any(w > 12.0 for w in wbc_data)
+    
+    result['band_percent'] = band_data
+    if band_data:
+        result['max_band_percent'] = float(max(band_data))
+        result['has_left_shift'] = any(b > 10.0 for b in band_data)
+    
+    result['neutrophil_percent'] = neutrophil_data
+    result['lymphocyte_percent'] = lymphocyte_data
+    result['monocyte_percent'] = monocyte_data
+    result['eosinophil_percent'] = eosinophil_data
+    result['basophil_percent'] = basophil_data
+    result['absolute_neutrophil_count'] = abs_neutrophil_data
+    result['absolute_lymphocyte_count'] = abs_lymphocyte_data
+    result['absolute_monocyte_count'] = abs_monocyte_data
+    result['absolute_eosinophil_count'] = abs_eosinophil_data
+    result['absolute_basophil_count'] = abs_basophil_data
+    
+    return result
+```
+
+---
+
+## Test Results & Error Fixes
+
+### Step 3 - Input Combination Tests
+- **Test 1**: `stay_id=35177744` - wbc_count=[16.0, 10.2], max=16.0, min=10.2 ✓
+- **Test 2**: `stay_id=36753294` - band_percent=[10.0], has_left_shift=False (exactly 10%, not >10%) ✓
+- **Test 3**: `stay_id=37190362` - band_percent=[20.0, 16.0], has_left_shift=True ✓
+- **Test 4**: `subject_id=10436108` - Initially returned empty (bug discovered)
+
+### Step 17-18 - Comprehensive Tests (After Function Rewrite)
+- **Test 1**: `stay_id=34477328` - wbc_count=[15.4, 15.4], has_elevated_wbc=True ✓
+- **Test 2**: `hadm_id=23433094` - subject_id=10436108, wbc_count=[19.5, 15.0, 12.2], has_elevated_wbc=True ✓
+- **Test 3**: `subject_id=10436108` - wbc_count=[19.5, 15.0, 12.2], has_elevated_wbc=True ✓
+- **Test 4**: `stay_id=35177744` - 34 WBC values, max=16.0, min=2.8 ✓
+- **Test 5**: `stay_id=36753294` - band_percent=[10.0], has_left_shift=False ✓
+- **Test 6**: `stay_id=37190362` - band_percent=[20.0, 16.0], has_left_shift=True ✓
+- **Test 7**: `subject_id=10436108, hadm_id=23433094` - wbc_count=[19.5, 15.0, 12.2] ✓
+- **Test 8**: `stay_id=99999999` (no data) - subject_id=None, wbc_count=[] ✓
+- **Test 9**: No parameters - Correctly raised ValueError ✓
+
+### Step 21 - Low WBC Test
+- **Test**: `subject_id=10429025, hadm_id=25475193` - wbc_count=[1.4, 9.8, 10.7], min=1.4, has_elevated_wbc=False ✓
+
+### Step 22 - Differential Components Test
+- **Test**: `stay_id=35177744` - All components extracted correctly:
+  - wbc_count: 34 values
+  - neutrophil_percent: 3 values
+  - lymphocyte_percent: 3 values
+  - monocyte_percent: 3 values
+  - eosinophil_percent: 3 values
+  - basophil_percent: 3 values
+  - absolute_neutrophil_count: 3 values
+  - absolute_lymphocyte_count: 5 values
+  - absolute_monocyte_count: 3 values
+  - absolute_eosinophil_count: 3 values
+  - absolute_basophil_count: 3 values
+
+### Step 24-36 - Case Investigations
+- **Case 1**: `stay_id=37701853` - wbc_count=[7.0], has_elevated_wbc=False ✓
+- **Case 2**: `stay_id=34870227` - wbc_count=[7.9, 9.5, 12.0, 9.5, 18.4, 20.0, ...], max=20.0, has_elevated_wbc=True ✓
+- **Case 3**: `stay_id=34843199` - wbc_count=[5.6, 7.8, 6.6], max=7.8, has_elevated_wbc=False ✓
+- **Case 4**: `stay_id=34823722` - wbc_count=[14.6, 13.9, 12.9], max=14.6, has_elevated_wbc=True ✓
+
+### Step 4-5 - Final Verification Tests
+- **Test**: `stay_id=35177744` - All differential components verified:
+  - Neutrophil percent: [82.2, 79.3, 81.0]
+  - Lymphocyte percent: [7.5, 9.5, 6.5]
+  - Monocyte percent: [7.5, 8.4, 9.4]
+  - Eosinophil percent: [0.5, 0.9, 0.8]
+  - Basophil percent: [0.2, 0.3, 0.3]
+  - Absolute neutrophil count: [11.36, 10.2, 8.3]
+  - Absolute lymphocyte count: [480.0, 1.04, 1.22, 0.66, 714.0]
+  - Absolute monocyte count: [1.04, 1.08, 0.96]
+  - Absolute eosinophil count: [0.07, 0.12, 0.08]
+  - Absolute basophil count: [0.03, 0.04, 0.03]
+- **Test**: ValueError with no parameters - Correctly raised ✓
+
+### Step 6-11 - Critical Discovery: Time Window Mismatch
+- **Issue**: Function filters to ICU stay window (charttime >= intime AND charttime <= outtime), but evaluation expects admission-level data
+- **Case 1** (`stay_id=35279049`): Function correctly returned elevated WBC (24.6, 15.3, 12.0) - all during ICU stay ✓
+- **Case 2** (`stay_id=32195458`): Function returned only 8 values during ICU stay (max=9.2, not elevated), but 49 total values exist with 41 AFTER ICU discharge (including elevated values: 16.2, 19.4, 17.5, etc.)
+- **Case 3** (`stay_id=37701853`): Function returned 7.0 (first value during ICU), but actual expected 8.1 which was BEFORE ICU admission (charttime=2154-11-27 03:36:00, intime=2154-11-27 04:39:29)
+- **Root Cause**: Evaluation expects admission-level WBC data (from admittime to dischtime), not just ICU stay-level data
+- **Required Fix**: Update function to query based on admission time window instead of ICU stay time window
+
+### Step 36 - Error
+- **Error**: `NameError: name 'ABS_MONOCYTES' is not defined`
+- **Cause**: Typo in SQL query - used `ABS_MONOCYTES` instead of `ABS_MONOCYTE`
+- **Fix**: Corrected variable name in all SQL queries
+
+### Step 27 - SQL Syntax Error
+- **Error**: `_duckdb.ParserException: Parser Error: syntax error at or near "DISTINCT"`
+- **Cause**: Invalid SQL syntax - `SELECT COUNT(*) as cnt, DISTINCT le.itemid`
+- **Fix**: Removed DISTINCT, used GROUP BY instead
+
+### Step 30 - Column Binding Error
+- **Error**: `_duckdb.BinderException: Binder Error: Table "le" does not have a column named "stay_id"`
+- **Cause**: `labevents` table doesn't have `stay_id` column
+- **Fix**: Changed query to select `icu.stay_id` from joined `icustays` table
+
+### Step 6 - Error Handling Test
+- **Test**: `blood_differential()` with no identifiers
+- **Result**: Correctly raised ValueError
+
+### Step 16-20 - Critical Discovery
+- **Issue**: Function was missing WBC data for many patients
+- **Root Cause**: Only queried item 51300 "WBC Count", but many patients have item 51301 "White Blood Cells"
+- **Example**: subject_id=10436108 had WBC values 12.6, 10.9, 14.0, 21.4, 20.0, 14.7, 19.5, 15.0, 12.2, 12.2, 8.6, 5.1, 6.8, 4.1 using item 51301
+- **Fix**: Added item 51301 to WBC_COUNT_ALT and combined both in query
+
+### Step 21 - Additional Item Discovery
+- **Finding**: Item 52769 "Absolute Lymphocyte Count" is another variant alongside 51133
+- **Fix**: Added ABS_LYMPHOCYTE_ALT = 52769 to function
+
+### Guidelines Retrieved
+1. **elevated_white_blood_cell_count_guideline** - Leukocytosis definition, thresholds, severity classification
+2. **sirs_guideline** - SIRS criteria including WBC > 12,000 cells/μL or < 4,000 cells/μL or > 10% bands
+

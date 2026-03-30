@@ -1,0 +1,47 @@
+{
+  "timestamp": "2026-03-25T08:06:01.750737",
+  "model": "Qwen/Qwen3.5-27B",
+  "db_path": "/home/v-tiossowski/MIMIC-IV/mimic4.db",
+  "qa_dataset": "/home/v-tiossowski/HealthcareAgent/mimic-code/data/MIMICIV_norepinephrine_dataset/norepinephrine.csv",
+  "match_threshold": 0.9,
+  "run_name": "norepinephrine",
+  "success": true,
+  "iterations": 23,
+  "qa_accuracy": 1.0,
+  "stats": {
+    "react": {
+      "prompt_tokens": 0,
+      "completion_tokens": 0,
+      "total_tokens": 0,
+      "llm_calls": 23,
+      "query_count": 31,
+      "query_time_sec": 0.183,
+      "wall_time_sec": 704.114
+    },
+    "qa": {
+      "prompt_tokens": 80253,
+      "completion_tokens": 40597,
+      "total_tokens": 120850,
+      "llm_calls": 45,
+      "query_count": 20,
+      "query_time_sec": 0.063,
+      "eval_wall_time_sec": 358.598,
+      "per_question": {
+        "avg_prompt_tokens": 4012.7,
+        "avg_completion_tokens": 2029.8,
+        "avg_llm_calls": 2.25,
+        "avg_query_count": 1.0,
+        "avg_query_time_sec": 0.003,
+        "avg_wall_time_sec": 17.93
+      }
+    },
+    "total": {
+      "prompt_tokens": 80253,
+      "completion_tokens": 40597,
+      "total_tokens": 120850,
+      "llm_calls": 68,
+      "query_count": 51,
+      "query_time_sec": 0.246
+    }
+  }
+}

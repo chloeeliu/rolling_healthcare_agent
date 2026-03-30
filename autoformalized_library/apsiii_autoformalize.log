@@ -1,0 +1,1198 @@
+2026-03-26 09:21:37  INFO      Using database: /home/v-tiossowski/MIMIC-IV/mimic4.db
+2026-03-26 09:21:37  INFO      No --model_url provided; loading vLLM in-process …
+INFO 03-26 09:21:42 [utils.py:238] non-default args: {'trust_remote_code': True, 'max_model_len': 40000, 'disable_log_stats': True, 'model': 'Qwen/Qwen3.5-27B'}
+The argument `trust_remote_code` is to be used with Auto classes. It has no effect here and is ignored.
+The argument `trust_remote_code` is to be used with Auto classes. It has no effect here and is ignored.
+The argument `trust_remote_code` is to be used with Auto classes. It has no effect here and is ignored.
+INFO 03-26 09:21:42 [model.py:531] Resolved architecture: Qwen3_5ForConditionalGeneration
+INFO 03-26 09:21:42 [model.py:1554] Using max model len 40000
+INFO 03-26 09:21:42 [scheduler.py:231] Chunked prefill is enabled with max_num_batched_tokens=8192.
+INFO 03-26 09:21:43 [config.py:544] Setting attention block size to 784 tokens to ensure that attention page size is >= mamba page size.
+INFO 03-26 09:21:43 [config.py:575] Padding mamba page size by 0.13% to ensure that mamba page size and attention page size are exactly equal.
+INFO 03-26 09:21:43 [vllm.py:747] Asynchronous scheduling is enabled.
+WARNING 03-26 09:21:51 [system_utils.py:152] We must use the `spawn` multiprocessing start method. Overriding VLLM_WORKER_MULTIPROC_METHOD to 'spawn'. See https://docs.vllm.ai/en/latest/usage/troubleshooting.html#python-multiprocessing for more information. Reasons: CUDA is initialized
+(EngineCore_DP0 pid=993810) INFO 03-26 09:21:55 [core.py:101] Initializing a V1 LLM engine (v0.17.1) with config: model='Qwen/Qwen3.5-27B', speculative_config=None, tokenizer='Qwen/Qwen3.5-27B', skip_tokenizer_init=False, tokenizer_mode=auto, revision=None, tokenizer_revision=None, trust_remote_code=True, dtype=torch.bfloat16, max_seq_len=40000, download_dir=None, load_format=auto, tensor_parallel_size=1, pipeline_parallel_size=1, data_parallel_size=1, disable_custom_all_reduce=False, quantization=None, enforce_eager=False, enable_return_routed_experts=False, kv_cache_dtype=auto, device_config=cuda, structured_outputs_config=StructuredOutputsConfig(backend='auto', disable_fallback=False, disable_any_whitespace=False, disable_additional_properties=False, reasoning_parser='', reasoning_parser_plugin='', enable_in_reasoning=False), observability_config=ObservabilityConfig(show_hidden_metrics_for_version=None, otlp_traces_endpoint=None, collect_detailed_traces=None, kv_cache_metrics=False, kv_cache_metrics_sample=0.01, cudagraph_metrics=False, enable_layerwise_nvtx_tracing=False, enable_mfu_metrics=False, enable_mm_processor_stats=False, enable_logging_iteration_details=False), seed=0, served_model_name=Qwen/Qwen3.5-27B, enable_prefix_caching=False, enable_chunked_prefill=True, pooler_config=None, compilation_config={'level': None, 'mode': <CompilationMode.VLLM_COMPILE: 3>, 'debug_dump_path': None, 'cache_dir': '', 'compile_cache_save_format': 'binary', 'backend': 'inductor', 'custom_ops': ['none'], 'splitting_ops': ['vllm::unified_attention', 'vllm::unified_attention_with_output', 'vllm::unified_mla_attention', 'vllm::unified_mla_attention_with_output', 'vllm::mamba_mixer2', 'vllm::mamba_mixer', 'vllm::short_conv', 'vllm::linear_attention', 'vllm::plamo2_mamba_mixer', 'vllm::gdn_attention_core', 'vllm::kda_attention', 'vllm::sparse_attn_indexer', 'vllm::rocm_aiter_sparse_attn_indexer', 'vllm::unified_kv_cache_update', 'vllm::unified_mla_kv_cache_update'], 'compile_mm_encoder': False, 'compile_sizes': [], 'compile_ranges_split_points': [8192], 'inductor_compile_config': {'enable_auto_functionalized_v2': False, 'combo_kernels': True, 'benchmark_combo_kernel': True}, 'inductor_passes': {}, 'cudagraph_mode': <CUDAGraphMode.FULL_AND_PIECEWISE: (2, 1)>, 'cudagraph_num_of_warmups': 1, 'cudagraph_capture_sizes': [1, 2, 4, 8, 16, 24, 32, 40, 48, 56, 64, 72, 80, 88, 96, 104, 112, 120, 128, 136, 144, 152, 160, 168, 176, 184, 192, 200, 208, 216, 224, 232, 240, 248, 256, 272, 288, 304, 320, 336, 352, 368, 384, 400, 416, 432, 448, 464, 480, 496, 512], 'cudagraph_copy_inputs': False, 'cudagraph_specialize_lora': True, 'use_inductor_graph_partition': False, 'pass_config': {'fuse_norm_quant': False, 'fuse_act_quant': False, 'fuse_attn_quant': False, 'enable_sp': False, 'fuse_gemm_comms': False, 'fuse_allreduce_rms': False}, 'max_cudagraph_capture_size': 512, 'dynamic_shapes_config': {'type': <DynamicShapesType.BACKED: 'backed'>, 'evaluate_guards': False, 'assume_32_bit_indexing': False}, 'local_cache_dir': None, 'fast_moe_cold_start': True, 'static_all_moe_layers': []}
+(EngineCore_DP0 pid=993810) INFO 03-26 09:21:58 [parallel_state.py:1393] world_size=1 rank=0 local_rank=0 distributed_init_method=tcp://10.8.144.167:53633 backend=nccl
+(EngineCore_DP0 pid=993810) INFO 03-26 09:21:58 [parallel_state.py:1715] rank 0 in world size 1 is assigned as DP rank 0, PP rank 0, PCP rank 0, TP rank 0, EP rank N/A, EPLB rank N/A
+(EngineCore_DP0 pid=993810) INFO 03-26 09:22:04 [base.py:106] Offloader set to NoopOffloader
+(EngineCore_DP0 pid=993810) INFO 03-26 09:22:05 [gpu_model_runner.py:4281] Starting to load model Qwen/Qwen3.5-27B...
+(EngineCore_DP0 pid=993810) INFO 03-26 09:22:05 [cuda.py:453] Using backend AttentionBackendEnum.FLASH_ATTN for vit attention
+(EngineCore_DP0 pid=993810) INFO 03-26 09:22:05 [mm_encoder_attention.py:215] Using AttentionBackendEnum.FLASH_ATTN for MMEncoderAttention.
+(EngineCore_DP0 pid=993810) INFO 03-26 09:22:05 [cuda.py:405] Using FLASH_ATTN attention backend out of potential backends: ['FLASH_ATTN', 'FLASHINFER', 'TRITON_ATTN', 'FLEX_ATTENTION'].
+(EngineCore_DP0 pid=993810) INFO 03-26 09:22:05 [flash_attn.py:587] Using FlashAttention version 2
+(EngineCore_DP0 pid=993810) <frozen importlib._bootstrap_external>:1301: FutureWarning: The cuda.cudart module is deprecated and will be removed in a future release, please switch to use the cuda.bindings.runtime module instead.
+(EngineCore_DP0 pid=993810) <frozen importlib._bootstrap_external>:1301: FutureWarning: The cuda.nvrtc module is deprecated and will be removed in a future release, please switch to use the cuda.bindings.nvrtc module instead.
+(EngineCore_DP0 pid=993810) Loading safetensors checkpoint shards:   0% Completed | 0/11 [00:00<?, ?it/s]
+(EngineCore_DP0 pid=993810) Loading safetensors checkpoint shards:   9% Completed | 1/11 [00:00<00:05,  1.88it/s]
+(EngineCore_DP0 pid=993810) Loading safetensors checkpoint shards:  18% Completed | 2/11 [00:01<00:05,  1.68it/s]
+(EngineCore_DP0 pid=993810) Loading safetensors checkpoint shards:  27% Completed | 3/11 [00:01<00:05,  1.57it/s]
+(EngineCore_DP0 pid=993810) Loading safetensors checkpoint shards:  36% Completed | 4/11 [00:02<00:04,  1.52it/s]
+(EngineCore_DP0 pid=993810) Loading safetensors checkpoint shards:  45% Completed | 5/11 [00:03<00:04,  1.49it/s]
+(EngineCore_DP0 pid=993810) Loading safetensors checkpoint shards:  55% Completed | 6/11 [00:03<00:03,  1.46it/s]
+(EngineCore_DP0 pid=993810) Loading safetensors checkpoint shards:  64% Completed | 7/11 [00:04<00:02,  1.45it/s]
+(EngineCore_DP0 pid=993810) Loading safetensors checkpoint shards:  73% Completed | 8/11 [00:05<00:02,  1.47it/s]
+(EngineCore_DP0 pid=993810) Loading safetensors checkpoint shards:  82% Completed | 9/11 [00:06<00:01,  1.46it/s]
+(EngineCore_DP0 pid=993810) Loading safetensors checkpoint shards:  91% Completed | 10/11 [00:06<00:00,  1.46it/s]
+(EngineCore_DP0 pid=993810) Loading safetensors checkpoint shards: 100% Completed | 11/11 [00:07<00:00,  1.63it/s]
+(EngineCore_DP0 pid=993810) Loading safetensors checkpoint shards: 100% Completed | 11/11 [00:07<00:00,  1.54it/s]
+(EngineCore_DP0 pid=993810) 
+(EngineCore_DP0 pid=993810) INFO 03-26 09:22:13 [default_loader.py:293] Loading weights took 7.21 seconds
+(EngineCore_DP0 pid=993810) INFO 03-26 09:22:14 [gpu_model_runner.py:4364] Model loading took 51.1 GiB memory and 8.258444 seconds
+(EngineCore_DP0 pid=993810) INFO 03-26 09:22:14 [gpu_model_runner.py:5280] Encoder cache will be initialized with a budget of 16384 tokens, and profiled with 1 image items of the maximum feature size.
+(EngineCore_DP0 pid=993810) INFO 03-26 09:22:22 [decorators.py:465] Directly load AOT compilation from path /home/v-tiossowski/.cache/vllm/torch_compile_cache/torch_aot_compile/0232891e22bd4d7db98ac2f43c441f0f81d0a431216053ca49fadeaff23e2af3/rank_0_0/model
+(EngineCore_DP0 pid=993810) INFO 03-26 09:22:22 [backends.py:916] Using cache directory: /home/v-tiossowski/.cache/vllm/torch_compile_cache/feaf61af16/rank_0_0/backbone for vLLM's torch.compile
+(EngineCore_DP0 pid=993810) INFO 03-26 09:22:22 [backends.py:976] Dynamo bytecode transform time: 3.54 s
+(EngineCore_DP0 pid=993810) INFO 03-26 09:22:32 [backends.py:266] Directly load the compiled graph(s) for compile range (1, 8192) from the cache, took 9.413 s
+(EngineCore_DP0 pid=993810) INFO 03-26 09:22:32 [monitor.py:35] torch.compile takes 13.79 s in total
+(EngineCore_DP0 pid=993810) INFO 03-26 09:22:33 [gpu_worker.py:424] Available KV cache memory: 18.3 GiB
+(EngineCore_DP0 pid=993810) INFO 03-26 09:22:33 [kv_cache_utils.py:1314] GPU KV cache size: 74,480 tokens
+(EngineCore_DP0 pid=993810) INFO 03-26 09:22:33 [kv_cache_utils.py:1319] Maximum concurrency for 40,000 tokens per request: 6.95x
+(EngineCore_DP0 pid=993810) Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):   0%|          | 0/51 [00:00<?, ?it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):   2%|▏         | 1/51 [00:00<00:08,  5.75it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):   4%|▍         | 2/51 [00:00<00:08,  5.99it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):   6%|▌         | 3/51 [00:00<00:07,  6.06it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):   8%|▊         | 4/51 [00:00<00:07,  6.11it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  10%|▉         | 5/51 [00:00<00:07,  6.13it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  12%|█▏        | 6/51 [00:00<00:07,  6.16it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  14%|█▎        | 7/51 [00:01<00:07,  6.18it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  16%|█▌        | 8/51 [00:01<00:06,  6.17it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  18%|█▊        | 9/51 [00:01<00:06,  6.46it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  20%|█▉        | 10/51 [00:01<00:06,  6.73it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  22%|██▏       | 11/51 [00:01<00:05,  6.75it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  24%|██▎       | 12/51 [00:01<00:05,  6.91it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  25%|██▌       | 13/51 [00:02<00:05,  7.03it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  27%|██▋       | 14/51 [00:02<00:05,  7.15it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  29%|██▉       | 15/51 [00:02<00:04,  7.22it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  31%|███▏      | 16/51 [00:02<00:04,  7.29it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  33%|███▎      | 17/51 [00:02<00:04,  7.61it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  35%|███▌      | 18/51 [00:02<00:04,  7.88it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  37%|███▋      | 19/51 [00:02<00:03,  8.11it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  39%|███▉      | 20/51 [00:02<00:03,  8.27it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  41%|████      | 21/51 [00:02<00:03,  8.37it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  43%|████▎     | 22/51 [00:03<00:03,  8.45it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  45%|████▌     | 23/51 [00:03<00:03,  8.50it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  47%|████▋     | 24/51 [00:03<00:03,  8.50it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  49%|████▉     | 25/51 [00:03<00:03,  8.49it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  51%|█████     | 26/51 [00:03<00:02,  8.42it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  53%|█████▎    | 27/51 [00:03<00:02,  8.48it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  55%|█████▍    | 28/51 [00:03<00:02,  8.53it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  57%|█████▋    | 29/51 [00:03<00:02,  8.57it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  59%|█████▉    | 30/51 [00:04<00:02,  8.58it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  61%|██████    | 31/51 [00:04<00:02,  8.59it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  63%|██████▎   | 32/51 [00:04<00:02,  8.59it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  65%|██████▍   | 33/51 [00:04<00:02,  8.92it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  67%|██████▋   | 34/51 [00:04<00:01,  9.18it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  69%|██████▊   | 35/51 [00:04<00:01,  9.41it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  71%|███████   | 36/51 [00:04<00:01,  9.56it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  73%|███████▎  | 37/51 [00:04<00:01,  9.65it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  75%|███████▍  | 38/51 [00:04<00:01,  9.73it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  76%|███████▋  | 39/51 [00:04<00:01,  9.76it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  78%|███████▊  | 40/51 [00:05<00:01,  9.70it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  82%|████████▏ | 42/51 [00:05<00:00,  9.91it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  86%|████████▋ | 44/51 [00:05<00:00, 10.10it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  90%|█████████ | 46/51 [00:05<00:00, 10.30it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  94%|█████████▍| 48/51 [00:05<00:00, 10.55it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  98%|█████████▊| 50/51 [00:06<00:00, 10.73it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE): 100%|██████████| 51/51 [00:06<00:00,  8.33it/s]
+(EngineCore_DP0 pid=993810) Capturing CUDA graphs (decode, FULL):   0%|          | 0/35 [00:00<?, ?it/s]Capturing CUDA graphs (decode, FULL):   3%|▎         | 1/35 [00:00<00:06,  5.53it/s]Capturing CUDA graphs (decode, FULL):   6%|▌         | 2/35 [00:00<00:05,  6.05it/s]Capturing CUDA graphs (decode, FULL):   9%|▊         | 3/35 [00:00<00:05,  6.33it/s]Capturing CUDA graphs (decode, FULL):  11%|█▏        | 4/35 [00:00<00:04,  6.48it/s]Capturing CUDA graphs (decode, FULL):  14%|█▍        | 5/35 [00:00<00:04,  6.55it/s]Capturing CUDA graphs (decode, FULL):  17%|█▋        | 6/35 [00:00<00:04,  6.63it/s]Capturing CUDA graphs (decode, FULL):  20%|██        | 7/35 [00:01<00:04,  6.70it/s]Capturing CUDA graphs (decode, FULL):  23%|██▎       | 8/35 [00:01<00:03,  6.77it/s]Capturing CUDA graphs (decode, FULL):  26%|██▌       | 9/35 [00:01<00:03,  6.82it/s]Capturing CUDA graphs (decode, FULL):  29%|██▊       | 10/35 [00:01<00:03,  6.89it/s]Capturing CUDA graphs (decode, FULL):  31%|███▏      | 11/35 [00:01<00:03,  6.90it/s]Capturing CUDA graphs (decode, FULL):  34%|███▍      | 12/35 [00:01<00:03,  6.99it/s]Capturing CUDA graphs (decode, FULL):  37%|███▋      | 13/35 [00:01<00:03,  7.04it/s]Capturing CUDA graphs (decode, FULL):  40%|████      | 14/35 [00:02<00:02,  7.11it/s]Capturing CUDA graphs (decode, FULL):  43%|████▎     | 15/35 [00:02<00:02,  7.11it/s]Capturing CUDA graphs (decode, FULL):  46%|████▌     | 16/35 [00:02<00:02,  7.18it/s]Capturing CUDA graphs (decode, FULL):  49%|████▊     | 17/35 [00:02<00:02,  7.46it/s]Capturing CUDA graphs (decode, FULL):  51%|█████▏    | 18/35 [00:02<00:02,  7.71it/s]Capturing CUDA graphs (decode, FULL):  54%|█████▍    | 19/35 [00:02<00:02,  7.92it/s]Capturing CUDA graphs (decode, FULL):  57%|█████▋    | 20/35 [00:02<00:01,  8.10it/s]Capturing CUDA graphs (decode, FULL):  60%|██████    | 21/35 [00:02<00:01,  8.18it/s]Capturing CUDA graphs (decode, FULL):  63%|██████▎   | 22/35 [00:03<00:01,  8.25it/s]Capturing CUDA graphs (decode, FULL):  66%|██████▌   | 23/35 [00:03<00:01,  8.39it/s]Capturing CUDA graphs (decode, FULL):  69%|██████▊   | 24/35 [00:03<00:01,  8.41it/s]Capturing CUDA graphs (decode, FULL):  71%|███████▏  | 25/35 [00:03<00:01,  8.54it/s]Capturing CUDA graphs (decode, FULL):  74%|███████▍  | 26/35 [00:03<00:01,  8.66it/s]Capturing CUDA graphs (decode, FULL):  77%|███████▋  | 27/35 [00:03<00:00,  8.62it/s]Capturing CUDA graphs (decode, FULL):  80%|████████  | 28/35 [00:03<00:00,  8.57it/s]Capturing CUDA graphs (decode, FULL):  83%|████████▎ | 29/35 [00:03<00:00,  8.50it/s]Capturing CUDA graphs (decode, FULL):  86%|████████▌ | 30/35 [00:03<00:00,  8.43it/s]Capturing CUDA graphs (decode, FULL):  89%|████████▊ | 31/35 [00:04<00:00,  8.58it/s]Capturing CUDA graphs (decode, FULL):  91%|█████████▏| 32/35 [00:04<00:00,  8.75it/s]Capturing CUDA graphs (decode, FULL):  94%|█████████▍| 33/35 [00:04<00:00,  8.80it/s]Capturing CUDA graphs (decode, FULL):  97%|█████████▋| 34/35 [00:04<00:00,  8.87it/s]Capturing CUDA graphs (decode, FULL): 100%|██████████| 35/35 [00:04<00:00,  9.04it/s]Capturing CUDA graphs (decode, FULL): 100%|██████████| 35/35 [00:04<00:00,  7.71it/s]
+(EngineCore_DP0 pid=993810) INFO 03-26 09:22:45 [gpu_model_runner.py:5386] Graph capturing finished in 11 secs, took 1.13 GiB
+(EngineCore_DP0 pid=993810) INFO 03-26 09:22:45 [core.py:282] init engine (profile, create kv cache, warmup model) took 31.32 seconds
+(EngineCore_DP0 pid=993810) INFO 03-26 09:22:45 [vllm.py:747] Asynchronous scheduling is enabled.
+INFO 03-26 09:22:45 [llm.py:388] Supported tasks: ['generate']
+2026-03-26 09:22:45  INFO      Loading QA dataset from /home/v-tiossowski/HealthcareAgent/mimic-code/data/MIMICIV_apsiii_dataset/apsiii.csv
+2026-03-26 09:22:45  INFO      Dataset: 1000 rows, columns: ['subject_id', 'hadm_id', 'stay_id', 'intime', 'outtime', 'first_careunit', 'last_careunit', 'gt_label', 'question', 'gt_answer_type', 'split', 'apsiii', 'hr_score', 'mbp_score', 'temp_score', 'resp_rate_score', 'pao2_aado2_score', 'hematocrit_score', 'wbc_score', 'creatinine_score', 'uo_score', 'bun_score', 'sodium_score', 'albumin_score', 'bilirubin_score', 'glucose_score', 'acidbase_score', 'gcs_score']
+2026-03-26 09:22:45  INFO      Filtered to train split: 100 rows
+2026-03-26 09:22:45  INFO      Auto-discovered ground-truth SQL: /home/v-tiossowski/HealthcareAgent/mimic-code/mimic-iv/concepts_duckdb/score/apsiii.sql
+2026-03-26 09:22:45  INFO      === Iteration 1/100  run=apsiii  best_qa=0.0% ===
+INFO 03-26 09:22:47 [hf.py:318] Detected the chat template content format to be 'string'. You can set `--chat-template-content-format` to override this.
+2026-03-26 09:23:05  INFO      Exec block 1/1 …
+2026-03-26 09:23:05  INFO      Output: Guidelines for 'apsiii': []
+
+Guidelines for 'apache': ['apache_iii_guideline']
+
+2026-03-26 09:23:05  INFO      === Iteration 2/100  run=apsiii  best_qa=0.0% ===
+2026-03-26 09:23:10  INFO      Exec block 1/1 …
+2026-03-26 09:23:10  INFO      Output: # APACHE III — Clinical Guideline
+# Generated by generate_guidelines.py
+# Source articles: 10 (PMID22126425, PMID37007579, PMID39781488, PMID8118723, PMID19699141...)
+############################################################
+
+# Clinical Guideline: APACHE III (Acute Physiology and Chronic Health Evaluation III)
+
+---
+
+## 1. Definition
+
+APACHE III is a severity-of-illness classification and mortality prediction system designed for critically ill adult patients admitted to the intensive care unit
+2026-03-26 09:23:10  INFO      === Iteration 3/100  run=apsiii  best_qa=0.0% ===
+2026-03-26 09:23:16  INFO      Exec block 1/1 …
+2026-03-26 09:23:16  INFO      Output: All apache guidelines: ['apache_iii_guideline']
+
+Available functions: ['acei', 'age', 'aki', 'antibiotic', 'arb', 'bg', 'blood_differential', 'cardiac_marker', 'charlson', 'chemistry', 'coagulation', 'code_status', 'complete_blood_count', 'creatinine_baseline', 'crrt', 'dobutamine', 'dopamine', 'enzyme', 'epinephrine', 'first_day_bg', '... (37 more; pass a keyword to filter)']
+
+2026-03-26 09:23:16  INFO      === Iteration 4/100  run=apsiii  best_qa=0.0% ===
+2026-03-26 09:23:21  INFO      Exec block 1/1 …
+2026-03-26 09:23:21  INFO      Output: # APACHE III — Clinical Guideline
+# Generated by generate_guidelines.py
+# Source articles: 10 (PMID22126425, PMID37007579, PMID39781488, PMID8118723, PMID19699141...)
+############################################################
+
+# Clinical Guideline: APACHE III (Acute Physiology and Chronic Health Evaluation III)
+
+---
+
+## 1. Definition
+
+APACHE III is a severity-of-illness classification and mortality prediction system designed for critically ill adult patients admitted to the intensive care unit
+2026-03-26 09:23:21  INFO      === Iteration 5/100  run=apsiii  best_qa=0.0% ===
+2026-03-26 09:23:28  INFO      Exec block 1/1 …
+2026-03-26 09:23:28  INFO      Output: Apache functions: []
+Physio functions: []
+Vital functions: ['first_day_vitalsign', 'vitalsign']
+Lab functions: ['first_day_lab']
+
+2026-03-26 09:23:28  INFO      === Iteration 6/100  run=apsiii  best_qa=0.0% ===
+2026-03-26 09:23:34  INFO      Exec block 1/1 …
+2026-03-26 09:23:34  INFO      Output: first_day_vitalsign: def first_day_vitalsign(stay_id):
+    """
+    Extract vital sign information for the first day (24 hours) of an ICU stay.
+
+    This function retrieves heart rate, mean arterial pressure (MAP), and 
+    respiratory rate measurements from the chartevents table for the period 
+    from ICU admission (intime) to 24 hours after ICU admission.
+
+    Parameters
+    ----------
+    stay_id : int
+        The ICU stay identifier.
+
+    Returns
+    -------
+    dict
+        A dictionary co
+2026-03-26 09:23:34  INFO      === Iteration 7/100  run=apsiii  best_qa=0.0% ===
+2026-03-26 09:23:43  INFO      Exec block 1/1 …
+2026-03-26 09:23:43  INFO      Output: icustays columns: ['subject_id', 'hadm_id', 'stay_id', 'first_careunit', 'last_careunit', 'intime', 'outtime', 'los']
+   subject_id   hadm_id  ...             outtime       los
+0    10000032  29079034  ... 2180-07-23 23:50:47  0.410266
+1    10000690  25860671  ... 2150-11-06 17:03:17  3.893252
+2    10000980  26913865  ... 2189-06-27 20:38:27  0.497535
+3    10001217  24597018  ... 2157-11-21 22:08:00  1.118032
+4    10001217  27703517  ... 2157-12-20 14:27:41  0.948113
+
+[5 rows x 8 columns]
+
+2026-03-26 09:23:43  INFO      === Iteration 8/100  run=apsiii  best_qa=0.0% ===
+2026-03-26 09:23:52  INFO      Exec block 1/1 …
+2026-03-26 09:23:52  INFO      Output: Heart rate items:    itemid                   label             category
+0  220045              Heart Rate  Routine Vital Signs
+1  220047  Heart Rate Alarm - Low               Alarms
+
+MAP items:    itemid         label                category
+0  227023  MAP_ApacheIV  Scores - APACHE IV (2)
+
+2026-03-26 09:23:52  INFO      === Iteration 9/100  run=apsiii  best_qa=0.0% ===
+2026-03-26 09:24:07  INFO      Exec block 1/1 …
+2026-03-26 09:24:07  INFO      Output: Temperature items:    itemid                        label                category
+0  223761       Temperature Fahrenheit     Routine Vital Signs
+1  223762          Temperature Celsius     Routine Vital Signs
+2  224027             Skin Temperature       Skin - Assessment
+3  224642             Temperature Site     Routine Vital Signs
+4  224674       Changes in Temperature              Toxicology
+5  226329    Blood Temperature CCO (C)     Routine Vital Signs
+6  227054        TemperatureF_ApacheIV  
+2026-03-26 09:24:07  INFO      === Iteration 10/100  run=apsiii  best_qa=0.0% ===
+2026-03-26 09:24:16  INFO      Exec block 1/1 …
+2026-03-26 09:24:16  INFO      Output: Blood pressure items:     itemid                                     label                 category
+0   220050          Arterial Blood Pressure systolic      Routine Vital Signs
+1   220051         Arterial Blood Pressure diastolic      Routine Vital Signs
+2   220052              Arterial Blood Pressure mean      Routine Vital Signs
+3   220056       Arterial Blood Pressure Alarm - Low                   Alarms
+4   220058      Arterial Blood Pressure Alarm - High                   Alarms
+5   220179
+2026-03-26 09:24:16  INFO      === Iteration 11/100  run=apsiii  best_qa=0.0% ===
+2026-03-26 09:24:28  INFO      Exec block 1/1 …
+2026-03-26 09:24:28  INFO      Output: Hematocrit items:    itemid                            label                category
+0  220545               Hematocrit (serum)                    Labs
+1  226540  Hematocrit (whole blood - calc)                    Labs
+2  226761          HematocritApacheIIScore      Scores - APACHE II
+3  226762          HematocritApacheIIValue      Scores - APACHE II
+4  227017              Hematocrit_ApacheIV  Scores - APACHE IV (2)
+
+WBC items:    itemid              label                category
+0  220546      
+2026-03-26 09:24:28  INFO      === Iteration 12/100  run=apsiii  best_qa=0.0% ===
+2026-03-26 09:24:37  INFO      Exec block 1/1 …
+2026-03-26 09:24:37  INFO      Output: Creatinine items:    itemid                     label                category
+0  220615        Creatinine (serum)                    Labs
+1  226751   CreatinineApacheIIScore      Scores - APACHE II
+2  226752   CreatinineApacheIIValue      Scores - APACHE II
+3  227005       Creatinine_ApacheIV  Scores - APACHE IV (2)
+4  227006       CreatScore_ApacheIV  Scores - APACHE IV (2)
+5  229761  Creatinine (whole blood)                    Labs
+
+Lab creatinine items:     itemid                            l
+2026-03-26 09:24:37  INFO      === Iteration 13/100  run=apsiii  best_qa=0.0% ===
+2026-03-26 09:24:52  INFO      Exec block 1/1 …
+2026-03-26 09:24:52  INFO      Output: BUN items:    itemid         label                category
+0  225624           BUN                    Labs
+1  227000  BUN_ApacheIV  Scores - APACHE IV (2)
+
+Sodium items:    itemid                      label       category
+0  225164     Trisodium Citrate 0.4%  Fluids/Intake
+1  229061  Ertapenem sodium (Invanz)    Antibiotics
+
+Albumin items: Empty DataFrame
+Columns: [itemid, label, category]
+Index: []
+
+Bilirubin items: Empty DataFrame
+Columns: [itemid, label, category]
+Index: []
+
+2026-03-26 09:24:52  INFO      === Iteration 14/100  run=apsiii  best_qa=0.0% ===
+2026-03-26 09:25:06  INFO      Exec block 1/1 …
+2026-03-26 09:25:06  INFO      Output: Sodium lab items:    itemid                label   category
+0   50824  Sodium, Whole Blood  Blood Gas
+1   50834   Sodium, Body Fluid  Blood Gas
+2   50848      Sodium, Ascites  Chemistry
+3   50983               Sodium  Chemistry
+4   51042   Sodium, Body Fluid  Chemistry
+5   51058      Sodium, Pleural  Chemistry
+6   51065        Sodium, Stool  Chemistry
+7   51100        Sodium, Urine  Chemistry
+8   51801          Sodium, CSF  Chemistry
+9   51823  Sodium, Joint Fluid  Chemistry
+
+Albumin lab items: 
+2026-03-26 09:25:06  INFO      === Iteration 15/100  run=apsiii  best_qa=0.0% ===
+2026-03-26 09:25:23  INFO      Exec block 1/1 …
+2026-03-26 09:25:23  INFO      Output: pH items:    itemid                  label                category
+0  220274            PH (Venous)                    Labs
+1  220734          PH (dipstick)                    Labs
+2  223259          Insulin - NPH             Medications
+3  223830          PH (Arterial)                    Labs
+4  226769        PHApacheIIValue      Scores - APACHE II
+5  227037            PH_ApacheIV  Scores - APACHE IV (2)
+6  227038  PHPaCO2Score_ApacheIV  Scores - APACHE IV (2)
+7  227586                  GI pH  
+2026-03-26 09:25:23  INFO      === Iteration 16/100  run=apsiii  best_qa=0.0% ===
+2026-03-26 09:25:38  INFO      Exec block 1/1 …
+2026-03-26 09:25:38  INFO      Output: CO2 items:    itemid                      label                category
+0  220235      Arterial CO2 Pressure                    Labs
+1  220245             CO2 production             Respiratory
+2  223679         TCO2 (calc) Venous                    Labs
+3  225698       TCO2 (calc) Arterial                    Labs
+4  226062        Venous CO2 Pressure                    Labs
+5  227036              PCO2_ApacheIV  Scores - APACHE IV (2)
+6  227038      PHPaCO2Score_ApacheIV  Scores - APACHE IV (2)
+7
+2026-03-26 09:25:38  INFO      === Iteration 17/100  run=apsiii  best_qa=0.0% ===
+2026-03-26 09:25:47  INFO      Exec block 1/1 …
+2026-03-26 09:25:48  INFO      Output: Urine items:    itemid                         label                category
+0  224015                  Urine Source                   GI/GU
+1  224016                   Urine Color                   GI/GU
+2  224876              Urine Appearance                   GI/GU
+3  225454                 Urine Culture              6-Cultures
+4  226566     Urine and GU Irrigant Out                  Output
+5  226627                      OR Urine                  Output
+6  226631                    PACU Urine
+2026-03-26 09:25:48  INFO      === Iteration 18/100  run=apsiii  best_qa=0.0% ===
+2026-03-26 09:25:57  INFO      Exec block 1/1 …
+2026-03-26 09:25:57  INFO      Output: patients columns: ['subject_id', 'gender', 'anchor_age', 'anchor_year', 'anchor_year_group', 'dod']
+   subject_id gender  anchor_age  anchor_year anchor_year_group        dod
+0    10000032      F          52         2180       2014 - 2016 2180-09-09
+1    10000048      F          23         2126       2008 - 2010        NaT
+2    10000058      F          33         2168       2020 - 2022        NaT
+3    10000068      F          19         2160       2008 - 2010        NaT
+4    10000084      M     
+2026-03-26 09:25:57  INFO      === Iteration 19/100  run=apsiii  best_qa=0.0% ===
+2026-03-26 09:26:08  INFO      Exec block 1/1 …
+2026-03-26 09:26:08  INFO      Output: first_day_vitalsign result: {'stay_id': 32359580, 'subject_id': 10007818, 'hadm_id': 22987108, 'intime': '2146-06-22 11:46:29', 'first_day_end': '2146-06-23 11:46:29', 'heart_rate': {'min': 72.0, 'max': 139.0, 'avg': 93.5, 'count': 28}, 'map': {'min': 28.0, 'max': 124.0, 'avg': 69.16666666666667, 'count': 36}, 'respiratory_rate': {'min': 0.0, 'max': 31.0, 'avg': 20.97826086956522, 'count': 46}, 'has_hypotension': True, 'has_tachycardia': True, 'has_tachypnea': True, 'has_bradytachycardia': True}
+2026-03-26 09:26:08  INFO      === Iteration 20/100  run=apsiii  best_qa=0.0% ===
+2026-03-26 09:26:16  INFO      Exec block 1/1 …
+2026-03-26 09:26:16  INFO      Output: first_day_lab result: {'subject_id': 10007818, 'hadm_id': 22987108, 'stay_id': 32359580, 'intime': '2146-06-22 11:46:29', 'wbc_count': {'values': [12.300000190734863, 8.399999618530273, 13.300000190734863, 20.0, 23.100000381469727, 21.5, 18.600000381469727, 12.399999618530273, 11.199999809265137], 'max': 23.100000381469727, 'min': 8.399999618530273, 'mean': 15.644444465637207, 'count': 9, 'has_elevated_wbc': True}, 'platelet_count': {'values': [394.0, 214.0, 158.0, 87.0, 104.0, 103.0, 112.0, 86.
+2026-03-26 09:26:16  INFO      === Iteration 21/100  run=apsiii  best_qa=0.0% ===
+2026-03-26 09:26:36  INFO      Exec block 1/1 …
+2026-03-26 09:26:36  INFO      Output: Chart events for stay 32359580:
+     itemid                                label
+0    228012              18 G Infiltration Scale
+1    228011                 18 G Phlebitis Scale
+2    227367          18 Gauge Dressing Occlusive
+3    226137  18 Gauge placed in outside facility
+4    228099         18 Gauge placed in the field
+..      ...                                  ...
+355  223848                      Ventilator Type
+356  223874                             Vti High
+357  220546                
+2026-03-26 09:26:36  INFO      === Iteration 22/100  run=apsiii  best_qa=0.0% ===
+2026-03-26 09:26:59  INFO      Exec block 1/1 …
+2026-03-26 09:26:59  INFO      Output: Relevant chartevents:
+    itemid                         label  valuenum valueuom           charttime
+0   220052  Arterial Blood Pressure mean      56.0     mmHg 2146-06-22 12:53:00
+1   220052  Arterial Blood Pressure mean      52.0     mmHg 2146-06-22 13:00:00
+2   220052  Arterial Blood Pressure mean      51.0     mmHg 2146-06-22 13:15:00
+3   220052  Arterial Blood Pressure mean      79.0     mmHg 2146-06-22 13:30:00
+4   220052  Arterial Blood Pressure mean     106.0     mmHg 2146-06-22 13:45:0
+2026-03-26 09:26:59  INFO      === Iteration 23/100  run=apsiii  best_qa=0.0% ===
+2026-03-26 09:27:30  INFO      Exec block 1/1 …
+2026-03-26 09:27:31  INFO      Output: Sodium/Glucose/Albumin/Bilirubin:
+    itemid    label  valuenum valueuom           charttime
+0   227456  Albumin       3.9     g/dL 2110-01-14 18:21:00
+1   227456  Albumin       3.2     g/dL 2110-01-15 04:10:00
+2   227456  Albumin       1.8     g/dL 2110-01-18 05:19:00
+3   227456  Albumin       3.9     g/dL 2110-01-20 22:21:00
+4   227456  Albumin       3.1     g/dL 2110-01-21 04:44:00
+5   227456  Albumin       3.5     g/dL 2110-01-21 18:26:00
+6   227456  Albumin       3.1     g/dL 2110-01-23 04:
+2026-03-26 09:27:31  INFO      === Iteration 24/100  run=apsiii  best_qa=0.0% ===
+2026-03-26 09:27:55  INFO      Exec block 1/1 …
+2026-03-26 09:27:55  INFO      Output: Sodium/Glucose/Bilirubin in first 24h:
+    itemid                                label  ...  valueuom           charttime
+0   220621                      Glucose (serum)  ...     mg/dL 2146-06-22 11:54:00
+1   220621                      Glucose (serum)  ...     mg/dL 2146-06-22 12:57:00
+2   220621                      Glucose (serum)  ...     mg/dL 2146-06-22 14:05:00
+3   220621                      Glucose (serum)  ...     mg/dL 2146-06-22 19:37:00
+4   220621                      Glucose (serum
+2026-03-26 09:27:55  INFO      === Iteration 25/100  run=apsiii  best_qa=0.0% ===
+2026-03-26 09:28:19  INFO      Exec block 1/1 …
+2026-03-26 09:28:19  INFO      Output: Urine output in first 24h:
+Empty DataFrame
+Columns: [itemid, label, value, valueuom, charttime]
+Index: []
+
+Hematocrit in first 24h:
+    itemid                            label  ...  valueuom           charttime
+0   220545               Hematocrit (serum)  ...         % 2146-06-22 11:54:00
+1   226540  Hematocrit (whole blood - calc)  ...         % 2146-06-22 12:25:00
+2   220545               Hematocrit (serum)  ...         % 2146-06-22 12:57:00
+3   220545               Hematocrit (serum)  ...    
+2026-03-26 09:28:19  INFO      === Iteration 26/100  run=apsiii  best_qa=0.0% ===
+2026-03-26 09:28:49  INFO      Exec block 1/1 …
+2026-03-26 09:28:49  INFO      Output: FiO2 items:    itemid                 label
+0  223835  Inspired O2 Fraction
+
+Urine output items:    itemid                         label
+0  226566     Urine and GU Irrigant Out
+1  226627                      OR Urine
+2  226631                    PACU Urine
+3  227489  GU Irrigant/Urine Volume Out
+
+2026-03-26 09:28:49  INFO      === Iteration 27/100  run=apsiii  best_qa=0.0% ===
+2026-03-26 09:29:20  INFO      Exec block 1/1 …
+2026-03-26 09:29:20  INFO      Output: FiO2 values:
+   itemid                 label  valuenum valueuom           charttime
+0  223835  Inspired O2 Fraction     100.0     None 2146-06-22 13:00:00
+1  223835  Inspired O2 Fraction      50.0     None 2146-06-22 14:00:00
+2  223835  Inspired O2 Fraction      60.0     None 2146-06-22 19:00:00
+3  223835  Inspired O2 Fraction      80.0     None 2146-06-22 21:00:00
+4  223835  Inspired O2 Fraction      70.0     None 2146-06-22 23:00:00
+5  223835  Inspired O2 Fraction      60.0     None 2146-06-23
+2026-03-26 09:29:20  INFO      === Iteration 28/100  run=apsiii  best_qa=0.0% ===
+2026-03-26 09:29:39  INFO      Exec block 1/1 …
+2026-03-26 09:29:39  INFO      Output: # APACHE III — Clinical Guideline
+# Generated by generate_guidelines.py
+# Source articles: 10 (PMID22126425, PMID37007579, PMID39781488, PMID8118723, PMID19699141...)
+############################################################
+
+# Clinical Guideline: APACHE III (Acute Physiology and Chronic Health Evaluation III)
+
+---
+
+## 1. Definition
+
+APACHE III is a severity-of-illness classification and mortality prediction system designed for critically ill adult patients admitted to the intensive care unit
+2026-03-26 09:29:39  INFO      === Iteration 29/100  run=apsiii  best_qa=0.0% ===
+2026-03-26 09:29:39  INFO      Context approaching limit (21603 tokens, limit=25000) — forcing summarize + compress
+2026-03-26 09:33:22  INFO      Context compressed: 58 messages -> 2 messages
+2026-03-26 09:33:33  INFO      Exec block 1/1 …
+2026-03-26 09:33:33  INFO      Output: (no guideline found for 'apacheiii')
+
+2026-03-26 09:33:33  INFO      === Iteration 30/100  run=apsiii  best_qa=0.0% ===
+2026-03-26 09:33:37  INFO      Exec block 1/1 …
+2026-03-26 09:33:37  INFO      Output: Available guidelines:
+  - acidosis_guideline
+  - acute_decompensated_heart_failure_guideline
+  - acute_hepatic_failure_guideline
+  - adverse_effect_of_anticoagulants_guideline
+  - alcohol_withdrawal_syndrome_guideline
+  - anemia_icu_critically_ill_hemoglobin_transfusion_guideline
+  - apache_iii_guideline
+  - atrial_fibrillation_guideline
+  - bradycardia_guideline
+  - cerebral_infarction_guideline
+  - coma_altered_consciousness_icu_guideline
+  - copd_exacerbation_guideline
+  - coronary_artery_dis
+2026-03-26 09:33:37  INFO      === Iteration 31/100  run=apsiii  best_qa=0.0% ===
+2026-03-26 09:33:42  INFO      Exec block 1/1 …
+2026-03-26 09:33:42  INFO      Output: Guideline length: 21564
+
+================================================================================
+
+# APACHE III — Clinical Guideline
+# Generated by generate_guidelines.py
+# Source articles: 10 (PMID22126425, PMID37007579, PMID39781488, PMID8118723, PMID19699141...)
+############################################################
+
+# Clinical Guideline: APACHE III (Acute Physiology and Chronic Health Evaluation III)
+
+---
+
+## 1. Definition
+
+APACHE III is a severity-of-illness classification and
+2026-03-26 09:33:42  INFO      === Iteration 32/100  run=apsiii  best_qa=0.0% ===
+2026-03-26 09:33:47  INFO      Exec block 1/1 …
+2026-03-26 09:33:47  INFO      Output: The full matrix published by Knaus et al. (1991) should be used for exact implementation. Some extreme combinations are clinically improbable. Maximum = 12 points.* [training knowledge]
+
+---
+
+#### 4.1.16 Neurologic — Glasgow Coma Scale (GCS) [training knowledge]
+
+The GCS (Eyes + Motor + Verbal, range 3–15) is converted to APACHE III APS points as follows:
+
+| GCS Score | APS Points |
+|---|---|
+| 15 | 0 |
+| 14 | 3 |
+| 13 | 5 |
+| 12 | 7 |
+| 11 | 10 |
+| 10 | 13 |
+| 9 | 15 |
+| 8 | 18 |
+| 7 | 22 |
+| 6
+2026-03-26 09:33:47  INFO      === Iteration 33/100  run=apsiii  best_qa=0.0% ===
+2026-03-26 09:34:01  INFO      Exec block 1/1 …
+2026-03-26 09:34:01  INFO      Output: 
+=== Section 4.1.10 ===
+4.1.10 Blood Urea Nitrogen (mg/dL) [training knowledge]
+
+| Range | Points |
+|---|---|
+| ≤ 16.9 | 0 |
+| 17–19 | 2 |
+| 20–39 | 7 |
+| 40–79 | 11 |
+| ≥ 80 | 12 |
+
+---
+
+#### 4.1.11 Serum Sodium (mEq/L) [training knowledge]
+
+| Range | Points |
+|---|---|
+| ≤ 119 | 3 |
+| 120–134 | 2 |
+| 135–145 | 0 |
+| 146–154 | 1 |
+| ≥ 155 | 4 |
+
+---
+
+#### 4.1.12 Serum Albumin (g/dL) [training knowledge]
+
+| Range | Points |
+|---|---|
+| < 2.0 | 11 |
+| 2.0–2.4 | 6 |
+| 2.5–4.4 | 0 |
+| ≥ 4.5 | 0 |
+
+
+2026-03-26 09:34:01  INFO      === Iteration 34/100  run=apsiii  best_qa=0.0% ===
+2026-03-26 09:34:20  INFO      Exec block 1/1 …
+2026-03-26 09:34:20  INFO      Output: Functions loaded successfully
+
+2026-03-26 09:34:20  INFO      === Iteration 35/100  run=apsiii  best_qa=0.0% ===
+2026-03-26 09:34:50  INFO      Exec block 1/1 …
+2026-03-26 09:34:50  INFO      Output:     itemid                                                            label                            category
+0   220448                                                       Phosphorus  Ingredients - general (Not In Use)
+1   220479                                                      Thryptophan  Ingredients - general (Not In Use)
+2   220483                                                       Tocopherol  Ingredients - general (Not In Use)
+3   221255                                          
+2026-03-26 09:34:50  INFO      === Iteration 36/100  run=apsiii  best_qa=0.0% ===
+2026-03-26 09:35:06  INFO      Exec block 1/1 …
+2026-03-26 09:35:06  INFO      Output:     itemid                             label             category
+0   220045                        Heart Rate  Routine Vital Signs
+1   220052      Arterial Blood Pressure mean  Routine Vital Signs
+2   220181  Non Invasive Blood Pressure mean  Routine Vital Signs
+3   220210                  Respiratory Rate          Respiratory
+4   220224              Arterial O2 pressure                 Labs
+5   220235             Arterial CO2 Pressure                 Labs
+6   220545                Hematocrit (
+2026-03-26 09:35:06  INFO      === Iteration 37/100  run=apsiii  best_qa=0.0% ===
+2026-03-26 09:35:22  INFO      Exec block 1/1 …
+2026-03-26 09:35:22  INFO      Output: ICU Stay Info:
+   subject_id   hadm_id              intime             outtime
+0    10007818  22987108 2146-06-22 11:46:29 2146-07-13 00:27:47
+
+First Day Vitals:
+{'stay_id': 32359580, 'subject_id': 10007818, 'hadm_id': 22987108, 'intime': '2146-06-22 11:46:29', 'first_day_end': '2146-06-23 11:46:29', 'heart_rate': {'min': 72.0, 'max': 139.0, 'avg': 93.5, 'count': 28}, 'map': {'min': 28.0, 'max': 124.0, 'avg': 69.16666666666667, 'count': 36}, 'respiratory_rate': {'min': 0.0, 'max': 31.0, 'avg': 2
+2026-03-26 09:35:22  INFO      === Iteration 38/100  run=apsiii  best_qa=0.0% ===
+2026-03-26 09:40:10  INFO      Exec block 1/1 …
+2026-03-26 09:40:10  INFO      Output: Error:
+Traceback (most recent call last):
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 643, in execute
+    _run_with_timeout(_do_execute, timeout)
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 174, in _run_with_timeout
+    raise error[0]
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 156, in target
+    result[0] = func(*args, **kwargs)
+                ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/v-tiossowsk
+2026-03-26 09:40:10  INFO      === Iteration 39/100  run=apsiii  best_qa=0.0% ===
+2026-03-26 09:44:30  INFO      Exec block 1/1 …
+2026-03-26 09:44:30  INFO      Output: Error:
+Traceback (most recent call last):
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 643, in execute
+    _run_with_timeout(_do_execute, timeout)
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 174, in _run_with_timeout
+    raise error[0]
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 156, in target
+    result[0] = func(*args, **kwargs)
+                ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/v-tiossowsk
+2026-03-26 09:44:30  INFO      === Iteration 40/100  run=apsiii  best_qa=0.0% ===
+2026-03-26 09:44:30  INFO      Context approaching limit (24672 tokens, limit=25000) — forcing summarize + compress
+2026-03-26 09:48:16  INFO      Context compressed: 24 messages -> 2 messages
+2026-03-26 09:48:26  INFO      Exec block 1/1 …
+2026-03-26 09:48:26  INFO      Output: []
+
+2026-03-26 09:48:26  INFO      === Iteration 41/100  run=apsiii  best_qa=0.0% ===
+2026-03-26 09:48:29  INFO      Exec block 1/1 …
+2026-03-26 09:48:29  INFO      Output: ['acei', 'age', 'aki', 'antibiotic', 'arb', 'bg', 'blood_differential', 'cardiac_marker', 'charlson', 'chemistry', 'coagulation', 'code_status', 'complete_blood_count', 'creatinine_baseline', 'crrt', 'dobutamine', 'dopamine', 'enzyme', 'epinephrine', 'first_day_bg', '... (37 more; pass a keyword to filter)']
+
+2026-03-26 09:48:29  INFO      === Iteration 42/100  run=apsiii  best_qa=0.0% ===
+2026-03-26 09:48:33  INFO      Exec block 1/1 …
+2026-03-26 09:48:33  INFO      Output: ['first_day_lab']
+
+2026-03-26 09:48:33  INFO      === Iteration 43/100  run=apsiii  best_qa=0.0% ===
+2026-03-26 09:48:39  INFO      Exec block 1/1 …
+2026-03-26 09:48:39  INFO      Output: []
+
+2026-03-26 09:48:39  INFO      === Iteration 44/100  run=apsiii  best_qa=0.0% ===
+2026-03-26 09:48:49  INFO      Exec block 1/1 …
+2026-03-26 09:48:49  INFO      Output: Error:
+Traceback (most recent call last):
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 643, in execute
+    _run_with_timeout(_do_execute, timeout)
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 174, in _run_with_timeout
+    raise error[0]
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 156, in target
+    result[0] = func(*args, **kwargs)
+                ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/v-tiossowsk
+2026-03-26 09:48:49  INFO      === Iteration 45/100  run=apsiii  best_qa=0.0% ===
+2026-03-26 09:48:53  INFO      Exec block 1/1 …
+2026-03-26 09:48:53  INFO      Output:     stay_id  subject_id   hadm_id              intime
+0  39553978    10000032  29079034 2180-07-23 14:00:00
+1  37081114    10000690  25860671 2150-11-02 19:37:00
+2  39765666    10000980  26913865 2189-06-27 08:42:00
+3  37067082    10001217  24597018 2157-11-20 19:18:02
+4  34592300    10001217  27703517 2157-12-19 15:42:24
+
+2026-03-26 09:48:53  INFO      === Iteration 46/100  run=apsiii  best_qa=0.0% ===
+2026-03-26 09:48:58  INFO      Exec block 1/1 …
+2026-03-26 09:48:58  INFO      Output: Vitals test: {'stay_id': 39553978, 'subject_id': 10000032, 'hadm_id': 29079034, 'intime': '2180-07-23 14:00:00', 'first_day_end': '2180-07-24 14:00:00', 'heart_rate': {'min': 91.0, 'max': 105.0, 'avg': 96.5, 'count': 10}, 'map': {'min': 56.0, 'max': 67.0, 'avg': 62.3, 'count': 10}, 'respiratory_rate': {'min': 16.0, 'max': 24.0, 'avg': 20.7, 'count': 10}, 'has_hypotension': True, 'has_tachycardia': True, 'has_tachypnea': True, 'has_bradytachycardia': True}
+
+2026-03-26 09:48:58  INFO      === Iteration 47/100  run=apsiii  best_qa=0.0% ===
+2026-03-26 09:49:12  INFO      Exec block 1/1 …
+2026-03-26 09:49:12  INFO      Output: Stay info:    subject_id   hadm_id              intime             outtime
+0    10000032  29079034 2180-07-23 14:00:00 2180-07-23 23:50:47
+Patient info:    subject_id gender  anchor_age  anchor_year
+0    10000032      F          52         2180
+Admission info:     hadm_id admission_type admit_provider_id
+0  29079034       EW EMER.            P06OTX
+
+2026-03-26 09:49:12  INFO      === Iteration 48/100  run=apsiii  best_qa=0.0% ===
+2026-03-26 09:49:27  INFO      Exec block 1/1 …
+2026-03-26 09:49:27  INFO      Output: Available items:
+    itemid                             label             category
+0   223762               Temperature Celsius  Routine Vital Signs
+1   220052      Arterial Blood Pressure mean  Routine Vital Signs
+2   220621                   Glucose (serum)                 Labs
+3   220615                Creatinine (serum)                 Labs
+4   223900             GCS - Verbal Response         Neurological
+5   220181  Non Invasive Blood Pressure mean  Routine Vital Signs
+6   223835           
+2026-03-26 09:49:27  INFO      === Iteration 49/100  run=apsiii  best_qa=0.0% ===
+2026-03-26 09:51:47  INFO      Exec block 1/1 …
+2026-03-26 09:51:47  INFO      Output: Testing scoring functions:
+HR 100: 1
+HR 120: 7
+MAP 65: 7
+MAP 85: 0
+Temp 36.5: 0
+Temp 40.5: 4
+RR 20: 0
+WBC 15: 0
+Age 52: 5
+GCS 15: 0
+GCS 10: 13
+
+2026-03-26 09:51:47  INFO      === Iteration 50/100  run=apsiii  best_qa=0.0% ===
+2026-03-26 09:51:57  INFO      Exec block 1/1 …
+2026-03-26 09:51:57  INFO      Output: Urine output items:
+    itemid                      label    category
+0   224015               Urine Source       GI/GU
+1   224016                Urine Color       GI/GU
+2   224876           Urine Appearance       GI/GU
+3   225454              Urine Culture  6-Cultures
+4   226557           R Ureteral Stent      Output
+5   226558           L Ureteral Stent      Output
+6   226559                      Foley      Output
+7   226560                       Void      Output
+8   226561                Cond
+2026-03-26 09:51:57  INFO      === Iteration 51/100  run=apsiii  best_qa=0.0% ===
+2026-03-26 09:54:59  INFO      Exec block 1/1 …
+2026-03-26 09:54:59  INFO      Output: APACHE III Result:
+  stay_id: 39553978
+  subject_id: 10000032
+  hadm_id: 29079034
+  intime: 2180-07-23 14:00:00
+  aps_score: 28
+  age_points: 5
+  chronic_health_points: 0
+  total_score: 33
+  component_scores: {'heart_rate': 1, 'map': 15, 'temperature': 0, 'respiratory_rate': 0, 'oxygenation': 0, 'hematocrit': 0, 'wbc': 0, 'creatinine': 0, 'urine_output': 0, 'bun': 7, 'sodium': 2, 'albumin': 0, 'bilirubin': 0, 'glucose': 0, 'acid_base': 0, 'gcs': 3}
+
+2026-03-26 09:54:59  INFO      === Iteration 52/100  run=apsiii  best_qa=0.0% ===
+2026-03-26 09:55:11  INFO      Exec block 1/1 …
+2026-03-26 09:55:11  INFO      Output: Stay 37081114: Total=66, APS=42, Age=24, Chronic=0
+Stay 39765666: Total=31, APS=15, Age=16, Chronic=0
+Stay 37067082: Total=25, APS=20, Age=5, Chronic=0
+Stay 34592300: Total=23, APS=18, Age=5, Chronic=0
+
+2026-03-26 09:55:11  INFO      === Iteration 53/100  run=apsiii  best_qa=0.0% ===
+2026-03-26 09:55:35  INFO      Exec block 1/1 …
+2026-03-26 09:55:36  INFO      Output: Intime: 2180-07-23 14:00:00
+GCS data:
+   itemid  valuenum           charttime
+0  220739       4.0 2180-07-23 14:45:00
+1  223901       6.0 2180-07-23 14:45:00
+2  223900       4.0 2180-07-23 14:45:00
+3  220739       4.0 2180-07-23 18:22:00
+4  223900       5.0 2180-07-23 18:22:00
+5  223901       6.0 2180-07-23 18:22:00
+6  220739       4.0 2180-07-23 20:00:00
+7  223900       5.0 2180-07-23 20:00:00
+8  223901       6.0 2180-07-23 20:00:00
+Urine output data:
+Empty DataFrame
+Columns: [itemid, value, ch
+2026-03-26 09:55:36  INFO      === Iteration 54/100  run=apsiii  best_qa=0.0% ===
+2026-03-26 09:56:07  INFO      Exec block 1/1 …
+2026-03-26 09:56:08  INFO      Output: MAP data:
+   itemid  valuenum           charttime
+0  220181      56.0 2180-07-23 14:11:00
+1  220181      67.0 2180-07-23 14:30:00
+2  220181      64.0 2180-07-23 15:00:00
+3  220181      64.0 2180-07-23 16:01:00
+4  220181      67.0 2180-07-23 17:00:00
+5  220181      60.0 2180-07-23 18:00:00
+6  220181      56.0 2180-07-23 19:00:00
+7  220181      64.0 2180-07-23 20:00:00
+8  220181      63.0 2180-07-23 21:01:00
+9  220181      62.0 2180-07-23 22:00:00
+BUN data:
+   itemid  valuenum           charttime
+
+2026-03-26 09:56:08  INFO      === Iteration 55/100  run=apsiii  best_qa=0.0% ===
+2026-03-26 09:56:33  INFO      Exec block 1/1 …
+2026-03-26 09:56:34  INFO      Output: ABG data:
+Empty DataFrame
+Columns: [itemid, valuenum, charttime]
+Index: []
+Creatinine data:
+   itemid  valuenum           charttime
+0  220615       0.5 2180-07-23 21:45:00
+
+2026-03-26 09:56:34  INFO      === Iteration 56/100  run=apsiii  best_qa=0.0% ===
+2026-03-26 09:57:04  INFO      Exec block 1/1 …
+2026-03-26 09:57:04  INFO      Output: Lab data:
+   itemid  valuenum           charttime
+0  220621     115.0 2180-07-23 21:45:00
+
+2026-03-26 09:57:04  INFO      === Iteration 57/100  run=apsiii  best_qa=0.0% ===
+2026-03-26 09:57:26  INFO      Exec block 1/1 …
+2026-03-26 09:57:26  INFO      Output: Error:
+Traceback (most recent call last):
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 643, in execute
+    _run_with_timeout(_do_execute, timeout)
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 174, in _run_with_timeout
+    raise error[0]
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 156, in target
+    result[0] = func(*args, **kwargs)
+                ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/v-tiossowsk
+2026-03-26 09:57:26  INFO      === Iteration 58/100  run=apsiii  best_qa=0.0% ===
+2026-03-26 09:57:43  INFO      Exec block 1/1 …
+2026-03-26 09:57:43  INFO      Output: Stays with ABG data:
+    stay_id  abg_count
+0  32289208          4
+1  37910458          4
+2  33362610          4
+3  38442604          4
+4  35849385          3
+5  30220211          4
+6  30045078          4
+7  36919199          4
+8  37488401          4
+9  38818471          4
+
+Testing with stay 32289208
+Total=102, APS=89
+Component scores:
+  heart_rate: 7
+  map: 15
+  temperature: 0
+  respiratory_rate: 6
+  oxygenation: 0
+  hematocrit: 3
+  wbc: 5
+  creatinine: 7
+  urine_output: 0
+  bun: 7
+  sodium: 0
+
+2026-03-26 09:57:43  INFO      === Iteration 59/100  run=apsiii  best_qa=0.0% ===
+2026-03-26 09:58:06  INFO      Exec block 1/1 …
+2026-03-26 09:58:07  INFO      Output: Intime: 2159-01-02 19:22:29
+ABG data:
+   itemid  valuenum           charttime
+0  223835      40.0 2159-01-02 21:12:00
+1  223835      40.0 2159-01-03 00:00:00
+2  223835      40.0 2159-01-03 04:00:00
+3  223835      35.0 2159-01-03 08:00:00
+4  220224      90.0 2159-01-03 15:12:00
+5  220235      42.0 2159-01-03 15:12:00
+6  223830       7.4 2159-01-03 15:12:00
+GCS data:
+    itemid  valuenum           charttime
+0   220739       2.0 2159-01-02 19:55:00
+1   223900       1.0 2159-01-02 19:55:00
+2   22390
+2026-03-26 09:58:07  INFO      === Iteration 60/100  run=apsiii  best_qa=0.0% ===
+2026-03-26 09:58:32  INFO      Exec block 1/1 …
+2026-03-26 09:58:33  INFO      Output: Stay 37910458: Total=91, APS=74, Age=17, Chronic=0
+Stay 33362610: Total=54, APS=54, Age=0, Chronic=0
+Stay 38442604: Total=112, APS=99, Age=13, Chronic=0
+Stay 35849385: Total=52, APS=35, Age=17, Chronic=0
+
+2026-03-26 09:58:33  INFO      === Iteration 61/100  run=apsiii  best_qa=0.0% ===
+2026-03-26 09:58:49  INFO      Exec block 1/1 …
+2026-03-26 09:58:49  INFO      Output: Admission types:
+                admission_type
+0       AMBULATORY OBSERVATION
+1                 DIRECT EMER.
+2                     ELECTIVE
+3                       URGENT
+4            OBSERVATION ADMIT
+5           DIRECT OBSERVATION
+6               EU OBSERVATION
+7  SURGICAL SAME DAY ADMISSION
+8                     EW EMER.
+Diagnoses for hadm 29079034:
+   icd_code
+0     45829
+1     07044
+2      7994
+3      2761
+4     78959
+5      2767
+6      3051
+7       V08
+8     V4986
+9      V462
+10      496
+
+2026-03-26 09:58:49  INFO      === Iteration 62/100  run=apsiii  best_qa=0.0% ===
+2026-03-26 09:59:10  INFO      Exec block 1/1 …
+2026-03-26 09:59:10  INFO      Output: Admission type: EW EMER.
+Chronic health points: 0
+
+2026-03-26 09:59:10  INFO      === Iteration 63/100  run=apsiii  best_qa=0.0% ===
+2026-03-26 10:02:11  INFO      Exec block 1/1 …
+2026-03-26 10:02:11  INFO      Output: Stay 39553978: Chronic health points: 4
+Total score: 37
+
+2026-03-26 10:02:11  INFO      === Iteration 64/100  run=apsiii  best_qa=0.0% ===
+2026-03-26 10:02:29  INFO      Exec block 1/1 …
+2026-03-26 10:02:30  INFO      Output: Stay 39553978: Total=37, APS=28, Age=5, Chronic=4
+Stay 37081114: Total=66, APS=42, Age=24, Chronic=0
+Stay 39765666: Total=31, APS=15, Age=16, Chronic=0
+Stay 37067082: Total=25, APS=20, Age=5, Chronic=0
+Stay 34592300: Total=23, APS=18, Age=5, Chronic=0
+Stay 32289208: Total=102, APS=89, Age=13, Chronic=0
+Stay 37910458: Total=91, APS=74, Age=17, Chronic=0
+Stay 33362610: Total=54, APS=54, Age=0, Chronic=0
+
+2026-03-26 10:02:30  INFO      === Iteration 65/100  run=apsiii  best_qa=0.0% ===
+2026-03-26 10:02:30  INFO      Context approaching limit (20122 tokens, limit=25000) — forcing summarize + compress
+2026-03-26 10:07:53  INFO      Context compressed: 52 messages -> 2 messages
+2026-03-26 10:08:03  INFO      Exec block 1/1 …
+2026-03-26 10:08:03  INFO      Output: []
+
+2026-03-26 10:08:03  INFO      === Iteration 66/100  run=apsiii  best_qa=0.0% ===
+2026-03-26 10:12:56  INFO      Exec block 1/1 …
+2026-03-26 10:12:56  INFO      Output: Error:
+Traceback (most recent call last):
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 643, in execute
+    _run_with_timeout(_do_execute, timeout)
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 174, in _run_with_timeout
+    raise error[0]
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 156, in target
+    result[0] = func(*args, **kwargs)
+                ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/v-tiossowsk
+2026-03-26 10:12:56  INFO      === Iteration 67/100  run=apsiii  best_qa=0.0% ===
+2026-03-26 10:13:04  INFO      Exec block 1/1 …
+2026-03-26 10:13:04  INFO      Output:     stay_id  subject_id   hadm_id              intime
+0  39553978    10000032  29079034 2180-07-23 14:00:00
+1  37081114    10000690  25860671 2150-11-02 19:37:00
+2  39765666    10000980  26913865 2189-06-27 08:42:00
+3  37067082    10001217  24597018 2157-11-20 19:18:02
+4  34592300    10001217  27703517 2157-12-19 15:42:24
+
+2026-03-26 10:13:04  INFO      === Iteration 68/100  run=apsiii  best_qa=0.0% ===
+2026-03-26 10:13:11  INFO      Exec block 1/1 …
+2026-03-26 10:13:11  INFO      Output: {'stay_id': 39553978, 'subject_id': 10000032, 'hadm_id': 29079034, 'intime': Timestamp('2180-07-23 14:00:00'), 'aps_score': 28, 'age_points': 5, 'chronic_health_points': 10, 'total_score': 43, 'component_scores': {'heart_rate': 1, 'map': 15, 'temperature': 0, 'respiratory_rate': 0, 'oxygenation': 0, 'hematocrit': 0, 'wbc': 0, 'creatinine': 0, 'urine_output': 0, 'bun': 7, 'sodium': 2, 'albumin': 0, 'bilirubin': 0, 'glucose': 0, 'acid_base': 0, 'gcs': 3}}
+
+2026-03-26 10:13:11  INFO      === Iteration 69/100  run=apsiii  best_qa=0.0% ===
+2026-03-26 10:13:22  INFO      Exec block 1/1 …
+2026-03-26 10:13:22  INFO      Output: Stay 37081114: APS=42, Age=24, Chronic=0, Total=66
+  Components: {'heart_rate': 1, 'map': 15, 'temperature': 0, 'respiratory_rate': 9, 'oxygenation': 0, 'hematocrit': 3, 'wbc': 0, 'creatinine': 0, 'urine_output': 0, 'bun': 7, 'sodium': 0, 'albumin': 0, 'bilirubin': 0, 'glucose': 0, 'acid_base': 0, 'gcs': 7}
+
+Stay 39765666: APS=15, Age=16, Chronic=0, Total=31
+  Components: {'heart_rate': 0, 'map': 9, 'temperature': 0, 'respiratory_rate': 6, 'oxygenation': 0, 'hematocrit': 0, 'wbc': 0, 'creatinine
+2026-03-26 10:13:22  INFO      === Iteration 70/100  run=apsiii  best_qa=0.0% ===
+2026-03-26 10:13:47  INFO      Exec block 1/1 …
+2026-03-26 10:13:47  INFO      Output: Admission type:   admission_type
+0       EW EMER.
+ICD codes: ['45829', '07044', '7994', '2761', '78959', '2767', '3051', 'V08', 'V4986', 'V462', '496', '29680', '5715']
+
+2026-03-26 10:13:47  INFO      === Iteration 71/100  run=apsiii  best_qa=0.0% ===
+2026-03-26 10:14:05  INFO      Exec block 1/1 …
+2026-03-26 10:14:05  INFO      Output:      hadm_id admission_type icd_code
+0   25860671       EW EMER.     5070
+1   25860671       EW EMER.    42833
+2   25860671       EW EMER.    51881
+3   25860671       EW EMER.     5849
+4   25860671       EW EMER.     5781
+5   25860671       EW EMER.     2763
+6   25860671       EW EMER.     5119
+7   25860671       EW EMER.     5180
+8   25860671       EW EMER.     V850
+9   25860671       EW EMER.     4280
+10  25860671       EW EMER.    42731
+11  25860671       EW EMER.    42781
+12  25860671       
+2026-03-26 10:14:05  INFO      === Iteration 72/100  run=apsiii  best_qa=0.0% ===
+2026-03-26 10:14:25  INFO      Exec block 1/1 …
+2026-03-26 10:14:25  INFO      Output: Admission type: EW EMER.
+Is elective postop: False
+Is emergency postop: True
+Is non-operative: False
+
+Distinct admission types:
+                admission_type
+0                     ELECTIVE
+1  SURGICAL SAME DAY ADMISSION
+2           DIRECT OBSERVATION
+3                       URGENT
+4            OBSERVATION ADMIT
+5               EU OBSERVATION
+6                     EW EMER.
+7       AMBULATORY OBSERVATION
+8                 DIRECT EMER.
+
+2026-03-26 10:14:25  INFO      === Iteration 73/100  run=apsiii  best_qa=0.0% ===
+2026-03-26 10:14:39  INFO      Exec block 1/1 …
+2026-03-26 10:14:39  INFO      Output: Postoperative-related admission types:
+                admission_type
+0  SURGICAL SAME DAY ADMISSION
+
+All admission types:
+                admission_type
+0                       URGENT
+1            OBSERVATION ADMIT
+2                 DIRECT EMER.
+3       AMBULATORY OBSERVATION
+4  SURGICAL SAME DAY ADMISSION
+5                     ELECTIVE
+6                     EW EMER.
+7           DIRECT OBSERVATION
+8               EU OBSERVATION
+
+2026-03-26 10:14:39  INFO      === Iteration 74/100  run=apsiii  best_qa=0.0% ===
+2026-03-26 10:17:49  INFO      Exec block 1/1 …
+2026-03-26 10:17:49  INFO      Output: Stay 39553978:
+  APS=28, Age=5, Chronic=14, Total=47
+  Components: {'heart_rate': 1, 'map': 15, 'temperature': 0, 'respiratory_rate': 0, 'oxygenation': 0, 'hematocrit': 0, 'wbc': 0, 'creatinine': 0, 'urine_output': 0, 'bun': 7, 'sodium': 2, 'albumin': 0, 'bilirubin': 0, 'glucose': 0, 'acid_base': 0, 'gcs': 3}
+
+2026-03-26 10:17:49  INFO      === Iteration 75/100  run=apsiii  best_qa=0.0% ===
+2026-03-26 10:18:12  INFO      Exec block 1/1 …
+2026-03-26 10:18:13  INFO      Output: Stay 37081114:
+  APS=42, Age=24, Chronic=0, Total=66
+  Admission type: EW EMER.
+  ICD codes (first 10): ['5070', '42833', '51881', '5849', '5781', '2763', '5119', '5180', 'V850', '4280']
+
+Stay 39765666:
+  APS=15, Age=16, Chronic=0, Total=31
+  Admission type: EW EMER.
+  ICD codes (first 10): ['41071', '42823', '41412', '5854', '4240', '4280', '41401', '40390', '25000', 'V5867']
+
+Stay 37067082:
+  APS=20, Age=5, Chronic=0, Total=25
+  Admission type: EW EMER.
+  ICD codes (first 10): ['3240', '3484',
+2026-03-26 10:18:13  INFO      === Iteration 76/100  run=apsiii  best_qa=0.0% ===
+2026-03-26 10:18:35  INFO      Exec block 1/1 …
+2026-03-26 10:18:35  INFO      Output: Elective admissions:
+    hadm_id admission_type icd_code
+0  22805634       ELECTIVE    Z5111
+1  22805634       ELECTIVE    C8338
+2  22805634       ELECTIVE    D6959
+3  22805634       ELECTIVE     Z853
+4  22805634       ELECTIVE     L930
+5  22805634       ELECTIVE    M5412
+6  22805634       ELECTIVE     Z801
+7  22805634       ELECTIVE    Z8241
+8  22805634       ELECTIVE     R740
+9  22805634       ELECTIVE  T451X5A
+
+Patients with chronic conditions:
+     hadm_id               admission_type icd_co
+2026-03-26 10:18:35  INFO      === Iteration 77/100  run=apsiii  best_qa=0.0% ===
+2026-03-26 10:18:57  INFO      Exec block 1/1 …
+2026-03-26 10:18:58  INFO      Output: ICU stays with chronic conditions:
+    stay_id   hadm_id admission_type icd_code
+0  35916210  22834779       EW EMER.      042
+1  30529483  25170750         URGENT     5715
+2  33897646  22773395       EW EMER.     5718
+3  34158436  28333022       EW EMER.     5715
+4  31588066  20654187   DIRECT EMER.     5716
+5  36806336  25733203       ELECTIVE     5715
+6  32260936  24639711       EW EMER.     5715
+7  30977260  28521731       EW EMER.     5715
+8  30429247  28660516         URGENT     5715
+9  33
+2026-03-26 10:18:58  INFO      === Iteration 78/100  run=apsiii  best_qa=0.0% ===
+2026-03-26 10:18:58  INFO      Context approaching limit (20303 tokens, limit=25000) — forcing summarize + compress
+2026-03-26 10:24:21  INFO      Context compressed: 28 messages -> 2 messages
+2026-03-26 10:27:26  INFO      Exec block 1/1 …
+2026-03-26 10:27:26  INFO      Output: Error:
+Traceback (most recent call last):
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 643, in execute
+    _run_with_timeout(_do_execute, timeout)
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 174, in _run_with_timeout
+    raise error[0]
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 156, in target
+    result[0] = func(*args, **kwargs)
+                ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/v-tiossowsk
+2026-03-26 10:27:26  INFO      === Iteration 79/100  run=apsiii  best_qa=0.0% ===
+2026-03-26 10:27:33  INFO      Exec block 1/1 …
+2026-03-26 10:27:33  INFO      Output:     stay_id  subject_id   hadm_id              intime
+0  39553978    10000032  29079034 2180-07-23 14:00:00
+1  37081114    10000690  25860671 2150-11-02 19:37:00
+2  39765666    10000980  26913865 2189-06-27 08:42:00
+3  37067082    10001217  24597018 2157-11-20 19:18:02
+4  34592300    10001217  27703517 2157-12-19 15:42:24
+
+2026-03-26 10:27:33  INFO      === Iteration 80/100  run=apsiii  best_qa=0.0% ===
+2026-03-26 10:27:39  INFO      Exec block 1/1 …
+2026-03-26 10:27:39  INFO      Output: {'stay_id': 39553978, 'subject_id': 10000032, 'hadm_id': 29079034, 'intime': '2180-07-23 14:00:00', 'aps_score': 28, 'age_points': 5, 'chronic_health_points': 25, 'total_score': 58, 'component_scores': {'heart_rate': 1, 'map': 15, 'temperature': 0, 'respiratory_rate': 0, 'oxygenation': 0, 'hematocrit': 0, 'wbc': 0, 'creatinine': 0, 'urine_output': 0, 'bun': 7, 'sodium': 2, 'albumin': 0, 'bilirubin': 0, 'glucose': 0, 'acid_base': 0, 'gcs': 3}}
+
+2026-03-26 10:27:39  INFO      === Iteration 81/100  run=apsiii  best_qa=0.0% ===
+2026-03-26 10:27:51  INFO      Exec block 1/1 …
+2026-03-26 10:27:51  INFO      Output: ['apache_iii_guideline']
+
+2026-03-26 10:27:51  INFO      === Iteration 82/100  run=apsiii  best_qa=0.0% ===
+2026-03-26 10:27:57  INFO      Exec block 1/1 …
+2026-03-26 10:27:57  INFO      Output: # APACHE III — Clinical Guideline
+# Generated by generate_guidelines.py
+# Source articles: 10 (PMID22126425, PMID37007579, PMID39781488, PMID8118723, PMID19699141...)
+############################################################
+
+# Clinical Guideline: APACHE III (Acute Physiology and Chronic Health Evaluation III)
+
+---
+
+## 1. Definition
+
+APACHE III is a severity-of-illness classification and mortality prediction system designed for critically ill adult patients admitted to the intensive care unit
+2026-03-26 10:27:57  INFO      === Iteration 83/100  run=apsiii  best_qa=0.0% ===
+2026-03-26 10:28:11  INFO      Exec block 1/1 …
+2026-03-26 10:28:11  INFO      Output: ############################################################
+
+# Clinical Guideline: APACHE III (Acute Physiology and Chronic Health Evaluation III)
+
+---
+
+## 1. Definition
+
+APACHE III is a severity-of-illness classification and mortality prediction system designed for critically ill adult patients admitted to the intensive care unit (ICU). It was introduced in **1991 by Knaus et al.** [training knowledge] as a refinement of APACHE II. The system quantifies the severity of acute illness, accounts 
+2026-03-26 10:28:11  INFO      === Iteration 84/100  run=apsiii  best_qa=0.0% ===
+2026-03-26 10:28:21  INFO      Exec block 1/1 …
+2026-03-26 10:28:21  INFO      Output: ############################################################
+
+# Clinical Guideline: APACHE III (Acute Physiology and Chronic Health Evaluation III)
+
+---
+
+## 1. Definition
+
+APACHE III is a severity-of-illness classification and mortality prediction system designed for critically ill adult patients admitted to the intensive care unit (ICU). It was introduced in **1991 by Knaus et al.** [training knowledge] as a refinement of APACHE II. The system quantifies the severity of acute illness, accounts 
+2026-03-26 10:28:21  INFO      === Iteration 85/100  run=apsiii  best_qa=0.0% ===
+2026-03-26 10:28:31  INFO      Exec block 1/1 …
+2026-03-26 10:28:31  INFO      Output: Line 5: # Clinical Guideline: APACHE III (Acute Physiology and Chronic Health Evaluation III)
+Line 11: APACHE III is a severity-of-illness classification and mortality prediction system designed for critically ill adult patients admitted to the intensive care unit (ICU). It was introduced in **1991 by Knaus et al.** [training knowledge] as a refinement of APACHE II. The system quantifies the severity of acute illness, accounts for patient age and pre-existing chronic health conditions, and, when
+2026-03-26 10:28:31  INFO      === Iteration 86/100  run=apsiii  best_qa=0.0% ===
+2026-03-26 10:28:48  INFO      Exec block 1/1 …
+2026-03-26 10:28:48  INFO      Output: ### 4.3 Chronic Health Evaluation Points [training knowledge]
+
+Points are assigned for severe chronic organ insufficiency or immunocompromised state present **prior to this hospital admission**. Scoring depends on the category of ICU admission.
+
+**Chronic conditions evaluated:**
+
+| Chronic Condition | Definition |
+|---|---|
+| AIDS | Confirmed HIV with opportunistic infection or Kaposi sarcoma |
+| Hepatic failure | Biopsy-proven cirrhosis, portal hypertension, prior hepatic encephalopathy or vari
+2026-03-26 10:28:48  INFO      === Iteration 87/100  run=apsiii  best_qa=0.0% ===
+2026-03-26 10:29:07  INFO      Exec block 1/1 …
+2026-03-26 10:29:07  INFO      Output: - All acute physiology variables are scored using the **worst (most abnormal) value** recorded during the **first 24 hours** of ICU admission [training knowledge].
+- The Glasgow Coma Scale (GCS) is scored as the **lowest** (most abnormal) value in the first 24 hours, assessed prior to or in the absence of sedation/paralysis when possible [training knowledge].
+- If a laboratory test is not measured within the scoring window, specific default/normal-value imputation rules apply (see Section 7).
+
+-
+2026-03-26 10:29:07  INFO      === Iteration 88/100  run=apsiii  best_qa=0.0% ===
+2026-03-26 10:29:28  INFO      Exec block 1/1 …
+2026-03-26 10:29:28  INFO      Output: | 16 | Acid-base status (arterial pH and PaCO₂) | ABG | pH units; mmHg | Required |
+| 17 | Glasgow Coma Scale (GCS) | Clinical assessment | Score 3–15 | Required |
+
+### 3.2 Age
+
+| Variable | Type | Units | Required |
+|---|---|---|---|
+| Age at ICU admission | Demographic | Years | Required |
+
+### 3.3 Chronic Health Evaluation Variables
+
+| Variable | Type | Required |
+|---|---|---|
+| Presence of chronic health conditions (see Section 4.3 for list) | Clinical history / chart review | Required |
+
+#
+2026-03-26 10:29:28  INFO      === Iteration 89/100  run=apsiii  best_qa=0.0% ===
+2026-03-26 10:29:40  INFO      Exec block 1/1 …
+2026-03-26 10:29:40  INFO      Output: | 14 | Bilirubin (total, serum) | Laboratory | mg/dL | Optional (use default if not measured) |
+| 15 | Glucose (serum) | Laboratory | mg/dL | Required |
+| 16 | Acid-base status (arterial pH and PaCO₂) | ABG | pH units; mmHg | Required |
+| 17 | Glasgow Coma Scale (GCS) | Clinical assessment | Score 3–15 | Required |
+
+### 3.2 Age
+
+| Variable | Type | Units | Required |
+|---|---|---|---|
+| Age at ICU admission | Demographic | Years | Required |
+
+### 3.3 Chronic Health Evaluation Variables
+
+| Variab
+2026-03-26 10:29:40  INFO      === Iteration 90/100  run=apsiii  best_qa=0.0% ===
+2026-03-26 10:29:52  INFO      Exec block 1/1 …
+2026-03-26 10:29:52  INFO      Output: ---
+
+#### 4.1.16 Neurologic — Glasgow Coma Scale (GCS) [training knowledge]
+
+The GCS (Eyes + Motor + Verbal, range 3–15) is converted to APACHE III APS points as follows:
+
+| GCS Score | APS Points |
+|---|---|
+| 15 | 0 |
+| 14 | 3 |
+| 13 | 5 |
+| 12 | 7 |
+| 11 | 10 |
+| 10 | 13 |
+| 9 | 15 |
+| 8 | 18 |
+| 7 | 22 |
+| 6 | 26 |
+| 5 | 33 |
+| 4 | 39 |
+| 3 | 48 |
+
+*Maximum neurologic contribution = 48 points* [training knowledge]
+
+---
+
+### 4.2 Age Points [training knowledge]
+
+| Age (years) | Points |
+|---|-
+2026-03-26 10:29:52  INFO      === Iteration 91/100  run=apsiii  best_qa=0.0% ===
+2026-03-26 10:29:52  INFO      Context approaching limit (20293 tokens, limit=25000) — forcing summarize + compress
+2026-03-26 10:35:09  INFO      Context compressed: 28 messages -> 2 messages
+2026-03-26 10:35:21  INFO      Exec block 1/1 …
+2026-03-26 10:35:21  INFO      Output: []
+
+2026-03-26 10:35:21  INFO      === Iteration 92/100  run=apsiii  best_qa=0.0% ===
+2026-03-26 10:35:28  INFO      Exec block 1/1 …
+2026-03-26 10:35:28  INFO      Output:                 admission_type
+0                       URGENT
+1            OBSERVATION ADMIT
+2                     EW EMER.
+3                     ELECTIVE
+4           DIRECT OBSERVATION
+5       AMBULATORY OBSERVATION
+6                 DIRECT EMER.
+7               EU OBSERVATION
+8  SURGICAL SAME DAY ADMISSION
+
+2026-03-26 10:35:28  INFO      === Iteration 93/100  run=apsiii  best_qa=0.0% ===
+2026-03-26 10:35:34  INFO      Exec block 1/1 …
+2026-03-26 10:35:34  INFO      Output:      hadm_id icd_code
+0   29079034    45829
+1   29079034    07044
+2   29079034     7994
+3   29079034     2761
+4   29079034    78959
+5   29079034     2767
+6   29079034     3051
+7   29079034      V08
+8   29079034    V4986
+9   29079034     V462
+10  29079034      496
+11  29079034    29680
+12  29079034     5715
+
+2026-03-26 10:35:34  INFO      === Iteration 94/100  run=apsiii  best_qa=0.0% ===
+2026-03-26 10:40:45  INFO      Exec block 1/1 …
+2026-03-26 10:40:45  INFO      Output: Error:
+Traceback (most recent call last):
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 643, in execute
+    _run_with_timeout(_do_execute, timeout)
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 174, in _run_with_timeout
+    raise error[0]
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 156, in target
+    result[0] = func(*args, **kwargs)
+                ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/v-tiossowsk
+2026-03-26 10:40:45  INFO      === Iteration 95/100  run=apsiii  best_qa=0.0% ===
+2026-03-26 10:45:02  INFO      Exec block 1/1 …
+2026-03-26 10:45:02  INFO      Output: Code executed successfully (no output).
+2026-03-26 10:45:02  INFO      Debug conversations will be saved to debug_logs
+2026-03-26 10:45:02  INFO      Using question from dataset column: Does this patient have an APS III score of 40 or more?
+2026-03-26 10:45:02  INFO      Answer type for 'apsiii': numerical (per_row=True)
+2026-03-26 10:45:02  INFO      ReACT iteration 1/5 — 20 active patients
+Rendering conversations:   0%|          | 0/20 [00:00<?, ?it/s]Rendering conversations: 100%|██████████| 20/20 [00:00<00:00, 776.40it/s]
+Processed prompts:   0%|          | 0/20 [00:00<?, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s]Processed prompts:   5%|▌         | 1/20 [00:08<02:46,  8.76s/it, est. speed input: 53.85 toks/s, output: 16.32 toks/s]Processed prompts:  10%|█         | 2/20 [00:08<01:06,  3.72s/it, est. speed input: 105.97 toks/s, output: 32.42 toks/s]Processed prompts:  40%|████      | 8/20 [00:09<00:07,  1.55it/s, est. speed input: 407.49 toks/s, output: 129.65 toks/s]Processed prompts: 100%|██████████| 20/20 [00:09<00:00,  4.30it/s, est. speed input: 953.71 toks/s, output: 308.25 toks/s]Processed prompts: 100%|██████████| 20/20 [00:09<00:00,  4.30it/s, est. speed input: 953.71 toks/s, output: 308.25 toks/s]Processed prompts: 100%|██████████| 20/20 [00:09<00:00,  2.03it/s, est. speed input: 953.71 toks/s, output: 308.25 toks/s]
+2026-03-26 10:45:14  INFO      ReACT iteration 2/5 — 20 active patients
+Rendering conversations:   0%|          | 0/20 [00:00<?, ?it/s]Rendering conversations: 100%|██████████| 20/20 [00:00<00:00, 586.49it/s]
+Processed prompts:   0%|          | 0/20 [00:00<?, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s]Processed prompts:   5%|▌         | 1/20 [00:06<02:10,  6.85s/it, est. speed input: 115.18 toks/s, output: 9.49 toks/s]Processed prompts:  10%|█         | 2/20 [00:07<00:56,  3.11s/it, est. speed input: 214.76 toks/s, output: 19.19 toks/s]Processed prompts:  15%|█▌        | 3/20 [00:10<00:56,  3.34s/it, est. speed input: 219.41 toks/s, output: 27.02 toks/s]Processed prompts:  20%|██        | 4/20 [00:11<00:34,  2.15s/it, est. speed input: 283.36 toks/s, output: 40.72 toks/s]Processed prompts:  25%|██▌       | 5/20 [00:11<00:22,  1.48s/it, est. speed input: 347.50 toks/s, output: 54.36 toks/s]Processed prompts:  40%|████      | 8/20 [00:11<00:07,  1.56it/s, est. speed input: 545.62 toks/s, output: 96.75 toks/s]Processed prompts:  50%|█████     | 10/20 [00:13<00:06,  1.46it/s, est. speed input: 604.07 toks/s, output: 114.74 toks/s]Processed prompts:  60%|██████    | 12/20 [00:15<00:06,  1.15it/s, est. speed input: 615.02 toks/s, output: 127.88 toks/s]Processed prompts:  80%|████████  | 16/20 [00:15<00:01,  2.20it/s, est. speed input: 818.43 toks/s, output: 195.82 toks/s]Processed prompts:  95%|█████████▌| 19/20 [00:17<00:00,  2.19it/s, est. speed input: 896.92 toks/s, output: 230.14 toks/s]Processed prompts: 100%|██████████| 20/20 [00:17<00:00,  2.10it/s, est. speed input: 913.48 toks/s, output: 240.90 toks/s]Processed prompts: 100%|██████████| 20/20 [00:17<00:00,  2.10it/s, est. speed input: 913.48 toks/s, output: 240.90 toks/s]Processed prompts: 100%|██████████| 20/20 [00:17<00:00,  1.12it/s, est. speed input: 913.48 toks/s, output: 240.90 toks/s]
+2026-03-26 10:45:35  INFO      ReACT iteration 3/5 — 15 active patients
+Rendering conversations:   0%|          | 0/15 [00:00<?, ?it/s]Rendering conversations: 100%|██████████| 15/15 [00:00<00:00, 332.13it/s]
+Processed prompts:   0%|          | 0/15 [00:00<?, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s]Processed prompts:   7%|▋         | 1/15 [00:07<01:45,  7.56s/it, est. speed input: 216.86 toks/s, output: 5.55 toks/s]Processed prompts:  20%|██        | 3/15 [00:07<00:24,  2.07s/it, est. speed input: 616.96 toks/s, output: 16.92 toks/s]Processed prompts:  33%|███▎      | 5/15 [00:07<00:10,  1.04s/it, est. speed input: 1014.35 toks/s, output: 29.30 toks/s]Processed prompts:  47%|████▋     | 7/15 [00:08<00:05,  1.35it/s, est. speed input: 1312.94 toks/s, output: 40.83 toks/s]Processed prompts:  53%|█████▎    | 8/15 [00:09<00:05,  1.21it/s, est. speed input: 1329.02 toks/s, output: 45.75 toks/s]Processed prompts:  60%|██████    | 9/15 [00:11<00:06,  1.01s/it, est. speed input: 1291.42 toks/s, output: 51.18 toks/s]Processed prompts:  67%|██████▋   | 10/15 [00:11<00:04,  1.19it/s, est. speed input: 1378.60 toks/s, output: 61.85 toks/s]Processed prompts:  73%|███████▎  | 11/15 [00:12<00:02,  1.41it/s, est. speed input: 1461.19 toks/s, output: 72.82 toks/s]Processed prompts:  87%|████████▋ | 13/15 [00:12<00:00,  2.28it/s, est. speed input: 1692.99 toks/s, output: 97.17 toks/s]Processed prompts:  93%|█████████▎| 14/15 [00:12<00:00,  2.77it/s, est. speed input: 1803.97 toks/s, output: 109.25 toks/s]Processed prompts: 100%|██████████| 15/15 [00:13<00:00,  1.78it/s, est. speed input: 1761.02 toks/s, output: 114.13 toks/s]Processed prompts: 100%|██████████| 15/15 [00:13<00:00,  1.78it/s, est. speed input: 1761.02 toks/s, output: 114.13 toks/s]Processed prompts: 100%|██████████| 15/15 [00:13<00:00,  1.11it/s, est. speed input: 1761.02 toks/s, output: 114.13 toks/s]
+2026-03-26 10:45:48  INFO      QA accuracy: 55.0%  (correct=11/20, parse_errors=0)
+2026-03-26 10:45:48  INFO      === Iteration 96/100  run=apsiii  best_qa=55.0% ===
+2026-03-26 10:46:10  INFO      Exec block 1/1 …
+2026-03-26 10:46:10  INFO      Output: ['apache_iii_guideline']
+
+2026-03-26 10:46:10  INFO      === Iteration 97/100  run=apsiii  best_qa=55.0% ===
+2026-03-26 10:46:18  INFO      Exec block 1/1 …
+2026-03-26 10:46:18  INFO      Output: "# APACHE III — Clinical Guideline\n# Generated by generate_guidelines.py\n# Source articles: 10 (PMID22126425, PMID37007579, PMID39781488, PMID8118723, PMID19699141...)\n############################################################\n\n# Clinical Guideline: APACHE III (Acute Physiology and Chronic Health Evaluation III)\n\n---\n\n## 1. Definition\n\nAPACHE III is a severity-of-illness classification and mortality prediction system designed for critically ill adult patients admitted to the intensi
+2026-03-26 10:46:18  INFO      === Iteration 98/100  run=apsiii  best_qa=55.0% ===
+2026-03-26 10:46:18  INFO      Context approaching limit (20605 tokens, limit=25000) — forcing summarize + compress
+2026-03-26 10:51:40  INFO      Context compressed: 17 messages -> 2 messages
+2026-03-26 10:51:54  INFO      Exec block 1/1 …
+2026-03-26 10:51:54  INFO      Output: BLOCKED: Function 'globals' is not allowed for security reasons.
+2026-03-26 10:51:54  INFO      === Iteration 99/100  run=apsiii  best_qa=55.0% ===
+2026-03-26 10:52:01  INFO      Exec block 1/1 …
+2026-03-26 10:52:01  INFO      Output: Function exists and returned: {'stay_id': 39553978, 'subject_id': 10000032, 'hadm_id': 29079034, 'intime': '2180-07-23 14:00:00', 'aps_score': 28, 'age_points': 5, 'chronic_health_points': 11, 'total_score': 44, 'component_scores': {'heart_rate': 1, 'map': 15, 'temperature': 0, 'respiratory_rate': 0, 'oxygenation': 0, 'hematocrit': 0, 'wbc': 0, 'creatinine': 0, 'urine_output': 0, 'bun': 7, 'sodium': 2, 'albumin': 0, 'bilirubin': 0, 'glucose': 0, 'acid_base': 0, 'gcs': 3}}
+
+2026-03-26 10:52:01  INFO      === Iteration 100/100  run=apsiii  best_qa=55.0% ===
+2026-03-26 10:52:12  INFO      Exec block 1/1 …
+2026-03-26 10:52:12  INFO      Output: Stay 39553978: APS=28, Age=5, Chronic=11, Total=44
+Stay 39553979: Error - Stay ID 39553979 not found
+Stay 39553980: Error - Stay ID 39553980 not found
+
+2026-03-26 10:52:12  INFO      Function code saved to autoformalized_library/functions/apsiii.py
+2026-03-26 10:52:12  INFO      Summary saved to autoformalized_library/summary.json
+
+======================================================================
+AUTOFORMALIZATION COMPLETE
+======================================================================
+  Output dir      : autoformalized_library
+  Model           : Qwen/Qwen3.5-27B
+  Dataset         : /home/v-tiossowski/HealthcareAgent/mimic-code/data/MIMICIV_apsiii_dataset/apsiii.csv
+  Run name        : apsiii
+  Status          : FAILED (below threshold)
+  QA accuracy     : 55.0%
+  Iterations      : 100
+  Total tokens    : 58,466  (prompt 49,562 / completion 8,904)
+  LLM calls       : 161
+  SQL queries     : 561
+  Function saved  : autoformalized_library/functions/apsiii.py
+======================================================================
+[rank0]:[W326 10:52:12.758227345 ProcessGroupNCCL.cpp:1553] Warning: WARNING: destroy_process_group() was not called before program exit, which can leak resources. For more info, please see https://pytorch.org/docs/stable/distributed.html#shutdown (function operator())
+ERROR 03-26 10:52:12 [core_client.py:691] Engine core proc EngineCore_DP0 died unexpectedly, shutting down client.

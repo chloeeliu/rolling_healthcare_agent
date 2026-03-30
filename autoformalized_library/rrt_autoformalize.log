@@ -1,0 +1,562 @@
+2026-03-25 10:52:01  INFO      Using database: /home/v-tiossowski/MIMIC-IV/mimic4.db
+2026-03-25 10:52:01  INFO      No --model_url provided; loading vLLM in-process …
+INFO 03-25 10:52:06 [utils.py:238] non-default args: {'trust_remote_code': True, 'max_model_len': 40000, 'disable_log_stats': True, 'model': 'Qwen/Qwen3.5-27B'}
+The argument `trust_remote_code` is to be used with Auto classes. It has no effect here and is ignored.
+The argument `trust_remote_code` is to be used with Auto classes. It has no effect here and is ignored.
+The argument `trust_remote_code` is to be used with Auto classes. It has no effect here and is ignored.
+INFO 03-25 10:52:06 [model.py:531] Resolved architecture: Qwen3_5ForConditionalGeneration
+INFO 03-25 10:52:06 [model.py:1554] Using max model len 40000
+INFO 03-25 10:52:07 [scheduler.py:231] Chunked prefill is enabled with max_num_batched_tokens=8192.
+INFO 03-25 10:52:08 [config.py:544] Setting attention block size to 784 tokens to ensure that attention page size is >= mamba page size.
+INFO 03-25 10:52:08 [config.py:575] Padding mamba page size by 0.13% to ensure that mamba page size and attention page size are exactly equal.
+INFO 03-25 10:52:08 [vllm.py:747] Asynchronous scheduling is enabled.
+WARNING 03-25 10:52:15 [system_utils.py:152] We must use the `spawn` multiprocessing start method. Overriding VLLM_WORKER_MULTIPROC_METHOD to 'spawn'. See https://docs.vllm.ai/en/latest/usage/troubleshooting.html#python-multiprocessing for more information. Reasons: CUDA is initialized
+(EngineCore_DP0 pid=4099554) INFO 03-25 10:52:20 [core.py:101] Initializing a V1 LLM engine (v0.17.1) with config: model='Qwen/Qwen3.5-27B', speculative_config=None, tokenizer='Qwen/Qwen3.5-27B', skip_tokenizer_init=False, tokenizer_mode=auto, revision=None, tokenizer_revision=None, trust_remote_code=True, dtype=torch.bfloat16, max_seq_len=40000, download_dir=None, load_format=auto, tensor_parallel_size=1, pipeline_parallel_size=1, data_parallel_size=1, disable_custom_all_reduce=False, quantization=None, enforce_eager=False, enable_return_routed_experts=False, kv_cache_dtype=auto, device_config=cuda, structured_outputs_config=StructuredOutputsConfig(backend='auto', disable_fallback=False, disable_any_whitespace=False, disable_additional_properties=False, reasoning_parser='', reasoning_parser_plugin='', enable_in_reasoning=False), observability_config=ObservabilityConfig(show_hidden_metrics_for_version=None, otlp_traces_endpoint=None, collect_detailed_traces=None, kv_cache_metrics=False, kv_cache_metrics_sample=0.01, cudagraph_metrics=False, enable_layerwise_nvtx_tracing=False, enable_mfu_metrics=False, enable_mm_processor_stats=False, enable_logging_iteration_details=False), seed=0, served_model_name=Qwen/Qwen3.5-27B, enable_prefix_caching=False, enable_chunked_prefill=True, pooler_config=None, compilation_config={'level': None, 'mode': <CompilationMode.VLLM_COMPILE: 3>, 'debug_dump_path': None, 'cache_dir': '', 'compile_cache_save_format': 'binary', 'backend': 'inductor', 'custom_ops': ['none'], 'splitting_ops': ['vllm::unified_attention', 'vllm::unified_attention_with_output', 'vllm::unified_mla_attention', 'vllm::unified_mla_attention_with_output', 'vllm::mamba_mixer2', 'vllm::mamba_mixer', 'vllm::short_conv', 'vllm::linear_attention', 'vllm::plamo2_mamba_mixer', 'vllm::gdn_attention_core', 'vllm::kda_attention', 'vllm::sparse_attn_indexer', 'vllm::rocm_aiter_sparse_attn_indexer', 'vllm::unified_kv_cache_update', 'vllm::unified_mla_kv_cache_update'], 'compile_mm_encoder': False, 'compile_sizes': [], 'compile_ranges_split_points': [8192], 'inductor_compile_config': {'enable_auto_functionalized_v2': False, 'combo_kernels': True, 'benchmark_combo_kernel': True}, 'inductor_passes': {}, 'cudagraph_mode': <CUDAGraphMode.FULL_AND_PIECEWISE: (2, 1)>, 'cudagraph_num_of_warmups': 1, 'cudagraph_capture_sizes': [1, 2, 4, 8, 16, 24, 32, 40, 48, 56, 64, 72, 80, 88, 96, 104, 112, 120, 128, 136, 144, 152, 160, 168, 176, 184, 192, 200, 208, 216, 224, 232, 240, 248, 256, 272, 288, 304, 320, 336, 352, 368, 384, 400, 416, 432, 448, 464, 480, 496, 512], 'cudagraph_copy_inputs': False, 'cudagraph_specialize_lora': True, 'use_inductor_graph_partition': False, 'pass_config': {'fuse_norm_quant': False, 'fuse_act_quant': False, 'fuse_attn_quant': False, 'enable_sp': False, 'fuse_gemm_comms': False, 'fuse_allreduce_rms': False}, 'max_cudagraph_capture_size': 512, 'dynamic_shapes_config': {'type': <DynamicShapesType.BACKED: 'backed'>, 'evaluate_guards': False, 'assume_32_bit_indexing': False}, 'local_cache_dir': None, 'fast_moe_cold_start': True, 'static_all_moe_layers': []}
+(EngineCore_DP0 pid=4099554) INFO 03-25 10:52:23 [parallel_state.py:1393] world_size=1 rank=0 local_rank=0 distributed_init_method=tcp://10.8.144.167:59493 backend=nccl
+(EngineCore_DP0 pid=4099554) INFO 03-25 10:52:23 [parallel_state.py:1715] rank 0 in world size 1 is assigned as DP rank 0, PP rank 0, PCP rank 0, TP rank 0, EP rank N/A, EPLB rank N/A
+(EngineCore_DP0 pid=4099554) INFO 03-25 10:52:29 [base.py:106] Offloader set to NoopOffloader
+(EngineCore_DP0 pid=4099554) INFO 03-25 10:52:29 [gpu_model_runner.py:4281] Starting to load model Qwen/Qwen3.5-27B...
+(EngineCore_DP0 pid=4099554) INFO 03-25 10:52:29 [cuda.py:453] Using backend AttentionBackendEnum.FLASH_ATTN for vit attention
+(EngineCore_DP0 pid=4099554) INFO 03-25 10:52:29 [mm_encoder_attention.py:215] Using AttentionBackendEnum.FLASH_ATTN for MMEncoderAttention.
+(EngineCore_DP0 pid=4099554) INFO 03-25 10:52:30 [cuda.py:405] Using FLASH_ATTN attention backend out of potential backends: ['FLASH_ATTN', 'FLASHINFER', 'TRITON_ATTN', 'FLEX_ATTENTION'].
+(EngineCore_DP0 pid=4099554) INFO 03-25 10:52:30 [flash_attn.py:587] Using FlashAttention version 2
+(EngineCore_DP0 pid=4099554) <frozen importlib._bootstrap_external>:1301: FutureWarning: The cuda.cudart module is deprecated and will be removed in a future release, please switch to use the cuda.bindings.runtime module instead.
+(EngineCore_DP0 pid=4099554) <frozen importlib._bootstrap_external>:1301: FutureWarning: The cuda.nvrtc module is deprecated and will be removed in a future release, please switch to use the cuda.bindings.nvrtc module instead.
+(EngineCore_DP0 pid=4099554) Loading safetensors checkpoint shards:   0% Completed | 0/11 [00:00<?, ?it/s]
+(EngineCore_DP0 pid=4099554) Loading safetensors checkpoint shards:   9% Completed | 1/11 [00:00<00:05,  1.87it/s]
+(EngineCore_DP0 pid=4099554) Loading safetensors checkpoint shards:  18% Completed | 2/11 [00:01<00:05,  1.66it/s]
+(EngineCore_DP0 pid=4099554) Loading safetensors checkpoint shards:  27% Completed | 3/11 [00:01<00:05,  1.56it/s]
+(EngineCore_DP0 pid=4099554) Loading safetensors checkpoint shards:  36% Completed | 4/11 [00:02<00:04,  1.50it/s]
+(EngineCore_DP0 pid=4099554) Loading safetensors checkpoint shards:  45% Completed | 5/11 [00:03<00:04,  1.47it/s]
+(EngineCore_DP0 pid=4099554) Loading safetensors checkpoint shards:  55% Completed | 6/11 [00:03<00:03,  1.44it/s]
+(EngineCore_DP0 pid=4099554) Loading safetensors checkpoint shards:  64% Completed | 7/11 [00:04<00:02,  1.43it/s]
+(EngineCore_DP0 pid=4099554) Loading safetensors checkpoint shards:  73% Completed | 8/11 [00:05<00:02,  1.44it/s]
+(EngineCore_DP0 pid=4099554) Loading safetensors checkpoint shards:  82% Completed | 9/11 [00:06<00:01,  1.44it/s]
+(EngineCore_DP0 pid=4099554) Loading safetensors checkpoint shards:  91% Completed | 10/11 [00:06<00:00,  1.43it/s]
+(EngineCore_DP0 pid=4099554) Loading safetensors checkpoint shards: 100% Completed | 11/11 [00:07<00:00,  1.60it/s]
+(EngineCore_DP0 pid=4099554) Loading safetensors checkpoint shards: 100% Completed | 11/11 [00:07<00:00,  1.51it/s]
+(EngineCore_DP0 pid=4099554) 
+(EngineCore_DP0 pid=4099554) INFO 03-25 10:52:38 [default_loader.py:293] Loading weights took 7.33 seconds
+(EngineCore_DP0 pid=4099554) INFO 03-25 10:52:38 [gpu_model_runner.py:4364] Model loading took 51.1 GiB memory and 8.367530 seconds
+(EngineCore_DP0 pid=4099554) INFO 03-25 10:52:38 [gpu_model_runner.py:5280] Encoder cache will be initialized with a budget of 16384 tokens, and profiled with 1 image items of the maximum feature size.
+(EngineCore_DP0 pid=4099554) INFO 03-25 10:52:46 [decorators.py:465] Directly load AOT compilation from path /home/v-tiossowski/.cache/vllm/torch_compile_cache/torch_aot_compile/0232891e22bd4d7db98ac2f43c441f0f81d0a431216053ca49fadeaff23e2af3/rank_0_0/model
+(EngineCore_DP0 pid=4099554) INFO 03-25 10:52:47 [backends.py:916] Using cache directory: /home/v-tiossowski/.cache/vllm/torch_compile_cache/feaf61af16/rank_0_0/backbone for vLLM's torch.compile
+(EngineCore_DP0 pid=4099554) INFO 03-25 10:52:47 [backends.py:976] Dynamo bytecode transform time: 3.64 s
+(EngineCore_DP0 pid=4099554) INFO 03-25 10:52:57 [backends.py:266] Directly load the compiled graph(s) for compile range (1, 8192) from the cache, took 9.424 s
+(EngineCore_DP0 pid=4099554) INFO 03-25 10:52:57 [monitor.py:35] torch.compile takes 13.96 s in total
+(EngineCore_DP0 pid=4099554) INFO 03-25 10:52:58 [gpu_worker.py:424] Available KV cache memory: 18.3 GiB
+(EngineCore_DP0 pid=4099554) INFO 03-25 10:52:58 [kv_cache_utils.py:1314] GPU KV cache size: 74,480 tokens
+(EngineCore_DP0 pid=4099554) INFO 03-25 10:52:58 [kv_cache_utils.py:1319] Maximum concurrency for 40,000 tokens per request: 6.95x
+(EngineCore_DP0 pid=4099554) Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):   0%|          | 0/51 [00:00<?, ?it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):   2%|▏         | 1/51 [00:00<00:08,  5.64it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):   4%|▍         | 2/51 [00:00<00:08,  5.94it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):   6%|▌         | 3/51 [00:00<00:07,  6.05it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):   8%|▊         | 4/51 [00:00<00:07,  6.11it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  10%|▉         | 5/51 [00:00<00:07,  6.10it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  12%|█▏        | 6/51 [00:00<00:07,  6.16it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  14%|█▎        | 7/51 [00:01<00:07,  6.15it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  16%|█▌        | 8/51 [00:01<00:07,  6.12it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  18%|█▊        | 9/51 [00:01<00:06,  6.40it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  20%|█▉        | 10/51 [00:01<00:06,  6.61it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  22%|██▏       | 11/51 [00:01<00:06,  6.59it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  24%|██▎       | 12/51 [00:01<00:05,  6.75it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  25%|██▌       | 13/51 [00:02<00:05,  6.88it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  27%|██▋       | 14/51 [00:02<00:05,  7.03it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  29%|██▉       | 15/51 [00:02<00:05,  7.18it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  31%|███▏      | 16/51 [00:02<00:04,  7.28it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  33%|███▎      | 17/51 [00:02<00:04,  7.63it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  35%|███▌      | 18/51 [00:02<00:04,  7.91it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  37%|███▋      | 19/51 [00:02<00:03,  8.13it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  39%|███▉      | 20/51 [00:02<00:03,  8.19it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  41%|████      | 21/51 [00:03<00:03,  8.32it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  43%|████▎     | 22/51 [00:03<00:03,  8.39it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  45%|████▌     | 23/51 [00:03<00:03,  8.44it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  47%|████▋     | 24/51 [00:03<00:03,  8.47it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  49%|████▉     | 25/51 [00:03<00:03,  8.48it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  51%|█████     | 26/51 [00:03<00:02,  8.55it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  53%|█████▎    | 27/51 [00:03<00:02,  8.60it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  55%|█████▍    | 28/51 [00:03<00:02,  8.66it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  57%|█████▋    | 29/51 [00:03<00:02,  8.59it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  59%|█████▉    | 30/51 [00:04<00:02,  8.61it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  61%|██████    | 31/51 [00:04<00:02,  8.59it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  63%|██████▎   | 32/51 [00:04<00:02,  8.61it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  65%|██████▍   | 33/51 [00:04<00:02,  8.90it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  67%|██████▋   | 34/51 [00:04<00:01,  9.07it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  69%|██████▊   | 35/51 [00:04<00:01,  9.29it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  73%|███████▎  | 37/51 [00:04<00:01,  9.63it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  76%|███████▋  | 39/51 [00:04<00:01,  9.80it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  78%|███████▊  | 40/51 [00:05<00:01,  9.81it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  82%|████████▏ | 42/51 [00:05<00:00,  9.90it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  86%|████████▋ | 44/51 [00:05<00:00, 10.07it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  90%|█████████ | 46/51 [00:05<00:00, 10.21it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  94%|█████████▍| 48/51 [00:05<00:00, 10.47it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  98%|█████████▊| 50/51 [00:06<00:00, 10.67it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE): 100%|██████████| 51/51 [00:06<00:00,  8.31it/s]
+(EngineCore_DP0 pid=4099554) Capturing CUDA graphs (decode, FULL):   0%|          | 0/35 [00:00<?, ?it/s]Capturing CUDA graphs (decode, FULL):   3%|▎         | 1/35 [00:00<00:06,  5.66it/s]Capturing CUDA graphs (decode, FULL):   6%|▌         | 2/35 [00:00<00:05,  6.02it/s]Capturing CUDA graphs (decode, FULL):   9%|▊         | 3/35 [00:00<00:05,  6.32it/s]Capturing CUDA graphs (decode, FULL):  11%|█▏        | 4/35 [00:00<00:04,  6.49it/s]Capturing CUDA graphs (decode, FULL):  14%|█▍        | 5/35 [00:00<00:04,  6.54it/s]Capturing CUDA graphs (decode, FULL):  17%|█▋        | 6/35 [00:00<00:04,  6.66it/s]Capturing CUDA graphs (decode, FULL):  20%|██        | 7/35 [00:01<00:04,  6.73it/s]Capturing CUDA graphs (decode, FULL):  23%|██▎       | 8/35 [00:01<00:03,  6.77it/s]Capturing CUDA graphs (decode, FULL):  26%|██▌       | 9/35 [00:01<00:03,  6.83it/s]Capturing CUDA graphs (decode, FULL):  29%|██▊       | 10/35 [00:01<00:03,  6.86it/s]Capturing CUDA graphs (decode, FULL):  31%|███▏      | 11/35 [00:01<00:03,  6.88it/s]Capturing CUDA graphs (decode, FULL):  34%|███▍      | 12/35 [00:01<00:03,  6.97it/s]Capturing CUDA graphs (decode, FULL):  37%|███▋      | 13/35 [00:01<00:03,  7.03it/s]Capturing CUDA graphs (decode, FULL):  40%|████      | 14/35 [00:02<00:02,  7.09it/s]Capturing CUDA graphs (decode, FULL):  43%|████▎     | 15/35 [00:02<00:02,  7.09it/s]Capturing CUDA graphs (decode, FULL):  46%|████▌     | 16/35 [00:02<00:02,  7.12it/s]Capturing CUDA graphs (decode, FULL):  49%|████▊     | 17/35 [00:02<00:02,  7.40it/s]Capturing CUDA graphs (decode, FULL):  51%|█████▏    | 18/35 [00:02<00:02,  7.67it/s]Capturing CUDA graphs (decode, FULL):  54%|█████▍    | 19/35 [00:02<00:02,  7.90it/s]Capturing CUDA graphs (decode, FULL):  57%|█████▋    | 20/35 [00:02<00:01,  8.08it/s]Capturing CUDA graphs (decode, FULL):  60%|██████    | 21/35 [00:02<00:01,  8.25it/s]Capturing CUDA graphs (decode, FULL):  63%|██████▎   | 22/35 [00:03<00:01,  8.30it/s]Capturing CUDA graphs (decode, FULL):  66%|██████▌   | 23/35 [00:03<00:01,  8.37it/s]Capturing CUDA graphs (decode, FULL):  69%|██████▊   | 24/35 [00:03<00:01,  8.48it/s]Capturing CUDA graphs (decode, FULL):  71%|███████▏  | 25/35 [00:03<00:01,  8.62it/s]Capturing CUDA graphs (decode, FULL):  74%|███████▍  | 26/35 [00:03<00:01,  8.65it/s]Capturing CUDA graphs (decode, FULL):  77%|███████▋  | 27/35 [00:03<00:00,  8.73it/s]Capturing CUDA graphs (decode, FULL):  80%|████████  | 28/35 [00:03<00:00,  8.79it/s]Capturing CUDA graphs (decode, FULL):  83%|████████▎ | 29/35 [00:03<00:00,  8.87it/s]Capturing CUDA graphs (decode, FULL):  86%|████████▌ | 30/35 [00:03<00:00,  8.93it/s]Capturing CUDA graphs (decode, FULL):  89%|████████▊ | 31/35 [00:04<00:00,  8.99it/s]Capturing CUDA graphs (decode, FULL):  91%|█████████▏| 32/35 [00:04<00:00,  9.04it/s]Capturing CUDA graphs (decode, FULL):  94%|█████████▍| 33/35 [00:04<00:00,  9.07it/s]Capturing CUDA graphs (decode, FULL):  97%|█████████▋| 34/35 [00:04<00:00,  9.05it/s]Capturing CUDA graphs (decode, FULL): 100%|██████████| 35/35 [00:04<00:00,  9.14it/s]Capturing CUDA graphs (decode, FULL): 100%|██████████| 35/35 [00:04<00:00,  7.76it/s]
+(EngineCore_DP0 pid=4099554) INFO 03-25 10:53:09 [gpu_model_runner.py:5386] Graph capturing finished in 11 secs, took 1.13 GiB
+(EngineCore_DP0 pid=4099554) INFO 03-25 10:53:09 [core.py:282] init engine (profile, create kv cache, warmup model) took 31.40 seconds
+(EngineCore_DP0 pid=4099554) INFO 03-25 10:53:10 [vllm.py:747] Asynchronous scheduling is enabled.
+INFO 03-25 10:53:10 [llm.py:388] Supported tasks: ['generate']
+2026-03-25 10:53:10  INFO      Loading QA dataset from /home/v-tiossowski/HealthcareAgent/mimic-code/data/MIMICIV_rrt_dataset/rrt.csv
+2026-03-25 10:53:10  INFO      Dataset: 1000 rows, columns: ['subject_id', 'hadm_id', 'stay_id', 'intime', 'outtime', 'first_careunit', 'last_careunit', 'gt_label', 'question', 'gt_answer_type', 'split', 'dialysis_present', 'dialysis_active', 'dialysis_type_any']
+2026-03-25 10:53:10  INFO      Filtered to train split: 100 rows
+2026-03-25 10:53:10  INFO      Auto-discovered ground-truth SQL: /home/v-tiossowski/HealthcareAgent/mimic-code/mimic-iv/concepts_duckdb/treatment/rrt.sql
+2026-03-25 10:53:10  INFO      === Iteration 1/100  run=rrt  best_qa=0.0% ===
+INFO 03-25 10:53:12 [hf.py:318] Detected the chat template content format to be 'string'. You can set `--chat-template-content-format` to override this.
+2026-03-25 10:53:26  INFO      Exec block 1/1 …
+2026-03-25 10:53:26  INFO      Output: []
+
+2026-03-25 10:53:26  INFO      === Iteration 2/100  run=rrt  best_qa=0.0% ===
+2026-03-25 10:53:29  INFO      Exec block 1/1 …
+2026-03-25 10:53:29  INFO      Output: []
+
+2026-03-25 10:53:29  INFO      === Iteration 3/100  run=rrt  best_qa=0.0% ===
+2026-03-25 10:53:31  INFO      Exec block 1/1 …
+2026-03-25 10:53:31  INFO      Output: ['acidosis_guideline', 'acute_decompensated_heart_failure_guideline', 'acute_hepatic_failure_guideline', 'adverse_effect_of_anticoagulants_guideline', 'alcohol_withdrawal_syndrome_guideline', 'anemia_icu_critically_ill_hemoglobin_transfusion_guideline', 'apache_iii_guideline', 'atrial_fibrillation_guideline', 'bradycardia_guideline', 'cerebral_infarction_guideline', 'coma_altered_consciousness_icu_guideline', 'copd_exacerbation_guideline', 'coronary_artery_disease_guideline', 'deep_vein_thrombos
+2026-03-25 10:53:31  INFO      === Iteration 4/100  run=rrt  best_qa=0.0% ===
+2026-03-25 10:53:34  INFO      Exec block 1/1 …
+2026-03-25 10:53:34  INFO      Output: ['acei', 'age', 'antibiotic', 'arb', 'bg', 'blood_differential', 'cardiac_marker', 'chemistry', 'coagulation', 'code_status', 'complete_blood_count', 'crrt', 'dobutamine', 'dopamine', 'enzyme', 'epinephrine', 'gcs', 'height', 'icp', 'icustay_detail', '... (13 more; pass a keyword to filter)']
+
+2026-03-25 10:53:34  INFO      === Iteration 5/100  run=rrt  best_qa=0.0% ===
+2026-03-25 10:53:37  INFO      Exec block 1/1 …
+2026-03-25 10:53:37  INFO      Output: 'def get_crrt_info(stay_id):\n    """\n    Extract CRRT (Continuous Renal Replacement Therapy) information for a patient\'s ICU stay.\n\n    This function queries the MIMIC-IV database to determine:\n    1. Whether the patient received CRRT during their ICU stay\n    2. Whether the CRRT system was actively running (not recirculating)\n    3. Whether the patient experienced filter clotting during CRRT\n\n    Parameters\n    ----------\n    stay_id : int\n        The ICU stay identifier for the pa
+2026-03-25 10:53:37  INFO      === Iteration 6/100  run=rrt  best_qa=0.0% ===
+2026-03-25 10:53:41  INFO      Exec block 1/1 …
+2026-03-25 10:53:41  INFO      Output: []
+
+2026-03-25 10:53:41  INFO      === Iteration 7/100  run=rrt  best_qa=0.0% ===
+2026-03-25 10:53:50  INFO      Exec block 1/1 …
+2026-03-25 10:53:50  INFO      Output: Error:
+Traceback (most recent call last):
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 643, in execute
+    _run_with_timeout(_do_execute, timeout)
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 174, in _run_with_timeout
+    raise error[0]
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 156, in target
+    result[0] = func(*args, **kwargs)
+                ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/v-tiossowsk
+2026-03-25 10:53:50  INFO      === Iteration 8/100  run=rrt  best_qa=0.0% ===
+2026-03-25 10:53:56  INFO      Exec block 1/1 …
+2026-03-25 10:53:56  INFO      Output:     itemid                                              label                 category unitname
+0   224135                               Dialysis Access Site                 Dialysis      NaN
+1   224139                           Dialysis Site Appearance                 Dialysis      NaN
+2   224270                                  Dialysis Catheter  Access Lines - Invasive     None
+3   225126                                   Dialysis patient         Adm History/FHPA      NaN
+4   225128          
+2026-03-25 10:53:56  INFO      === Iteration 9/100  run=rrt  best_qa=0.0% ===
+2026-03-25 10:54:07  INFO      Exec block 1/1 …
+2026-03-25 10:54:07  INFO      Output:     value
+0    SCUF
+1    CVVH
+2  CVVHDF
+3   CVVHD
+
+2026-03-25 10:54:07  INFO      === Iteration 10/100  run=rrt  best_qa=0.0% ===
+2026-03-25 10:54:14  INFO      Exec block 1/1 …
+2026-03-25 10:54:14  INFO      Output: Error:
+Traceback (most recent call last):
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 643, in execute
+    _run_with_timeout(_do_execute, timeout)
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 174, in _run_with_timeout
+    raise error[0]
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 156, in target
+    result[0] = func(*args, **kwargs)
+                ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/v-tiossowsk
+2026-03-25 10:54:14  INFO      === Iteration 11/100  run=rrt  best_qa=0.0% ===
+2026-03-25 10:54:20  INFO      Exec block 1/1 …
+2026-03-25 10:54:20  INFO      Output:     itemid                             label     cnt
+0   224146                  System Integrity  380652
+1   226457              Ultrafiltrate Output  365849
+2   224150                   Filter Pressure  342241
+3   224149                   Access Pressure  342216
+4   224152                   Return Pressure  342036
+5   224151                 Effluent Pressure  341931
+6   224191      Hourly Patient Fluid Removal  336784
+7   225183                      Current Goal  329924
+8   224154             
+2026-03-25 10:54:20  INFO      === Iteration 12/100  run=rrt  best_qa=0.0% ===
+2026-03-25 10:54:25  INFO      Exec block 1/1 …
+2026-03-25 10:54:25  INFO      Output:                         value
+0                Discontinued
+1                 Reinitiated
+2                      Active
+3                  New Filter
+4  Line pressure inconsistent
+5               Clots Present
+6                     Clotted
+7            Clots Increasing
+8               Recirculating
+9             No Clot Present
+
+2026-03-25 10:54:25  INFO      === Iteration 13/100  run=rrt  best_qa=0.0% ===
+2026-03-25 10:54:35  INFO      Exec block 1/1 …
+2026-03-25 10:54:35  INFO      Output: Error:
+Traceback (most recent call last):
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 643, in execute
+    _run_with_timeout(_do_execute, timeout)
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 174, in _run_with_timeout
+    raise error[0]
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 156, in target
+    result[0] = func(*args, **kwargs)
+                ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/v-tiossowsk
+2026-03-25 10:54:35  INFO      === Iteration 14/100  run=rrt  best_qa=0.0% ===
+2026-03-25 10:54:39  INFO      Exec block 1/1 …
+2026-03-25 10:54:39  INFO      Output:   icd_code  icd_version                                             long_title
+0     0001            9     Therapeutic ultrasound of vessels of head and neck
+1     0002            9                        Therapeutic ultrasound of heart
+2     0003            9  Therapeutic ultrasound of peripheral vascular vessels
+3     0009            9                           Other therapeutic ultrasound
+4      001           10      Central Nervous System and Cranial Nerves, Bypass
+
+2026-03-25 10:54:39  INFO      === Iteration 15/100  run=rrt  best_qa=0.0% ===
+2026-03-25 10:54:44  INFO      Exec block 1/1 …
+2026-03-25 10:54:44  INFO      Output:    icd_code  icd_version                                                                   long_title
+0      1255            9                                                                Cyclodialysis
+1      3895            9                                    Venous catheterization for renal dialysis
+2      3927            9                                          Arteriovenostomy for renal dialysis
+3      3942            9                           Revision of arteriovenous shunt for renal
+2026-03-25 10:54:44  INFO      === Iteration 16/100  run=rrt  best_qa=0.0% ===
+2026-03-25 10:54:58  INFO      Exec block 1/1 …
+2026-03-25 10:54:58  INFO      Output: 'def get_crrt_info(stay_id):\n    """\n    Extract CRRT (Continuous Renal Replacement Therapy) information for a patient\'s ICU stay.\n\n    This function queries the MIMIC-IV database to determine:\n    1. Whether the patient received CRRT during their ICU stay\n    2. Whether the CRRT system was actively running (not recirculating)\n    3. Whether the patient experienced filter clotting during CRRT\n\n    Parameters\n    ----------\n    stay_id : int\n        The ICU stay identifier for the pa
+2026-03-25 10:54:58  INFO      === Iteration 17/100  run=rrt  best_qa=0.0% ===
+(EngineCore_DP0 pid=4099554) /home/v-tiossowski/anaconda3/envs/autoformalization/lib/python3.12/site-packages/vllm/model_executor/layers/fla/ops/utils.py:113: UserWarning: Input tensor shape suggests potential format mismatch: seq_len (20) < num_heads (48). This may indicate the inputs were passed in head-first format [B, H, T, ...] when head_first=False was specified. Please verify your input tensor format matches the expected shape [B, T, H, ...].
+(EngineCore_DP0 pid=4099554)   return fn(*contiguous_args, **contiguous_kwargs)
+2026-03-25 10:55:09  INFO      Exec block 1/1 …
+2026-03-25 10:55:09  INFO      Output:     stay_id
+0  37631039
+1  34597440
+2  35771738
+3  39307365
+4  34423873
+
+2026-03-25 10:55:09  INFO      === Iteration 18/100  run=rrt  best_qa=0.0% ===
+2026-03-25 10:55:14  INFO      Exec block 1/1 …
+2026-03-25 10:55:14  INFO      Output: {'received_crrt': True, 'crrt_active': True, 'filter_clotting': True, 'crrt_modes': ['CVVHDF'], 'system_integrity_states': ['New Filter', 'Active', 'Recirculating', 'Reinitiated', 'No Clot Present', 'Discontinued', 'Line pressure inconsistent', 'Clots Present'], 'crrt_start_time': Timestamp('2136-07-01 14:00:00'), 'crrt_end_time': Timestamp('2136-08-23 11:00:00'), 'filter_changes': np.int64(0), 'clotting_events': [{'timestamp': Timestamp('2136-07-20 09:05:00'), 'state': 'Clots Present'}, {'times
+2026-03-25 10:55:14  INFO      === Iteration 19/100  run=rrt  best_qa=0.0% ===
+2026-03-25 10:55:25  INFO      Exec block 1/1 …
+2026-03-25 10:55:25  INFO      Output:     itemid                                              label     cnt
+0   224146                                   System Integrity  380652
+1   226457                               Ultrafiltrate Output  365849
+2   224150                                    Filter Pressure  342241
+3   224149                                    Access Pressure  342216
+4   224152                                    Return Pressure  342036
+5   224151                                  Effluent Pressure  341931
+6   224191
+2026-03-25 10:55:25  INFO      === Iteration 20/100  run=rrt  best_qa=0.0% ===
+2026-03-25 10:55:33  INFO      Exec block 1/1 …
+2026-03-25 10:55:33  INFO      Output: Error:
+Traceback (most recent call last):
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 643, in execute
+    _run_with_timeout(_do_execute, timeout)
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 174, in _run_with_timeout
+    raise error[0]
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 156, in target
+    result[0] = func(*args, **kwargs)
+                ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/v-tiossowsk
+2026-03-25 10:55:33  INFO      === Iteration 21/100  run=rrt  best_qa=0.0% ===
+2026-03-25 10:55:40  INFO      Exec block 1/1 …
+2026-03-25 10:55:40  INFO      Output:     subject_id   hadm_id icd_code  seq_num                                 long_title
+0     17327554  21951811     3995        1                               Hemodialysis
+1     17327554  22243166     3995        2                               Hemodialysis
+2     17327554  22755354     3895        1  Venous catheterization for renal dialysis
+3     17327554  22755354     3995        2                               Hemodialysis
+4     17327554  26505797     3995        1                            
+2026-03-25 10:55:40  INFO      === Iteration 22/100  run=rrt  best_qa=0.0% ===
+2026-03-25 10:55:50  INFO      Exec block 1/1 …
+2026-03-25 10:55:50  INFO      Output: 'def icustay_detail(stay_id):\n    """\n    Extract critical clinical information for an ICU stay.\n\n    This function retrieves comprehensive details about a specific ICU stay,\n    including mortality status, length of stay, and whether this is the first\n    ICU admission during the hospitalization.\n\n    Parameters\n    ----------\n    stay_id : int\n        The ICU stay identifier.\n\n    Returns\n    -------\n    dict or None\n        A dictionary containing the following keys:\n        
+2026-03-25 10:55:50  INFO      === Iteration 23/100  run=rrt  best_qa=0.0% ===
+2026-03-25 10:56:07  INFO      Exec block 1/1 …
+2026-03-25 10:56:07  INFO      Output: Empty DataFrame
+Columns: [value]
+Index: []
+
+2026-03-25 10:56:07  INFO      === Iteration 24/100  run=rrt  best_qa=0.0% ===
+2026-03-25 10:56:14  INFO      Exec block 1/1 …
+2026-03-25 10:56:14  INFO      Output:    cnt
+0    0
+
+2026-03-25 10:56:14  INFO      === Iteration 25/100  run=rrt  best_qa=0.0% ===
+2026-03-25 10:56:39  INFO      Exec block 1/1 …
+2026-03-25 10:56:39  INFO      Output:     stay_id  subject_id   hadm_id              intime             outtime
+0  37631039    11943854  20513880 2136-06-30 11:09:03 2136-08-23 16:23:33
+
+2026-03-25 10:56:39  INFO      === Iteration 26/100  run=rrt  best_qa=0.0% ===
+2026-03-25 10:56:51  INFO      Exec block 1/1 …
+2026-03-25 10:56:51  INFO      Output: Error:
+Traceback (most recent call last):
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 643, in execute
+    _run_with_timeout(_do_execute, timeout)
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 174, in _run_with_timeout
+    raise error[0]
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 156, in target
+    result[0] = func(*args, **kwargs)
+                ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/v-tiossowsk
+2026-03-25 10:56:51  INFO      === Iteration 27/100  run=rrt  best_qa=0.0% ===
+2026-03-25 10:56:59  INFO      Exec block 1/1 …
+2026-03-25 10:56:59  INFO      Output:     itemid                                              label   cnt
+0   225953                     Solution (Peritoneal Dialysis)  3958
+1   225963                  Peritoneal Dialysis Catheter Type  3437
+2   225951               Peritoneal Dialysis Fluid Appearance  3414
+3   225965                Peritoneal Dialysis Catheter Status  3376
+4   225810                   Dwell Time (Peritoneal Dialysis)  2218
+5   225952          Medication Added #1 (Peritoneal Dialysis)  2043
+6   225961    Medication
+2026-03-25 10:56:59  INFO      === Iteration 28/100  run=rrt  best_qa=0.0% ===
+2026-03-25 10:57:23  INFO      Exec block 1/1 …
+2026-03-25 10:57:23  INFO      Output: CRRT result keys: dict_keys(['received_crrt', 'crrt_active', 'filter_clotting', 'crrt_modes', 'system_integrity_states', 'crrt_start_time', 'crrt_end_time', 'filter_changes', 'clotting_events'])
+Received CRRT: True
+CRRT Active: True
+
+2026-03-25 10:57:23  INFO      === Iteration 29/100  run=rrt  best_qa=0.0% ===
+2026-03-25 10:57:35  INFO      Exec block 1/1 …
+2026-03-25 10:57:35  INFO      Output:     stay_id
+0  35906548
+1  38282611
+2  39790330
+3  34485596
+4  34917106
+
+2026-03-25 10:57:35  INFO      === Iteration 30/100  run=rrt  best_qa=0.0% ===
+2026-03-25 10:57:47  INFO      Exec block 1/1 …
+2026-03-25 10:57:48  INFO      Output:     stay_id  itemid                                              label           charttime
+0  35906548  225951               Peritoneal Dialysis Fluid Appearance 2150-10-19 09:00:00
+1  35906548  225952          Medication Added #1 (Peritoneal Dialysis) 2150-10-19 09:00:00
+2  35906548  225959  Medication Added Amount  #1 (Peritoneal Dialysis) 2150-10-19 09:00:00
+3  35906548  225961    Medication Added Units #1 (Peritoneal Dialysis) 2150-10-19 09:00:00
+4  35906548  225963                  Peritone
+2026-03-25 10:57:48  INFO      === Iteration 31/100  run=rrt  best_qa=0.0% ===
+2026-03-25 10:58:58  INFO      Exec block 1/1 …
+2026-03-25 10:58:58  INFO      Output: CRRT patient result:
+  Received RRT: True
+  RRT Modalities: ['CRRT']
+  CRRT Active: True
+  RRT Start: 2136-07-01 14:00:00
+  RRT End: 2136-08-23 11:00:00
+
+2026-03-25 10:58:58  INFO      === Iteration 32/100  run=rrt  best_qa=0.0% ===
+2026-03-25 10:59:09  INFO      Exec block 1/1 …
+2026-03-25 10:59:09  INFO      Output: Peritoneal Dialysis patient result:
+  Received RRT: True
+  RRT Modalities: ['Peritoneal Dialysis']
+  Peritoneal Dialysis: True
+  RRT Start: 2150-10-15 00:00:00
+  RRT End: 2150-10-24 16:45:00
+
+2026-03-25 10:59:09  INFO      === Iteration 33/100  run=rrt  best_qa=0.0% ===
+2026-03-25 10:59:23  INFO      Exec block 1/1 …
+2026-03-25 10:59:23  INFO      Output:     stay_id
+0  39553978
+
+2026-03-25 10:59:23  INFO      === Iteration 34/100  run=rrt  best_qa=0.0% ===
+2026-03-25 10:59:34  INFO      Exec block 1/1 …
+2026-03-25 10:59:34  INFO      Output: No RRT patient result:
+  Received RRT: False
+  RRT Modalities: []
+  CRRT Active: False
+  Peritoneal Dialysis: False
+  Hemodialysis: False
+
+2026-03-25 10:59:34  INFO      === Iteration 35/100  run=rrt  best_qa=0.0% ===
+2026-03-25 10:59:45  INFO      Exec block 1/1 …
+2026-03-25 10:59:45  INFO      Output:    subject_id   hadm_id icd_code    long_title
+0    11285165  22410210     3995  Hemodialysis
+1    11285165  25422788     3995  Hemodialysis
+2    11285165  26699499     3995  Hemodialysis
+3    11285165  26860814     3995  Hemodialysis
+4    11288058  20155284     3995  Hemodialysis
+
+2026-03-25 10:59:45  INFO      === Iteration 36/100  run=rrt  best_qa=0.0% ===
+2026-03-25 10:59:53  INFO      Exec block 1/1 …
+2026-03-25 10:59:53  INFO      Output:     stay_id   hadm_id
+0  32583467  22410210
+
+2026-03-25 10:59:53  INFO      === Iteration 37/100  run=rrt  best_qa=0.0% ===
+2026-03-25 11:00:03  INFO      Exec block 1/1 …
+2026-03-25 11:00:03  INFO      Output: Hemodialysis patient result:
+  Received RRT: True
+  RRT Modalities: ['Hemodialysis']
+  Hemodialysis: True
+  CRRT Active: False
+
+2026-03-25 11:00:03  INFO      === Iteration 38/100  run=rrt  best_qa=0.0% ===
+2026-03-25 11:00:16  INFO      Exec block 1/1 …
+2026-03-25 11:00:16  INFO      Output:     stay_id   hadm_id
+0  36828715  26771738
+1  31193730  24277049
+2  31395458  22795641
+3  35541679  24961921
+4  37587748  28663447
+
+2026-03-25 11:00:16  INFO      === Iteration 39/100  run=rrt  best_qa=0.0% ===
+2026-03-25 11:00:27  INFO      Exec block 1/1 …
+2026-03-25 11:00:27  INFO      Output: Multiple RRT modalities patient result:
+  Received RRT: True
+  RRT Modalities: ['CRRT', 'Hemodialysis']
+  CRRT Active: True
+  Hemodialysis: True
+  Peritoneal Dialysis: False
+
+2026-03-25 11:00:27  INFO      === Iteration 40/100  run=rrt  best_qa=0.0% ===
+2026-03-25 11:00:38  INFO      Exec block 1/1 …
+2026-03-25 11:00:38  INFO      Output: Non-existent stay_id result:
+  Received RRT: False
+
+2026-03-25 11:00:38  INFO      === Iteration 41/100  run=rrt  best_qa=0.0% ===
+2026-03-25 11:01:07  INFO      Exec block 1/1 …
+2026-03-25 11:01:07  INFO      Output: Test 1 - CRRT patient:
+  Q1: Does patient receive dialysis? True
+  Q2: Is patient on active dialysis? True
+  Q3: Does patient have RRT? True
+
+Test 2 - Peritoneal Dialysis patient:
+  Q1: Does patient receive dialysis? True
+  Q2: Is patient on active dialysis? N/A (PD doesn't have 'active' status like CRRT)
+  Q3: Does patient have RRT? True
+
+Test 3 - Hemodialysis patient:
+  Q1: Does patient receive dialysis? True
+  Q2: Is patient on active dialysis? N/A (HD is intermittent)
+  Q3: Does patient have
+2026-03-25 11:01:07  INFO      === Iteration 42/100  run=rrt  best_qa=0.0% ===
+2026-03-25 11:01:19  INFO      Exec block 1/1 …
+2026-03-25 11:01:19  INFO      Output:    itemid                label   cnt
+0  226499  Hemodialysis Output  7073
+
+2026-03-25 11:01:19  INFO      === Iteration 43/100  run=rrt  best_qa=0.0% ===
+2026-03-25 11:02:52  INFO      Exec block 1/1 …
+2026-03-25 11:02:52  INFO      Output: Test 1 - CRRT patient (37631039):
+  Received RRT: True
+  RRT Modalities: ['CRRT']
+  CRRT Active: True
+
+Test 2 - Peritoneal Dialysis patient (35906548):
+  Received RRT: True
+  RRT Modalities: ['Peritoneal Dialysis']
+  Peritoneal Dialysis: True
+
+Test 3 - Hemodialysis patient (32583467):
+  Received RRT: True
+  RRT Modalities: ['Hemodialysis']
+  Hemodialysis: True
+
+Test 4 - No RRT patient (39553978):
+  Received RRT: False
+  RRT Modalities: []
+
+Test 5 - Multiple RRT modalities (36828715):
+  Received 
+2026-03-25 11:02:52  INFO      === Iteration 44/100  run=rrt  best_qa=0.0% ===
+2026-03-25 11:03:04  INFO      Exec block 1/1 …
+2026-03-25 11:03:04  INFO      Output:     stay_id
+0  31041869
+1  37994285
+2  31471562
+3  31106791
+4  33551009
+
+2026-03-25 11:03:04  INFO      === Iteration 45/100  run=rrt  best_qa=0.0% ===
+2026-03-25 11:03:17  INFO      Exec block 1/1 …
+2026-03-25 11:03:17  INFO      Output: Hemodialysis chart events patient (31041869):
+  Received RRT: True
+  RRT Modalities: ['CRRT', 'Hemodialysis']
+  Hemodialysis: True
+  RRT Start: 2156-08-02 15:03:00
+  RRT End: 2156-08-05 17:55:00
+
+2026-03-25 11:03:17  INFO      === Iteration 46/100  run=rrt  best_qa=0.0% ===
+2026-03-25 11:03:31  INFO      Exec block 1/1 …
+2026-03-25 11:03:31  INFO      Output: Non-existent stay_id result:
+  Received RRT: False
+  RRT Modalities: []
+  CRRT Info: {'received_crrt': False, 'crrt_active': False, 'filter_clotting': False, 'crrt_modes': [], 'system_integrity_states': [], 'crrt_start_time': None, 'crrt_end_time': None, 'filter_changes': np.int64(0), 'clotting_events': []}
+
+2026-03-25 11:03:31  INFO      === Iteration 47/100  run=rrt  best_qa=0.0% ===
+2026-03-25 11:04:49  INFO      Exec block 1/1 …
+2026-03-25 11:04:49  INFO      Output: Code executed successfully (no output).
+2026-03-25 11:04:49  INFO      Debug conversations will be saved to debug_logs
+2026-03-25 11:04:49  INFO      Using question from dataset column: Does this patient receive dialysis during their ICU stay?
+2026-03-25 11:04:49  INFO      Answer type for 'rrt': binary (per_row=True)
+2026-03-25 11:04:49  INFO      ReACT iteration 1/5 — 20 active patients
+Rendering conversations:   0%|          | 0/20 [00:00<?, ?it/s]Rendering conversations: 100%|██████████| 20/20 [00:00<00:00, 494.07it/s]
+Processed prompts:   0%|          | 0/20 [00:00<?, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s]Processed prompts:   5%|▌         | 1/20 [00:11<03:47, 11.99s/it, est. speed input: 72.47 toks/s, output: 14.18 toks/s]Processed prompts:  20%|██        | 4/20 [00:12<00:37,  2.37s/it, est. speed input: 281.79 toks/s, output: 55.94 toks/s]Processed prompts:  30%|███       | 6/20 [00:12<00:19,  1.36s/it, est. speed input: 418.88 toks/s, output: 84.35 toks/s]Processed prompts:  45%|████▌     | 9/20 [00:12<00:07,  1.38it/s, est. speed input: 622.24 toks/s, output: 127.13 toks/s]Processed prompts:  55%|█████▌    | 11/20 [00:13<00:05,  1.78it/s, est. speed input: 736.89 toks/s, output: 152.29 toks/s]Processed prompts:  70%|███████   | 14/20 [00:13<00:02,  2.72it/s, est. speed input: 920.53 toks/s, output: 193.96 toks/s]Processed prompts:  80%|████████  | 16/20 [00:13<00:01,  3.12it/s, est. speed input: 1021.71 toks/s, output: 218.77 toks/s]Processed prompts:  90%|█████████ | 18/20 [00:18<00:01,  1.14it/s, est. speed input: 861.70 toks/s, output: 195.98 toks/s] Processed prompts:  95%|█████████▌| 19/20 [00:19<00:01,  1.01s/it, est. speed input: 835.08 toks/s, output: 198.78 toks/s]Processed prompts: 100%|██████████| 20/20 [00:25<00:00,  1.91s/it, est. speed input: 683.93 toks/s, output: 175.35 toks/s]Processed prompts: 100%|██████████| 20/20 [00:25<00:00,  1.91s/it, est. speed input: 683.93 toks/s, output: 175.35 toks/s]Processed prompts: 100%|██████████| 20/20 [00:25<00:00,  1.28s/it, est. speed input: 683.93 toks/s, output: 175.35 toks/s]
+2026-03-25 11:05:15  INFO      ReACT iteration 2/5 — 20 active patients
+Rendering conversations:   0%|          | 0/20 [00:00<?, ?it/s]Rendering conversations: 100%|██████████| 20/20 [00:00<00:00, 403.94it/s]
+Processed prompts:   0%|          | 0/20 [00:00<?, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s]Processed prompts:   5%|▌         | 1/20 [00:07<02:21,  7.46s/it, est. speed input: 147.13 toks/s, output: 6.17 toks/s]Processed prompts:  15%|█▌        | 3/20 [00:08<00:36,  2.13s/it, est. speed input: 411.84 toks/s, output: 18.87 toks/s]Processed prompts:  20%|██        | 4/20 [00:09<00:28,  1.76s/it, est. speed input: 485.38 toks/s, output: 25.45 toks/s]Processed prompts:  25%|██▌       | 5/20 [00:09<00:19,  1.30s/it, est. speed input: 587.12 toks/s, output: 33.85 toks/s]Processed prompts:  30%|███       | 6/20 [00:09<00:14,  1.01s/it, est. speed input: 703.67 toks/s, output: 42.63 toks/s]Processed prompts:  40%|████      | 8/20 [00:10<00:07,  1.68it/s, est. speed input: 899.35 toks/s, output: 61.78 toks/s]Processed prompts:  55%|█████▌    | 11/20 [00:10<00:02,  3.17it/s, est. speed input: 1207.79 toks/s, output: 92.42 toks/s]Processed prompts:  65%|██████▌   | 13/20 [00:10<00:01,  3.86it/s, est. speed input: 1382.63 toks/s, output: 111.43 toks/s]Processed prompts:  75%|███████▌  | 15/20 [00:10<00:01,  4.29it/s, est. speed input: 1539.50 toks/s, output: 129.96 toks/s]Processed prompts:  85%|████████▌ | 17/20 [00:11<00:00,  3.74it/s, est. speed input: 1637.73 toks/s, output: 145.26 toks/s]Processed prompts:  95%|█████████▌| 19/20 [00:19<00:01,  1.40s/it, est. speed input: 1087.32 toks/s, output: 111.90 toks/s]Processed prompts: 100%|██████████| 20/20 [00:27<00:00,  2.59s/it, est. speed input: 811.11 toks/s, output: 100.16 toks/s] Processed prompts: 100%|██████████| 20/20 [00:27<00:00,  2.59s/it, est. speed input: 811.11 toks/s, output: 100.16 toks/s]Processed prompts: 100%|██████████| 20/20 [00:27<00:00,  1.37s/it, est. speed input: 811.11 toks/s, output: 100.16 toks/s]
+2026-03-25 11:05:43  INFO      QA accuracy: 75.0%  (correct=15/20, parse_errors=0)
+2026-03-25 11:05:43  INFO      === Iteration 48/100  run=rrt  best_qa=75.0% ===
+2026-03-25 11:05:56  INFO      Exec block 1/1 …
+2026-03-25 11:05:56  INFO      Output:     stay_id   hadm_id  subject_id
+0  35864227  22238108    15642980
+
+2026-03-25 11:05:56  INFO      === Iteration 49/100  run=rrt  best_qa=75.0% ===
+2026-03-25 11:06:10  INFO      Exec block 1/1 …
+2026-03-25 11:06:10  INFO      Output: Error:
+Traceback (most recent call last):
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 643, in execute
+    _run_with_timeout(_do_execute, timeout)
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 174, in _run_with_timeout
+    raise error[0]
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 156, in target
+    result[0] = func(*args, **kwargs)
+                ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/v-tiossowsk
+2026-03-25 11:06:10  INFO      === Iteration 50/100  run=rrt  best_qa=75.0% ===
+2026-03-25 11:06:23  INFO      Exec block 1/1 …
+2026-03-25 11:06:23  INFO      Output:     itemid                             label  cnt
+0   224146                  System Integrity  190
+1   224151                 Effluent Pressure  174
+2   229247           Trans Membrane Pressure  174
+3   224150                   Filter Pressure  174
+4   224152                   Return Pressure  174
+5   229248                     Pressure Drop  174
+6   224149                   Access Pressure  174
+7   224153                  Replacement Rate  158
+8   225977                   Dialysate Fluid  158
+
+2026-03-25 11:06:23  INFO      === Iteration 51/100  run=rrt  best_qa=75.0% ===
+2026-03-25 11:06:37  INFO      Exec block 1/1 …
+2026-03-25 11:06:37  INFO      Output:    cnt
+0   32
+
+2026-03-25 11:06:37  INFO      === Iteration 52/100  run=rrt  best_qa=75.0% ===
+2026-03-25 11:06:37  INFO      Context approaching limit (20052 tokens, limit=25000) — forcing summarize + compress
+2026-03-25 11:09:10  INFO      Context compressed: 105 messages -> 2 messages
+2026-03-25 11:09:24  INFO      Exec block 1/1 …
+2026-03-25 11:09:24  INFO      Output: Result for stay_id 35864227:
+  received_rrt: True
+  rrt_modalities: ['CRRT']
+  crrt_info: {'received_crrt': True, 'crrt_active': True, 'filter_clotting': True, 'crrt_modes': ['CVVHDF'], 'system_integrity_states': ['New Filter', 'Active', 'Clots Present', 'Discontinued'], 'crrt_start_time': Timestamp('2183-01-13 22:00:00'), 'crrt_end_time': Timestamp('2183-01-17 18:33:00'), 'filter_changes': np.int64(0), 'clotting_events': [{'timestamp': Timestamp('2183-01-15 17:00:00'), 'state': 'Clots Present'}
+2026-03-25 11:09:24  INFO      === Iteration 53/100  run=rrt  best_qa=75.0% ===
+2026-03-25 11:09:43  INFO      Exec block 1/1 …
+2026-03-25 11:09:43  INFO      Output: Testing all cases:
+Stay 37631039 (expected CRRT): received_rrt=True, modalities=['CRRT']
+Stay 35906548 (expected Peritoneal Dialysis): received_rrt=True, modalities=['Peritoneal Dialysis']
+Stay 32583467 (expected Hemodialysis): received_rrt=True, modalities=['Hemodialysis']
+Stay 39553978 (expected None): received_rrt=False, modalities=[]
+Stay 36828715 (expected Multiple): received_rrt=True, modalities=['CRRT', 'Hemodialysis']
+Stay 31041869 (expected Multiple): received_rrt=True, modalities=['CRR
+2026-03-25 11:09:43  INFO      === Iteration 54/100  run=rrt  best_qa=75.0% ===
+2026-03-25 11:09:48  INFO      Exec block 1/1 …
+2026-03-25 11:09:48  INFO      Output: "(no saved function found for 'get_crrt_info')"
+
+2026-03-25 11:09:48  INFO      === Iteration 55/100  run=rrt  best_qa=75.0% ===
+2026-03-25 11:09:55  INFO      Exec block 1/1 …
+2026-03-25 11:09:55  INFO      Output: ['acei', 'age', 'antibiotic', 'arb', 'bg', 'blood_differential', 'cardiac_marker', 'chemistry', 'coagulation', 'code_status', 'complete_blood_count', 'crrt', 'dobutamine', 'dopamine', 'enzyme', 'epinephrine', 'gcs', 'height', 'icp', 'icustay_detail', '... (14 more; pass a keyword to filter)']
+
+2026-03-25 11:09:55  INFO      === Iteration 56/100  run=rrt  best_qa=75.0% ===
+2026-03-25 11:09:58  INFO      Exec block 1/1 …
+2026-03-25 11:09:58  INFO      Output: 'def get_crrt_info(stay_id):\n    """\n    Extract CRRT (Continuous Renal Replacement Therapy) information for a patient\'s ICU stay.\n\n    This function queries the MIMIC-IV database to determine:\n    1. Whether the patient received CRRT during their ICU stay\n    2. Whether the CRRT system was actively running (not recirculating)\n    3. Whether the patient experienced filter clotting during CRRT\n\n    Parameters\n    ----------\n    stay_id : int\n        The ICU stay identifier for the pa
+2026-03-25 11:09:58  INFO      === Iteration 57/100  run=rrt  best_qa=75.0% ===
+2026-03-25 11:10:08  INFO      Exec block 1/1 …
+2026-03-25 11:10:08  INFO      Output: CRRT test result:
+  received_crrt: True
+  crrt_active: True
+  filter_clotting: True
+  crrt_modes: ['CVVHDF']
+
+2026-03-25 11:10:08  INFO      === Iteration 58/100  run=rrt  best_qa=75.0% ===
+2026-03-25 11:10:20  INFO      Exec block 1/1 …
+2026-03-25 11:10:20  INFO      Output:    itemid                label  category unitname
+0  224146     System Integrity  Dialysis      NaN
+1  225802      Dialysis - CRRT  Dialysis     None
+2  225803     Dialysis - CVVHD  Dialysis     None
+3  225805  Peritoneal Dialysis  Dialysis     None
+4  225809    Dialysis - CVVHDF  Dialysis     None
+5  225955      Dialysis - SCUF  Dialysis     None
+6  226499  Hemodialysis Output  Dialysis       mL
+7  227290            CRRT mode  Dialysis      NaN
+
+2026-03-25 11:10:20  INFO      === Iteration 59/100  run=rrt  best_qa=75.0% ===
+2026-03-25 11:12:16  INFO      Exec block 1/1 …
+2026-03-25 11:12:16  INFO      Output: Code executed successfully (no output).
+2026-03-25 11:12:16  INFO      Debug conversations will be saved to debug_logs
+2026-03-25 11:12:16  INFO      Using question from dataset column: Does this patient receive dialysis during their ICU stay?
+2026-03-25 11:12:16  INFO      Answer type for 'rrt': binary (per_row=True)
+2026-03-25 11:12:16  INFO      ReACT iteration 1/5 — 20 active patients
+Rendering conversations:   0%|          | 0/20 [00:00<?, ?it/s]Rendering conversations: 100%|██████████| 20/20 [00:00<00:00, 494.09it/s]
+Processed prompts:   0%|          | 0/20 [00:00<?, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s]Processed prompts:   5%|▌         | 1/20 [00:11<03:46, 11.94s/it, est. speed input: 72.79 toks/s, output: 14.24 toks/s]Processed prompts:  15%|█▌        | 3/20 [00:12<00:54,  3.18s/it, est. speed input: 214.30 toks/s, output: 42.33 toks/s]Processed prompts:  20%|██        | 4/20 [00:12<00:34,  2.13s/it, est. speed input: 282.60 toks/s, output: 56.18 toks/s]Processed prompts:  25%|██▌       | 5/20 [00:12<00:21,  1.47s/it, est. speed input: 349.55 toks/s, output: 70.15 toks/s]Processed prompts:  30%|███       | 6/20 [00:12<00:14,  1.04s/it, est. speed input: 415.61 toks/s, output: 84.09 toks/s]Processed prompts:  50%|█████     | 10/20 [00:12<00:04,  2.31it/s, est. speed input: 671.05 toks/s, output: 138.76 toks/s]Processed prompts:  65%|██████▌   | 13/20 [00:13<00:01,  3.60it/s, est. speed input: 862.03 toks/s, output: 181.66 toks/s]Processed prompts:  75%|███████▌  | 15/20 [00:13<00:01,  3.61it/s, est. speed input: 955.10 toks/s, output: 204.25 toks/s]Processed prompts:  80%|████████  | 16/20 [00:18<00:04,  1.07s/it, est. speed input: 745.54 toks/s, output: 167.60 toks/s]Processed prompts:  85%|████████▌ | 17/20 [00:19<00:03,  1.03s/it, est. speed input: 758.59 toks/s, output: 178.98 toks/s]Processed prompts:  90%|█████████ | 18/20 [00:20<00:01,  1.11it/s, est. speed input: 785.42 toks/s, output: 193.68 toks/s]Processed prompts:  95%|█████████▌| 19/20 [00:20<00:00,  1.18it/s, est. speed input: 802.57 toks/s, output: 206.38 toks/s]Processed prompts: 100%|██████████| 20/20 [00:24<00:00,  1.51s/it, est. speed input: 723.84 toks/s, output: 196.93 toks/s]Processed prompts: 100%|██████████| 20/20 [00:24<00:00,  1.51s/it, est. speed input: 723.84 toks/s, output: 196.93 toks/s]Processed prompts: 100%|██████████| 20/20 [00:24<00:00,  1.21s/it, est. speed input: 723.84 toks/s, output: 196.93 toks/s]
+2026-03-25 11:12:41  INFO      ReACT iteration 2/5 — 20 active patients
+Rendering conversations:   0%|          | 0/20 [00:00<?, ?it/s]Rendering conversations: 100%|██████████| 20/20 [00:00<00:00, 333.15it/s]
+Processed prompts:   0%|          | 0/20 [00:00<?, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s]Processed prompts:   5%|▌         | 1/20 [00:10<03:12, 10.11s/it, est. speed input: 121.37 toks/s, output: 6.83 toks/s]Processed prompts:  10%|█         | 2/20 [00:10<01:16,  4.24s/it, est. speed input: 399.07 toks/s, output: 13.56 toks/s]Processed prompts:  15%|█▌        | 3/20 [00:10<00:43,  2.58s/it, est. speed input: 481.39 toks/s, output: 20.47 toks/s]Processed prompts:  25%|██▌       | 5/20 [00:11<00:18,  1.21s/it, est. speed input: 769.00 toks/s, output: 35.59 toks/s]Processed prompts:  30%|███       | 6/20 [00:11<00:13,  1.07it/s, est. speed input: 856.58 toks/s, output: 43.11 toks/s]Processed prompts:  40%|████      | 8/20 [00:11<00:06,  1.79it/s, est. speed input: 1094.77 toks/s, output: 59.02 toks/s]Processed prompts:  45%|████▌     | 9/20 [00:11<00:04,  2.20it/s, est. speed input: 1175.58 toks/s, output: 67.24 toks/s]Processed prompts:  50%|█████     | 10/20 [00:11<00:03,  2.56it/s, est. speed input: 1246.00 toks/s, output: 75.10 toks/s]Processed prompts:  65%|██████▌   | 13/20 [00:12<00:01,  4.02it/s, est. speed input: 1474.65 toks/s, output: 99.83 toks/s]Processed prompts:  70%|███████   | 14/20 [00:12<00:01,  3.06it/s, est. speed input: 1504.51 toks/s, output: 105.25 toks/s]Processed prompts:  80%|████████  | 16/20 [00:13<00:01,  3.67it/s, est. speed input: 1657.08 toks/s, output: 123.42 toks/s]Processed prompts:  85%|████████▌ | 17/20 [00:14<00:01,  2.00it/s, est. speed input: 1576.31 toks/s, output: 124.10 toks/s]Processed prompts:  90%|█████████ | 18/20 [00:15<00:01,  1.71it/s, est. speed input: 1627.12 toks/s, output: 130.20 toks/s]Processed prompts: 100%|██████████| 20/20 [00:22<00:00,  1.74s/it, est. speed input: 1286.21 toks/s, output: 115.93 toks/s]Processed prompts: 100%|██████████| 20/20 [00:22<00:00,  1.74s/it, est. speed input: 1286.21 toks/s, output: 115.93 toks/s]Processed prompts: 100%|██████████| 20/20 [00:22<00:00,  1.13s/it, est. speed input: 1286.21 toks/s, output: 115.93 toks/s]
+2026-03-25 11:13:04  INFO      QA accuracy: 95.0%  (correct=19/20, parse_errors=0)
+2026-03-25 11:13:04  INFO      SUCCESS: 95.0% QA accuracy for 'rrt' at iteration 59
+2026-03-25 11:13:04  INFO      Function code saved to autoformalized_library/functions/rrt.py
+2026-03-25 11:13:04  INFO      Summary saved to autoformalized_library/summary.json
+[rank0]:[W325 11:13:04.960439898 ProcessGroupNCCL.cpp:1553] Warning: WARNING: destroy_process_group() was not called before program exit, which can leak resources. For more info, please see https://pytorch.org/docs/stable/distributed.html#shutdown (function operator())
+
+======================================================================
+AUTOFORMALIZATION COMPLETE
+======================================================================
+  Output dir      : autoformalized_library
+  Model           : Qwen/Qwen3.5-27B
+  Dataset         : /home/v-tiossowski/HealthcareAgent/mimic-code/data/MIMICIV_rrt_dataset/rrt.csv
+  Run name        : rrt
+  Status          : SUCCESS
+  QA accuracy     : 95.0%
+  Iterations      : 59
+  Total tokens    : 53,936  (prompt 46,561 / completion 7,375)
+  LLM calls       : 100
+  SQL queries     : 323
+  Function saved  : autoformalized_library/functions/rrt.py
+======================================================================

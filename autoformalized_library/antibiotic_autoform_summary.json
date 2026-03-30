@@ -1,0 +1,47 @@
+{
+  "timestamp": "2026-03-25T07:04:14.835299",
+  "model": "Qwen/Qwen3.5-27B",
+  "db_path": "/home/v-tiossowski/MIMIC-IV/mimic4.db",
+  "qa_dataset": "/home/v-tiossowski/HealthcareAgent/mimic-code/data/MIMICIV_antibiotic_dataset/antibiotic.csv",
+  "match_threshold": 0.9,
+  "run_name": "antibiotic",
+  "success": true,
+  "iterations": 85,
+  "qa_accuracy": 0.95,
+  "stats": {
+    "react": {
+      "prompt_tokens": 0,
+      "completion_tokens": 0,
+      "total_tokens": 0,
+      "llm_calls": 90,
+      "query_count": 431,
+      "query_time_sec": 19.9,
+      "wall_time_sec": 5941.857
+    },
+    "qa": {
+      "prompt_tokens": 49775,
+      "completion_tokens": 8546,
+      "total_tokens": 58321,
+      "llm_calls": 41,
+      "query_count": 55,
+      "query_time_sec": 0.505,
+      "eval_wall_time_sec": 57.572,
+      "per_question": {
+        "avg_prompt_tokens": 2488.8,
+        "avg_completion_tokens": 427.3,
+        "avg_llm_calls": 2.05,
+        "avg_query_count": 2.75,
+        "avg_query_time_sec": 0.025,
+        "avg_wall_time_sec": 2.879
+      }
+    },
+    "total": {
+      "prompt_tokens": 49775,
+      "completion_tokens": 8546,
+      "total_tokens": 58321,
+      "llm_calls": 131,
+      "query_count": 486,
+      "query_time_sec": 20.405
+    }
+  }
+}

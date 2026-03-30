@@ -1,0 +1,186 @@
+[
+  {
+    "trajectory_id": "mimiciv_stay_30104258",
+    "stay_id": 30104258,
+    "subject_id": 17643481,
+    "hadm_id": 21832753,
+    "anchor": "icu_intime",
+    "step_hours": 4,
+    "horizon_hours": 24,
+    "transitions": {
+      "infection_start_hour": 4,
+      "sepsis_start_hour": 4,
+      "infection_start_time": "2118-10-24 12:00:00",
+      "sepsis_start_time": "2118-10-24 12:00:00"
+    },
+    "checkpoints": [
+      {
+        "t_hour": 0,
+        "state_label": "keep_monitoring",
+        "task_labels": null,
+        "checkpoint_time": "2118-10-24 10:50:35",
+        "terminal": false,
+        "terminal_by_task": null
+      },
+      {
+        "t_hour": 4,
+        "state_label": "trigger_sepsis_alert",
+        "task_labels": null,
+        "checkpoint_time": "2118-10-24 14:50:35",
+        "terminal": true,
+        "terminal_by_task": null
+      },
+      {
+        "t_hour": 8,
+        "state_label": "trigger_sepsis_alert",
+        "task_labels": null,
+        "checkpoint_time": "2118-10-24 18:50:35",
+        "terminal": true,
+        "terminal_by_task": null
+      },
+      {
+        "t_hour": 12,
+        "state_label": "trigger_sepsis_alert",
+        "task_labels": null,
+        "checkpoint_time": "2118-10-24 22:50:35",
+        "terminal": true,
+        "terminal_by_task": null
+      },
+      {
+        "t_hour": 16,
+        "state_label": "trigger_sepsis_alert",
+        "task_labels": null,
+        "checkpoint_time": "2118-10-25 02:50:35",
+        "terminal": true,
+        "terminal_by_task": null
+      },
+      {
+        "t_hour": 20,
+        "state_label": "trigger_sepsis_alert",
+        "task_labels": null,
+        "checkpoint_time": "2118-10-25 06:50:35",
+        "terminal": true,
+        "terminal_by_task": null
+      },
+      {
+        "t_hour": 24,
+        "state_label": "trigger_sepsis_alert",
+        "task_labels": null,
+        "checkpoint_time": "2118-10-25 10:50:35",
+        "terminal": true,
+        "terminal_by_task": null
+      }
+    ],
+    "icu_intime": "2118-10-24 10:50:35",
+    "icu_outtime": "2118-11-03 12:54:59",
+    "icu_los_hours": 242.07333333333332,
+    "is_sepsis": true,
+    "task_name": "sepsis",
+    "task_names": [
+      "sepsis"
+    ],
+    "tool_names": [
+      "query_suspicion_of_infection",
+      "query_sofa"
+    ],
+    "label_spaces": {
+      "sepsis": [
+        "keep_monitoring",
+        "infection_suspect",
+        "trigger_sepsis_alert"
+      ]
+    }
+  },
+  {
+    "trajectory_id": "mimiciv_stay_30157290",
+    "stay_id": 30157290,
+    "subject_id": 14130631,
+    "hadm_id": 29470299,
+    "anchor": "icu_intime",
+    "step_hours": 4,
+    "horizon_hours": 24,
+    "transitions": {
+      "infection_start_hour": 4,
+      "sepsis_start_hour": 24,
+      "infection_start_time": "2156-04-17 22:00:00",
+      "sepsis_start_time": "2156-04-18 15:00:00"
+    },
+    "checkpoints": [
+      {
+        "t_hour": 0,
+        "state_label": "keep_monitoring",
+        "task_labels": null,
+        "checkpoint_time": "2156-04-17 18:44:00",
+        "terminal": false,
+        "terminal_by_task": null
+      },
+      {
+        "t_hour": 4,
+        "state_label": "infection_suspect",
+        "task_labels": null,
+        "checkpoint_time": "2156-04-17 22:44:00",
+        "terminal": false,
+        "terminal_by_task": null
+      },
+      {
+        "t_hour": 8,
+        "state_label": "infection_suspect",
+        "task_labels": null,
+        "checkpoint_time": "2156-04-18 02:44:00",
+        "terminal": false,
+        "terminal_by_task": null
+      },
+      {
+        "t_hour": 12,
+        "state_label": "infection_suspect",
+        "task_labels": null,
+        "checkpoint_time": "2156-04-18 06:44:00",
+        "terminal": false,
+        "terminal_by_task": null
+      },
+      {
+        "t_hour": 16,
+        "state_label": "infection_suspect",
+        "task_labels": null,
+        "checkpoint_time": "2156-04-18 10:44:00",
+        "terminal": false,
+        "terminal_by_task": null
+      },
+      {
+        "t_hour": 20,
+        "state_label": "infection_suspect",
+        "task_labels": null,
+        "checkpoint_time": "2156-04-18 14:44:00",
+        "terminal": false,
+        "terminal_by_task": null
+      },
+      {
+        "t_hour": 24,
+        "state_label": "trigger_sepsis_alert",
+        "task_labels": null,
+        "checkpoint_time": "2156-04-18 18:44:00",
+        "terminal": true,
+        "terminal_by_task": null
+      }
+    ],
+    "icu_intime": "2156-04-17 18:44:00",
+    "icu_outtime": "2156-04-19 13:03:47",
+    "icu_los_hours": 42.32972222222222,
+    "is_sepsis": true,
+    "task_name": "sepsis",
+    "task_names": [
+      "sepsis"
+    ],
+    "tool_names": [
+      "query_suspicion_of_infection",
+      "query_sofa"
+    ],
+    "label_spaces": {
+      "sepsis": [
+        "keep_monitoring",
+        "infection_suspect",
+        "trigger_sepsis_alert"
+      ]
+    }
+  }
+]

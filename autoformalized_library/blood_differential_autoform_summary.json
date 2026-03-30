@@ -1,0 +1,47 @@
+{
+  "timestamp": "2026-03-24T21:40:35.192721",
+  "model": "Qwen/Qwen3.5-27B",
+  "db_path": "/home/v-tiossowski/MIMIC-IV/mimic4.db",
+  "qa_dataset": "/home/v-tiossowski/HealthcareAgent/mimic-code/data/MIMICIV_blood_differential_dataset/blood_differential.csv",
+  "match_threshold": 0.9,
+  "run_name": "blood_differential",
+  "success": false,
+  "iterations": 100,
+  "qa_accuracy": 0.78,
+  "stats": {
+    "react": {
+      "prompt_tokens": 0,
+      "completion_tokens": 0,
+      "total_tokens": 0,
+      "llm_calls": 104,
+      "query_count": 144,
+      "query_time_sec": 2.594,
+      "wall_time_sec": 8021.512
+    },
+    "qa": {
+      "prompt_tokens": 963753,
+      "completion_tokens": 111369,
+      "total_tokens": 1075122,
+      "llm_calls": 713,
+      "query_count": 219,
+      "query_time_sec": 1.675,
+      "eval_wall_time_sec": 505.68,
+      "per_question": {
+        "avg_prompt_tokens": 9637.5,
+        "avg_completion_tokens": 1113.7,
+        "avg_llm_calls": 7.13,
+        "avg_query_count": 2.19,
+        "avg_query_time_sec": 0.017,
+        "avg_wall_time_sec": 5.057
+      }
+    },
+    "total": {
+      "prompt_tokens": 963753,
+      "completion_tokens": 111369,
+      "total_tokens": 1075122,
+      "llm_calls": 817,
+      "query_count": 363,
+      "query_time_sec": 4.269
+    }
+  }
+}

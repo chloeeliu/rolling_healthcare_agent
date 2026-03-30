@@ -2,3 +2,4 @@ __pycache__/
 *.py[cod]
 
 /rolling_monitor_dataset
+/result

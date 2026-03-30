@@ -1,0 +1,384 @@
+=== Step 1 ===
+# Clinical Coding Agent Memory
+
+## Schema Facts
+
+### Code Status Data Sources
+| Table | Columns | Itemids/Field Names |
+|-------|---------|---------------------|
+| `mimiciv_icu.chartevents` | stay_id, charttime, itemid, value | itemid: 223758 (Code Status), 228687 (Code Status from MD Progress Note) |
+| `mimiciv_hosp.poe_detail` | poe_seq, subject_id, field_name, field_value | field_name = 'Code status' |
+| `mimiciv_hosp.poe` | poe_seq, subject_id, hadm_id, ordertime, order_subtype | Links poe_detail to admissions |
+| `mimiciv_icu.icustays` | stay_id, subject_id, hadm_id, intime, outtime | ICU stay timeframe |
+
+### Code Status Values Observed
+- "Full code"
+- "Full code (attempt resuscitation)"
+- "Resuscitate (Full code)"
+- "DNR (do not resuscitate)"
+- "DNI (do not intubate)"
+- "DNR / DNI"
+- "Comfort measures only"
+- "DNAR (Do Not Attempt Resuscitation) [DNR]"
+- "DNAR (DO NOT attempt resuscitation for cardiac arrest)"
+- "Do not resuscitate (DNR/DNI)"
+
+### Join Path for POE Data
+`poe_detail` → `poe` (via poe_seq) → `admissions` (via hadm_id) → `icustays` (via hadm_id)
+
+---
+
+## Function Source Code
+
+```python
+import pandas as pd
+
+def get_code_status(stay_id):
+    """
+    Extract code status information for a patient during their ICU stay.
+    
+    This function queries the MIMIC-IV database to retrieve code status orders
+    (DNR, DNI, Full Code, Comfort Measures Only, etc.) for a specific ICU stay.
+    
+    Parameters
+    ----------
+    stay_id : int
+        The ICU stay identifier from the icustays table.
+    
+    Returns
+    -------
+    dict
+        A dictionary containing the following keys:
+        
+        - 'has_dnr' (bool): True if patient has a DNR (Do Not Resuscitate) order
+          during their ICU stay. Includes DNAR (Do Not Attempt Resuscitation)
+          and combined DNR/DNI orders.
+        
+        - 'has_dni' (bool): True if patient has a DNI (Do Not Intubate) order
+          during their ICU stay. Includes combined DNR/DNI orders.
+        
+        - 'is_full_code' (bool): True if patient is documented as Full Code
+          (full resuscitation) at any point during their ICU stay.
+        
+        - 'comfort_measures_only' (bool): True if patient has a Comfort Measures
+          Only order during their ICU stay.
+        
+        - 'code_status_values' (list): List of all code status values recorded
+          during the stay (in chronological order, most recent first).
+        
+        - 'latest_code_status' (str or None): The most recent code status value
+          recorded during the stay, or None if no code status was documented.
+    """
+    # Query code status from chartevents (ICU charting)
+    sql_chartevents = """
+    SELECT ce.charttime as eventtime, ce.value as code_status
+    FROM mimiciv_icu.chartevents ce
+    JOIN mimiciv_icu.icustays i ON ce.stay_id = i.stay_id
+    WHERE ce.stay_id = {stay_id}
+    AND ce.itemid IN (223758, 228687)
+    AND ce.charttime >= i.intime
+    AND ce.charttime <= i.outtime
+    """.format(stay_id=stay_id)
+    
+    df_ce = query_db(sql_chartevents)
+    
+    # Query code status from poe_detail (Provider Order Entry)
+    sql_poe = """
+    SELECT p.ordertime as eventtime, pd.field_value as code_status
+    FROM mimiciv_hosp.poe_detail pd
+    JOIN mimiciv_hosp.poe p ON pd.poe_seq = p.poe_seq
+    JOIN mimiciv_hosp.admissions a ON p.hadm_id = a.hadm_id
+    JOIN mimiciv_icu.icustays i ON a.hadm_id = i.hadm_id
+    WHERE i.stay_id = {stay_id}
+    AND pd.field_name = 'Code status'
+    AND p.ordertime >= i.intime
+    AND p.ordertime <= i.outtime
+    """.format(stay_id=stay_id)
+    
+    df_poe = query_db(sql_poe)
+    
+    # Combine both sources
+    if not df_ce.empty and not df_poe.empty:
+        df_ce['source'] = 'chartevents'
+        df_poe['source'] = 'poe_detail'
+        df = pd.concat([df_ce, df_poe], ignore_index=True)
+    elif not df_ce.empty:
+        df = df_ce
+    elif not df_poe.empty:
+        df = df_poe
+    else:
+        df = pd.DataFrame(columns=['eventtime', 'code_status'])
+    
+    if df.empty:
+        return {
+            'has_dnr': False,
+            'has_dni': False,
+            'is_full_code': False,
+            'comfort_measures_only': False,
+            'code_status_values': [],
+            'latest_code_status': None
+        }
+    
+    # Sort by eventtime descending
+    df = df.sort_values('eventtime', ascending=False).reset_index(drop=True)
+    
+    # Get all code status values
+    code_status_values = df['code_status'].tolist()
+    latest_code_status = df.iloc[0]['code_status']
+    
+    # Check for DNR (includes DNR/DNI combinations, DNAR)
+    dnr_patterns = ['dnr', 'dnar', 'do not resuscitate', 'do not attempt resuscitation']
+    has_dnr = any(
+        any(pattern in str(val).lower() for pattern in dnr_patterns)
+        for val in code_status_values
+    )
+    
+    # Check for DNI (includes DNR/DNI combinations)
+    dni_patterns = ['dni', 'do not intubate']
+    has_dni = any(
+        any(pattern in str(val).lower() for pattern in dni_patterns)
+        for val in code_status_values
+    )
+    
+    # Check for full code
+    is_full_code = any('full code' in str(val).lower() for val in code_status_values)
+    
+    # Check for comfort measures only
+    comfort_measures_only = any('comfort' in str(val).lower() for val in code_status_values)
+    
+    return {
+        'has_dnr': has_dnr,
+        'has_dni': has_dni,
+        'is_full_code': is_full_code,
+        'comfort_measures_only': comfort_measures_only,
+        'code_status_values': code_status_values,
+        'latest_code_status': latest_code_status
+    }
+```
+
+---
+
+## Test Results & Error Fixes
+
+### Error 1: Case Sensitivity Issue (Step 16-18)
+- **Problem**: Pattern matching failed because patterns were uppercase but values were lowercased
+- **Fix**: Changed patterns to lowercase: `['dnr', 'dnar', 'do not resuscitate', 'do not attempt resuscitation']`
+
+### Error 2: Missing POE Data (Step 29-47)
+- **Problem**: Function only queried `chartevents`, missing code status from `poe_detail` table
+- **Impact**: Patients with code status only in POE were misclassified as having no code status
+- **Fix**: Added query to `poe_detail` table and combined results from both sources
+
+### Test Cases Verified
+| stay_id | Expected | Result |
+|---------|----------|--------|
+| 37081114 | DNR/DNI | ✓ has_dnr=True, has_dni=True |
+| 39553978 | Full code | ✓ is_full_code=True |
+| 31090461 | DNI only | ✓ has_dni=True |
+| 30932571 | Comfort measures | ✓ comfort_measures_only=True |
+| 30676350 | No code status | ✓ All False |
+| 31233808 | Previously misclassified | ✓ Fixed with POE data |
+| 39560723 | Previously misclassified | ✓ Fixed with POE data |
+| 33235789 | Previously misclassified | ✓ Fixed with POE data |
+| 38113073 | Previously misclassified | ✓ Fixed with POE data |
+| 35159664 | Previously misclassified | ✓ Fixed with POE data |
+
+=== Step 2 ===
+# Clinical Coding Agent Memory
+
+## Schema Facts
+
+### Code Status Data Sources
+| Table | Columns | Itemids/Field Names |
+|-------|---------|---------------------|
+| `mimiciv_icu.chartevents` | stay_id, charttime, itemid, value | itemid: 223758 (Code Status), 228687 (Code Status from MD Progress Note) |
+| `mimiciv_hosp.poe_detail` | poe_seq, subject_id, field_name, field_value | field_name = 'Code status' |
+| `mimiciv_hosp.poe` | poe_seq, subject_id, hadm_id, ordertime, order_subtype, order_status | Links poe_detail to admissions; order_status can be 'Active' or 'Inactive' |
+| `mimiciv_icu.icustays` | stay_id, subject_id, hadm_id, intime, outtime | ICU stay timeframe |
+
+### Code Status Values Observed
+- "Full code"
+- "Full code (attempt resuscitation)"
+- "Resuscitate (Full code)"
+- "DNR (do not resuscitate)"
+- "DNI (do not intubate)"
+- "DNR / DNI"
+- "Comfort measures only"
+- "DNAR (Do Not Attempt Resuscitation) [DNR]"
+- "DNAR (DO NOT attempt resuscitation for cardiac arrest)"
+- "Do not resuscitate (DNR/DNI)"
+
+### Join Path for POE Data
+`poe_detail` → `poe` (via poe_seq) → `admissions` (via hadm_id) → `icustays` (via hadm_id)
+
+### Key Findings
+- **chartevents is more reliable** than POE for code status
+- POE has many duplicate/overlapping entries with same poe_seq
+- Should prioritize chartevents, fall back to POE only if chartevents empty
+- Should check only the **LATEST** code status, not all historical values
+- POE has `order_status` column ('Active'/'Inactive') that could filter valid orders
+
+---
+
+## Function Source Code
+
+```python
+import pandas as pd
+
+def get_code_status(stay_id):
+    """
+    Extract code status information for a patient during their ICU stay.
+    Prioritizes chartevents over POE for more accurate results.
+    Focuses on the LATEST code status to determine current status.
+    
+    Parameters
+    ----------
+    stay_id : int
+        The ICU stay identifier from the icustays table.
+    
+    Returns
+    -------
+    dict
+        A dictionary containing the following keys:
+        
+        - 'has_dnr' (bool): True if patient has a DNR (Do Not Resuscitate) order
+          during their ICU stay. Includes DNAR (Do Not Attempt Resuscitation)
+          and combined DNR/DNI orders.
+        
+        - 'has_dni' (bool): True if patient has a DNI (Do Not Intubate) order
+          during their ICU stay. Includes combined DNR/DNI orders.
+        
+        - 'is_full_code' (bool): True if patient is documented as Full Code
+          (full resuscitation) at any point during their ICU stay.
+        
+        - 'comfort_measures_only' (bool): True if patient has a Comfort Measures
+          Only order during their ICU stay.
+        
+        - 'code_status_values' (list): List of all code status values recorded
+          during the stay (in chronological order, most recent first).
+        
+        - 'latest_code_status' (str or None): The most recent code status value
+          recorded during the stay, or None if no code status was documented.
+    """
+    # Query code status from chartevents (ICU charting) - PRIMARY SOURCE
+    sql_chartevents = """
+    SELECT ce.charttime as eventtime, ce.value as code_status
+    FROM mimiciv_icu.chartevents ce
+    JOIN mimiciv_icu.icustays i ON ce.stay_id = i.stay_id
+    WHERE ce.stay_id = {stay_id}
+    AND ce.itemid IN (223758, 228687)
+    AND ce.charttime >= i.intime
+    AND ce.charttime <= i.outtime
+    """.format(stay_id=stay_id)
+    
+    df_ce = query_db(sql_chartevents)
+    
+    # Query code status from poe_detail (Provider Order Entry) - FALLBACK
+    sql_poe = """
+    SELECT p.ordertime as eventtime, pd.field_value as code_status
+    FROM mimiciv_hosp.poe_detail pd
+    JOIN mimiciv_hosp.poe p ON pd.poe_seq = p.poe_seq
+    JOIN mimiciv_hosp.admissions a ON p.hadm_id = a.hadm_id
+    JOIN mimiciv_icu.icustays i ON a.hadm_id = i.hadm_id
+    WHERE i.stay_id = {stay_id}
+    AND pd.field_name = 'Code status'
+    AND p.ordertime >= i.intime
+    AND p.ordertime <= i.outtime
+    """.format(stay_id=stay_id)
+    
+    df_poe = query_db(sql_poe)
+    
+    # Prioritize chartevents, fall back to POE if empty
+    if not df_ce.empty:
+        df = df_ce
+    elif not df_poe.empty:
+        df = df_poe
+    else:
+        df = pd.DataFrame(columns=['eventtime', 'code_status'])
+    
+    if df.empty:
+        return {
+            'has_dnr': False,
+            'has_dni': False,
+            'is_full_code': False,
+            'comfort_measures_only': False,
+            'code_status_values': [],
+            'latest_code_status': None
+        }
+    
+    # Sort by eventtime descending
+    df = df.sort_values('eventtime', ascending=False).reset_index(drop=True)
+    
+    # Get all code status values
+    code_status_values = df['code_status'].tolist()
+    latest_code_status = df.iloc[0]['code_status']
+    
+    # Check the LATEST code status only
+    latest_lower = str(latest_code_status).lower()
+    
+    # Check for DNR (includes DNR/DNI combinations, DNAR)
+    dnr_patterns = ['dnr', 'dnar', 'do not resuscitate', 'do not attempt resuscitation']
+    has_dnr = any(pattern in latest_lower for pattern in dnr_patterns)
+    
+    # Check for DNI (includes DNR/DNI combinations)
+    dni_patterns = ['dni', 'do not intubate']
+    has_dni = any(pattern in latest_lower for pattern in dni_patterns)
+    
+    # Check for full code
+    is_full_code = 'full code' in latest_lower or 'resuscitate' in latest_lower
+    
+    # Check for comfort measures only
+    comfort_measures_only = 'comfort' in latest_lower
+    
+    return {
+        'has_dnr': has_dnr,
+        'has_dni': has_dni,
+        'is_full_code': is_full_code,
+        'comfort_measures_only': comfort_measures_only,
+        'code_status_values': code_status_values,
+        'latest_code_status': latest_code_status
+    }
+```
+
+---
+
+## Test Results & Error Fixes
+
+### Error 1: Case Sensitivity Issue (Step 16-18)
+- **Problem**: Pattern matching failed because patterns were uppercase but values were lowercased
+- **Fix**: Changed patterns to lowercase: `['dnr', 'dnar', 'do not resuscitate', 'do not attempt resuscitation']`
+
+### Error 2: Missing POE Data (Step 29-47)
+- **Problem**: Function only queried `chartevents`, missing code status from `poe_detail` table
+- **Impact**: Patients with code status only in POE were misclassified as having no code status
+- **Fix**: Added query to `poe_detail` table and combined results from both sources
+
+### Error 3: Checking All Historical Values (Step 14-17)
+- **Problem**: Function checked if ANY code status value matched patterns, causing false positives
+- **Impact**: Patients with historical DNR/DNI but current Full Code were misclassified
+- **Fix**: Changed to check only the LATEST code status value
+
+### Error 4: POE Data Quality Issues (Step 18-22)
+- **Problem**: POE has many duplicate/overlapping entries with same poe_seq, less reliable than chartevents
+- **Impact**: Misclassification when POE data was prioritized over chartevents
+- **Fix**: Prioritized chartevents as primary source, POE as fallback only
+
+### Test Cases Verified
+| stay_id | Expected | Result (v3) |
+|---------|----------|-------------|
+| 37081114 | DNR/DNI | ✓ has_dnr=True, has_dni=True |
+| 39553978 | Full code | ✓ is_full_code=True |
+| 31090461 | DNI only | ✓ has_dni=True |
+| 30932571 | Comfort measures | ✓ comfort_measures_only=True |
+| 30676350 | Has code status | ✓ Fixed with POE data |
+| 39842495 | Full code | ✓ Fixed with chartevents priority |
+| 31895311 | Full code | ✓ Fixed with chartevents priority |
+| 30957600 | Full code | ⚠ Still shows DNR/DNI (POE fallback issue) |
+| 30498702 | Full code | ✓ Fixed with chartevents priority |
+| 38109814 | Full code | ✓ Fixed with chartevents priority |
+| 999999999 | Non-existent | ✓ All False, latest=None |
+
+### Remaining Issue
+- Stay 30957600 still misclassified because chartevents is empty and POE fallback shows DNR/DNI
+- Need to investigate POE `order_status` filtering to identify valid orders
+

@@ -1,0 +1,47 @@
+{
+  "timestamp": "2026-03-26T04:15:26.541713",
+  "model": "Qwen/Qwen3.5-27B",
+  "db_path": "/home/v-tiossowski/MIMIC-IV/mimic4.db",
+  "qa_dataset": "/home/v-tiossowski/HealthcareAgent/mimic-code/data/MIMICIV_aki_dataset/aki.csv",
+  "match_threshold": 0.9,
+  "run_name": "aki",
+  "success": false,
+  "iterations": 100,
+  "qa_accuracy": 0.6,
+  "stats": {
+    "react": {
+      "prompt_tokens": 0,
+      "completion_tokens": 0,
+      "total_tokens": 0,
+      "llm_calls": 104,
+      "query_count": 578,
+      "query_time_sec": 2.735,
+      "wall_time_sec": 3944.346
+    },
+    "qa": {
+      "prompt_tokens": 79322,
+      "completion_tokens": 6393,
+      "total_tokens": 85715,
+      "llm_calls": 40,
+      "query_count": 124,
+      "query_time_sec": 0.492,
+      "eval_wall_time_sec": 55.783,
+      "per_question": {
+        "avg_prompt_tokens": 3966.1,
+        "avg_completion_tokens": 319.6,
+        "avg_llm_calls": 2.0,
+        "avg_query_count": 6.2,
+        "avg_query_time_sec": 0.025,
+        "avg_wall_time_sec": 2.789
+      }
+    },
+    "total": {
+      "prompt_tokens": 79322,
+      "completion_tokens": 6393,
+      "total_tokens": 85715,
+      "llm_calls": 144,
+      "query_count": 702,
+      "query_time_sec": 3.227
+    }
+  }
+}

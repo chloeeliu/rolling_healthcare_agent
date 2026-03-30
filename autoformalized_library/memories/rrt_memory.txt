@@ -1,0 +1,271 @@
+=== Step 1 ===
+# Clinical Coding Agent - Rolling Memory
+
+## Schema Facts
+
+### Tables
+- `mimiciv_icu.d_items`: itemid, label, category, unitname
+- `mimiciv_icu.chartevents`: itemid, stay_id, charttime, value
+- `mimiciv_icu.icustays`: stay_id, subject_id, hadm_id, intime, outtime
+- `mimiciv_hosp.procedures_icd`: subject_id, hadm_id, icd_code, seq_num, chartdate
+- `mimiciv_hosp.d_icd_procedures`: icd_code, icd_version, long_title
+
+### RRT-Related Item IDs
+| Item ID | Label | Category |
+|---------|-------|----------|
+| 227290 | CRRT mode | Dialysis |
+| 224146 | System Integrity | Dialysis |
+| 226499 | Hemodialysis Output | Dialysis |
+| 225802 | Dialysis - CRRT | Dialysis |
+| 225803 | Dialysis - CVVHD | Dialysis |
+| 225809 | Dialysis - CVVHDF | Dialysis |
+| 225955 | Dialysis - SCUF | Dialysis |
+| 225805 | Peritoneal Dialysis | Dialysis |
+
+### Peritoneal Dialysis Item IDs
+[225953, 225963, 225951, 225965, 225810, 225952, 225961, 225959, 227638, 227640, 227639, 225806, 225807, 225805]
+
+### CRRT System Integrity States
+['Discontinued', 'Reinitiated', 'Active', 'New Filter', 'Line pressure inconsistent', 'Clots Present', 'Clotted', 'Clots Increasing', 'Recirculating', 'No Clot Present']
+
+### CRRT Modes
+['SCUF', 'CVVH', 'CVVHDF', 'CVVHD']
+
+### Hemodialysis ICD Codes
+- 3995: Hemodialysis (ICD-9)
+- B50W0ZZ, B50W1ZZ, B50WYZZ, B51W0ZA, B51W0ZZ, B51W1ZA, B51W1ZZ, B51WYZZ, B51WZZA, B51WZZZ: Dialysis Shunt/Fistula procedures (ICD-10)
+
+## Functions
+
+### get_crrt_info(stay_id)
+```python
+def get_crrt_info(stay_id):
+    """
+    Extract CRRT (Continuous Renal Replacement Therapy) information for a patient's ICU stay.
+
+    This function queries the MIMIC-IV database to determine:
+    1. Whether the patient received CRRT during their ICU stay
+    2. Whether the CRRT system was actively running (not recirculating)
+    3. Whether the patient experienced filter clotting during CRRT
+
+    Parameters
+    ----------
+    stay_id : int
+        The ICU stay identifier for the patient
+    
+    Returns
+    -------
+    dict
+        A dictionary containing the following keys:
+        - 'received_crrt': bool - True if patient received any CRRT during stay
+        - 'crrt_active': bool - True if CRRT was actively running (not recirculating) at any point
+        - 'filter_clotting': bool - True if patient experienced filter clotting
+        - 'crrt_modes': list - List of CRRT modes used (CVVH, CVVHD, CVVHDF, SCUF)
+        - 'system_integrity_states': list - List of all system integrity states observed
+        - 'crrt_start_time': datetime or None - First CRRT observation time
+        - 'crrt_end_time': datetime or None - Last CRRT observation time
+        - 'filter_changes': int - Number of filter changes recorded
+        - 'clotting_events': list - List of clotting-related events with timestamps
+    """
+    pass  # Implementation exists in system
+```
+
+### get_rrt_info(stay_id)
+```python
+import pandas as pd
+import numpy as np
+from datetime import datetime
+
+def get_rrt_info(stay_id):
+    """
+    Extract Renal Replacement Therapy (RRT) information for a patient's ICU stay.
+    
+    This function queries the MIMIC-IV database to determine:
+    1. Whether the patient received any form of RRT during their ICU stay
+    2. The specific modalities of RRT used (CRRT, Hemodialysis, Peritoneal Dialysis)
+    3. Whether CRRT was actively running (not recirculating) at any point
+    4. Detailed CRRT information including modes, system integrity states, and filter events
+    
+    Parameters
+    ----------
+    stay_id : int
+        The ICU stay identifier for the patient
+    
+    Returns
+    -------
+    dict
+        A dictionary containing the following keys:
+        - 'received_rrt': bool - True if patient received any RRT during stay
+        - 'rrt_modalities': list - List of RRT modalities used (CRRT, Hemodialysis, Peritoneal Dialysis)
+        - 'crrt_info': dict - Detailed CRRT information (from get_crrt_info)
+        - 'peritoneal_dialysis': bool - True if patient received peritoneal dialysis
+        - 'hemodialysis': bool - True if patient received hemodialysis
+        - 'rrt_start_time': datetime or None - First RRT observation time
+        - 'rrt_end_time': datetime or None - Last RRT observation time
+    
+    Notes
+    -----
+    RRT modalities are identified as follows:
+    - CRRT: CRRT mode data (itemid 227290) or Dialysis category chart events
+    - Peritoneal Dialysis: Peritoneal dialysis-related chart events
+    - Hemodialysis: Hemodialysis procedures from procedures_icd table or Hemodialysis Output chart events
+    
+    Examples
+    --------
+    >>> result = get_rrt_info(37631039)
+    >>> result['received_rrt']
+    True
+    >>> result['rrt_modalities']
+    ['CRRT']
+    """
+    
+    # Get CRRT information using the existing function
+    try:
+        crrt_info = get_crrt_info(stay_id)
+    except:
+        crrt_info = {
+            'received_crrt': False,
+            'crrt_active': False,
+            'filter_clotting': False,
+            'crrt_modes': [],
+            'system_integrity_states': [],
+            'crrt_start_time': None,
+            'crrt_end_time': None,
+            'filter_changes': 0,
+            'clotting_events': []
+        }
+    
+    # Check for Peritoneal Dialysis
+    pd_itemids = [225953, 225963, 225951, 225965, 225810, 225952, 225961, 225959, 227638, 227640, 227639, 225806, 225807, 225805]
+    
+    pd_query = f"""
+    SELECT COUNT(*) as cnt, MIN(charttime) as pd_start, MAX(charttime) as pd_end
+    FROM mimiciv_icu.chartevents
+    WHERE stay_id = {stay_id}
+      AND itemid IN ({','.join(map(str, pd_itemids))})
+    """
+    pd_result = query_db(pd_query).iloc[0]
+    peritoneal_dialysis = pd_result['cnt'] > 0
+    pd_start = pd_result['pd_start']
+    pd_end = pd_result['pd_end']
+    
+    # Check for Hemodialysis from procedures table and chart events
+    # First get the hadm_id for this stay
+    stay_info = query_db(f"""
+    SELECT hadm_id
+    FROM mimiciv_icu.icustays
+    WHERE stay_id = {stay_id}
+    """)
+    
+    hemodialysis = False
+    hd_start = None
+    hd_end = None
+    
+    # Check for hemodialysis chart events (Hemodialysis Output)
+    hd_chart_query = f"""
+    SELECT COUNT(*) as cnt, MIN(charttime) as hd_start, MAX(charttime) as hd_end
+    FROM mimiciv_icu.chartevents
+    WHERE stay_id = {stay_id}
+      AND itemid = 226499
+    """
+    hd_chart_result = query_db(hd_chart_query).iloc[0]
+    
+    if hd_chart_result['cnt'] > 0:
+        hemodialysis = True
+        hd_start = hd_chart_result['hd_start']
+        hd_end = hd_chart_result['hd_end']
+    
+    # Also check for hemodialysis procedures during this admission
+    if len(stay_info) > 0:
+        hadm_id = stay_info['hadm_id'].iloc[0]
+        
+        # Check for hemodialysis procedures during this admission
+        hd_proc_query = f"""
+        SELECT COUNT(*) as cnt, MIN(chartdate) as hd_start, MAX(chartdate) as hd_end
+        FROM mimiciv_hosp.procedures_icd p
+        JOIN mimiciv_hosp.d_icd_procedures d ON p.icd_code = d.icd_code
+        WHERE p.hadm_id = {hadm_id}
+          AND LOWER(d.long_title) LIKE '%hemodialysis%'
+        """
+        hd_proc_result = query_db(hd_proc_query).iloc[0]
+        
+        if hd_proc_result['cnt'] > 0:
+            hemodialysis = True
+            # Update start/end times if procedure times are earlier/later
+            if hd_proc_result['hd_start'] and (hd_start is None or pd.Timestamp(hd_proc_result['hd_start']) < pd.Timestamp(hd_start)):
+                hd_start = hd_proc_result['hd_start']
+            if hd_proc_result['hd_end'] and (hd_end is None or pd.Timestamp(hd_proc_result['hd_end']) > pd.Timestamp(hd_end)):
+                hd_end = hd_proc_result['hd_end']
+    
+    # Determine RRT modalities
+    rrt_modalities = []
+    if crrt_info.get('received_crrt', False):
+        rrt_modalities.append('CRRT')
+    if peritoneal_dialysis:
+        rrt_modalities.append('Peritoneal Dialysis')
+    if hemodialysis:
+        rrt_modalities.append('Hemodialysis')
+    
+    # Determine overall RRT status
+    received_rrt = len(rrt_modalities) > 0
+    
+    # Determine overall RRT start and end times
+    rrt_start_time = None
+    rrt_end_time = None
+    
+    times = []
+    if crrt_info.get('crrt_start_time'):
+        times.append(crrt_info['crrt_start_time'])
+    if pd_start:
+        times.append(pd_start)
+    if hd_start:
+        times.append(hd_start)
+    
+    if times:
+        rrt_start_time = min(times)
+    
+    end_times = []
+    if crrt_info.get('crrt_end_time'):
+        end_times.append(crrt_info['crrt_end_time'])
+    if pd_end:
+        end_times.append(pd_end)
+    if hd_end:
+        end_times.append(hd_end)
+    
+    if end_times:
+        rrt_end_time = max(end_times)
+    
+    return {
+        'received_rrt': received_rrt,
+        'rrt_modalities': rrt_modalities,
+        'crrt_info': crrt_info,
+        'peritoneal_dialysis': peritoneal_dialysis,
+        'hemodialysis': hemodialysis,
+        'rrt_start_time': rrt_start_time,
+        'rrt_end_time': rrt_end_time
+    }
+```
+
+## Test Results
+
+### Successful Tests
+| Stay ID | RRT Type | received_rrt | Modalities | Notes |
+|---------|----------|--------------|------------|-------|
+| 37631039 | CRRT | True | ['CRRT'] | CRRT Active: True |
+| 35906548 | Peritoneal Dialysis | True | ['Peritoneal Dialysis'] | PD confirmed |
+| 32583467 | Hemodialysis | True | ['Hemodialysis'] | HD procedure found |
+| 39553978 | None | False | [] | No RRT |
+| 36828715 | Multiple | True | ['CRRT', 'Hemodialysis'] | Both modalities |
+| 31041869 | Multiple | True | ['CRRT', 'Hemodialysis'] | HD chart events + CRRT |
+| 999999999 | Non-existent | False | [] | Handles gracefully |
+
+### Error Fixes
+1. **Step 7**: Fixed column name `unit_name` → `unitname` in d_items table
+2. **Step 10**: Fixed ambiguous column reference `itemid` → `ce.itemid` and `di.itemid`
+3. **Step 13**: Fixed column name `description` → `long_title` in d_icd_procedures
+4. **Step 20**: Fixed table name `procedures` → `procedures_icd`
+5. **Step 26**: Fixed ambiguous column reference in GROUP BY query
+
+### Known Issues
+- **Step 48-51**: Misclassified patient stay_id 35864227 has extensive CRRT data (190 System Integrity records, 32 CRRT mode records) but may not be detected correctly. Investigation needed.
+

@@ -1,0 +1,415 @@
+2026-03-25 01:56:49  INFO      Using database: /home/v-tiossowski/MIMIC-IV/mimic4.db
+2026-03-25 01:56:49  INFO      No --model_url provided; loading vLLM in-process …
+INFO 03-25 01:56:54 [utils.py:238] non-default args: {'trust_remote_code': True, 'max_model_len': 40000, 'disable_log_stats': True, 'model': 'Qwen/Qwen3.5-27B'}
+The argument `trust_remote_code` is to be used with Auto classes. It has no effect here and is ignored.
+The argument `trust_remote_code` is to be used with Auto classes. It has no effect here and is ignored.
+The argument `trust_remote_code` is to be used with Auto classes. It has no effect here and is ignored.
+INFO 03-25 01:56:54 [model.py:531] Resolved architecture: Qwen3_5ForConditionalGeneration
+INFO 03-25 01:56:54 [model.py:1554] Using max model len 40000
+INFO 03-25 01:56:54 [scheduler.py:231] Chunked prefill is enabled with max_num_batched_tokens=8192.
+INFO 03-25 01:56:56 [config.py:544] Setting attention block size to 784 tokens to ensure that attention page size is >= mamba page size.
+INFO 03-25 01:56:56 [config.py:575] Padding mamba page size by 0.13% to ensure that mamba page size and attention page size are exactly equal.
+INFO 03-25 01:56:56 [vllm.py:747] Asynchronous scheduling is enabled.
+WARNING 03-25 01:57:03 [system_utils.py:152] We must use the `spawn` multiprocessing start method. Overriding VLLM_WORKER_MULTIPROC_METHOD to 'spawn'. See https://docs.vllm.ai/en/latest/usage/troubleshooting.html#python-multiprocessing for more information. Reasons: CUDA is initialized
+(EngineCore_DP0 pid=3822610) INFO 03-25 01:57:08 [core.py:101] Initializing a V1 LLM engine (v0.17.1) with config: model='Qwen/Qwen3.5-27B', speculative_config=None, tokenizer='Qwen/Qwen3.5-27B', skip_tokenizer_init=False, tokenizer_mode=auto, revision=None, tokenizer_revision=None, trust_remote_code=True, dtype=torch.bfloat16, max_seq_len=40000, download_dir=None, load_format=auto, tensor_parallel_size=1, pipeline_parallel_size=1, data_parallel_size=1, disable_custom_all_reduce=False, quantization=None, enforce_eager=False, enable_return_routed_experts=False, kv_cache_dtype=auto, device_config=cuda, structured_outputs_config=StructuredOutputsConfig(backend='auto', disable_fallback=False, disable_any_whitespace=False, disable_additional_properties=False, reasoning_parser='', reasoning_parser_plugin='', enable_in_reasoning=False), observability_config=ObservabilityConfig(show_hidden_metrics_for_version=None, otlp_traces_endpoint=None, collect_detailed_traces=None, kv_cache_metrics=False, kv_cache_metrics_sample=0.01, cudagraph_metrics=False, enable_layerwise_nvtx_tracing=False, enable_mfu_metrics=False, enable_mm_processor_stats=False, enable_logging_iteration_details=False), seed=0, served_model_name=Qwen/Qwen3.5-27B, enable_prefix_caching=False, enable_chunked_prefill=True, pooler_config=None, compilation_config={'level': None, 'mode': <CompilationMode.VLLM_COMPILE: 3>, 'debug_dump_path': None, 'cache_dir': '', 'compile_cache_save_format': 'binary', 'backend': 'inductor', 'custom_ops': ['none'], 'splitting_ops': ['vllm::unified_attention', 'vllm::unified_attention_with_output', 'vllm::unified_mla_attention', 'vllm::unified_mla_attention_with_output', 'vllm::mamba_mixer2', 'vllm::mamba_mixer', 'vllm::short_conv', 'vllm::linear_attention', 'vllm::plamo2_mamba_mixer', 'vllm::gdn_attention_core', 'vllm::kda_attention', 'vllm::sparse_attn_indexer', 'vllm::rocm_aiter_sparse_attn_indexer', 'vllm::unified_kv_cache_update', 'vllm::unified_mla_kv_cache_update'], 'compile_mm_encoder': False, 'compile_sizes': [], 'compile_ranges_split_points': [8192], 'inductor_compile_config': {'enable_auto_functionalized_v2': False, 'combo_kernels': True, 'benchmark_combo_kernel': True}, 'inductor_passes': {}, 'cudagraph_mode': <CUDAGraphMode.FULL_AND_PIECEWISE: (2, 1)>, 'cudagraph_num_of_warmups': 1, 'cudagraph_capture_sizes': [1, 2, 4, 8, 16, 24, 32, 40, 48, 56, 64, 72, 80, 88, 96, 104, 112, 120, 128, 136, 144, 152, 160, 168, 176, 184, 192, 200, 208, 216, 224, 232, 240, 248, 256, 272, 288, 304, 320, 336, 352, 368, 384, 400, 416, 432, 448, 464, 480, 496, 512], 'cudagraph_copy_inputs': False, 'cudagraph_specialize_lora': True, 'use_inductor_graph_partition': False, 'pass_config': {'fuse_norm_quant': False, 'fuse_act_quant': False, 'fuse_attn_quant': False, 'enable_sp': False, 'fuse_gemm_comms': False, 'fuse_allreduce_rms': False}, 'max_cudagraph_capture_size': 512, 'dynamic_shapes_config': {'type': <DynamicShapesType.BACKED: 'backed'>, 'evaluate_guards': False, 'assume_32_bit_indexing': False}, 'local_cache_dir': None, 'fast_moe_cold_start': True, 'static_all_moe_layers': []}
+(EngineCore_DP0 pid=3822610) INFO 03-25 01:57:11 [parallel_state.py:1393] world_size=1 rank=0 local_rank=0 distributed_init_method=tcp://10.8.144.167:55983 backend=nccl
+(EngineCore_DP0 pid=3822610) INFO 03-25 01:57:11 [parallel_state.py:1715] rank 0 in world size 1 is assigned as DP rank 0, PP rank 0, PCP rank 0, TP rank 0, EP rank N/A, EPLB rank N/A
+(EngineCore_DP0 pid=3822610) INFO 03-25 01:57:17 [base.py:106] Offloader set to NoopOffloader
+(EngineCore_DP0 pid=3822610) INFO 03-25 01:57:17 [gpu_model_runner.py:4281] Starting to load model Qwen/Qwen3.5-27B...
+(EngineCore_DP0 pid=3822610) INFO 03-25 01:57:17 [cuda.py:453] Using backend AttentionBackendEnum.FLASH_ATTN for vit attention
+(EngineCore_DP0 pid=3822610) INFO 03-25 01:57:17 [mm_encoder_attention.py:215] Using AttentionBackendEnum.FLASH_ATTN for MMEncoderAttention.
+(EngineCore_DP0 pid=3822610) INFO 03-25 01:57:18 [cuda.py:405] Using FLASH_ATTN attention backend out of potential backends: ['FLASH_ATTN', 'FLASHINFER', 'TRITON_ATTN', 'FLEX_ATTENTION'].
+(EngineCore_DP0 pid=3822610) INFO 03-25 01:57:18 [flash_attn.py:587] Using FlashAttention version 2
+(EngineCore_DP0 pid=3822610) <frozen importlib._bootstrap_external>:1301: FutureWarning: The cuda.cudart module is deprecated and will be removed in a future release, please switch to use the cuda.bindings.runtime module instead.
+(EngineCore_DP0 pid=3822610) <frozen importlib._bootstrap_external>:1301: FutureWarning: The cuda.nvrtc module is deprecated and will be removed in a future release, please switch to use the cuda.bindings.nvrtc module instead.
+(EngineCore_DP0 pid=3822610) Loading safetensors checkpoint shards:   0% Completed | 0/11 [00:00<?, ?it/s]
+(EngineCore_DP0 pid=3822610) Loading safetensors checkpoint shards:   9% Completed | 1/11 [00:00<00:05,  1.84it/s]
+(EngineCore_DP0 pid=3822610) Loading safetensors checkpoint shards:  18% Completed | 2/11 [00:01<00:05,  1.64it/s]
+(EngineCore_DP0 pid=3822610) Loading safetensors checkpoint shards:  27% Completed | 3/11 [00:01<00:05,  1.54it/s]
+(EngineCore_DP0 pid=3822610) Loading safetensors checkpoint shards:  36% Completed | 4/11 [00:02<00:04,  1.48it/s]
+(EngineCore_DP0 pid=3822610) Loading safetensors checkpoint shards:  45% Completed | 5/11 [00:03<00:04,  1.46it/s]
+(EngineCore_DP0 pid=3822610) Loading safetensors checkpoint shards:  55% Completed | 6/11 [00:04<00:03,  1.45it/s]
+(EngineCore_DP0 pid=3822610) Loading safetensors checkpoint shards:  64% Completed | 7/11 [00:04<00:02,  1.44it/s]
+(EngineCore_DP0 pid=3822610) Loading safetensors checkpoint shards:  73% Completed | 8/11 [00:05<00:02,  1.45it/s]
+(EngineCore_DP0 pid=3822610) Loading safetensors checkpoint shards:  82% Completed | 9/11 [00:06<00:01,  1.45it/s]
+(EngineCore_DP0 pid=3822610) Loading safetensors checkpoint shards:  91% Completed | 10/11 [00:06<00:00,  1.43it/s]
+(EngineCore_DP0 pid=3822610) Loading safetensors checkpoint shards: 100% Completed | 11/11 [00:07<00:00,  1.59it/s]
+(EngineCore_DP0 pid=3822610) Loading safetensors checkpoint shards: 100% Completed | 11/11 [00:07<00:00,  1.51it/s]
+(EngineCore_DP0 pid=3822610) 
+(EngineCore_DP0 pid=3822610) INFO 03-25 01:57:26 [default_loader.py:293] Loading weights took 7.33 seconds
+(EngineCore_DP0 pid=3822610) INFO 03-25 01:57:26 [gpu_model_runner.py:4364] Model loading took 51.1 GiB memory and 8.414853 seconds
+(EngineCore_DP0 pid=3822610) INFO 03-25 01:57:26 [gpu_model_runner.py:5280] Encoder cache will be initialized with a budget of 16384 tokens, and profiled with 1 image items of the maximum feature size.
+(EngineCore_DP0 pid=3822610) INFO 03-25 01:57:34 [decorators.py:465] Directly load AOT compilation from path /home/v-tiossowski/.cache/vllm/torch_compile_cache/torch_aot_compile/0232891e22bd4d7db98ac2f43c441f0f81d0a431216053ca49fadeaff23e2af3/rank_0_0/model
+(EngineCore_DP0 pid=3822610) INFO 03-25 01:57:35 [backends.py:916] Using cache directory: /home/v-tiossowski/.cache/vllm/torch_compile_cache/feaf61af16/rank_0_0/backbone for vLLM's torch.compile
+(EngineCore_DP0 pid=3822610) INFO 03-25 01:57:35 [backends.py:976] Dynamo bytecode transform time: 3.54 s
+(EngineCore_DP0 pid=3822610) INFO 03-25 01:57:45 [backends.py:266] Directly load the compiled graph(s) for compile range (1, 8192) from the cache, took 9.299 s
+(EngineCore_DP0 pid=3822610) INFO 03-25 01:57:45 [monitor.py:35] torch.compile takes 13.72 s in total
+(EngineCore_DP0 pid=3822610) INFO 03-25 01:57:46 [gpu_worker.py:424] Available KV cache memory: 18.3 GiB
+(EngineCore_DP0 pid=3822610) INFO 03-25 01:57:46 [kv_cache_utils.py:1314] GPU KV cache size: 74,480 tokens
+(EngineCore_DP0 pid=3822610) INFO 03-25 01:57:46 [kv_cache_utils.py:1319] Maximum concurrency for 40,000 tokens per request: 6.95x
+(EngineCore_DP0 pid=3822610) Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):   0%|          | 0/51 [00:00<?, ?it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):   2%|▏         | 1/51 [00:00<00:08,  5.87it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):   4%|▍         | 2/51 [00:00<00:08,  6.07it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):   6%|▌         | 3/51 [00:00<00:07,  6.13it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):   8%|▊         | 4/51 [00:00<00:07,  6.12it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  10%|▉         | 5/51 [00:00<00:07,  6.20it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  12%|█▏        | 6/51 [00:00<00:07,  6.22it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  14%|█▎        | 7/51 [00:01<00:07,  6.25it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  16%|█▌        | 8/51 [00:01<00:06,  6.26it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  18%|█▊        | 9/51 [00:01<00:06,  6.55it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  20%|█▉        | 10/51 [00:01<00:05,  6.83it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  22%|██▏       | 11/51 [00:01<00:05,  6.79it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  24%|██▎       | 12/51 [00:01<00:05,  6.98it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  25%|██▌       | 13/51 [00:01<00:05,  7.13it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  27%|██▋       | 14/51 [00:02<00:05,  7.26it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  29%|██▉       | 15/51 [00:02<00:04,  7.36it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  31%|███▏      | 16/51 [00:02<00:04,  7.42it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  33%|███▎      | 17/51 [00:02<00:04,  7.75it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  35%|███▌      | 18/51 [00:02<00:04,  7.99it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  37%|███▋      | 19/51 [00:02<00:03,  8.22it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  39%|███▉      | 20/51 [00:02<00:03,  8.41it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  41%|████      | 21/51 [00:02<00:03,  8.52it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  43%|████▎     | 22/51 [00:03<00:03,  8.60it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  45%|████▌     | 23/51 [00:03<00:03,  8.64it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  47%|████▋     | 24/51 [00:03<00:03,  8.66it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  49%|████▉     | 25/51 [00:03<00:02,  8.68it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  51%|█████     | 26/51 [00:03<00:02,  8.73it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  53%|█████▎    | 27/51 [00:03<00:02,  8.75it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  55%|█████▍    | 28/51 [00:03<00:02,  8.78it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  57%|█████▋    | 29/51 [00:03<00:02,  8.79it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  59%|█████▉    | 30/51 [00:03<00:02,  8.78it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  61%|██████    | 31/51 [00:04<00:02,  8.81it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  63%|██████▎   | 32/51 [00:04<00:02,  8.76it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  67%|██████▋   | 34/51 [00:04<00:01,  9.26it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  69%|██████▊   | 35/51 [00:04<00:01,  9.43it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  71%|███████   | 36/51 [00:04<00:01,  9.47it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  73%|███████▎  | 37/51 [00:04<00:01,  9.59it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  76%|███████▋  | 39/51 [00:04<00:01,  9.89it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  80%|████████  | 41/51 [00:05<00:00, 10.01it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  84%|████████▍ | 43/51 [00:05<00:00, 10.25it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  88%|████████▊ | 45/51 [00:05<00:00, 10.38it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  92%|█████████▏| 47/51 [00:05<00:00, 10.56it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  96%|█████████▌| 49/51 [00:05<00:00, 10.81it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE): 100%|██████████| 51/51 [00:06<00:00, 10.87it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE): 100%|██████████| 51/51 [00:06<00:00,  8.49it/s]
+(EngineCore_DP0 pid=3822610) Capturing CUDA graphs (decode, FULL):   0%|          | 0/35 [00:00<?, ?it/s]Capturing CUDA graphs (decode, FULL):   3%|▎         | 1/35 [00:00<00:05,  5.78it/s]Capturing CUDA graphs (decode, FULL):   6%|▌         | 2/35 [00:00<00:05,  6.27it/s]Capturing CUDA graphs (decode, FULL):   9%|▊         | 3/35 [00:00<00:04,  6.50it/s]Capturing CUDA graphs (decode, FULL):  11%|█▏        | 4/35 [00:00<00:04,  6.60it/s]Capturing CUDA graphs (decode, FULL):  14%|█▍        | 5/35 [00:00<00:04,  6.66it/s]Capturing CUDA graphs (decode, FULL):  17%|█▋        | 6/35 [00:00<00:04,  6.76it/s]Capturing CUDA graphs (decode, FULL):  20%|██        | 7/35 [00:01<00:04,  6.82it/s]Capturing CUDA graphs (decode, FULL):  23%|██▎       | 8/35 [00:01<00:03,  6.87it/s]Capturing CUDA graphs (decode, FULL):  26%|██▌       | 9/35 [00:01<00:03,  6.85it/s]Capturing CUDA graphs (decode, FULL):  29%|██▊       | 10/35 [00:01<00:03,  6.86it/s]Capturing CUDA graphs (decode, FULL):  31%|███▏      | 11/35 [00:01<00:03,  6.86it/s]Capturing CUDA graphs (decode, FULL):  34%|███▍      | 12/35 [00:01<00:03,  6.94it/s]Capturing CUDA graphs (decode, FULL):  37%|███▋      | 13/35 [00:01<00:03,  7.02it/s]Capturing CUDA graphs (decode, FULL):  40%|████      | 14/35 [00:02<00:02,  7.11it/s]Capturing CUDA graphs (decode, FULL):  43%|████▎     | 15/35 [00:02<00:02,  7.17it/s]Capturing CUDA graphs (decode, FULL):  46%|████▌     | 16/35 [00:02<00:02,  7.26it/s]Capturing CUDA graphs (decode, FULL):  49%|████▊     | 17/35 [00:02<00:02,  7.54it/s]Capturing CUDA graphs (decode, FULL):  51%|█████▏    | 18/35 [00:02<00:02,  7.77it/s]Capturing CUDA graphs (decode, FULL):  54%|█████▍    | 19/35 [00:02<00:02,  7.90it/s]Capturing CUDA graphs (decode, FULL):  57%|█████▋    | 20/35 [00:02<00:01,  8.13it/s]Capturing CUDA graphs (decode, FULL):  60%|██████    | 21/35 [00:02<00:01,  8.30it/s]Capturing CUDA graphs (decode, FULL):  63%|██████▎   | 22/35 [00:03<00:01,  8.40it/s]Capturing CUDA graphs (decode, FULL):  66%|██████▌   | 23/35 [00:03<00:01,  8.52it/s]Capturing CUDA graphs (decode, FULL):  69%|██████▊   | 24/35 [00:03<00:01,  8.45it/s]Capturing CUDA graphs (decode, FULL):  71%|███████▏  | 25/35 [00:03<00:01,  8.53it/s]Capturing CUDA graphs (decode, FULL):  74%|███████▍  | 26/35 [00:03<00:01,  8.68it/s]Capturing CUDA graphs (decode, FULL):  77%|███████▋  | 27/35 [00:03<00:00,  8.64it/s]Capturing CUDA graphs (decode, FULL):  80%|████████  | 28/35 [00:03<00:00,  8.52it/s]Capturing CUDA graphs (decode, FULL):  83%|████████▎ | 29/35 [00:03<00:00,  8.69it/s]Capturing CUDA graphs (decode, FULL):  86%|████████▌ | 30/35 [00:03<00:00,  8.86it/s]Capturing CUDA graphs (decode, FULL):  89%|████████▊ | 31/35 [00:04<00:00,  8.93it/s]Capturing CUDA graphs (decode, FULL):  91%|█████████▏| 32/35 [00:04<00:00,  8.87it/s]Capturing CUDA graphs (decode, FULL):  94%|█████████▍| 33/35 [00:04<00:00,  8.91it/s]Capturing CUDA graphs (decode, FULL):  97%|█████████▋| 34/35 [00:04<00:00,  9.01it/s]Capturing CUDA graphs (decode, FULL): 100%|██████████| 35/35 [00:04<00:00,  9.24it/s]Capturing CUDA graphs (decode, FULL): 100%|██████████| 35/35 [00:04<00:00,  7.80it/s]
+(EngineCore_DP0 pid=3822610) INFO 03-25 01:57:57 [gpu_model_runner.py:5386] Graph capturing finished in 11 secs, took 1.13 GiB
+(EngineCore_DP0 pid=3822610) INFO 03-25 01:57:57 [core.py:282] init engine (profile, create kv cache, warmup model) took 31.01 seconds
+(EngineCore_DP0 pid=3822610) INFO 03-25 01:57:57 [vllm.py:747] Asynchronous scheduling is enabled.
+INFO 03-25 01:57:57 [llm.py:388] Supported tasks: ['generate']
+2026-03-25 01:57:57  INFO      Loading QA dataset from /home/v-tiossowski/HealthcareAgent/mimic-code/data/MIMICIV_height_dataset/height.csv
+2026-03-25 01:57:58  INFO      Dataset: 1000 rows, columns: ['subject_id', 'hadm_id', 'stay_id', 'intime', 'outtime', 'first_careunit', 'last_careunit', 'gt_label', 'question', 'gt_answer_type', 'split', 'height_avg']
+2026-03-25 01:57:58  INFO      Filtered to train split: 100 rows
+2026-03-25 01:57:58  INFO      Auto-discovered ground-truth SQL: /home/v-tiossowski/HealthcareAgent/mimic-code/mimic-iv/concepts_duckdb/measurement/height.sql
+2026-03-25 01:57:58  INFO      === Iteration 1/100  run=height  best_qa=0.0% ===
+INFO 03-25 01:58:00 [hf.py:318] Detected the chat template content format to be 'string'. You can set `--chat-template-content-format` to override this.
+2026-03-25 01:58:16  INFO      Exec block 1/1 …
+2026-03-25 01:58:16  INFO      Output: []
+
+2026-03-25 01:58:16  INFO      === Iteration 2/100  run=height  best_qa=0.0% ===
+2026-03-25 01:58:19  INFO      Exec block 1/1 …
+2026-03-25 01:58:19  INFO      Output: []
+
+2026-03-25 01:58:19  INFO      === Iteration 3/100  run=height  best_qa=0.0% ===
+2026-03-25 01:58:21  INFO      === Iteration 4/100  run=height  best_qa=0.0% ===
+2026-03-25 01:58:25  INFO      Exec block 1/1 …
+2026-03-25 01:58:25  INFO      Output: ['acidosis_guideline', 'acute_decompensated_heart_failure_guideline', 'acute_hepatic_failure_guideline', 'adverse_effect_of_anticoagulants_guideline', 'alcohol_withdrawal_syndrome_guideline', 'anemia_icu_critically_ill_hemoglobin_transfusion_guideline', 'apache_iii_guideline', 'atrial_fibrillation_guideline', 'bradycardia_guideline', 'cerebral_infarction_guideline', 'coma_altered_consciousness_icu_guideline', 'copd_exacerbation_guideline', 'coronary_artery_disease_guideline', 'deep_vein_thrombos
+2026-03-25 01:58:25  INFO      === Iteration 5/100  run=height  best_qa=0.0% ===
+2026-03-25 01:58:30  INFO      Exec block 1/1 …
+2026-03-25 01:58:30  INFO      Output: Error:
+Traceback (most recent call last):
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 643, in execute
+    _run_with_timeout(_do_execute, timeout)
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 174, in _run_with_timeout
+    raise error[0]
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 156, in target
+    result[0] = func(*args, **kwargs)
+                ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/v-tiossowsk
+2026-03-25 01:58:30  INFO      === Iteration 6/100  run=height  best_qa=0.0% ===
+2026-03-25 01:58:33  INFO      Exec block 1/1 …
+2026-03-25 01:58:33  INFO      Output:    itemid                    label        abbreviation         linksto             category unitname     param_type  lownormalvalue  highnormalvalue
+0  220001             Problem List        Problem List     chartevents              General      NaN           Text             NaN              NaN
+1  220003       ICU Admission date  ICU Admission date  datetimeevents                  ADT      NaN  Date and time             NaN              NaN
+2  220045               Heart Rate                  H
+2026-03-25 01:58:33  INFO      === Iteration 7/100  run=height  best_qa=0.0% ===
+2026-03-25 01:58:37  INFO      Exec block 1/1 …
+2026-03-25 01:58:37  INFO      Output:    itemid        label abbreviation      linksto category unitname param_type  lownormalvalue  highnormalvalue
+0  226707       Height       Height  chartevents  General     Inch    Numeric             NaN              NaN
+1  226730  Height (cm)  Height (cm)  chartevents  General       cm    Numeric             NaN              NaN
+
+2026-03-25 01:58:37  INFO      === Iteration 8/100  run=height  best_qa=0.0% ===
+2026-03-25 01:58:44  INFO      Exec block 1/1 …
+2026-03-25 01:58:45  INFO      Output:     subject_id   hadm_id   stay_id           charttime value valueuom        label
+0     10000032  29079034  39553978 2180-07-23 12:36:00   152       cm  Height (cm)
+1     10000032  29079034  39553978 2180-07-23 12:36:00    60     Inch       Height
+2     10001725  25563031  31205490 2110-04-11 15:52:00   157       cm  Height (cm)
+3     10001725  25563031  31205490 2110-04-11 15:52:00    62     Inch       Height
+4     10001884  26184834  37510196 2131-01-11 04:20:00    62     Inch       Height
+5 
+2026-03-25 01:58:45  INFO      === Iteration 9/100  run=height  best_qa=0.0% ===
+2026-03-25 01:58:53  INFO      Exec block 1/1 …
+2026-03-25 01:58:53  INFO      Output: Empty DataFrame
+Columns: [itemid, label, fluid, category]
+Index: []
+
+2026-03-25 01:58:53  INFO      === Iteration 10/100  run=height  best_qa=0.0% ===
+2026-03-25 01:58:58  INFO      Exec block 1/1 …
+2026-03-25 01:58:58  INFO      Output: Error:
+Traceback (most recent call last):
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 643, in execute
+    _run_with_timeout(_do_execute, timeout)
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 174, in _run_with_timeout
+    raise error[0]
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 156, in target
+    result[0] = func(*args, **kwargs)
+                ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/v-tiossowsk
+2026-03-25 01:58:58  INFO      === Iteration 11/100  run=height  best_qa=0.0% ===
+2026-03-25 01:59:01  INFO      Exec block 1/1 …
+2026-03-25 01:59:01  INFO      Output: Empty DataFrame
+Columns: [table_name]
+Index: []
+
+2026-03-25 01:59:01  INFO      === Iteration 12/100  run=height  best_qa=0.0% ===
+2026-03-25 01:59:04  INFO      Exec block 1/1 …
+2026-03-25 01:59:04  INFO      Output:    table_schema
+0  mimiciv_hosp
+1   mimiciv_icu
+
+2026-03-25 01:59:04  INFO      === Iteration 13/100  run=height  best_qa=0.0% ===
+2026-03-25 01:59:09  INFO      Exec block 1/1 …
+2026-03-25 01:59:09  INFO      Output: ['age', 'bg', 'blood_differential', 'cardiac_marker', 'chemistry', 'coagulation', 'complete_blood_count', 'enzyme', 'gcs', 'icustay_detail', 'weight_durations']
+
+2026-03-25 01:59:09  INFO      === Iteration 14/100  run=height  best_qa=0.0% ===
+2026-03-25 01:59:12  INFO      Exec block 1/1 …
+2026-03-25 01:59:12  INFO      Output: 'def weight_durations(stay_id):\n    """\n    Extract weight-related clinical information for an ICU stay.\n\n    This function retrieves all weight measurements during a specific ICU stay\n    that are recorded in kilograms, and provides summary statistics and \n    clinical thresholds.\n\n    Parameters\n    ----------\n    stay_id : int\n        The ICU stay identifier.\n\n    Returns\n    -------\n    dict or None\n        A dictionary containing the following keys:\n        - \'stay_id\': T
+2026-03-25 01:59:12  INFO      === Iteration 15/100  run=height  best_qa=0.0% ===
+2026-03-25 01:59:24  INFO      Exec block 1/1 …
+2026-03-25 01:59:24  INFO      Output:    subject_id   hadm_id   stay_id           charttime value valueuom        label
+0    10000032  29079034  39553978 2180-07-23 12:36:00    60     Inch       Height
+1    10000032  29079034  39553978 2180-07-23 12:36:00   152       cm  Height (cm)
+
+2026-03-25 01:59:24  INFO      === Iteration 16/100  run=height  best_qa=0.0% ===
+2026-03-25 01:59:34  INFO      Exec block 1/1 …
+2026-03-25 01:59:34  INFO      Output:    subject_id  height_count
+0    12468016            46
+1    15229355            38
+2    17295976            30
+3    11281568            30
+4    15776313            24
+5    11833827            24
+6    18358138            22
+7    18881392            22
+8    10122346            20
+9    13903530            20
+
+2026-03-25 01:59:34  INFO      === Iteration 17/100  run=height  best_qa=0.0% ===
+2026-03-25 01:59:47  INFO      Exec block 1/1 …
+2026-03-25 01:59:47  INFO      Output:    total  non_null  unique_units
+0  87232     87232             2
+
+2026-03-25 01:59:47  INFO      === Iteration 18/100  run=height  best_qa=0.0% ===
+2026-03-25 02:00:02  INFO      Exec block 1/1 …
+2026-03-25 02:00:02  INFO      Output:    subject_id   hadm_id   stay_id           charttime value valueuom
+0    10000032  29079034  39553978 2180-07-23 12:36:00    60     Inch
+1    10000032  29079034  39553978 2180-07-23 12:36:00   152       cm
+
+2026-03-25 02:00:02  INFO      === Iteration 19/100  run=height  best_qa=0.0% ===
+2026-03-25 02:00:18  INFO      Exec block 1/1 …
+2026-03-25 02:00:18  INFO      Output: Error:
+Traceback (most recent call last):
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 643, in execute
+    _run_with_timeout(_do_execute, timeout)
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 174, in _run_with_timeout
+    raise error[0]
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 156, in target
+    result[0] = func(*args, **kwargs)
+                ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/v-tiossowsk
+2026-03-25 02:00:18  INFO      === Iteration 20/100  run=height  best_qa=0.0% ===
+2026-03-25 02:00:29  INFO      Exec block 1/1 …
+2026-03-25 02:00:29  INFO      Output:    subject_id   hadm_id   stay_id  min_height_cm  max_height_cm  avg_height_cm  measurement_count
+0    10000032  29079034  39553978          152.0          152.4          152.2                  2
+
+2026-03-25 02:00:29  INFO      === Iteration 21/100  run=height  best_qa=0.0% ===
+2026-03-25 02:00:45  INFO      Exec block 1/1 …
+2026-03-25 02:00:45  INFO      Output:    subject_id   hadm_id   stay_id  min_height_cm  max_height_cm  avg_height_cm  measurement_count
+0    10001725  25563031  31205490          157.0         157.48         157.24                  2
+
+2026-03-25 02:00:45  INFO      === Iteration 22/100  run=height  best_qa=0.0% ===
+2026-03-25 02:01:23  INFO      Exec block 1/1 …
+2026-03-25 02:01:23  INFO      Output: Error:
+Traceback (most recent call last):
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 643, in execute
+    _run_with_timeout(_do_execute, timeout)
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 174, in _run_with_timeout
+    raise error[0]
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 156, in target
+    result[0] = func(*args, **kwargs)
+                ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/v-tiossowsk
+2026-03-25 02:01:23  INFO      === Iteration 23/100  run=height  best_qa=0.0% ===
+2026-03-25 02:02:00  INFO      Exec block 1/1 …
+2026-03-25 02:02:00  INFO      Output: Testing get_height function:
+{'stay_id': 39553978, 'height_count': 2, 'all_heights_cm': [152.4, 152.0], 'min_height_cm': 152.0, 'max_height_cm': 152.4, 'avg_height_cm': 152.2, 'is_taller_than_180_cm': False, 'is_shorter_than_160_cm': True}
+{'stay_id': 31205490, 'height_count': 2, 'all_heights_cm': [157.48, 157.0], 'min_height_cm': 157.0, 'max_height_cm': 157.48, 'avg_height_cm': 157.24, 'is_taller_than_180_cm': False, 'is_shorter_than_160_cm': True}
+{'stay_id': 37510196, 'height_count': 2, 'all_
+2026-03-25 02:02:00  INFO      === Iteration 24/100  run=height  best_qa=0.0% ===
+2026-03-25 02:02:11  INFO      Exec block 1/1 …
+2026-03-25 02:02:11  INFO      Output:     stay_id  avg_height
+0  32576222      193.02
+1  38485189      182.94
+2  37888515      187.98
+3  31106204      180.17
+4  38542058      182.94
+
+2026-03-25 02:02:11  INFO      === Iteration 25/100  run=height  best_qa=0.0% ===
+2026-03-25 02:02:17  INFO      Exec block 1/1 …
+2026-03-25 02:02:17  INFO      Output: Testing with taller patients:
+{'stay_id': 32576222, 'height_count': 2, 'all_heights_cm': [193.04, 193.0], 'min_height_cm': 193.0, 'max_height_cm': 193.04, 'avg_height_cm': 193.02, 'is_taller_than_180_cm': True, 'is_shorter_than_160_cm': False}
+{'stay_id': 38485189, 'height_count': 2, 'all_heights_cm': [182.88, 183.0], 'min_height_cm': 182.88, 'max_height_cm': 183.0, 'avg_height_cm': 182.94, 'is_taller_than_180_cm': True, 'is_shorter_than_160_cm': False}
+
+2026-03-25 02:02:17  INFO      === Iteration 26/100  run=height  best_qa=0.0% ===
+2026-03-25 02:02:28  INFO      Exec block 1/1 …
+2026-03-25 02:02:28  INFO      Output:     stay_id  avg_height
+0  37767813      157.24
+1  33224424      152.20
+2  33368978      154.97
+3  33064964      154.97
+4  38546370      157.24
+
+2026-03-25 02:02:28  INFO      === Iteration 27/100  run=height  best_qa=0.0% ===
+2026-03-25 02:02:34  INFO      Exec block 1/1 …
+2026-03-25 02:02:34  INFO      Output: Testing with a stay_id that might not have height data:
+None
+
+2026-03-25 02:02:34  INFO      === Iteration 28/100  run=height  best_qa=0.0% ===
+2026-03-25 02:02:41  INFO      Exec block 1/1 …
+2026-03-25 02:02:41  INFO      Output: Final verification:
+{'stay_id': 37767813, 'height_count': 2, 'all_heights_cm': [157.48, 157.0], 'min_height_cm': 157.0, 'max_height_cm': 157.48, 'avg_height_cm': 157.24, 'is_taller_than_180_cm': False, 'is_shorter_than_160_cm': True}
+{'stay_id': 33224424, 'height_count': 2, 'all_heights_cm': [152.4, 152.0], 'min_height_cm': 152.0, 'max_height_cm': 152.4, 'avg_height_cm': 152.2, 'is_taller_than_180_cm': False, 'is_shorter_than_160_cm': True}
+
+2026-03-25 02:02:41  INFO      === Iteration 29/100  run=height  best_qa=0.0% ===
+2026-03-25 02:03:17  INFO      Exec block 1/1 …
+2026-03-25 02:03:17  INFO      Output: Code executed successfully (no output).
+2026-03-25 02:03:17  INFO      Debug conversations will be saved to debug_logs
+2026-03-25 02:03:17  INFO      Using question from dataset column: Is this patient taller than 180 cm?
+2026-03-25 02:03:17  INFO      Answer type for 'height': numerical (per_row=True)
+2026-03-25 02:03:17  INFO      ReACT iteration 1/10 — 20 active patients
+Rendering conversations:   0%|          | 0/20 [00:00<?, ?it/s]Rendering conversations: 100%|██████████| 20/20 [00:00<00:00, 497.86it/s]
+Processed prompts:   0%|          | 0/20 [00:00<?, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s]Processed prompts:   5%|▌         | 1/20 [00:09<02:53,  9.14s/it, est. speed input: 95.79 toks/s, output: 11.81 toks/s]Processed prompts:  25%|██▌       | 5/20 [00:09<00:21,  1.41s/it, est. speed input: 468.25 toks/s, output: 58.29 toks/s]Processed prompts:  35%|███▌      | 7/20 [00:09<00:12,  1.08it/s, est. speed input: 638.68 toks/s, output: 80.98 toks/s]Processed prompts:  70%|███████   | 14/20 [00:09<00:01,  3.02it/s, est. speed input: 1264.11 toks/s, output: 166.15 toks/s]Processed prompts:  85%|████████▌ | 17/20 [00:11<00:01,  2.45it/s, est. speed input: 1296.76 toks/s, output: 176.35 toks/s]Processed prompts:  95%|█████████▌| 19/20 [00:12<00:00,  2.55it/s, est. speed input: 1369.95 toks/s, output: 195.98 toks/s]Processed prompts: 100%|██████████| 20/20 [00:12<00:00,  2.55it/s, est. speed input: 1433.53 toks/s, output: 210.10 toks/s]Processed prompts: 100%|██████████| 20/20 [00:12<00:00,  1.63it/s, est. speed input: 1433.53 toks/s, output: 210.10 toks/s]
+2026-03-25 02:03:30  INFO      ReACT iteration 2/10 — 20 active patients
+Rendering conversations:   0%|          | 0/20 [00:00<?, ?it/s]Rendering conversations: 100%|██████████| 20/20 [00:00<00:00, 406.10it/s]
+Processed prompts:   0%|          | 0/20 [00:00<?, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s]Processed prompts:   5%|▌         | 1/20 [00:09<03:05,  9.77s/it, est. speed input: 110.18 toks/s, output: 10.44 toks/s]Processed prompts:  10%|█         | 2/20 [00:10<01:18,  4.37s/it, est. speed input: 207.28 toks/s, output: 20.93 toks/s]Processed prompts:  20%|██        | 4/20 [00:10<00:27,  1.69s/it, est. speed input: 407.52 toks/s, output: 42.75 toks/s]Processed prompts:  30%|███       | 6/20 [00:10<00:13,  1.03it/s, est. speed input: 592.09 toks/s, output: 64.08 toks/s]Processed prompts:  35%|███▌      | 7/20 [00:11<00:10,  1.27it/s, est. speed input: 665.53 toks/s, output: 74.57 toks/s]Processed prompts:  40%|████      | 8/20 [00:11<00:07,  1.57it/s, est. speed input: 750.15 toks/s, output: 85.16 toks/s]Processed prompts:  45%|████▌     | 9/20 [00:11<00:05,  2.02it/s, est. speed input: 835.79 toks/s, output: 96.43 toks/s]Processed prompts:  55%|█████▌    | 11/20 [00:11<00:02,  3.27it/s, est. speed input: 1014.48 toks/s, output: 119.95 toks/s]Processed prompts:  65%|██████▌   | 13/20 [00:12<00:01,  3.67it/s, est. speed input: 1157.55 toks/s, output: 140.22 toks/s]Processed prompts:  75%|███████▌  | 15/20 [00:12<00:00,  5.08it/s, est. speed input: 1323.30 toks/s, output: 164.66 toks/s]Processed prompts:  85%|████████▌ | 17/20 [00:12<00:00,  6.65it/s, est. speed input: 1477.15 toks/s, output: 189.14 toks/s]Processed prompts:  95%|█████████▌| 19/20 [00:16<00:00,  1.25it/s, est. speed input: 1216.24 toks/s, output: 166.75 toks/s]Processed prompts: 100%|██████████| 20/20 [00:17<00:00,  1.15it/s, est. speed input: 1192.63 toks/s, output: 173.31 toks/s]Processed prompts: 100%|██████████| 20/20 [00:17<00:00,  1.15it/s, est. speed input: 1192.63 toks/s, output: 173.31 toks/s]Processed prompts: 100%|██████████| 20/20 [00:17<00:00,  1.13it/s, est. speed input: 1192.63 toks/s, output: 173.31 toks/s]
+2026-03-25 02:03:48  INFO      ReACT iteration 3/10 — 3 active patients
+Rendering conversations:   0%|          | 0/3 [00:00<?, ?it/s]Rendering conversations: 100%|██████████| 3/3 [00:00<00:00, 373.87it/s]
+Processed prompts:   0%|          | 0/3 [00:00<?, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s]Processed prompts:  33%|███▎      | 1/3 [00:12<00:25, 12.52s/it, est. speed input: 90.11 toks/s, output: 24.76 toks/s]Processed prompts:  67%|██████▋   | 2/3 [00:14<00:06,  6.10s/it, est. speed input: 160.30 toks/s, output: 46.89 toks/s]Processed prompts: 100%|██████████| 3/3 [00:15<00:00,  3.75s/it, est. speed input: 225.54 toks/s, output: 68.99 toks/s]Processed prompts: 100%|██████████| 3/3 [00:15<00:00,  3.75s/it, est. speed input: 225.54 toks/s, output: 68.99 toks/s]Processed prompts: 100%|██████████| 3/3 [00:15<00:00,  5.03s/it, est. speed input: 225.54 toks/s, output: 68.99 toks/s]
+2026-03-25 02:04:03  INFO      ReACT iteration 4/10 — 2 active patients
+Rendering conversations:   0%|          | 0/2 [00:00<?, ?it/s]Rendering conversations: 100%|██████████| 2/2 [00:00<00:00, 288.33it/s]
+Processed prompts:   0%|          | 0/2 [00:00<?, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s]Processed prompts:  50%|█████     | 1/2 [00:10<00:10, 10.00s/it, est. speed input: 167.49 toks/s, output: 24.70 toks/s]Processed prompts: 100%|██████████| 2/2 [00:18<00:00,  9.40s/it, est. speed input: 172.21 toks/s, output: 38.82 toks/s]Processed prompts: 100%|██████████| 2/2 [00:18<00:00,  9.40s/it, est. speed input: 172.21 toks/s, output: 38.82 toks/s]Processed prompts: 100%|██████████| 2/2 [00:18<00:00,  9.49s/it, est. speed input: 172.21 toks/s, output: 38.82 toks/s]
+2026-03-25 02:04:22  INFO      ReACT iteration 5/10 — 2 active patients
+Rendering conversations:   0%|          | 0/2 [00:00<?, ?it/s]Rendering conversations: 100%|██████████| 2/2 [00:00<00:00, 265.85it/s]
+Processed prompts:   0%|          | 0/2 [00:00<?, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s]Processed prompts:  50%|█████     | 1/2 [00:08<00:08,  8.93s/it, est. speed input: 190.80 toks/s, output: 24.09 toks/s]Processed prompts: 100%|██████████| 2/2 [00:15<00:00,  7.83s/it, est. speed input: 229.98 toks/s, output: 38.84 toks/s]Processed prompts: 100%|██████████| 2/2 [00:15<00:00,  7.83s/it, est. speed input: 229.98 toks/s, output: 38.84 toks/s]Processed prompts: 100%|██████████| 2/2 [00:15<00:00,  7.99s/it, est. speed input: 229.98 toks/s, output: 38.84 toks/s]
+2026-03-25 02:04:38  INFO      ReACT iteration 6/10 — 2 active patients
+Rendering conversations:   0%|          | 0/2 [00:00<?, ?it/s]Rendering conversations: 100%|██████████| 2/2 [00:00<00:00, 240.22it/s]
+Processed prompts:   0%|          | 0/2 [00:00<?, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s]Processed prompts:  50%|█████     | 1/2 [00:06<00:06,  6.06s/it, est. speed input: 285.51 toks/s, output: 22.11 toks/s]Processed prompts: 100%|██████████| 2/2 [00:15<00:00,  8.26s/it, est. speed input: 268.13 toks/s, output: 33.60 toks/s]Processed prompts: 100%|██████████| 2/2 [00:15<00:00,  8.26s/it, est. speed input: 268.13 toks/s, output: 33.60 toks/s]Processed prompts: 100%|██████████| 2/2 [00:15<00:00,  7.93s/it, est. speed input: 268.13 toks/s, output: 33.60 toks/s]
+2026-03-25 02:04:54  INFO      ReACT iteration 7/10 — 2 active patients
+Rendering conversations:   0%|          | 0/2 [00:00<?, ?it/s]Rendering conversations: 100%|██████████| 2/2 [00:00<00:00, 221.77it/s]
+Processed prompts:   0%|          | 0/2 [00:00<?, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s]Processed prompts:  50%|█████     | 1/2 [00:05<00:05,  5.77s/it, est. speed input: 459.11 toks/s, output: 21.66 toks/s]Processed prompts: 100%|██████████| 2/2 [00:06<00:00,  2.70s/it, est. speed input: 696.71 toks/s, output: 41.90 toks/s]Processed prompts: 100%|██████████| 2/2 [00:06<00:00,  2.70s/it, est. speed input: 696.71 toks/s, output: 41.90 toks/s]Processed prompts: 100%|██████████| 2/2 [00:06<00:00,  3.16s/it, est. speed input: 696.71 toks/s, output: 41.90 toks/s]
+2026-03-25 02:05:00  INFO      ReACT iteration 8/10 — 2 active patients
+Rendering conversations:   0%|          | 0/2 [00:00<?, ?it/s]Rendering conversations: 100%|██████████| 2/2 [00:00<00:00, 240.84it/s]
+Processed prompts:   0%|          | 0/2 [00:00<?, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s]Processed prompts:  50%|█████     | 1/2 [00:05<00:05,  5.45s/it, est. speed input: 327.61 toks/s, output: 21.30 toks/s]Processed prompts: 100%|██████████| 2/2 [00:14<00:00,  7.84s/it, est. speed input: 302.78 toks/s, output: 32.70 toks/s]Processed prompts: 100%|██████████| 2/2 [00:14<00:00,  7.84s/it, est. speed input: 302.78 toks/s, output: 32.70 toks/s]Processed prompts: 100%|██████████| 2/2 [00:14<00:00,  7.48s/it, est. speed input: 302.78 toks/s, output: 32.70 toks/s]
+2026-03-25 02:05:15  INFO      ReACT iteration 9/10 — 2 active patients
+Rendering conversations:   0%|          | 0/2 [00:00<?, ?it/s]Rendering conversations: 100%|██████████| 2/2 [00:00<00:00, 190.76it/s]
+Processed prompts:   0%|          | 0/2 [00:00<?, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s]Processed prompts:  50%|█████     | 1/2 [00:06<00:06,  6.70s/it, est. speed input: 270.15 toks/s, output: 21.33 toks/s]Processed prompts: 100%|██████████| 2/2 [00:11<00:00,  5.84s/it, est. speed input: 466.19 toks/s, output: 35.71 toks/s]Processed prompts: 100%|██████████| 2/2 [00:11<00:00,  5.84s/it, est. speed input: 466.19 toks/s, output: 35.71 toks/s]Processed prompts: 100%|██████████| 2/2 [00:11<00:00,  5.97s/it, est. speed input: 466.19 toks/s, output: 35.71 toks/s]
+2026-03-25 02:05:27  INFO      ReACT iteration 10/10 — 2 active patients
+Rendering conversations:   0%|          | 0/2 [00:00<?, ?it/s]Rendering conversations: 100%|██████████| 2/2 [00:00<00:00, 157.12it/s]
+Processed prompts:   0%|          | 0/2 [00:00<?, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s]Processed prompts:  50%|█████     | 1/2 [00:04<00:04,  4.94s/it, est. speed input: 453.76 toks/s, output: 18.01 toks/s]Processed prompts: 100%|██████████| 2/2 [00:10<00:00,  5.42s/it, est. speed input: 611.64 toks/s, output: 31.15 toks/s]Processed prompts: 100%|██████████| 2/2 [00:10<00:00,  5.42s/it, est. speed input: 611.64 toks/s, output: 31.15 toks/s]Processed prompts: 100%|██████████| 2/2 [00:10<00:00,  5.34s/it, est. speed input: 611.64 toks/s, output: 31.15 toks/s]
+2026-03-25 02:05:38  INFO      QA accuracy: 75.0%  (correct=15/20, parse_errors=2)
+2026-03-25 02:05:38  INFO      === Iteration 30/100  run=height  best_qa=75.0% ===
+2026-03-25 02:05:59  INFO      Exec block 1/1 …
+2026-03-25 02:06:00  INFO      Output:    subject_id   hadm_id   stay_id           charttime value valueuom        label
+0    11253419  29296123  35597217 2129-09-09 00:29:00   178       cm  Height (cm)
+1    11253419  29296123  35597217 2129-09-09 00:29:00    70     Inch       Height
+2    17349350  24401706  38377395 2125-08-27 16:08:00    67     Inch       Height
+3    17349350  24401706  38377395 2125-08-27 16:08:00   170       cm  Height (cm)
+4    19651727  29291884  39140814 2130-12-23 09:53:00    62     Inch       Height
+5    196
+2026-03-25 02:06:00  INFO      === Iteration 31/100  run=height  best_qa=75.0% ===
+2026-03-25 02:06:24  INFO      Exec block 1/1 …
+2026-03-25 02:06:24  INFO      Output:    subject_id   hadm_id   stay_id           charttime value valueuom        label
+0    11253419  29296123  35597217 2129-09-09 00:29:00    70     Inch       Height
+1    11253419  29296123  35597217 2129-09-09 00:29:00   178       cm  Height (cm)
+
+2026-03-25 02:06:24  INFO      === Iteration 32/100  run=height  best_qa=75.0% ===
+2026-03-25 02:06:49  INFO      Exec block 1/1 …
+2026-03-25 02:06:49  INFO      Output:    subject_id   hadm_id   stay_id           charttime value valueuom  height_cm  is_cm
+0    11253419  29296123  35597217 2129-09-09 00:29:00   178       cm      178.0      1
+1    11253419  29296123  35597217 2129-09-09 00:29:00    70     Inch      177.8      0
+
+2026-03-25 02:06:49  INFO      === Iteration 33/100  run=height  best_qa=75.0% ===
+2026-03-25 02:07:04  INFO      Exec block 1/1 …
+2026-03-25 02:07:04  INFO      Output:    subject_id   hadm_id   stay_id           charttime value valueuom  height_cm  is_cm
+0    19651727  29291884  39140814 2130-12-23 09:53:00   157       cm     157.00      1
+1    19651727  29291884  39140814 2130-12-23 09:53:00    62     Inch     157.48      0
+
+2026-03-25 02:07:04  INFO      === Iteration 34/100  run=height  best_qa=75.0% ===
+2026-03-25 02:07:22  INFO      Exec block 1/1 …
+2026-03-25 02:07:22  INFO      Output:     stay_id  total  cm_count
+0  39214730      4       2.0
+
+2026-03-25 02:07:22  INFO      === Iteration 35/100  run=height  best_qa=75.0% ===
+2026-03-25 02:07:35  INFO      Exec block 1/1 …
+2026-03-25 02:07:35  INFO      Output:    subject_id   hadm_id   stay_id           charttime value valueuom  height_cm  is_cm
+0    19529415  26871621  39214730 2166-07-19 22:10:00    60     Inch      152.4      0
+1    19529415  26871621  39214730 2166-07-19 22:10:00   152       cm      152.0      1
+2    19529415  26871621  39214730 2166-07-20 01:21:00    60     Inch      152.4      0
+3    19529415  26871621  39214730 2166-07-20 01:21:00   152       cm      152.0      1
+
+2026-03-25 02:07:35  INFO      === Iteration 36/100  run=height  best_qa=75.0% ===
+2026-03-25 02:08:02  INFO      Exec block 1/1 …
+2026-03-25 02:08:02  INFO      Output:     stay_id  height_cm           charttime  is_cm
+0  35597217      178.0 2129-09-09 00:29:00      1
+
+2026-03-25 02:08:02  INFO      === Iteration 37/100  run=height  best_qa=75.0% ===
+2026-03-25 02:08:17  INFO      Exec block 1/1 …
+2026-03-25 02:08:17  INFO      Output:     stay_id  height_cm           charttime  is_cm
+0  39140814      157.0 2130-12-23 09:53:00      1
+
+2026-03-25 02:08:17  INFO      === Iteration 38/100  run=height  best_qa=75.0% ===
+2026-03-25 02:08:55  INFO      Exec block 1/1 …
+2026-03-25 02:08:56  INFO      Output: Testing revised get_height function:
+{'stay_id': 35597217, 'height_cm': np.float64(178.0), 'is_taller_than_180_cm': np.False_, 'is_shorter_than_160_cm': np.False_}
+{'stay_id': 39140814, 'height_cm': np.float64(157.0), 'is_taller_than_180_cm': np.False_, 'is_shorter_than_160_cm': np.True_}
+{'stay_id': 38377395, 'height_cm': np.float64(170.0), 'is_taller_than_180_cm': np.False_, 'is_shorter_than_160_cm': np.False_}
+
+2026-03-25 02:08:56  INFO      === Iteration 39/100  run=height  best_qa=75.0% ===
+2026-03-25 02:09:06  INFO      Exec block 1/1 …
+2026-03-25 02:09:06  INFO      Output: Testing more cases:
+{'stay_id': 39553978, 'height_cm': np.float64(152.0), 'is_taller_than_180_cm': np.False_, 'is_shorter_than_160_cm': np.True_}
+{'stay_id': 31205490, 'height_cm': np.float64(157.0), 'is_taller_than_180_cm': np.False_, 'is_shorter_than_160_cm': np.True_}
+{'stay_id': 32576222, 'height_cm': np.float64(193.0), 'is_taller_than_180_cm': np.True_, 'is_shorter_than_160_cm': np.False_}
+None
+
+2026-03-25 02:09:06  INFO      === Iteration 40/100  run=height  best_qa=75.0% ===
+2026-03-25 02:09:45  INFO      Exec block 1/1 …
+2026-03-25 02:09:45  INFO      Output: Testing revised get_height function:
+{'stay_id': 35597217, 'height_cm': 178.0, 'is_taller_than_180_cm': False, 'is_shorter_than_160_cm': False}
+{'stay_id': 39140814, 'height_cm': 157.0, 'is_taller_than_180_cm': False, 'is_shorter_than_160_cm': True}
+{'stay_id': 38377395, 'height_cm': 170.0, 'is_taller_than_180_cm': False, 'is_shorter_than_160_cm': False}
+{'stay_id': 39553978, 'height_cm': 152.0, 'is_taller_than_180_cm': False, 'is_shorter_than_160_cm': True}
+{'stay_id': 32576222, 'height_cm': 19
+2026-03-25 02:09:45  INFO      === Iteration 41/100  run=height  best_qa=75.0% ===
+2026-03-25 02:10:17  INFO      Exec block 1/1 …
+2026-03-25 02:10:17  INFO      Output: Code executed successfully (no output).
+2026-03-25 02:10:17  INFO      Debug conversations will be saved to debug_logs
+2026-03-25 02:10:17  INFO      Using question from dataset column: Is this patient taller than 180 cm?
+2026-03-25 02:10:17  INFO      Answer type for 'height': numerical (per_row=True)
+2026-03-25 02:10:17  INFO      ReACT iteration 1/10 — 20 active patients
+Rendering conversations:   0%|          | 0/20 [00:00<?, ?it/s]Rendering conversations: 100%|██████████| 20/20 [00:00<00:00, 567.71it/s]
+Processed prompts:   0%|          | 0/20 [00:00<?, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s]Processed prompts:   5%|▌         | 1/20 [00:07<02:26,  7.72s/it, est. speed input: 98.17 toks/s, output: 11.53 toks/s]Processed prompts:  10%|█         | 2/20 [00:08<01:03,  3.53s/it, est. speed input: 182.40 toks/s, output: 22.98 toks/s]Processed prompts:  15%|█▌        | 3/20 [00:08<00:34,  2.02s/it, est. speed input: 266.41 toks/s, output: 34.91 toks/s]Processed prompts:  20%|██        | 4/20 [00:08<00:20,  1.31s/it, est. speed input: 346.11 toks/s, output: 46.80 toks/s]Processed prompts:  30%|███       | 6/20 [00:08<00:09,  1.51it/s, est. speed input: 509.87 toks/s, output: 71.43 toks/s]Processed prompts:  70%|███████   | 14/20 [00:09<00:01,  5.69it/s, est. speed input: 1177.88 toks/s, output: 173.16 toks/s]Processed prompts:  85%|████████▌ | 17/20 [00:11<00:01,  2.97it/s, est. speed input: 1149.88 toks/s, output: 176.95 toks/s]Processed prompts:  95%|█████████▌| 19/20 [00:11<00:00,  3.32it/s, est. speed input: 1248.10 toks/s, output: 203.33 toks/s]Processed prompts: 100%|██████████| 20/20 [00:11<00:00,  3.32it/s, est. speed input: 1293.39 toks/s, output: 216.27 toks/s]Processed prompts: 100%|██████████| 20/20 [00:11<00:00,  1.70it/s, est. speed input: 1293.39 toks/s, output: 216.27 toks/s]
+2026-03-25 02:10:29  INFO      ReACT iteration 2/10 — 20 active patients
+Rendering conversations:   0%|          | 0/20 [00:00<?, ?it/s]Rendering conversations: 100%|██████████| 20/20 [00:00<00:00, 458.84it/s]
+Processed prompts:   0%|          | 0/20 [00:00<?, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s]Processed prompts:   5%|▌         | 1/20 [00:06<01:56,  6.11s/it, est. speed input: 145.14 toks/s, output: 6.55 toks/s]Processed prompts:  10%|█         | 2/20 [00:06<00:47,  2.62s/it, est. speed input: 284.30 toks/s, output: 13.35 toks/s]Processed prompts:  30%|███       | 6/20 [00:06<00:09,  1.55it/s, est. speed input: 828.77 toks/s, output: 40.71 toks/s]Processed prompts:  40%|████      | 8/20 [00:07<00:06,  1.73it/s, est. speed input: 968.15 toks/s, output: 53.94 toks/s]Processed prompts:  45%|████▌     | 9/20 [00:07<00:06,  1.75it/s, est. speed input: 1015.65 toks/s, output: 60.70 toks/s]Processed prompts:  50%|█████     | 10/20 [00:08<00:06,  1.64it/s, est. speed input: 1032.61 toks/s, output: 67.34 toks/s]Processed prompts:  55%|█████▌    | 11/20 [00:09<00:04,  1.88it/s, est. speed input: 1099.82 toks/s, output: 77.30 toks/s]Processed prompts:  75%|███████▌  | 15/20 [00:09<00:01,  4.16it/s, est. speed input: 1480.69 toks/s, output: 124.39 toks/s]Processed prompts:  85%|████████▌ | 17/20 [00:10<00:01,  2.61it/s, est. speed input: 1442.79 toks/s, output: 132.72 toks/s]Processed prompts:  90%|█████████ | 18/20 [00:10<00:00,  2.97it/s, est. speed input: 1507.03 toks/s, output: 145.62 toks/s]Processed prompts: 100%|██████████| 20/20 [00:14<00:00,  1.14it/s, est. speed input: 1217.24 toks/s, output: 134.54 toks/s]Processed prompts: 100%|██████████| 20/20 [00:14<00:00,  1.14it/s, est. speed input: 1217.24 toks/s, output: 134.54 toks/s]Processed prompts: 100%|██████████| 20/20 [00:14<00:00,  1.37it/s, est. speed input: 1217.24 toks/s, output: 134.54 toks/s]
+2026-03-25 02:10:44  INFO      ReACT iteration 3/10 — 3 active patients
+Rendering conversations:   0%|          | 0/3 [00:00<?, ?it/s]Rendering conversations: 100%|██████████| 3/3 [00:00<00:00, 378.91it/s]
+Processed prompts:   0%|          | 0/3 [00:00<?, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s]Processed prompts:  33%|███▎      | 1/3 [00:04<00:09,  4.61s/it, est. speed input: 222.27 toks/s, output: 22.12 toks/s]Processed prompts:  67%|██████▋   | 2/3 [00:04<00:02,  2.05s/it, est. speed input: 420.78 toks/s, output: 43.51 toks/s]Processed prompts: 100%|██████████| 3/3 [00:13<00:00,  5.07s/it, est. speed input: 226.75 toks/s, output: 41.08 toks/s]Processed prompts: 100%|██████████| 3/3 [00:13<00:00,  5.07s/it, est. speed input: 226.75 toks/s, output: 41.08 toks/s]Processed prompts: 100%|██████████| 3/3 [00:13<00:00,  4.51s/it, est. speed input: 226.75 toks/s, output: 41.08 toks/s]
+2026-03-25 02:10:57  INFO      ReACT iteration 4/10 — 2 active patients
+Rendering conversations:   0%|          | 0/2 [00:00<?, ?it/s]Rendering conversations: 100%|██████████| 2/2 [00:00<00:00, 403.57it/s]
+Processed prompts:   0%|          | 0/2 [00:00<?, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s]Processed prompts:  50%|█████     | 1/2 [00:03<00:03,  3.86s/it, est. speed input: 271.61 toks/s, output: 23.07 toks/s]Processed prompts: 100%|██████████| 2/2 [00:03<00:00,  1.65s/it, est. speed input: 528.87 toks/s, output: 45.61 toks/s]Processed prompts: 100%|██████████| 2/2 [00:03<00:00,  1.65s/it, est. speed input: 528.87 toks/s, output: 45.61 toks/s]Processed prompts: 100%|██████████| 2/2 [00:03<00:00,  1.98s/it, est. speed input: 528.87 toks/s, output: 45.61 toks/s]
+2026-03-25 02:11:01  INFO      ReACT iteration 5/10 — 2 active patients
+Rendering conversations:   0%|          | 0/2 [00:00<?, ?it/s]Rendering conversations: 100%|██████████| 2/2 [00:00<00:00, 382.29it/s]
+Processed prompts:   0%|          | 0/2 [00:00<?, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s]Processed prompts:  50%|█████     | 1/2 [00:03<00:03,  3.86s/it, est. speed input: 277.39 toks/s, output: 23.05 toks/s]Processed prompts: 100%|██████████| 2/2 [00:03<00:00,  1.65s/it, est. speed input: 540.82 toks/s, output: 45.57 toks/s]Processed prompts: 100%|██████████| 2/2 [00:03<00:00,  1.65s/it, est. speed input: 540.82 toks/s, output: 45.57 toks/s]Processed prompts: 100%|██████████| 2/2 [00:03<00:00,  1.99s/it, est. speed input: 540.82 toks/s, output: 45.57 toks/s]
+2026-03-25 02:11:05  INFO      ReACT iteration 6/10 — 2 active patients
+Rendering conversations:   0%|          | 0/2 [00:00<?, ?it/s]Rendering conversations: 100%|██████████| 2/2 [00:00<00:00, 370.96it/s]
+Processed prompts:   0%|          | 0/2 [00:00<?, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s]Processed prompts:  50%|█████     | 1/2 [00:04<00:04,  4.48s/it, est. speed input: 246.29 toks/s, output: 23.45 toks/s]Processed prompts: 100%|██████████| 2/2 [00:12<00:00,  6.42s/it, est. speed input: 179.26 toks/s, output: 34.35 toks/s]Processed prompts: 100%|██████████| 2/2 [00:12<00:00,  6.42s/it, est. speed input: 179.26 toks/s, output: 34.35 toks/s]Processed prompts: 100%|██████████| 2/2 [00:12<00:00,  6.13s/it, est. speed input: 179.26 toks/s, output: 34.35 toks/s]
+2026-03-25 02:11:18  INFO      ReACT iteration 7/10 — 2 active patients
+Rendering conversations:   0%|          | 0/2 [00:00<?, ?it/s]Rendering conversations: 100%|██████████| 2/2 [00:00<00:00, 295.94it/s]
+Processed prompts:   0%|          | 0/2 [00:00<?, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s]Processed prompts:  50%|█████     | 1/2 [00:01<00:01,  1.36s/it, est. speed input: 827.66 toks/s, output: 14.66 toks/s]Processed prompts: 100%|██████████| 2/2 [00:04<00:00,  2.21s/it, est. speed input: 613.92 toks/s, output: 27.84 toks/s]Processed prompts: 100%|██████████| 2/2 [00:04<00:00,  2.21s/it, est. speed input: 613.92 toks/s, output: 27.84 toks/s]Processed prompts: 100%|██████████| 2/2 [00:04<00:00,  2.08s/it, est. speed input: 613.92 toks/s, output: 27.84 toks/s]
+2026-03-25 02:11:22  INFO      ReACT iteration 8/10 — 2 active patients
+Rendering conversations:   0%|          | 0/2 [00:00<?, ?it/s]Rendering conversations: 100%|██████████| 2/2 [00:00<00:00, 304.53it/s]
+Processed prompts:   0%|          | 0/2 [00:00<?, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s]Processed prompts:  50%|█████     | 1/2 [00:01<00:01,  1.40s/it, est. speed input: 823.77 toks/s, output: 14.26 toks/s]Processed prompts: 100%|██████████| 2/2 [00:15<00:00,  8.81s/it, est. speed input: 169.39 toks/s, output: 27.23 toks/s]Processed prompts: 100%|██████████| 2/2 [00:15<00:00,  8.81s/it, est. speed input: 169.39 toks/s, output: 27.23 toks/s]Processed prompts: 100%|██████████| 2/2 [00:15<00:00,  7.70s/it, est. speed input: 169.39 toks/s, output: 27.23 toks/s]
+2026-03-25 02:11:37  INFO      ReACT iteration 9/10 — 2 active patients
+Rendering conversations:   0%|          | 0/2 [00:00<?, ?it/s]Rendering conversations: 100%|██████████| 2/2 [00:00<00:00, 293.68it/s]
+Processed prompts:   0%|          | 0/2 [00:00<?, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s]Processed prompts:  50%|█████     | 1/2 [00:05<00:05,  5.55s/it, est. speed input: 347.21 toks/s, output: 23.23 toks/s]Processed prompts: 100%|██████████| 2/2 [00:09<00:00,  4.69s/it, est. speed input: 322.36 toks/s, output: 38.16 toks/s]Processed prompts: 100%|██████████| 2/2 [00:09<00:00,  4.69s/it, est. speed input: 322.36 toks/s, output: 38.16 toks/s]Processed prompts: 100%|██████████| 2/2 [00:09<00:00,  4.82s/it, est. speed input: 322.36 toks/s, output: 38.16 toks/s]
+2026-03-25 02:11:47  INFO      ReACT iteration 10/10 — 2 active patients
+Rendering conversations:   0%|          | 0/2 [00:00<?, ?it/s]Rendering conversations: 100%|██████████| 2/2 [00:00<00:00, 254.69it/s]
+Processed prompts:   0%|          | 0/2 [00:00<?, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s]Processed prompts:  50%|█████     | 1/2 [00:05<00:05,  5.68s/it, est. speed input: 343.63 toks/s, output: 23.07 toks/s]Processed prompts: 100%|██████████| 2/2 [00:13<00:00,  7.07s/it, est. speed input: 240.00 toks/s, output: 34.99 toks/s]Processed prompts: 100%|██████████| 2/2 [00:13<00:00,  7.07s/it, est. speed input: 240.00 toks/s, output: 34.99 toks/s]Processed prompts: 100%|██████████| 2/2 [00:13<00:00,  6.86s/it, est. speed input: 240.00 toks/s, output: 34.99 toks/s]
+2026-03-25 02:12:01  INFO      QA accuracy: 90.0%  (correct=18/20, parse_errors=2)
+2026-03-25 02:12:01  INFO      SUCCESS: 90.0% QA accuracy for 'height' at iteration 41
+2026-03-25 02:12:01  INFO      Function code saved to autoformalized_library/functions/height.py
+2026-03-25 02:12:01  INFO      Summary saved to autoformalized_library/summary.json
+[rank0]:[W325 02:12:01.587160400 ProcessGroupNCCL.cpp:1553] Warning: WARNING: destroy_process_group() was not called before program exit, which can leak resources. For more info, please see https://pytorch.org/docs/stable/distributed.html#shutdown (function operator())
+
+======================================================================
+AUTOFORMALIZATION COMPLETE
+======================================================================
+  Output dir      : autoformalized_library
+  Model           : Qwen/Qwen3.5-27B
+  Dataset         : /home/v-tiossowski/HealthcareAgent/mimic-code/data/MIMICIV_height_dataset/height.csv
+  Run name        : height
+  Status          : SUCCESS
+  QA accuracy     : 90.0%
+  Iterations      : 41
+  Total tokens    : 61,385  (prompt 54,144 / completion 7,241)
+  LLM calls       : 98
+  SQL queries     : 72
+  Function saved  : autoformalized_library/functions/height.py
+======================================================================

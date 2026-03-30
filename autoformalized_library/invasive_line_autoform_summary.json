@@ -1,0 +1,47 @@
+{
+  "timestamp": "2026-03-25T10:51:58.783342",
+  "model": "Qwen/Qwen3.5-27B",
+  "db_path": "/home/v-tiossowski/MIMIC-IV/mimic4.db",
+  "qa_dataset": "/home/v-tiossowski/HealthcareAgent/mimic-code/data/MIMICIV_invasive_line_dataset/invasive_line.csv",
+  "match_threshold": 0.9,
+  "run_name": "invasive_line",
+  "success": true,
+  "iterations": 48,
+  "qa_accuracy": 0.9,
+  "stats": {
+    "react": {
+      "prompt_tokens": 0,
+      "completion_tokens": 0,
+      "total_tokens": 0,
+      "llm_calls": 49,
+      "query_count": 46,
+      "query_time_sec": 2.068,
+      "wall_time_sec": 884.658
+    },
+    "qa": {
+      "prompt_tokens": 30185,
+      "completion_tokens": 6643,
+      "total_tokens": 36828,
+      "llm_calls": 41,
+      "query_count": 20,
+      "query_time_sec": 0.14,
+      "eval_wall_time_sec": 43.639,
+      "per_question": {
+        "avg_prompt_tokens": 1509.2,
+        "avg_completion_tokens": 332.1,
+        "avg_llm_calls": 2.05,
+        "avg_query_count": 1.0,
+        "avg_query_time_sec": 0.007,
+        "avg_wall_time_sec": 2.182
+      }
+    },
+    "total": {
+      "prompt_tokens": 30185,
+      "completion_tokens": 6643,
+      "total_tokens": 36828,
+      "llm_calls": 90,
+      "query_count": 66,
+      "query_time_sec": 2.208
+    }
+  }
+}

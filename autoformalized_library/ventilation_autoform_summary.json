@@ -1,0 +1,47 @@
+{
+  "timestamp": "2026-03-25T16:36:29.194968",
+  "model": "Qwen/Qwen3.5-27B",
+  "db_path": "/home/v-tiossowski/MIMIC-IV/mimic4.db",
+  "qa_dataset": "/home/v-tiossowski/HealthcareAgent/mimic-code/data/MIMICIV_ventilation_dataset/ventilation.csv",
+  "match_threshold": 0.9,
+  "run_name": "ventilation",
+  "success": true,
+  "iterations": 47,
+  "qa_accuracy": 1.0,
+  "stats": {
+    "react": {
+      "prompt_tokens": 0,
+      "completion_tokens": 0,
+      "total_tokens": 0,
+      "llm_calls": 48,
+      "query_count": 273,
+      "query_time_sec": 8.493,
+      "wall_time_sec": 1183.957
+    },
+    "qa": {
+      "prompt_tokens": 51268,
+      "completion_tokens": 5890,
+      "total_tokens": 57158,
+      "llm_calls": 40,
+      "query_count": 160,
+      "query_time_sec": 4.648,
+      "eval_wall_time_sec": 37.158,
+      "per_question": {
+        "avg_prompt_tokens": 2563.4,
+        "avg_completion_tokens": 294.5,
+        "avg_llm_calls": 2.0,
+        "avg_query_count": 8.0,
+        "avg_query_time_sec": 0.232,
+        "avg_wall_time_sec": 1.858
+      }
+    },
+    "total": {
+      "prompt_tokens": 51268,
+      "completion_tokens": 5890,
+      "total_tokens": 57158,
+      "llm_calls": 88,
+      "query_count": 433,
+      "query_time_sec": 13.141
+    }
+  }
+}

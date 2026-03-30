@@ -1,0 +1,24 @@
+{
+  "concept": "age",
+  "status": "success",
+  "qa_eval_status": "success",
+  "autoformalize": {
+    "iterations": 62,
+    "train_qa_accuracy": 1.0,
+    "success": true,
+    "wall_time_sec": 2262,
+    "summary_file": "autoformalized_library/age_autoform_summary.json",
+    "log_file": "autoformalized_library/age_autoformalize.log"
+  },
+  "qa_eval_test": {
+    "qa_accuracy": 0.9966666666666667,
+    "precision": 1.0,
+    "recall": 0.9966555183946488,
+    "correct": 897,
+    "total": 900,
+    "parse_errors": 2,
+    "wall_time_sec": 1635,
+    "output_file": "autoformalized_library/age_qa_eval.json",
+    "log_file": "autoformalized_library/age_qa_eval.log"
+  }
+}

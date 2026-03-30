@@ -1,0 +1,367 @@
+2026-03-26 07:33:49  INFO      Using database: /home/v-tiossowski/MIMIC-IV/mimic4.db
+2026-03-26 07:33:49  INFO      No --model_url provided; loading vLLM in-process …
+INFO 03-26 07:33:54 [utils.py:238] non-default args: {'trust_remote_code': True, 'max_model_len': 40000, 'disable_log_stats': True, 'model': 'Qwen/Qwen3.5-27B'}
+The argument `trust_remote_code` is to be used with Auto classes. It has no effect here and is ignored.
+The argument `trust_remote_code` is to be used with Auto classes. It has no effect here and is ignored.
+The argument `trust_remote_code` is to be used with Auto classes. It has no effect here and is ignored.
+INFO 03-26 07:33:54 [model.py:531] Resolved architecture: Qwen3_5ForConditionalGeneration
+INFO 03-26 07:33:54 [model.py:1554] Using max model len 40000
+INFO 03-26 07:33:54 [scheduler.py:231] Chunked prefill is enabled with max_num_batched_tokens=8192.
+INFO 03-26 07:33:56 [config.py:544] Setting attention block size to 784 tokens to ensure that attention page size is >= mamba page size.
+INFO 03-26 07:33:56 [config.py:575] Padding mamba page size by 0.13% to ensure that mamba page size and attention page size are exactly equal.
+INFO 03-26 07:33:56 [vllm.py:747] Asynchronous scheduling is enabled.
+WARNING 03-26 07:34:03 [system_utils.py:152] We must use the `spawn` multiprocessing start method. Overriding VLLM_WORKER_MULTIPROC_METHOD to 'spawn'. See https://docs.vllm.ai/en/latest/usage/troubleshooting.html#python-multiprocessing for more information. Reasons: CUDA is initialized
+(EngineCore_DP0 pid=853451) INFO 03-26 07:34:08 [core.py:101] Initializing a V1 LLM engine (v0.17.1) with config: model='Qwen/Qwen3.5-27B', speculative_config=None, tokenizer='Qwen/Qwen3.5-27B', skip_tokenizer_init=False, tokenizer_mode=auto, revision=None, tokenizer_revision=None, trust_remote_code=True, dtype=torch.bfloat16, max_seq_len=40000, download_dir=None, load_format=auto, tensor_parallel_size=1, pipeline_parallel_size=1, data_parallel_size=1, disable_custom_all_reduce=False, quantization=None, enforce_eager=False, enable_return_routed_experts=False, kv_cache_dtype=auto, device_config=cuda, structured_outputs_config=StructuredOutputsConfig(backend='auto', disable_fallback=False, disable_any_whitespace=False, disable_additional_properties=False, reasoning_parser='', reasoning_parser_plugin='', enable_in_reasoning=False), observability_config=ObservabilityConfig(show_hidden_metrics_for_version=None, otlp_traces_endpoint=None, collect_detailed_traces=None, kv_cache_metrics=False, kv_cache_metrics_sample=0.01, cudagraph_metrics=False, enable_layerwise_nvtx_tracing=False, enable_mfu_metrics=False, enable_mm_processor_stats=False, enable_logging_iteration_details=False), seed=0, served_model_name=Qwen/Qwen3.5-27B, enable_prefix_caching=False, enable_chunked_prefill=True, pooler_config=None, compilation_config={'level': None, 'mode': <CompilationMode.VLLM_COMPILE: 3>, 'debug_dump_path': None, 'cache_dir': '', 'compile_cache_save_format': 'binary', 'backend': 'inductor', 'custom_ops': ['none'], 'splitting_ops': ['vllm::unified_attention', 'vllm::unified_attention_with_output', 'vllm::unified_mla_attention', 'vllm::unified_mla_attention_with_output', 'vllm::mamba_mixer2', 'vllm::mamba_mixer', 'vllm::short_conv', 'vllm::linear_attention', 'vllm::plamo2_mamba_mixer', 'vllm::gdn_attention_core', 'vllm::kda_attention', 'vllm::sparse_attn_indexer', 'vllm::rocm_aiter_sparse_attn_indexer', 'vllm::unified_kv_cache_update', 'vllm::unified_mla_kv_cache_update'], 'compile_mm_encoder': False, 'compile_sizes': [], 'compile_ranges_split_points': [8192], 'inductor_compile_config': {'enable_auto_functionalized_v2': False, 'combo_kernels': True, 'benchmark_combo_kernel': True}, 'inductor_passes': {}, 'cudagraph_mode': <CUDAGraphMode.FULL_AND_PIECEWISE: (2, 1)>, 'cudagraph_num_of_warmups': 1, 'cudagraph_capture_sizes': [1, 2, 4, 8, 16, 24, 32, 40, 48, 56, 64, 72, 80, 88, 96, 104, 112, 120, 128, 136, 144, 152, 160, 168, 176, 184, 192, 200, 208, 216, 224, 232, 240, 248, 256, 272, 288, 304, 320, 336, 352, 368, 384, 400, 416, 432, 448, 464, 480, 496, 512], 'cudagraph_copy_inputs': False, 'cudagraph_specialize_lora': True, 'use_inductor_graph_partition': False, 'pass_config': {'fuse_norm_quant': False, 'fuse_act_quant': False, 'fuse_attn_quant': False, 'enable_sp': False, 'fuse_gemm_comms': False, 'fuse_allreduce_rms': False}, 'max_cudagraph_capture_size': 512, 'dynamic_shapes_config': {'type': <DynamicShapesType.BACKED: 'backed'>, 'evaluate_guards': False, 'assume_32_bit_indexing': False}, 'local_cache_dir': None, 'fast_moe_cold_start': True, 'static_all_moe_layers': []}
+(EngineCore_DP0 pid=853451) INFO 03-26 07:34:11 [parallel_state.py:1393] world_size=1 rank=0 local_rank=0 distributed_init_method=tcp://10.8.144.167:36291 backend=nccl
+(EngineCore_DP0 pid=853451) INFO 03-26 07:34:11 [parallel_state.py:1715] rank 0 in world size 1 is assigned as DP rank 0, PP rank 0, PCP rank 0, TP rank 0, EP rank N/A, EPLB rank N/A
+(EngineCore_DP0 pid=853451) INFO 03-26 07:34:17 [base.py:106] Offloader set to NoopOffloader
+(EngineCore_DP0 pid=853451) INFO 03-26 07:34:17 [gpu_model_runner.py:4281] Starting to load model Qwen/Qwen3.5-27B...
+(EngineCore_DP0 pid=853451) INFO 03-26 07:34:17 [cuda.py:453] Using backend AttentionBackendEnum.FLASH_ATTN for vit attention
+(EngineCore_DP0 pid=853451) INFO 03-26 07:34:17 [mm_encoder_attention.py:215] Using AttentionBackendEnum.FLASH_ATTN for MMEncoderAttention.
+(EngineCore_DP0 pid=853451) INFO 03-26 07:34:18 [cuda.py:405] Using FLASH_ATTN attention backend out of potential backends: ['FLASH_ATTN', 'FLASHINFER', 'TRITON_ATTN', 'FLEX_ATTENTION'].
+(EngineCore_DP0 pid=853451) INFO 03-26 07:34:18 [flash_attn.py:587] Using FlashAttention version 2
+(EngineCore_DP0 pid=853451) <frozen importlib._bootstrap_external>:1301: FutureWarning: The cuda.cudart module is deprecated and will be removed in a future release, please switch to use the cuda.bindings.runtime module instead.
+(EngineCore_DP0 pid=853451) <frozen importlib._bootstrap_external>:1301: FutureWarning: The cuda.nvrtc module is deprecated and will be removed in a future release, please switch to use the cuda.bindings.nvrtc module instead.
+(EngineCore_DP0 pid=853451) Loading safetensors checkpoint shards:   0% Completed | 0/11 [00:00<?, ?it/s]
+(EngineCore_DP0 pid=853451) Loading safetensors checkpoint shards:   9% Completed | 1/11 [00:00<00:05,  1.87it/s]
+(EngineCore_DP0 pid=853451) Loading safetensors checkpoint shards:  18% Completed | 2/11 [00:01<00:05,  1.63it/s]
+(EngineCore_DP0 pid=853451) Loading safetensors checkpoint shards:  27% Completed | 3/11 [00:01<00:05,  1.55it/s]
+(EngineCore_DP0 pid=853451) Loading safetensors checkpoint shards:  36% Completed | 4/11 [00:02<00:04,  1.49it/s]
+(EngineCore_DP0 pid=853451) Loading safetensors checkpoint shards:  45% Completed | 5/11 [00:03<00:04,  1.45it/s]
+(EngineCore_DP0 pid=853451) Loading safetensors checkpoint shards:  55% Completed | 6/11 [00:04<00:03,  1.44it/s]
+(EngineCore_DP0 pid=853451) Loading safetensors checkpoint shards:  64% Completed | 7/11 [00:04<00:02,  1.44it/s]
+(EngineCore_DP0 pid=853451) Loading safetensors checkpoint shards:  73% Completed | 8/11 [00:05<00:02,  1.45it/s]
+(EngineCore_DP0 pid=853451) Loading safetensors checkpoint shards:  82% Completed | 9/11 [00:06<00:01,  1.44it/s]
+(EngineCore_DP0 pid=853451) Loading safetensors checkpoint shards:  91% Completed | 10/11 [00:06<00:00,  1.42it/s]
+(EngineCore_DP0 pid=853451) Loading safetensors checkpoint shards: 100% Completed | 11/11 [00:07<00:00,  1.59it/s]
+(EngineCore_DP0 pid=853451) Loading safetensors checkpoint shards: 100% Completed | 11/11 [00:07<00:00,  1.51it/s]
+(EngineCore_DP0 pid=853451) 
+(EngineCore_DP0 pid=853451) INFO 03-26 07:34:26 [default_loader.py:293] Loading weights took 7.35 seconds
+(EngineCore_DP0 pid=853451) INFO 03-26 07:34:26 [gpu_model_runner.py:4364] Model loading took 51.1 GiB memory and 8.385835 seconds
+(EngineCore_DP0 pid=853451) INFO 03-26 07:34:26 [gpu_model_runner.py:5280] Encoder cache will be initialized with a budget of 16384 tokens, and profiled with 1 image items of the maximum feature size.
+(EngineCore_DP0 pid=853451) INFO 03-26 07:34:35 [decorators.py:465] Directly load AOT compilation from path /home/v-tiossowski/.cache/vllm/torch_compile_cache/torch_aot_compile/0232891e22bd4d7db98ac2f43c441f0f81d0a431216053ca49fadeaff23e2af3/rank_0_0/model
+(EngineCore_DP0 pid=853451) INFO 03-26 07:34:35 [backends.py:916] Using cache directory: /home/v-tiossowski/.cache/vllm/torch_compile_cache/feaf61af16/rank_0_0/backbone for vLLM's torch.compile
+(EngineCore_DP0 pid=853451) INFO 03-26 07:34:35 [backends.py:976] Dynamo bytecode transform time: 3.60 s
+(EngineCore_DP0 pid=853451) INFO 03-26 07:34:45 [backends.py:266] Directly load the compiled graph(s) for compile range (1, 8192) from the cache, took 9.495 s
+(EngineCore_DP0 pid=853451) INFO 03-26 07:34:45 [monitor.py:35] torch.compile takes 13.98 s in total
+(EngineCore_DP0 pid=853451) INFO 03-26 07:34:46 [gpu_worker.py:424] Available KV cache memory: 18.3 GiB
+(EngineCore_DP0 pid=853451) INFO 03-26 07:34:46 [kv_cache_utils.py:1314] GPU KV cache size: 74,480 tokens
+(EngineCore_DP0 pid=853451) INFO 03-26 07:34:46 [kv_cache_utils.py:1319] Maximum concurrency for 40,000 tokens per request: 6.95x
+(EngineCore_DP0 pid=853451) Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):   0%|          | 0/51 [00:00<?, ?it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):   2%|▏         | 1/51 [00:00<00:08,  5.75it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):   4%|▍         | 2/51 [00:00<00:08,  5.95it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):   6%|▌         | 3/51 [00:00<00:07,  6.02it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):   8%|▊         | 4/51 [00:00<00:07,  5.96it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  10%|▉         | 5/51 [00:00<00:07,  6.01it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  12%|█▏        | 6/51 [00:00<00:07,  6.06it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  14%|█▎        | 7/51 [00:01<00:07,  6.08it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  16%|█▌        | 8/51 [00:01<00:07,  6.10it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  18%|█▊        | 9/51 [00:01<00:06,  6.37it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  20%|█▉        | 10/51 [00:01<00:06,  6.66it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  22%|██▏       | 11/51 [00:01<00:05,  6.67it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  24%|██▎       | 12/51 [00:01<00:05,  6.87it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  25%|██▌       | 13/51 [00:02<00:05,  7.01it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  27%|██▋       | 14/51 [00:02<00:05,  7.06it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  29%|██▉       | 15/51 [00:02<00:05,  7.08it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  31%|███▏      | 16/51 [00:02<00:04,  7.19it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  33%|███▎      | 17/51 [00:02<00:04,  7.50it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  35%|███▌      | 18/51 [00:02<00:04,  7.79it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  37%|███▋      | 19/51 [00:02<00:04,  7.93it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  39%|███▉      | 20/51 [00:02<00:03,  8.02it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  41%|████      | 21/51 [00:03<00:03,  8.11it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  43%|████▎     | 22/51 [00:03<00:03,  8.16it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  45%|████▌     | 23/51 [00:03<00:03,  8.26it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  47%|████▋     | 24/51 [00:03<00:03,  8.33it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  49%|████▉     | 25/51 [00:03<00:03,  8.37it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  51%|█████     | 26/51 [00:03<00:02,  8.41it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  53%|█████▎    | 27/51 [00:03<00:02,  8.40it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  55%|█████▍    | 28/51 [00:03<00:02,  8.46it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  57%|█████▋    | 29/51 [00:03<00:02,  8.50it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  59%|█████▉    | 30/51 [00:04<00:02,  8.50it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  61%|██████    | 31/51 [00:04<00:02,  8.47it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  63%|██████▎   | 32/51 [00:04<00:02,  8.50it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  65%|██████▍   | 33/51 [00:04<00:02,  8.81it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  67%|██████▋   | 34/51 [00:04<00:01,  9.09it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  69%|██████▊   | 35/51 [00:04<00:01,  9.18it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  71%|███████   | 36/51 [00:04<00:01,  9.31it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  73%|███████▎  | 37/51 [00:04<00:01,  9.41it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  75%|███████▍  | 38/51 [00:04<00:01,  9.52it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  76%|███████▋  | 39/51 [00:05<00:01,  9.62it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  78%|███████▊  | 40/51 [00:05<00:01,  9.63it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  80%|████████  | 41/51 [00:05<00:01,  9.53it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  82%|████████▏ | 42/51 [00:05<00:00,  9.54it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  84%|████████▍ | 43/51 [00:05<00:00,  9.54it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  86%|████████▋ | 44/51 [00:05<00:00,  9.64it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  88%|████████▊ | 45/51 [00:05<00:00,  9.71it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  92%|█████████▏| 47/51 [00:05<00:00,  9.90it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  96%|█████████▌| 49/51 [00:06<00:00, 10.26it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE): 100%|██████████| 51/51 [00:06<00:00, 10.38it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE): 100%|██████████| 51/51 [00:06<00:00,  8.16it/s]
+(EngineCore_DP0 pid=853451) Capturing CUDA graphs (decode, FULL):   0%|          | 0/35 [00:00<?, ?it/s]Capturing CUDA graphs (decode, FULL):   3%|▎         | 1/35 [00:00<00:06,  5.62it/s]Capturing CUDA graphs (decode, FULL):   6%|▌         | 2/35 [00:00<00:05,  6.10it/s]Capturing CUDA graphs (decode, FULL):   9%|▊         | 3/35 [00:00<00:05,  6.31it/s]Capturing CUDA graphs (decode, FULL):  11%|█▏        | 4/35 [00:00<00:04,  6.44it/s]Capturing CUDA graphs (decode, FULL):  14%|█▍        | 5/35 [00:00<00:04,  6.52it/s]Capturing CUDA graphs (decode, FULL):  17%|█▋        | 6/35 [00:00<00:04,  6.60it/s]Capturing CUDA graphs (decode, FULL):  20%|██        | 7/35 [00:01<00:04,  6.59it/s]Capturing CUDA graphs (decode, FULL):  23%|██▎       | 8/35 [00:01<00:04,  6.65it/s]Capturing CUDA graphs (decode, FULL):  26%|██▌       | 9/35 [00:01<00:03,  6.61it/s]Capturing CUDA graphs (decode, FULL):  29%|██▊       | 10/35 [00:01<00:03,  6.60it/s]Capturing CUDA graphs (decode, FULL):  31%|███▏      | 11/35 [00:01<00:03,  6.64it/s]Capturing CUDA graphs (decode, FULL):  34%|███▍      | 12/35 [00:01<00:03,  6.72it/s]Capturing CUDA graphs (decode, FULL):  37%|███▋      | 13/35 [00:01<00:03,  6.77it/s]Capturing CUDA graphs (decode, FULL):  40%|████      | 14/35 [00:02<00:03,  6.81it/s]Capturing CUDA graphs (decode, FULL):  43%|████▎     | 15/35 [00:02<00:02,  6.84it/s]Capturing CUDA graphs (decode, FULL):  46%|████▌     | 16/35 [00:02<00:02,  6.87it/s]Capturing CUDA graphs (decode, FULL):  49%|████▊     | 17/35 [00:02<00:02,  7.10it/s]Capturing CUDA graphs (decode, FULL):  51%|█████▏    | 18/35 [00:02<00:02,  7.42it/s]Capturing CUDA graphs (decode, FULL):  54%|█████▍    | 19/35 [00:02<00:02,  7.69it/s]Capturing CUDA graphs (decode, FULL):  57%|█████▋    | 20/35 [00:02<00:01,  7.84it/s]Capturing CUDA graphs (decode, FULL):  60%|██████    | 21/35 [00:03<00:01,  7.84it/s]Capturing CUDA graphs (decode, FULL):  63%|██████▎   | 22/35 [00:03<00:01,  7.93it/s]Capturing CUDA graphs (decode, FULL):  66%|██████▌   | 23/35 [00:03<00:01,  8.00it/s]Capturing CUDA graphs (decode, FULL):  69%|██████▊   | 24/35 [00:03<00:01,  8.09it/s]Capturing CUDA graphs (decode, FULL):  71%|███████▏  | 25/35 [00:03<00:01,  8.09it/s]Capturing CUDA graphs (decode, FULL):  74%|███████▍  | 26/35 [00:03<00:01,  8.03it/s]Capturing CUDA graphs (decode, FULL):  77%|███████▋  | 27/35 [00:03<00:00,  8.12it/s]Capturing CUDA graphs (decode, FULL):  80%|████████  | 28/35 [00:03<00:00,  8.14it/s]Capturing CUDA graphs (decode, FULL):  83%|████████▎ | 29/35 [00:04<00:00,  8.25it/s]Capturing CUDA graphs (decode, FULL):  86%|████████▌ | 30/35 [00:04<00:00,  8.38it/s]Capturing CUDA graphs (decode, FULL):  89%|████████▊ | 31/35 [00:04<00:00,  8.46it/s]Capturing CUDA graphs (decode, FULL):  91%|█████████▏| 32/35 [00:04<00:00,  8.54it/s]Capturing CUDA graphs (decode, FULL):  94%|█████████▍| 33/35 [00:04<00:00,  8.61it/s]Capturing CUDA graphs (decode, FULL):  97%|█████████▋| 34/35 [00:04<00:00,  8.64it/s]Capturing CUDA graphs (decode, FULL): 100%|██████████| 35/35 [00:04<00:00,  8.67it/s]Capturing CUDA graphs (decode, FULL): 100%|██████████| 35/35 [00:04<00:00,  7.46it/s]
+(EngineCore_DP0 pid=853451) INFO 03-26 07:34:58 [gpu_model_runner.py:5386] Graph capturing finished in 12 secs, took 1.13 GiB
+(EngineCore_DP0 pid=853451) INFO 03-26 07:34:58 [core.py:282] init engine (profile, create kv cache, warmup model) took 31.77 seconds
+(EngineCore_DP0 pid=853451) INFO 03-26 07:34:58 [vllm.py:747] Asynchronous scheduling is enabled.
+INFO 03-26 07:34:58 [llm.py:388] Supported tasks: ['generate']
+2026-03-26 07:34:58  INFO      Loading QA dataset from /home/v-tiossowski/HealthcareAgent/mimic-code/data/MIMICIV_sirs_dataset/sirs.csv
+2026-03-26 07:34:59  INFO      Dataset: 1000 rows, columns: ['subject_id', 'hadm_id', 'stay_id', 'intime', 'outtime', 'first_careunit', 'last_careunit', 'gt_label', 'question', 'gt_answer_type', 'split', 'sirs', 'temp_score', 'heart_rate_score', 'resp_score', 'wbc_score']
+2026-03-26 07:34:59  INFO      Filtered to train split: 100 rows
+2026-03-26 07:34:59  INFO      Auto-discovered ground-truth SQL: /home/v-tiossowski/HealthcareAgent/mimic-code/mimic-iv/concepts_duckdb/score/sirs.sql
+2026-03-26 07:34:59  INFO      === Iteration 1/100  run=sirs  best_qa=0.0% ===
+INFO 03-26 07:35:01 [hf.py:318] Detected the chat template content format to be 'string'. You can set `--chat-template-content-format` to override this.
+2026-03-26 07:35:15  INFO      Exec block 1/1 …
+2026-03-26 07:35:15  INFO      Output: ['sirs_guideline']
+
+2026-03-26 07:35:15  INFO      === Iteration 2/100  run=sirs  best_qa=0.0% ===
+2026-03-26 07:35:18  INFO      Exec block 1/1 …
+2026-03-26 07:35:18  INFO      Output: '# SIRS — Clinical Guideline\n# Generated by generate_guidelines.py\n# Source articles: 10 (PMID37087544, PMID27885969, PMID29660669, PMID36891171, PMID31355322...)\n############################################################\n\n# Clinical Guideline: Systemic Inflammatory Response Syndrome (SIRS)\n\n---\n\n## 1. Definition\n\nThe **Systemic Inflammatory Response Syndrome (SIRS)** is a clinical syndrome reflecting a widespread, non-specific inflammatory response to a variety of severe clinical i
+2026-03-26 07:35:18  INFO      === Iteration 3/100  run=sirs  best_qa=0.0% ===
+2026-03-26 07:35:21  INFO      Exec block 1/1 …
+2026-03-26 07:35:21  INFO      Output: ['acei', 'age', 'aki', 'antibiotic', 'arb', 'bg', 'blood_differential', 'cardiac_marker', 'charlson', 'chemistry', 'coagulation', 'code_status', 'complete_blood_count', 'creatinine_baseline', 'crrt', 'dobutamine', 'dopamine', 'enzyme', 'epinephrine', 'first_day_bg', '... (35 more; pass a keyword to filter)']
+
+2026-03-26 07:35:21  INFO      === Iteration 4/100  run=sirs  best_qa=0.0% ===
+2026-03-26 07:35:26  INFO      Exec block 1/1 …
+2026-03-26 07:35:26  INFO      Output: ['blood_differential', 'complete_blood_count']
+
+2026-03-26 07:35:26  INFO      === Iteration 5/100  run=sirs  best_qa=0.0% ===
+2026-03-26 07:35:29  INFO      Exec block 1/1 …
+2026-03-26 07:35:29  INFO      Output: 'def blood_differential(stay_id, subject_id, hadm_id):\n    """\n    Extract blood differential information for a patient\'s ICU stay.\n\n    This function retrieves comprehensive blood differential data including WBC count,\n    band neutrophils, and other differential components (neutrophils, lymphocytes, \n    monocytes, eosinophils, basophils) during an ICU stay.\n\n    Parameters\n    ----------\n    stay_id : int, optional\n        The ICU stay identifier. If provided, data is filtered to 
+2026-03-26 07:35:29  INFO      === Iteration 6/100  run=sirs  best_qa=0.0% ===
+2026-03-26 07:35:33  INFO      Exec block 1/1 …
+2026-03-26 07:35:33  INFO      Output: ['icustay_detail']
+
+2026-03-26 07:35:33  INFO      === Iteration 7/100  run=sirs  best_qa=0.0% ===
+2026-03-26 07:35:40  INFO      Exec block 1/1 …
+2026-03-26 07:35:40  INFO      Output:     table_schema          table_name
+0   mimiciv_hosp          admissions
+1   mimiciv_hosp             d_hcpcs
+2   mimiciv_hosp     d_icd_diagnoses
+3   mimiciv_hosp    d_icd_procedures
+4   mimiciv_hosp          d_labitems
+5   mimiciv_hosp       diagnoses_icd
+6   mimiciv_hosp            drgcodes
+7   mimiciv_hosp                emar
+8   mimiciv_hosp         emar_detail
+9   mimiciv_hosp         hcpcsevents
+10  mimiciv_hosp           labevents
+11  mimiciv_hosp  microbiologyevents
+12  mimiciv_hosp   
+2026-03-26 07:35:40  INFO      === Iteration 8/100  run=sirs  best_qa=0.0% ===
+2026-03-26 07:35:46  INFO      Exec block 1/1 …
+2026-03-26 07:35:46  INFO      Output: Empty DataFrame
+Columns: [itemid, label, category]
+Index: []
+
+2026-03-26 07:35:46  INFO      === Iteration 9/100  run=sirs  best_qa=0.0% ===
+2026-03-26 07:35:50  INFO      Exec block 1/1 …
+2026-03-26 07:35:50  INFO      Output:     itemid                                   label                      abbreviation           linksto                            category         unitname     param_type  lownormalvalue  highnormalvalue
+0   220001                            Problem List                      Problem List       chartevents                             General              NaN           Text             NaN              NaN
+1   220003                      ICU Admission date                ICU Admission date    date
+2026-03-26 07:35:50  INFO      === Iteration 10/100  run=sirs  best_qa=0.0% ===
+2026-03-26 07:35:57  INFO      Exec block 1/1 …
+2026-03-26 07:35:57  INFO      Output:     itemid                                               label                     category unitname
+0   228392                                    Alsius Bath Temp                   Treatments       °C
+1   227630                         Arctic Sun Temp #1 Location          Routine Vital Signs      NaN
+2   227631                         Arctic Sun Temp #2 Location          Routine Vital Signs      NaN
+3   227628                               Arctic Sun Water Temp                   Treatments     
+2026-03-26 07:35:57  INFO      === Iteration 11/100  run=sirs  best_qa=0.0% ===
+2026-03-26 07:36:06  INFO      Exec block 1/1 …
+2026-03-26 07:36:06  INFO      Output: Error:
+Traceback (most recent call last):
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 643, in execute
+    _run_with_timeout(_do_execute, timeout)
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 174, in _run_with_timeout
+    raise error[0]
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 156, in target
+    result[0] = func(*args, **kwargs)
+                ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/v-tiossowsk
+2026-03-26 07:36:06  INFO      === Iteration 12/100  run=sirs  best_qa=0.0% ===
+2026-03-26 07:36:11  INFO      Exec block 1/1 …
+2026-03-26 07:36:11  INFO      Output:     itemid                                label  fluid   category
+0    50801           Alveolar-arterial Gradient  Blood  Blood Gas
+1    50802                          Base Excess  Blood  Blood Gas
+2    50803  Calculated Bicarbonate, Whole Blood  Blood  Blood Gas
+3    50804                 Calculated Total CO2  Blood  Blood Gas
+4    50805                    Carboxyhemoglobin  Blood  Blood Gas
+5    50806                Chloride, Whole Blood  Blood  Blood Gas
+6    50808                         Fre
+2026-03-26 07:36:11  INFO      === Iteration 13/100  run=sirs  best_qa=0.0% ===
+2026-03-26 07:36:17  INFO      Exec block 1/1 …
+2026-03-26 07:36:17  INFO      Output:     itemid              label                fluid    category
+0    51111              Bands              Ascites  Hematology
+1    51144              Bands                Blood  Hematology
+2    51366              Bands          Joint Fluid  Hematology
+3    51386              Bands     Other Body Fluid  Hematology
+4    51441              Bands              Pleural  Hematology
+5    52223              Bands  Cerebrospinal Fluid  Hematology
+6    52049             Bands#              Ascites  Hematol
+2026-03-26 07:36:17  INFO      === Iteration 14/100  run=sirs  best_qa=0.0% ===
+2026-03-26 07:36:27  INFO      Exec block 1/1 …
+2026-03-26 07:36:27  INFO      Output:    itemid                 label             fluid   category
+0   50804  Calculated Total CO2             Blood  Blood Gas
+1   51739             Total CO2             Blood  Chemistry
+2   52037               WB tCO2             Blood  Blood Gas
+3   50818                  pCO2             Blood  Blood Gas
+4   52040                  pCO2             Fluid  Blood Gas
+5   50830      pCO2, Body Fluid  Other Body Fluid  Blood Gas
+
+2026-03-26 07:36:27  INFO      === Iteration 15/100  run=sirs  best_qa=0.0% ===
+2026-03-26 07:36:39  INFO      Exec block 1/1 …
+2026-03-26 07:36:39  INFO      Output:    subject_id   hadm_id   stay_id                       first_careunit                        last_careunit              intime             outtime       los
+0    10000032  29079034  39553978   Medical Intensive Care Unit (MICU)   Medical Intensive Care Unit (MICU) 2180-07-23 14:00:00 2180-07-23 23:50:47  0.410266
+1    10000690  25860671  37081114   Medical Intensive Care Unit (MICU)   Medical Intensive Care Unit (MICU) 2150-11-02 19:37:00 2150-11-06 17:03:17  3.893252
+2    10000980  26913865  3
+2026-03-26 07:36:39  INFO      === Iteration 16/100  run=sirs  best_qa=0.0% ===
+2026-03-26 07:36:54  INFO      Exec block 1/1 …
+2026-03-26 07:36:54  INFO      Output:    subject_id   hadm_id   stay_id  caregiver_id           charttime           storetime  itemid              value    valuenum valueuom  warning
+0    10000032  29079034  39553978         18704 2180-07-23 12:36:00 2180-07-23 14:45:00  226512               39.4   39.400002       kg        0
+1    10000032  29079034  39553978         18704 2180-07-23 12:36:00 2180-07-23 14:45:00  226707                 60   60.000000     Inch        0
+2    10000032  29079034  39553978         18704 2180-07-23 12:36:
+2026-03-26 07:36:54  INFO      === Iteration 17/100  run=sirs  best_qa=0.0% ===
+2026-03-26 07:37:11  INFO      Exec block 1/1 …
+2026-03-26 07:37:11  INFO      Output: "Functions from 'blood_differential' loaded successfully."
+
+2026-03-26 07:37:11  INFO      === Iteration 18/100  run=sirs  best_qa=0.0% ===
+2026-03-26 07:37:37  INFO      Exec block 1/1 …
+2026-03-26 07:37:37  INFO      Output:              charttime  itemid    valuenum  valueuom                   label
+0  2180-07-23 14:00:00  223761   98.699997        °F  Temperature Fahrenheit
+1  2180-07-23 14:12:00  220210   24.000000  insp/min        Respiratory Rate
+2  2180-07-23 14:12:00  220045   91.000000       bpm              Heart Rate
+3  2180-07-23 14:30:00  220210   21.000000  insp/min        Respiratory Rate
+4  2180-07-23 14:30:00  220045   93.000000       bpm              Heart Rate
+5  2180-07-23 15:00:00  220045   94.00
+2026-03-26 07:37:37  INFO      === Iteration 19/100  run=sirs  best_qa=0.0% ===
+2026-03-26 07:37:44  INFO      Exec block 1/1 …
+2026-03-26 07:37:44  INFO      Output:    labevent_id  subject_id  hadm_id  specimen_id  itemid order_provider_id           charttime           storetime value  valuenum valueuom  ref_range_lower  ref_range_upper      flag priority                                                                                                                                                                                comments
+0            1    10000032     <NA>      2704548   50931            P69FQC 2180-03-23 11:51:00 2180-03-23 15:56:00   ___   
+2026-03-26 07:37:44  INFO      === Iteration 20/100  run=sirs  best_qa=0.0% ===
+2026-03-26 07:37:54  INFO      Exec block 1/1 …
+2026-03-26 07:37:54  INFO      Output:             charttime  valuenum valueuom  flag
+0 2180-07-24 06:35:00       4.1     K/uL  None
+1 2180-07-25 04:45:00       4.8     K/uL  None
+
+2026-03-26 07:37:54  INFO      === Iteration 21/100  run=sirs  best_qa=0.0% ===
+2026-03-26 07:38:03  INFO      Exec block 1/1 …
+2026-03-26 07:38:03  INFO      Output: Empty DataFrame
+Columns: [charttime, valuenum, valueuom, flag]
+Index: []
+
+2026-03-26 07:38:03  INFO      === Iteration 22/100  run=sirs  best_qa=0.0% ===
+2026-03-26 07:38:12  INFO      Exec block 1/1 …
+2026-03-26 07:38:12  INFO      Output: Empty DataFrame
+Columns: [charttime, valuenum, valueuom, flag]
+Index: []
+
+2026-03-26 07:38:12  INFO      === Iteration 23/100  run=sirs  best_qa=0.0% ===
+2026-03-26 07:38:32  INFO      Exec block 1/1 …
+2026-03-26 07:38:32  INFO      Output: {'subject_id': None, 'hadm_id': None, 'stay_id': None, 'wbc_count': [], 'max_wbc_count': None, 'min_wbc_count': None, 'has_elevated_wbc': False, 'band_percent': [], 'max_band_percent': None, 'has_left_shift': False, 'neutrophil_percent': [], 'lymphocyte_percent': [], 'monocyte_percent': [], 'eosinophil_percent': [], 'basophil_percent': [], 'absolute_neutrophil_count': [], 'absolute_lymphocyte_count': [], 'absolute_monocyte_count': [], 'absolute_eosinophil_count': [], 'absolute_basophil_count': [
+2026-03-26 07:38:32  INFO      === Iteration 24/100  run=sirs  best_qa=0.0% ===
+2026-03-26 07:38:42  INFO      Exec block 1/1 …
+2026-03-26 07:38:42  INFO      Output:    subject_id   hadm_id  itemid  valuenum
+0    10160622  28663041   51301      14.9
+1    10160622  28663041   51301      17.7
+2    10160781  24512311   51301       5.1
+3    10161014      <NA>   51301       8.2
+4    10161112  21231068   51301       8.5
+5    10161616  23095935   51301       9.5
+6    10161877      <NA>   51301       8.5
+7    10161877  27289242   51301      10.0
+8    10162760  21897296   51301       6.4
+9    10163174  29824060   51301      10.4
+
+2026-03-26 07:38:42  INFO      === Iteration 25/100  run=sirs  best_qa=0.0% ===
+2026-03-26 07:38:50  INFO      Exec block 1/1 …
+2026-03-26 07:38:50  INFO      Output:     stay_id              intime             outtime
+0  32434125 2180-04-21 11:29:00 2180-04-23 15:30:08
+1  30997525 2180-07-01 03:31:00 2180-07-03 15:07:26
+2  39565767 2180-05-20 00:01:00 2180-06-16 22:50:53
+3  36787094 2176-01-08 16:57:23 2176-01-11 21:52:56
+4  37309694 2176-01-06 19:00:12 2176-01-08 16:42:33
+
+2026-03-26 07:38:50  INFO      === Iteration 26/100  run=sirs  best_qa=0.0% ===
+2026-03-26 07:39:04  INFO      Exec block 1/1 …
+2026-03-26 07:39:04  INFO      Output: {'subject_id': 10160622, 'hadm_id': 21082262, 'stay_id': 32434125, 'wbc_count': [16.1, 13.8, 12.5], 'max_wbc_count': 16.1, 'min_wbc_count': 12.5, 'has_elevated_wbc': True, 'band_percent': [], 'max_band_percent': None, 'has_left_shift': False, 'neutrophil_percent': [88.0], 'lymphocyte_percent': [4.4], 'monocyte_percent': [4.2], 'eosinophil_percent': [2.4], 'basophil_percent': [0.6], 'absolute_neutrophil_count': [14.15], 'absolute_lymphocyte_count': [0.71], 'absolute_monocyte_count': [0.67], 'abso
+2026-03-26 07:39:04  INFO      === Iteration 27/100  run=sirs  best_qa=0.0% ===
+2026-03-26 07:39:27  INFO      Exec block 1/1 …
+2026-03-26 07:39:27  INFO      Output:              charttime  itemid    valuenum  valueuom                   label
+0  2180-04-21 11:59:00  220210   18.000000  insp/min        Respiratory Rate
+1  2180-04-21 11:59:00  220045  109.000000       bpm              Heart Rate
+2  2180-04-21 12:00:00  220210   14.000000  insp/min        Respiratory Rate
+3  2180-04-21 12:00:00  220045   79.000000       bpm              Heart Rate
+4  2180-04-21 12:09:00  220210   15.000000  insp/min        Respiratory Rate
+5  2180-04-21 12:09:00  223761   97.50
+2026-03-26 07:39:27  INFO      === Iteration 28/100  run=sirs  best_qa=0.0% ===
+2026-03-26 07:40:59  INFO      Exec block 1/1 …
+2026-03-26 07:40:59  INFO      Output: Error:
+Traceback (most recent call last):
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 643, in execute
+    _run_with_timeout(_do_execute, timeout)
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 174, in _run_with_timeout
+    raise error[0]
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 156, in target
+    result[0] = func(*args, **kwargs)
+                ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/v-tiossowsk
+2026-03-26 07:40:59  INFO      === Iteration 29/100  run=sirs  best_qa=0.0% ===
+2026-03-26 07:42:25  INFO      Exec block 1/1 …
+2026-03-26 07:42:25  INFO      Output: {'stay_id': np.int32(32434125), 'subject_id': np.int32(10160622), 'hadm_id': np.int32(21082262), 'sirs_score': 1, 'sirs_positive': False, 'criteria': {'temperature': False, 'heart_rate': False, 'respiratory_rate': False, 'wbc': True}, 'temperature_celsius': 36.72222137451172, 'heart_rate': 75.0, 'respiratory_rate': 16.0, 'wbc_count': 16.1, 'band_percent': None, 'paco2': 72.0}
+
+2026-03-26 07:42:25  INFO      === Iteration 30/100  run=sirs  best_qa=0.0% ===
+2026-03-26 07:42:37  INFO      Exec block 1/1 …
+2026-03-26 07:42:37  INFO      Output: {'stay_id': np.int32(39553978), 'subject_id': np.int32(10000032), 'hadm_id': np.int32(29079034), 'sirs_score': 2, 'sirs_positive': True, 'criteria': {'temperature': False, 'heart_rate': True, 'respiratory_rate': True, 'wbc': False}, 'temperature_celsius': 37.05555386013455, 'heart_rate': 91.0, 'respiratory_rate': 24.0, 'wbc_count': 4.1, 'band_percent': None, 'paco2': None}
+
+2026-03-26 07:42:37  INFO      === Iteration 31/100  run=sirs  best_qa=0.0% ===
+2026-03-26 07:42:48  INFO      Exec block 1/1 …
+2026-03-26 07:42:48  INFO      Output: {'stay_id': np.int32(37081114), 'subject_id': np.int32(10000690), 'hadm_id': np.int32(25860671), 'sirs_score': 1, 'sirs_positive': False, 'criteria': {'temperature': False, 'heart_rate': False, 'respiratory_rate': True, 'wbc': False}, 'temperature_celsius': 36.499998304578995, 'heart_rate': 79.0, 'respiratory_rate': 23.0, 'wbc_count': 7.5, 'band_percent': None, 'paco2': None}
+
+2026-03-26 07:42:48  INFO      === Iteration 32/100  run=sirs  best_qa=0.0% ===
+2026-03-26 07:42:57  INFO      Exec block 1/1 …
+2026-03-26 07:42:57  INFO      Output: {'stay_id': np.int32(39765666), 'subject_id': np.int32(10000980), 'hadm_id': np.int32(26913865), 'sirs_score': 1, 'sirs_positive': False, 'criteria': {'temperature': False, 'heart_rate': False, 'respiratory_rate': True, 'wbc': False}, 'temperature_celsius': 36.666666666666664, 'heart_rate': 77.0, 'respiratory_rate': 23.0, 'wbc_count': 5.4, 'band_percent': None, 'paco2': None}
+
+2026-03-26 07:42:57  INFO      === Iteration 33/100  run=sirs  best_qa=0.0% ===
+2026-03-26 07:43:15  INFO      Exec block 1/1 …
+2026-03-26 07:43:15  INFO      Output:     stay_id           charttime    valuenum valueuom
+0  35128235 2129-04-06 02:00:00  103.000000       °F
+1  33987268 2156-04-12 17:45:00  102.900002       °F
+2  33987268 2156-04-12 17:25:00  102.900002       °F
+3  33987268 2156-04-12 19:00:00  102.900002       °F
+4  35128235 2129-04-07 00:00:00  102.500000       °F
+5  35128235 2129-04-06 08:00:00  102.099998       °F
+6  35479615 2156-05-12 00:00:00  102.099998       °F
+7  33987268 2156-04-12 23:00:00  101.699997       °F
+8  39699336 2144-06-05 
+2026-03-26 07:43:15  INFO      === Iteration 34/100  run=sirs  best_qa=0.0% ===
+2026-03-26 07:43:25  INFO      Exec block 1/1 …
+2026-03-26 07:43:25  INFO      Output: {'stay_id': np.int32(35128235), 'subject_id': np.int32(10007928), 'hadm_id': np.int32(20338077), 'sirs_score': 3, 'sirs_positive': True, 'criteria': {'temperature': True, 'heart_rate': True, 'respiratory_rate': True, 'wbc': False}, 'temperature_celsius': 39.44444444444444, 'heart_rate': 101.0, 'respiratory_rate': 21.0, 'wbc_count': 10.3, 'band_percent': None, 'paco2': 24.0}
+
+2026-03-26 07:43:25  INFO      === Iteration 35/100  run=sirs  best_qa=0.0% ===
+2026-03-26 07:43:37  INFO      Exec block 1/1 …
+2026-03-26 07:43:37  INFO      Output: {'stay_id': np.int32(37067082), 'subject_id': np.int32(10001217), 'hadm_id': np.int32(24597018), 'sirs_score': 1, 'sirs_positive': False, 'criteria': {'temperature': False, 'heart_rate': False, 'respiratory_rate': False, 'wbc': True}, 'temperature_celsius': 36.94444444444444, 'heart_rate': 86.0, 'respiratory_rate': 18.0, 'wbc_count': 19.0, 'band_percent': None, 'paco2': None}
+
+2026-03-26 07:43:37  INFO      === Iteration 36/100  run=sirs  best_qa=0.0% ===
+2026-03-26 07:43:47  INFO      Exec block 1/1 …
+2026-03-26 07:43:47  INFO      Output: {'error': 'Stay ID not found'}
+
+2026-03-26 07:43:47  INFO      === Iteration 37/100  run=sirs  best_qa=0.0% ===
+2026-03-26 07:45:32  INFO      Exec block 1/1 …
+2026-03-26 07:45:32  INFO      Output: Test 1: {'stay_id': 32434125, 'subject_id': 10160622, 'hadm_id': 21082262, 'sirs_score': 4, 'sirs_positive': True, 'criteria': {'temperature': True, 'heart_rate': True, 'respiratory_rate': True, 'wbc': True}, 'temperature_celsius': 35.72222391764323, 'heart_rate': 109.0, 'respiratory_rate': 32.0, 'wbc_count': 16.1, 'band_percent': None, 'paco2': 44.0}
+Test 2: {'stay_id': 39553978, 'subject_id': 10000032, 'hadm_id': 29079034, 'sirs_score': 2, 'sirs_positive': True, 'criteria': {'temperature': Fal
+2026-03-26 07:45:32  INFO      === Iteration 38/100  run=sirs  best_qa=0.0% ===
+2026-03-26 07:45:32  INFO      Context approaching limit (21736 tokens, limit=25000) — forcing summarize + compress
+2026-03-26 07:48:07  INFO      Context compressed: 76 messages -> 2 messages
+2026-03-26 07:49:48  INFO      Exec block 1/1 …
+2026-03-26 07:49:49  INFO      Output: Stay 32434125: Score=4, Positive=True, Criteria={'temperature': True, 'heart_rate': True, 'respiratory_rate': True, 'wbc': True}
+Stay 39553978: Score=2, Positive=True, Criteria={'temperature': False, 'heart_rate': True, 'respiratory_rate': True, 'wbc': False}
+Stay 35128235: Score=3, Positive=True, Criteria={'temperature': True, 'heart_rate': True, 'respiratory_rate': True, 'wbc': False}
+Stay 37081114: Score=3, Positive=True, Criteria={'temperature': True, 'heart_rate': True, 'respiratory_rate': 
+2026-03-26 07:49:49  INFO      === Iteration 39/100  run=sirs  best_qa=0.0% ===
+2026-03-26 07:50:00  INFO      Exec block 1/1 …
+2026-03-26 07:50:00  INFO      Output: Non-existent stay: {'error': 'Stay ID not found'}
+Stay 39553978: Score=2, Positive=True
+  Temp: 37.05555386013455, HR: 105.0, RR: 24.0, WBC: 4.1, Bands: None, PaCO2: None
+Stay 37081114: Score=3, Positive=True
+  Temp: 35.55555555555556, HR: 102.0, RR: 35.0, WBC: 7.5, Bands: None, PaCO2: None
+Stay 39765666: Score=1, Positive=False
+  Temp: 36.666666666666664, HR: 80.0, RR: 25.0, WBC: 5.4, Bands: None, PaCO2: None
+Stay 37067082: Score=4, Positive=True
+  Temp: 38.22222391764323, HR: 106.0, RR: 27.0, 
+2026-03-26 07:50:00  INFO      === Iteration 40/100  run=sirs  best_qa=0.0% ===
+2026-03-26 07:50:29  INFO      Exec block 1/1 …
+2026-03-26 07:50:29  INFO      Output: 100.4°F = 38.00°C (should be 38.0)
+96.8°F = 36.00°C (should be 36.0)
+
+Final verification:
+Stay 32434125: Score=4, SIRS+=True
+  Criteria: Temp=True, HR=True, RR=True, WBC=True
+Stay 39553978: Score=2, SIRS+=True
+  Criteria: Temp=False, HR=True, RR=True, WBC=False
+Stay 35128235: Score=3, SIRS+=True
+  Criteria: Temp=True, HR=True, RR=True, WBC=False
+Stay 37081114: Score=3, SIRS+=True
+  Criteria: Temp=True, HR=True, RR=True, WBC=False
+Stay 39765666: Score=1, SIRS+=False
+  Criteria: Temp=False, HR=Fal
+2026-03-26 07:50:29  INFO      === Iteration 41/100  run=sirs  best_qa=0.0% ===
+2026-03-26 07:51:57  INFO      Exec block 1/1 …
+2026-03-26 07:51:57  INFO      Output: Code executed successfully (no output).
+2026-03-26 07:51:57  INFO      Debug conversations will be saved to debug_logs
+2026-03-26 07:51:57  INFO      Using question from dataset column: Does this patient meet SIRS criteria (SIRS score >= 2) during their first ICU day?
+2026-03-26 07:51:57  INFO      Answer type for 'sirs': numerical (per_row=True)
+2026-03-26 07:51:57  INFO      ReACT iteration 1/5 — 20 active patients
+Rendering conversations:   0%|          | 0/20 [00:00<?, ?it/s]Rendering conversations: 100%|██████████| 20/20 [00:00<00:00, 523.44it/s]
+Processed prompts:   0%|          | 0/20 [00:00<?, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s]Processed prompts:   5%|▌         | 1/20 [00:09<02:51,  9.01s/it, est. speed input: 95.26 toks/s, output: 11.88 toks/s]Processed prompts:  25%|██▌       | 5/20 [00:09<00:20,  1.37s/it, est. speed input: 465.54 toks/s, output: 59.38 toks/s]Processed prompts:  65%|██████▌   | 13/20 [00:09<00:02,  2.44it/s, est. speed input: 1198.06 toks/s, output: 154.26 toks/s]Processed prompts:  85%|████████▌ | 17/20 [00:09<00:00,  3.28it/s, est. speed input: 1503.88 toks/s, output: 196.35 toks/s]Processed prompts: 100%|██████████| 20/20 [00:10<00:00,  3.62it/s, est. speed input: 1666.32 toks/s, output: 222.57 toks/s]Processed prompts: 100%|██████████| 20/20 [00:10<00:00,  3.62it/s, est. speed input: 1666.32 toks/s, output: 222.57 toks/s]Processed prompts: 100%|██████████| 20/20 [00:10<00:00,  1.95it/s, est. speed input: 1666.32 toks/s, output: 222.57 toks/s]
+2026-03-26 07:52:08  INFO      ReACT iteration 2/5 — 20 active patients
+Rendering conversations:   0%|          | 0/20 [00:00<?, ?it/s]Rendering conversations: 100%|██████████| 20/20 [00:00<00:00, 387.92it/s]
+Processed prompts:   0%|          | 0/20 [00:00<?, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s]Processed prompts:   5%|▌         | 1/20 [00:08<02:37,  8.28s/it, est. speed input: 132.41 toks/s, output: 7.85 toks/s]Processed prompts:  20%|██        | 4/20 [00:08<00:27,  1.74s/it, est. speed input: 493.14 toks/s, output: 30.75 toks/s]Processed prompts:  25%|██▌       | 5/20 [00:09<00:21,  1.42s/it, est. speed input: 578.77 toks/s, output: 38.49 toks/s]Processed prompts:  35%|███▌      | 7/20 [00:09<00:11,  1.13it/s, est. speed input: 775.72 toks/s, output: 56.48 toks/s]Processed prompts:  40%|████      | 8/20 [00:11<00:11,  1.04it/s, est. speed input: 790.12 toks/s, output: 62.14 toks/s]Processed prompts:  50%|█████     | 10/20 [00:11<00:06,  1.50it/s, est. speed input: 949.64 toks/s, output: 83.55 toks/s]Processed prompts:  55%|█████▌    | 11/20 [00:11<00:04,  1.84it/s, est. speed input: 1033.65 toks/s, output: 95.03 toks/s]Processed prompts:  80%|████████  | 16/20 [00:12<00:01,  3.04it/s, est. speed input: 1389.36 toks/s, output: 146.79 toks/s]Processed prompts:  85%|████████▌ | 17/20 [00:13<00:01,  2.54it/s, est. speed input: 1391.80 toks/s, output: 152.59 toks/s]Processed prompts:  90%|█████████ | 18/20 [00:13<00:00,  2.90it/s, est. speed input: 1461.49 toks/s, output: 165.52 toks/s]Processed prompts:  95%|█████████▌| 19/20 [00:14<00:00,  1.81it/s, est. speed input: 1401.33 toks/s, output: 165.74 toks/s]Processed prompts: 100%|██████████| 20/20 [00:17<00:00,  1.00it/s, est. speed input: 1260.62 toks/s, output: 158.73 toks/s]Processed prompts: 100%|██████████| 20/20 [00:17<00:00,  1.00it/s, est. speed input: 1260.62 toks/s, output: 158.73 toks/s]Processed prompts: 100%|██████████| 20/20 [00:17<00:00,  1.14it/s, est. speed input: 1260.62 toks/s, output: 158.73 toks/s]
+2026-03-26 07:52:25  INFO      QA accuracy: 95.0%  (correct=19/20, parse_errors=0)
+2026-03-26 07:52:25  INFO      SUCCESS: 95.0% QA accuracy for 'sirs' at iteration 41
+2026-03-26 07:52:25  INFO      Function code saved to autoformalized_library/functions/sirs.py
+2026-03-26 07:52:25  INFO      Summary saved to autoformalized_library/summary.json
+[rank0]:[W326 07:52:26.328492185 ProcessGroupNCCL.cpp:1553] Warning: WARNING: destroy_process_group() was not called before program exit, which can leak resources. For more info, please see https://pytorch.org/docs/stable/distributed.html#shutdown (function operator())
+
+======================================================================
+AUTOFORMALIZATION COMPLETE
+======================================================================
+  Output dir      : autoformalized_library
+  Model           : Qwen/Qwen3.5-27B
+  Dataset         : /home/v-tiossowski/HealthcareAgent/mimic-code/data/MIMICIV_sirs_dataset/sirs.csv
+  Run name        : sirs
+  Status          : SUCCESS
+  QA accuracy     : 95.0%
+  Iterations      : 41
+  Total tokens    : 44,208  (prompt 39,148 / completion 5,060)
+  LLM calls       : 82
+  SQL queries     : 271
+  Function saved  : autoformalized_library/functions/sirs.py
+======================================================================

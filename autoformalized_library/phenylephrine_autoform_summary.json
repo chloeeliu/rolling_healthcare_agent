@@ -1,0 +1,47 @@
+{
+  "timestamp": "2026-03-25T08:32:59.605531",
+  "model": "Qwen/Qwen3.5-27B",
+  "db_path": "/home/v-tiossowski/MIMIC-IV/mimic4.db",
+  "qa_dataset": "/home/v-tiossowski/HealthcareAgent/mimic-code/data/MIMICIV_phenylephrine_dataset/phenylephrine.csv",
+  "match_threshold": 0.9,
+  "run_name": "phenylephrine",
+  "success": true,
+  "iterations": 31,
+  "qa_accuracy": 1.0,
+  "stats": {
+    "react": {
+      "prompt_tokens": 0,
+      "completion_tokens": 0,
+      "total_tokens": 0,
+      "llm_calls": 31,
+      "query_count": 22,
+      "query_time_sec": 1.363,
+      "wall_time_sec": 423.938
+    },
+    "qa": {
+      "prompt_tokens": 46021,
+      "completion_tokens": 6899,
+      "total_tokens": 52920,
+      "llm_calls": 44,
+      "query_count": 20,
+      "query_time_sec": 0.062,
+      "eval_wall_time_sec": 39.767,
+      "per_question": {
+        "avg_prompt_tokens": 2301.1,
+        "avg_completion_tokens": 344.9,
+        "avg_llm_calls": 2.2,
+        "avg_query_count": 1.0,
+        "avg_query_time_sec": 0.003,
+        "avg_wall_time_sec": 1.988
+      }
+    },
+    "total": {
+      "prompt_tokens": 46021,
+      "completion_tokens": 6899,
+      "total_tokens": 52920,
+      "llm_calls": 75,
+      "query_count": 42,
+      "query_time_sec": 1.425
+    }
+  }
+}

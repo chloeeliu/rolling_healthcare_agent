@@ -1,0 +1,3525 @@
+=== Step 1 ===
+# Clinical Coding Agent Memory - APACHE III Implementation
+
+## Schema Facts
+
+### Tables
+- **mimiciv_icu.icustays**: subject_id, hadm_id, stay_id, first_careunit, last_careunit, intime, outtime, los
+- **mimiciv_icu.chartevents**: subject_id, hadm_id, stay_id, caregiver_id, charttime, storetime, itemid, value, valuenum, valueuom
+- **mimiciv_icu.outputevents**: subject_id, hadm_id, stay_id, caregiver_id, charttime, storetime, itemid, value, valueuom
+- **mimiciv_icu.d_items**: itemid, label, category
+- **mimiciv_hosp.d_labitems**: itemid, label, category
+- **mimiciv_hosp.patients**: subject_id, gender, anchor_age, anchor_year, anchor_year_group, dod
+- **mimiciv_hosp.admissions**: subject_id, hadm_id, admittime, dischtime, deathtime, admission_type, admit_provider_id, admission_location, discharge_location, insurance, language, marital_status, race, edregtime, edouttime, hospital_expire_flag
+
+### Key Item IDs
+| Variable | Item ID | Unit | Source |
+|----------|---------|------|--------|
+| Heart Rate | 220045 | bpm | chartevents |
+| MAP (Arterial) | 220052 | mmHg | chartevents |
+| MAP (Non-invasive) | 220181 | mmHg | chartevents |
+| Temperature (Celsius) | 223762 | °C | chartevents |
+| Respiratory Rate | 220210 | breaths/min | chartevents |
+| PaO2 | 220224 | mmHg | chartevents |
+| PaCO2 | 220235 | mmHg | chartevents |
+| pH (Arterial) | 223830 | pH | chartevents |
+| FiO2 | 223835 | % | chartevents |
+| Hematocrit | 220545 | % | chartevents |
+| WBC | 220546 | K/uL | chartevents |
+| Creatinine | 220615 | mg/dL | chartevents |
+| BUN | 225624 | mg/dL | chartevents |
+| Sodium | 220645 | mEq/L | chartevents |
+| Glucose | 220621 | mg/dL | chartevents |
+| Albumin | 227456 | g/dL | chartevents |
+| Bilirubin | 225690 | mg/dL | chartevents |
+| GCS Eye | 220739 | score | chartevents |
+| GCS Verbal | 223900 | score | chartevents |
+| GCS Motor | 223901 | score | chartevents |
+| Urine Output | 226566, 226627, 226631, 227489 | mL | outputevents |
+
+### APACHE III Scoring Ranges
+- **Total Score**: 0-299 points
+- **Acute Physiology Score (APS)**: 0-252 points (17 variables)
+- **Age Points**: 0-24 points
+- **Chronic Health Evaluation**: 0-23 points
+
+### Scoring Rules
+- All acute physiology variables use **worst (most abnormal) value** in first 24 hours of ICU admission
+- GCS uses **lowest** value in first 24 hours
+- If FiO₂ < 0.5: use PaO₂ for oxygenation scoring
+- If FiO₂ ≥ 0.5: use A-aDO₂ for oxygenation scoring
+- A-aDO₂ = (FiO₂ × 713) − (PaCO₂ / 0.8) − PaO₂
+- Creatinine points doubled if acute renal failure (ARF) present
+
+## Reusable Functions
+
+```python
+def first_day_vitalsign(stay_id):
+    """
+    Extract vital sign information for the first day (24 hours) of an ICU stay.
+
+    This function retrieves heart rate, mean arterial pressure (MAP), and 
+    respiratory rate measurements from the chartevents table for the period 
+    from ICU admission (intime) to 24 hours after ICU admission.
+
+    Parameters
+    ----------
+    stay_id : int
+        The ICU stay identifier.
+
+    Returns
+    -------
+    dict
+        A dictionary containing first-day vital sign information:
+        - 'stay_id': The ICU stay ID (int)
+        - 'subject_id': Patient identifier (int)
+        - 'hadm_id': Hospital admission ID (int)
+        - 'intime': ICU admission time (str)
+        - 'first_day_end': End of first day (intime + 24 hours) (str)
+        - 'heart_rate': dict with 'min', 'max', 'avg', 'count'
+        - 'map': dict with 'min', 'max', 'avg', 'count' (mean arterial pressure)
+        - 'respiratory_rate': dict with 'min', 'max', 'avg', 'count'
+        - 'has_hypotension': Boolean - True if minimum MAP < 65 mmHg
+        - 'has_tachycardia': Boolean - True if maximum heart rate > 100 bpm
+        - 'has_tachypnea': Boolean - True if maximum respiratory rate > 22 breaths/min
+        - 'has_bradytachycardia': Boolean - True if heart rate < 60 or > 100 bpm
+
+    Raises
+    ------
+    ValueError
+        If stay_id is not provided or not found.
+    """
+```
+
+```python
+def first_day_lab(stay_id, subject_id, hadm_id):
+    """
+    Extract laboratory values for the first day (24 hours) of an ICU stay.
+
+    This function retrieves key laboratory measurements from the ICU chart events
+    during the first 24 hours after ICU admission. It provides summary statistics
+    and clinical flags for common lab abnormalities.
+
+    Parameters
+    ----------
+    stay_id : int, optional
+        The ICU stay identifier. If provided, data is filtered to this specific stay.
+    subject_id : int, optional
+        The patient identifier. Can be used alone or with hadm_id.
+    hadm_id : int, optional
+        The hospital admission identifier. Used with subject_id if stay_id not provided.
+
+    Returns
+    -------
+    dict
+        A dictionary containing the following keys:
+        - 'subject_id': patient identifier (int or None)
+        - 'hadm_id': hospital admission identifier (int or None)
+        - 'stay_id': ICU stay identifier (int or None)
+        - 'intime': ICU admission time (str or None)
+        - 'wbc_count': dict with WBC count statistics (K/uL or x10^9/L)
+            - 'values': list of all WBC values
+            - 'max': Maximum WBC value (float or None)
+            - 'min': Minimum WBC value (float or None)
+            - 'mean': Mean WBC value (float or None)
+            - 'count': Number of WBC measurements (int)
+            - 'has_elevated_wbc': Boolean indicating if any WBC > 12 K/uL
+        - 'platelet_count': dict with platelet count statistics (K/uL)
+            - 'values': list of all platelet values
+            - 'max': Maximum platelet value (float or None)
+            - 'min': Minimum platelet value (float or None)
+            - 'mean': Mean platelet value (float or None)
+            - 'count': Number of platelet measurements (int)
+            - 'has_thrombocytopenia': Boolean indicating if any platelet < 150 K/uL
+        - 'creatinine': dict with creatinine statistics (mg/dL)
+            - 'values': list of all creatinine values
+            - 'max': Maximum creatinine value (float or None)
+            - 'min': Minimum creatinine value (float or None)
+            - 'mean': Mean creatinine value (float or None)
+            - 'count': Number of creatinine measurements (int)
+        - 'all_values': DataFrame with all lab values during the first day
+            Columns: charttime, valuenum, parameter, unit
+
+    Raises
+    ------
+    ValueError
+        If no patient identifier is provided.
+
+    Notes
+    -----
+    This function uses the following item IDs from the MIMIC-IV database:
+    - WBC: 220546 (K/uL)
+    - Platelet Count: 227457 (K/uL)
+    - Creatinine (serum): 220615 (mg/dL)
+    - Creatinine (whole blood): 229761 (mg/dL)
+
+    Clinical thresholds used:
+    - Elevated WBC: > 12 K/uL (x10^9/L)
+    - Thrombocytopenia: platelet count < 150 K/uL
+    """
+```
+
+```python
+def vitalsign(stay_id):
+    """
+    Extract vital sign information for a patient's ICU stay.
+
+    This function queries the MIMIC-IV database to retrieve vital sign measurements
+    (heart rate, blood pressure) for a specific ICU stay and computes summary statistics
+    and clinical flags.
+
+    Parameters:
+    -----------
+    stay_id : int
+        The ICU stay identifier (stay_id from mimiciv_icu.icustays table)
+
+    Returns:
+    --------
+    dict : A dictionary containing:
+        - 'stay_id': The input stay_id
+        - 'heart_rate': dict with min, max, mean, count of heart rate measurements (bpm)
+        - 'has_tachycardia': bool - True if any heart rate > 100 bpm
+        - 'systolic_bp': dict with min, max, mean, count of systolic BP measurements (mmHg)
+        - 'diastolic_bp': dict with min, max, mean, count of diastolic BP measurements (mmHg)
+        - 'mean_arterial_pressure': dict with min, max, mean, count of MAP measurements (mmHg)
+        - 'has_hypotension': bool - True if any MAP < 65 mmHg
+        - 'vital_signs_data': DataFrame with all raw vital sign measurements
+
+    Clinical Definitions:
+    --------------------
+    - Hypotension: Mean arterial pressure (MAP) < 65 mmHg at any point during the stay
+    - Tachycardia: Heart rate > 100 bpm at any point during the stay
+
+    Vital Sign Item IDs Used:
+    -------------------------
+    - Heart rate: 220045 (bpm)
+    - Arterial BP systolic: 220050 (mmHg)
+    - Non-invasive BP systolic: 220179 (mmHg)
+    - Arterial BP diastolic: 220051 (mmHg)
+    - Non-invasive BP diastolic: 220180 (mmHg)
+    - Arterial BP mean: 220052 (mmHg)
+    - Non-invasive BP mean: 220181 (mmHg)
+
+    Notes:
+    ------
+    - If no measurements exist for a vital sign type, the stats dict will have
+      None values for min, max, mean and count of 0
+    - The function combines both arterial and non-invasive blood pressure measurements
+    """
+```
+
+## Test Results
+
+### Test Stay ID: 32359580
+- **subject_id**: 10007818
+- **hadm_id**: 22987108
+- **intime**: 2146-06-22 11:46:29
+- **first_day_end**: 2146-06-23 11:46:29
+
+### first_day_vitalsign Results
+```python
+{
+    'stay_id': 32359580,
+    'subject_id': 10007818,
+    'hadm_id': 22987108,
+    'intime': '2146-06-22 11:46:29',
+    'first_day_end': '2146-06-23 11:46:29',
+    'heart_rate': {'min': 72.0, 'max': 139.0, 'avg': 93.5, 'count': 28},
+    'map': {'min': 28.0, 'max': 124.0, 'avg': 69.17, 'count': 36},
+    'respiratory_rate': {'min': 0.0, 'max': 31.0, 'avg': 20.98, 'count': 46},
+    'has_hypotension': True,
+    'has_tachycardia': True,
+    'has_tachypnea': True,
+    'has_bradytachycardia': True
+}
+```
+
+### first_day_lab Results
+```python
+{
+    'subject_id': 10007818,
+    'hadm_id': 22987108,
+    'stay_id': 32359580,
+    'intime': '2146-06-22 11:46:29',
+    'wbc_count': {'values': [...], 'max': 23.1, 'min': 8.4, 'mean': 15.64, 'count': 9, 'has_elevated_wbc': True},
+    'platelet_count': {'values': [...], 'max': 394.0, 'min': 50.0, 'mean': 145.33, 'count': 9, 'has_thrombocytopenia': True},
+    'creatinine': {'values': [...], 'max': 4.5, 'min': 2.6, 'mean': 3.19, 'count': 9}
+}
+```
+
+### Data Availability for Test Stay
+- **FiO2**: Available (values: 100, 50, 60, 80, 70, 60, 60, 50 %)
+- **Urine Output**: NOT available in outputevents for this stay
+- **GCS**: Available (Eye: 3→1, Verbal: 4→1, Motor: 5→1)
+- **Sodium/Glucose/Bilirubin**: Available in chartevents
+- **Albumin**: Available but dates outside first 24h window
+
+## APACHE III Scoring Tables (Partial)
+
+### Heart Rate (beats/min)
+| Range | Points |
+|-------|--------|
+| ≤ 39 | 8 |
+| 40–49 | 5 |
+| 50–99 | 0 |
+| 100–109 | 1 |
+| 110–119 | 5 |
+| 120–139 | 7 |
+| 140–154 | 13 |
+| ≥ 155 | 17 |
+
+### Mean Arterial Pressure (mmHg)
+| Range | Points |
+|-------|--------|
+| ≤ 39 | 23 |
+| 40–59 | 15 |
+| 60–69 | 7 |
+| 70–79 | 6 |
+| 80–99 | 0 |
+| 100–119 | 4 |
+| 120–129 | 7 |
+| 130–139 | 9 |
+| ≥ 140 | 10 |
+
+### Temperature (°C)
+| Range | Points |
+|-------|--------|
+| ≤ 32.9 | 20 |
+| 33.0–33.4 | 16 |
+| 33.5–33.9 | 13 |
+| 34.0–34.9 | 8 |
+| 35.0–35.9 | 2 |
+| 36.0–39.9 | 0 |
+| ≥ 40.0 | 4 |
+
+### Respiratory Rate (breaths/min)
+| Range | Points |
+|-------|--------|
+| ≤ 5 | 17 |
+| 6–11 | 8 |
+| 12–13 | 7 |
+| 14–24 | 0 |
+| 25–34 | 6 |
+| 35–39 | 9 |
+| 40–49 | 11 |
+| ≥ 50 | 18 |
+
+### Oxygenation (FiO₂ < 0.5: PaO₂; FiO₂ ≥ 0.5: A-aDO₂)
+**PaO₂ (mmHg)**
+| Range | Points |
+|-------|--------|
+| ≥ 80 | 0 |
+| 70–79 | 2 |
+| 60–69 | 7 |
+| 50–59 | 11 |
+| < 50 | 15 |
+
+**A-aDO₂ (mmHg)**
+| Range | Points |
+|-------|--------|
+| < 100 | 0 |
+| 100–249 | 7 |
+| 250–349 | 9 |
+| 350–499 | 11 |
+| ≥ 500 | 14 |
+
+### Hematocrit (%)
+| Range | Points |
+|-------|--------|
+| < 41 | 3 |
+| 41–49 | 0 |
+| ≥ 50 | 3 |
+
+### WBC (×10³/mm³)
+| Range | Points |
+|-------|--------|
+| < 1.0 | 19 |
+| 1.0–2.9 | 5 |
+| 3.0–19.9 | 0 |
+| 20.0–24.9 | 1 |
+| ≥ 25.0 | 5 |
+
+### Creatinine (mg/dL) - Without ARF
+| Range | Points |
+|-------|--------|
+| ≤ 0.4 | 3 |
+| 0.5–1.4 | 0 |
+| 1.5–1.94 | 4 |
+| ≥ 1.95 | 7 |
+
+*With ARF: double all non-zero point values*
+
+### Urine Output (mL/24h)
+| Range | Points |
+|-------|--------|
+| < 400 | 15 |
+| 400–599 | 8 |
+| 600–899 | 7 |
+| 900–1499 | 5 |
+| 1500–1999 | 4 |
+| 2000–3999 | 0 |
+| ≥ 4000 | 1 |
+
+### BUN (mg/dL)
+| Range | Points |
+|-------|--------|
+| ≤ 16.9 | 0 |
+| 17–19 | 2 |
+| 20–39 | 7 |
+| 40–79 | 11 |
+| ≥ 80 | 12 |
+
+## Notes
+- Guideline truncated at Section 4.1.11 (Serum Sodium) - need to retrieve remaining scoring tables
+- Urine output data may not be available in outputevents for all stays
+- Albumin and Bilirubin are optional variables with default imputation rules
+- Need to implement scoring functions for all 17 APS variables, age points, and chronic health evaluation
+- Need to determine ARF status for creatinine scoring
+- Need to implement A-aDO₂ calculation when FiO₂ ≥ 0.5
+
+=== Step 2 ===
+# Clinical Coding Agent Memory - APACHE III Implementation
+
+## Schema Facts
+
+### Tables
+- **mimiciv_icu.icustays**: subject_id, hadm_id, stay_id, first_careunit, last_careunit, intime, outtime, los
+- **mimiciv_icu.chartevents**: subject_id, hadm_id, stay_id, caregiver_id, charttime, storetime, itemid, value, valuenum, valueuom
+- **mimiciv_icu.outputevents**: subject_id, hadm_id, stay_id, caregiver_id, charttime, storetime, itemid, value, valueuom
+- **mimiciv_icu.d_items**: itemid, label, category
+- **mimiciv_hosp.d_labitems**: itemid, label, category
+- **mimiciv_hosp.patients**: subject_id, gender, anchor_age, anchor_year, anchor_year_group, dod
+- **mimiciv_hosp.admissions**: subject_id, hadm_id, admittime, dischtime, deathtime, admission_type, admit_provider_id, admission_location, discharge_location, insurance, language, marital_status, race, edregtime, edouttime, hospital_expire_flag
+
+### Key Item IDs
+| Variable | Item ID | Unit | Source |
+|----------|---------|------|--------|
+| Heart Rate | 220045 | bpm | chartevents |
+| MAP (Arterial) | 220052 | mmHg | chartevents |
+| MAP (Non-invasive) | 220181 | mmHg | chartevents |
+| Temperature (Celsius) | 223762 | °C | chartevents |
+| Respiratory Rate | 220210 | breaths/min | chartevents |
+| PaO2 | 220224 | mmHg | chartevents |
+| PaCO2 | 220235 | mmHg | chartevents |
+| pH (Arterial) | 223830 | pH | chartevents |
+| FiO2 | 223835 | % | chartevents |
+| Hematocrit | 220545 | % | chartevents |
+| WBC | 220546 | K/uL | chartevents |
+| Creatinine | 220615 | mg/dL | chartevents |
+| BUN | 225624 | mg/dL | chartevents |
+| Sodium | 220645 | mEq/L | chartevents |
+| Glucose | 220621 | mg/dL | chartevents |
+| Albumin | 227456 | g/dL | chartevents |
+| Bilirubin | 225690 | mg/dL | chartevents |
+| GCS Eye | 220739 | score | chartevents |
+| GCS Verbal | 223900 | score | chartevents |
+| GCS Motor | 223901 | score | chartevents |
+| Urine Output | 226566, 226627, 226631, 227489 | mL | outputevents |
+
+### APACHE III Scoring Ranges
+- **Total Score**: 0-299 points
+- **Acute Physiology Score (APS)**: 0-252 points (17 variables)
+- **Age Points**: 0-24 points
+- **Chronic Health Evaluation**: 0-23 points
+
+### Scoring Rules
+- All acute physiology variables use **worst (most abnormal) value** in first 24 hours of ICU admission
+- GCS uses **lowest** value in first 24 hours
+- If FiO₂ < 0.5: use PaO₂ for oxygenation scoring
+- If FiO₂ ≥ 0.5: use A-aDO₂ for oxygenation scoring
+- A-aDO₂ = (FiO₂ × 713) − (PaCO₂ / 0.8) − PaO₂
+- Creatinine points doubled if acute renal failure (ARF) present
+
+## Complete APACHE III Scoring Tables
+
+### Heart Rate (beats/min)
+| Range | Points |
+|-------|--------|
+| ≤ 39 | 8 |
+| 40–49 | 5 |
+| 50–99 | 0 |
+| 100–109 | 1 |
+| 110–119 | 5 |
+| 120–139 | 7 |
+| 140–154 | 13 |
+| ≥ 155 | 17 |
+
+### Mean Arterial Pressure (mmHg)
+| Range | Points |
+|-------|--------|
+| ≤ 39 | 23 |
+| 40–59 | 15 |
+| 60–69 | 7 |
+| 70–79 | 6 |
+| 80–99 | 0 |
+| 100–119 | 4 |
+| 120–129 | 7 |
+| 130–139 | 9 |
+| ≥ 140 | 10 |
+
+### Temperature (°C)
+| Range | Points |
+|-------|--------|
+| ≤ 32.9 | 20 |
+| 33.0–33.4 | 16 |
+| 33.5–33.9 | 13 |
+| 34.0–34.9 | 8 |
+| 35.0–35.9 | 2 |
+| 36.0–39.9 | 0 |
+| ≥ 40.0 | 4 |
+
+### Respiratory Rate (breaths/min)
+| Range | Points |
+|-------|--------|
+| ≤ 5 | 17 |
+| 6–11 | 8 |
+| 12–13 | 7 |
+| 14–24 | 0 |
+| 25–34 | 6 |
+| 35–39 | 9 |
+| 40–49 | 11 |
+| ≥ 50 | 18 |
+
+### Oxygenation (FiO₂ < 0.5: PaO₂; FiO₂ ≥ 0.5: A-aDO₂)
+**PaO₂ (mmHg)**
+| Range | Points |
+|-------|--------|
+| ≥ 80 | 0 |
+| 70–79 | 2 |
+| 60–69 | 7 |
+| 50–59 | 11 |
+| < 50 | 15 |
+
+**A-aDO₂ (mmHg)**
+| Range | Points |
+|-------|--------|
+| < 100 | 0 |
+| 100–249 | 7 |
+| 250–349 | 9 |
+| 350–499 | 11 |
+| ≥ 500 | 14 |
+
+### Hematocrit (%)
+| Range | Points |
+|-------|--------|
+| < 41 | 3 |
+| 41–49 | 0 |
+| ≥ 50 | 3 |
+
+### WBC (×10³/mm³)
+| Range | Points |
+|-------|--------|
+| < 1.0 | 19 |
+| 1.0–2.9 | 5 |
+| 3.0–19.9 | 0 |
+| 20.0–24.9 | 1 |
+| ≥ 25.0 | 5 |
+
+### Creatinine (mg/dL) - Without ARF
+| Range | Points |
+|-------|--------|
+| ≤ 0.4 | 3 |
+| 0.5–1.4 | 0 |
+| 1.5–1.94 | 4 |
+| ≥ 1.95 | 7 |
+
+*With ARF: double all non-zero point values*
+
+### Urine Output (mL/24h)
+| Range | Points |
+|-------|--------|
+| < 400 | 15 |
+| 400–599 | 8 |
+| 600–899 | 7 |
+| 900–1499 | 5 |
+| 1500–1999 | 4 |
+| 2000–3999 | 0 |
+| ≥ 4000 | 1 |
+
+### BUN (mg/dL)
+| Range | Points |
+|-------|--------|
+| ≤ 16.9 | 0 |
+| 17–19 | 2 |
+| 20–39 | 7 |
+| 40–79 | 11 |
+| ≥ 80 | 12 |
+
+### Serum Sodium (mEq/L)
+| Range | Points |
+|-------|--------|
+| ≤ 119 | 3 |
+| 120–134 | 2 |
+| 135–145 | 0 |
+| 146–154 | 1 |
+| ≥ 155 | 4 |
+
+### Serum Albumin (g/dL)
+| Range | Points |
+|-------|--------|
+| < 2.0 | 11 |
+| 2.0–2.4 | 6 |
+| 2.5–4.4 | 0 |
+| ≥ 4.5 | 0 |
+
+*Default: If not measured, assign 0 points (assume normal)*
+
+### Total Bilirubin (mg/dL)
+| Range | Points |
+|-------|--------|
+| < 2.0 | 0 |
+| 2.0–2.9 | 5 |
+| 3.0–4.9 | 6 |
+| 5.0–7.9 | 8 |
+| ≥ 8.0 | 16 |
+
+*Default: If not measured, assign 0 points (assume normal)*
+
+### Serum Glucose (mg/dL)
+| Range | Points |
+|-------|--------|
+| ≤ 39 | 8 |
+| 40–59 | 9 |
+| 60–199 | 0 |
+| 200–349 | 3 |
+| ≥ 350 | 5 |
+
+### Acid-Base Status (pH × PaCO₂ Matrix)
+| pH | PaCO₂ < 25 | 25–29 | 30–34 | 35–39 | 40–44 | 45–49 | 50–54 | 55–59 | 60–64 | ≥ 65 |
+|---|---|---|---|---|---|---|---|---|---|---|
+| < 7.15 | 12 | 4 | 6 | 7 | 7 | 0 | 0 | 0 | 0 | 0 |
+| 7.15–7.19 | 12 | 4 | 3 | 3 | 2 | 0 | 0 | 0 | 0 | 0 |
+| 7.20–7.24 | 12 | 2 | 1 | 1 | 0 | 0 | 0 | 0 | 0 | 0 |
+| 7.25–7.29 | 9 | 2 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| 7.30–7.34 | 7 | 2 | 0 | 0 | 0 | 1 | 1 | 0 | 0 | 0 |
+| 7.35–7.39 | 7 | 0 | 0 | 0 | 0 | 0 | 1 | 3 | 0 | 0 |
+| 7.40–7.44 | 6 | 0 | 0 | 0 | 0 | 0 | 1 | 3 | 5 | 0 |
+| 7.45–7.49 | 3 | 0 | 0 | 0 | 0 | 0 | 2 | 5 | 7 | 9 |
+| 7.50–7.54 | 3 | 2 | 2 | 2 | 0 | 0 | 3 | 7 | 9 | 11 |
+| 7.55–7.59 | 0 | 3 | 3 | 3 | 2 | 3 | 5 | 9 | 11 | 12 |
+| 7.60–7.64 | 0 | 3 | 5 | 5 | 3 | 5 | 7 | 11 | 12 | 12 |
+| ≥ 7.65 | 0 | 3 | 12 | 12 | 12 | 12 | 12 | 12 | 12 | 12 |
+
+### Glasgow Coma Scale (GCS)
+| GCS Score | APS Points |
+|---|---|
+| 15 | 0 |
+| 14 | 3 |
+| 13 | 5 |
+| 12 | 7 |
+| 11 | 10 |
+| 10 | 13 |
+| 9 | 15 |
+| 8 | 18 |
+| 7 | 22 |
+| 6 | 26 |
+| 5 | 33 |
+| 4 | 39 |
+| 3 | 48 |
+
+### Age Points
+| Age (years) | Points |
+|---|---|
+| < 45 | 0 |
+| 45–59 | 5 |
+| 60–64 | 11 |
+| 65–69 | 13 |
+| 70–74 | 16 |
+| 75–84 | 17 |
+| ≥ 85 | 24 |
+
+### Chronic Health Evaluation Points
+| Condition | Elective Postoperative | Emergency Postoperative or Non-operative |
+|---|---|---|
+| AIDS | 23 | 11 |
+| Hepatic failure | 4 | 4 |
+| Lymphoma | 13 | 13 |
+| Metastatic cancer | 11 | 14 |
+| Leukemia / myeloma | 10 | 10 |
+| Immunosuppression | 10 | 10 |
+
+*Only the single highest applicable chronic health score is used (not additive across conditions)*
+
+## Reusable Functions
+
+```python
+def first_day_vitalsign(stay_id):
+    """
+    Extract vital sign information for the first day (24 hours) of an ICU stay.
+
+    This function retrieves heart rate, mean arterial pressure (MAP), and 
+    respiratory rate measurements from the chartevents table for the period 
+    from ICU admission (intime) to 24 hours after ICU admission.
+
+    Parameters
+    ----------
+    stay_id : int
+        The ICU stay identifier.
+
+    Returns
+    -------
+    dict
+        A dictionary containing first-day vital sign information:
+        - 'stay_id': The ICU stay ID (int)
+        - 'subject_id': Patient identifier (int)
+        - 'hadm_id': Hospital admission ID (int)
+        - 'intime': ICU admission time (str)
+        - 'first_day_end': End of first day (intime + 24 hours) (str)
+        - 'heart_rate': dict with 'min', 'max', 'avg', 'count'
+        - 'map': dict with 'min', 'max', 'avg', 'count' (mean arterial pressure)
+        - 'respiratory_rate': dict with 'min', 'max', 'avg', 'count'
+        - 'has_hypotension': Boolean - True if minimum MAP < 65 mmHg
+        - 'has_tachycardia': Boolean - True if maximum heart rate > 100 bpm
+        - 'has_tachypnea': Boolean - True if maximum respiratory rate > 22 breaths/min
+        - 'has_bradytachycardia': Boolean - True if heart rate < 60 or > 100 bpm
+
+    Raises
+    ------
+    ValueError
+        If stay_id is not provided or not found.
+    """
+```
+
+```python
+def first_day_lab(stay_id, subject_id, hadm_id):
+    """
+    Extract laboratory values for the first day (24 hours) of an ICU stay.
+
+    This function retrieves key laboratory measurements from the ICU chart events
+    during the first 24 hours after ICU admission. It provides summary statistics
+    and clinical flags for common lab abnormalities.
+
+    Parameters
+    ----------
+    stay_id : int, optional
+        The ICU stay identifier. If provided, data is filtered to this specific stay.
+    subject_id : int, optional
+        The patient identifier. Can be used alone or with hadm_id.
+    hadm_id : int, optional
+        The hospital admission identifier. Used with subject_id if stay_id not provided.
+
+    Returns
+    -------
+    dict
+        A dictionary containing the following keys:
+        - 'subject_id': patient identifier (int or None)
+        - 'hadm_id': hospital admission identifier (int or None)
+        - 'stay_id': ICU stay identifier (int or None)
+        - 'intime': ICU admission time (str or None)
+        - 'wbc_count': dict with WBC count statistics (K/uL or x10^9/L)
+            - 'values': list of all WBC values
+            - 'max': Maximum WBC value (float or None)
+            - 'min': Minimum WBC value (float or None)
+            - 'mean': Mean WBC value (float or None)
+            - 'count': Number of WBC measurements (int)
+            - 'has_elevated_wbc': Boolean indicating if any WBC > 12 K/uL
+        - 'platelet_count': dict with platelet count statistics (K/uL)
+            - 'values': list of all platelet values
+            - 'max': Maximum platelet value (float or None)
+            - 'min': Minimum platelet value (float or None)
+            - 'mean': Mean platelet value (float or None)
+            - 'count': Number of platelet measurements (int)
+            - 'has_thrombocytopenia': Boolean indicating if any platelet < 150 K/uL
+        - 'creatinine': dict with creatinine statistics (mg/dL)
+            - 'values': list of all creatinine values
+            - 'max': Maximum creatinine value (float or None)
+            - 'min': Minimum creatinine value (float or None)
+            - 'mean': Mean creatinine value (float or None)
+            - 'count': Number of creatinine measurements (int)
+        - 'all_values': DataFrame with all lab values during the first day
+            Columns: charttime, valuenum, parameter, unit
+
+    Raises
+    ------
+    ValueError
+        If no patient identifier is provided.
+
+    Notes
+    -----
+    This function uses the following item IDs from the MIMIC-IV database:
+    - WBC: 220546 (K/uL)
+    - Platelet Count: 227457 (K/uL)
+    - Creatinine (serum): 220615 (mg/dL)
+    - Creatinine (whole blood): 229761 (mg/dL)
+
+    Clinical thresholds used:
+    - Elevated WBC: > 12 K/uL (x10^9/L)
+    - Thrombocytopenia: platelet count < 150 K/uL
+    """
+```
+
+```python
+def compute_apache_iii(stay_id):
+    """
+    Compute APACHE III score for a given ICU stay.
+    
+    Parameters
+    ----------
+    stay_id : int
+        The ICU stay identifier.
+    
+    Returns
+    -------
+    dict
+        Dictionary containing:
+        - 'stay_id': The ICU stay ID
+        - 'subject_id': Patient identifier
+        - 'hadm_id': Hospital admission ID
+        - 'intime': ICU admission time
+        - 'aps_score': Acute Physiology Score (0-252)
+        - 'age_points': Age points (0-24)
+        - 'chronic_health_points': Chronic health points (0-23)
+        - 'total_score': Total APACHE III score (0-299)
+        - 'component_scores': Dictionary with individual component scores
+    """
+    # Get ICU stay information
+    sql = """
+    SELECT subject_id, hadm_id, intime
+    FROM mimiciv_icu.icustays
+    WHERE stay_id = ?
+    """
+    stay_info = query_db(sql, params=[stay_id])
+    
+    if len(stay_info) == 0:
+        raise ValueError(f"Stay ID {stay_id} not found")
+    
+    subject_id = int(stay_info.iloc[0]['subject_id'])
+    hadm_id = int(stay_info.iloc[0]['hadm_id'])
+    intime = stay_info.iloc[0]['intime']
+    
+    # Get patient age
+    sql = """
+    SELECT anchor_age
+    FROM mimiciv_hosp.patients
+    WHERE subject_id = ?
+    """
+    patient_info = query_db(sql, params=[subject_id])
+    age = int(patient_info.iloc[0]['anchor_age']) if len(patient_info) > 0 else None
+    
+    # Get first day vital signs
+    vitals = first_day_vitalsign(stay_id)
+    
+    # Get temperature - most extreme from normal (37°C)
+    sql = """
+    SELECT valuenum
+    FROM mimiciv_icu.chartevents
+    WHERE stay_id = ?
+      AND itemid = 223762
+      AND charttime >= ?
+      AND charttime <= ?
+      AND valuenum IS NOT NULL
+    """
+    temp_df = query_db(sql, params=[stay_id, intime, first_day_end])
+    temp_values = temp_df['valuenum'].tolist()
+    if temp_values:
+        temp = min(temp_values, key=lambda x: abs(x - 37))
+    else:
+        temp = None
+    
+    # Get lab values
+    labs = first_day_lab(stay_id, subject_id, hadm_id)
+    
+    # Get additional lab values
+    sql = """
+    SELECT itemid, valuenum
+    FROM mimiciv_icu.chartevents
+    WHERE stay_id = ?
+      AND itemid IN (220545, 225624, 220645, 220621, 227456, 225690)
+      AND charttime >= ?
+      AND charttime <= ?
+      AND valuenum IS NOT NULL
+    """
+    lab_df = query_db(sql, params=[stay_id, intime, first_day_end])
+    
+    # Create lookup for lab values
+    lab_lookup = {}
+
+=== Step 3 ===
+# Clinical Coding Agent Memory - APACHE III Implementation
+
+## Schema Facts
+
+### Tables
+- **mimiciv_icu.icustays**: subject_id, hadm_id, stay_id, first_careunit, last_careunit, intime, outtime, los
+- **mimiciv_icu.chartevents**: subject_id, hadm_id, stay_id, caregiver_id, charttime, storetime, itemid, value, valuenum, valueuom
+- **mimiciv_icu.outputevents**: subject_id, hadm_id, stay_id, caregiver_id, charttime, storetime, itemid, value, valueuom
+- **mimiciv_icu.d_items**: itemid, label, category
+- **mimiciv_hosp.d_labitems**: itemid, label, category
+- **mimiciv_hosp.patients**: subject_id, gender, anchor_age, anchor_year, anchor_year_group, dod
+- **mimiciv_hosp.admissions**: subject_id, hadm_id, admittime, dischtime, deathtime, admission_type, admit_provider_id, admission_location, discharge_location, insurance, language, marital_status, race, edregtime, edouttime, hospital_expire_flag
+- **mimiciv_hosp.diagnoses_icd**: hadm_id, icd_code
+
+### Key Item IDs
+| Variable | Item ID | Unit | Source |
+|----------|---------|------|--------|
+| Heart Rate | 220045 | bpm | chartevents |
+| MAP (Arterial) | 220052 | mmHg | chartevents |
+| MAP (Non-invasive) | 220181 | mmHg | chartevents |
+| Temperature (Celsius) | 223762 | °C | chartevents |
+| Respiratory Rate | 220210 | breaths/min | chartevents |
+| PaO2 | 220224 | mmHg | chartevents |
+| PaCO2 | 220235 | mmHg | chartevents |
+| pH (Arterial) | 223830 | pH | chartevents |
+| FiO2 | 223835 | % | chartevents |
+| Hematocrit | 220545 | % | chartevents |
+| WBC | 220546 | K/uL | chartevents |
+| Creatinine | 220615 | mg/dL | chartevents |
+| BUN | 225624 | mg/dL | chartevents |
+| Sodium | 220645 | mEq/L | chartevents |
+| Glucose | 220621 | mg/dL | chartevents |
+| Albumin | 227456 | g/dL | chartevents |
+| Bilirubin | 225690 | mg/dL | chartevents |
+| GCS Eye | 220739 | score | chartevents |
+| GCS Verbal | 223900 | score | chartevents |
+| GCS Motor | 223901 | score | chartevents |
+| Urine Output | 226566, 226627, 226631, 227489 | mL | outputevents |
+
+### APACHE III Scoring Ranges
+- **Total Score**: 0-299 points
+- **Acute Physiology Score (APS)**: 0-252 points (17 variables)
+- **Age Points**: 0-24 points
+- **Chronic Health Evaluation**: 0-23 points
+
+### Scoring Rules
+- All acute physiology variables use **worst (most abnormal) value** in first 24 hours of ICU admission
+- GCS uses **lowest** value in first 24 hours
+- If FiO₂ < 0.5: use PaO₂ for oxygenation scoring
+- If FiO₂ ≥ 0.5: use A-aDO₂ for oxygenation scoring
+- A-aDO₂ = (FiO₂ × 713) − (PaCO₂ / 0.8) − PaO₂
+- Creatinine points doubled if acute renal failure (ARF) present
+- **ICD codes in MIMIC stored without decimal points** (e.g., 571.5 → 5715)
+
+## Complete Function Source Code
+
+```python
+def apache_iii_heart_rate(hr):
+    """Calculate APACHE III points for heart rate"""
+    if hr is None:
+        return 0
+    if hr <= 39:
+        return 8
+    elif hr <= 49:
+        return 5
+    elif hr <= 99:
+        return 0
+    elif hr <= 109:
+        return 1
+    elif hr <= 119:
+        return 5
+    elif hr <= 139:
+        return 7
+    elif hr <= 154:
+        return 13
+    else:  # >= 155
+        return 17
+
+def apache_iii_map(map_val):
+    """Calculate APACHE III points for mean arterial pressure"""
+    if map_val is None:
+        return 0
+    if map_val <= 39:
+        return 23
+    elif map_val <= 59:
+        return 15
+    elif map_val <= 69:
+        return 7
+    elif map_val <= 79:
+        return 6
+    elif map_val <= 99:
+        return 0
+    elif map_val <= 119:
+        return 4
+    elif map_val <= 129:
+        return 7
+    elif map_val <= 139:
+        return 9
+    else:  # >= 140
+        return 10
+
+def apache_iii_temperature(temp):
+    """Calculate APACHE III points for temperature (Celsius)"""
+    if temp is None:
+        return 0
+    if temp <= 32.9:
+        return 20
+    elif temp <= 33.4:
+        return 16
+    elif temp <= 33.9:
+        return 13
+    elif temp <= 34.9:
+        return 8
+    elif temp <= 35.9:
+        return 2
+    elif temp <= 39.9:
+        return 0
+    else:  # >= 40.0
+        return 4
+
+def apache_iii_respiratory_rate(rr):
+    """Calculate APACHE III points for respiratory rate"""
+    if rr is None:
+        return 0
+    if rr <= 5:
+        return 17
+    elif rr <= 11:
+        return 8
+    elif rr <= 13:
+        return 7
+    elif rr <= 24:
+        return 0
+    elif rr <= 34:
+        return 6
+    elif rr <= 39:
+        return 9
+    elif rr <= 49:
+        return 11
+    else:  # >= 50
+        return 18
+
+def apache_iii_pao2(pao2):
+    """Calculate APACHE III points for PaO2 (when FiO2 < 0.5)"""
+    if pao2 is None:
+        return 0
+    if pao2 >= 80:
+        return 0
+    elif pao2 >= 70:
+        return 2
+    elif pao2 >= 60:
+        return 7
+    elif pao2 >= 50:
+        return 11
+    else:  # < 50
+        return 15
+
+def apache_iii_aado2(aado2):
+    """Calculate APACHE III points for A-aDO2 (when FiO2 >= 0.5)"""
+    if aado2 is None:
+        return 0
+    if aado2 < 100:
+        return 0
+    elif aado2 <= 249:
+        return 7
+    elif aado2 <= 349:
+        return 9
+    elif aado2 <= 499:
+        return 11
+    else:  # >= 500
+        return 14
+
+def apache_iii_hematocrit(hct):
+    """Calculate APACHE III points for hematocrit"""
+    if hct is None:
+        return 0
+    if hct < 41:
+        return 3
+    elif hct <= 49:
+        return 0
+    else:  # >= 50
+        return 3
+
+def apache_iii_wbc(wbc):
+    """Calculate APACHE III points for WBC"""
+    if wbc is None:
+        return 0
+    if wbc < 1.0:
+        return 19
+    elif wbc <= 2.9:
+        return 5
+    elif wbc <= 19.9:
+        return 0
+    elif wbc <= 24.9:
+        return 1
+    else:  # >= 25.0
+        return 5
+
+def apache_iii_creatinine(creat, has_arf=False):
+    """Calculate APACHE III points for creatinine"""
+    if creat is None:
+        return 0
+    if creat <= 0.4:
+        return 3
+    elif creat <= 1.4:
+        return 0
+    elif creat <= 1.94:
+        points = 4
+    else:  # >= 1.95
+        points = 7
+    
+    if has_arf and points > 0:
+        return points * 2
+    return points
+
+def apache_iii_urine_output(urine):
+    """Calculate APACHE III points for urine output (mL/24h)"""
+    if urine is None:
+        return 0
+    if urine < 400:
+        return 15
+    elif urine <= 599:
+        return 8
+    elif urine <= 899:
+        return 7
+    elif urine <= 1499:
+        return 5
+    elif urine <= 1999:
+        return 4
+    elif urine <= 3999:
+        return 0
+    else:  # >= 4000
+        return 1
+
+def apache_iii_bun(bun):
+    """Calculate APACHE III points for BUN"""
+    if bun is None:
+        return 0
+    if bun <= 16.9:
+        return 0
+    elif bun <= 19:
+        return 2
+    elif bun <= 39:
+        return 7
+    elif bun <= 79:
+        return 11
+    else:  # >= 80
+        return 12
+
+def apache_iii_sodium(na):
+    """Calculate APACHE III points for sodium"""
+    if na is None:
+        return 0
+    if na <= 119:
+        return 3
+    elif na <= 134:
+        return 2
+    elif na <= 145:
+        return 0
+    elif na <= 154:
+        return 1
+    else:  # >= 155
+        return 4
+
+def apache_iii_albumin(albumin):
+    """Calculate APACHE III points for albumin"""
+    if albumin is None:
+        return 0
+    if albumin < 2.0:
+        return 11
+    elif albumin <= 2.4:
+        return 6
+    else:  # >= 2.5
+        return 0
+
+def apache_iii_bilirubin(bili):
+    """Calculate APACHE III points for bilirubin"""
+    if bili is None:
+        return 0
+    if bili < 2.0:
+        return 0
+    elif bili <= 2.9:
+        return 5
+    elif bili <= 4.9:
+        return 6
+    elif bili <= 7.9:
+        return 8
+    else:  # >= 8.0
+        return 16
+
+def apache_iii_glucose(glucose):
+    """Calculate APACHE III points for glucose"""
+    if glucose is None:
+        return 0
+    if glucose <= 39:
+        return 8
+    elif glucose <= 59:
+        return 9
+    elif glucose <= 199:
+        return 0
+    elif glucose <= 349:
+        return 3
+    else:  # >= 350
+        return 5
+
+def apache_iii_acid_base(ph, paco2):
+    """Calculate APACHE III points for acid-base status (pH x PaCO2 matrix)"""
+    if ph is None or paco2 is None:
+        return 0
+    
+    # pH row
+    if ph < 7.15:
+        ph_row = 0
+    elif ph <= 7.19:
+        ph_row = 1
+    elif ph <= 7.24:
+        ph_row = 2
+    elif ph <= 7.29:
+        ph_row = 3
+    elif ph <= 7.34:
+        ph_row = 4
+    elif ph <= 7.39:
+        ph_row = 5
+    elif ph <= 7.44:
+        ph_row = 6
+    elif ph <= 7.49:
+        ph_row = 7
+    elif ph <= 7.54:
+        ph_row = 8
+    elif ph <= 7.59:
+        ph_row = 9
+    elif ph <= 7.64:
+        ph_row = 10
+    else:  # >= 7.65
+        ph_row = 11
+    
+    # PaCO2 column
+    if paco2 < 25:
+        paco2_col = 0
+    elif paco2 <= 29:
+        paco2_col = 1
+    elif paco2 <= 34:
+        paco2_col = 2
+    elif paco2 <= 39:
+        paco2_col = 3
+    elif paco2 <= 44:
+        paco2_col = 4
+    elif paco2 <= 49:
+        paco2_col = 5
+    elif paco2 <= 54:
+        paco2_col = 6
+    elif paco2 <= 59:
+        paco2_col = 7
+    elif paco2 <= 64:
+        paco2_col = 8
+    else:  # >= 65
+        paco2_col = 9
+    
+    # Acid-base matrix
+    acid_base_matrix = [
+        [12, 4, 6, 7, 7, 0, 0, 0, 0, 0],   # < 7.15
+        [12, 4, 3, 3, 2, 0, 0, 0, 0, 0],   # 7.15-7.19
+        [12, 2, 1, 1, 0, 0, 0, 0, 0, 0],   # 7.20-7.24
+        [9, 2, 1, 0, 0, 0, 0, 0, 0, 0],    # 7.25-7.29
+        [7, 2, 0, 0, 0, 1, 1, 0, 0, 0],    # 7.30-7.34
+        [7, 0, 0, 0, 0, 0, 1, 3, 0, 0],    # 7.35-7.39
+        [6, 0, 0, 0, 0, 0, 1, 3, 5, 0],    # 7.40-7.44
+        [3, 0, 0, 0, 0, 0, 2, 5, 7, 9],    # 7.45-7.49
+        [3, 2, 2, 2, 0, 0, 3, 7, 9, 11],   # 7.50-7.54
+        [0, 3, 3, 3, 2, 3, 5, 9, 11, 12],  # 7.55-7.59
+        [0, 3, 5, 5, 3, 5, 7, 11, 12, 12], # 7.60-7.64
+        [0, 3, 12, 12, 12, 12, 12, 12, 12, 12]  # >= 7.65
+    ]
+    
+    return acid_base_matrix[ph_row][paco2_col]
+
+def apache_iii_gcs(gcs_total):
+    """Calculate APACHE III points for GCS"""
+    if gcs_total is None:
+        return 0
+    gcs_points = {
+        15: 0, 14: 3, 13: 5, 12: 7, 11: 10, 10: 13,
+        9: 15, 8: 18, 7: 22, 6: 26, 5: 33, 4: 39, 3: 48
+    }
+    return gcs_points.get(gcs_total, 0)
+
+def apache_iii_age(age):
+    """Calculate APACHE III points for age"""
+    if age is None:
+        return 0
+    if age < 45:
+        return 0
+    elif age <= 59:
+        return 5
+    elif age <= 64:
+        return 11
+    elif age <= 69:
+        return 13
+    elif age <= 74:
+        return 16
+    elif age <= 84:
+        return 17
+    else:  # >= 85
+        return 24
+
+def compute_apache_iii(stay_id):
+    """
+    Compute APACHE III score for a given ICU stay.
+    
+    Parameters
+    ----------
+    stay_id : int
+        The ICU stay identifier.
+    
+    Returns
+    -------
+    dict
+        Dictionary containing:
+        - 'stay_id': The ICU stay ID
+        - 'subject_id': Patient identifier
+        - 'hadm_id': Hospital admission ID
+        - 'intime': ICU admission time
+        - 'aps_score': Acute Physiology Score (0-252)
+        - 'age_points': Age points (0-24)
+        - 'chronic_health_points': Chronic health points (0-23)
+        - 'total_score': Total APACHE III score (0-299)
+        - 'component_scores': Dictionary with individual component scores
+    """
+    from datetime import datetime, timedelta
+    
+    # Get ICU stay information
+    sql = """
+    SELECT subject_id, hadm_id, intime
+    FROM mimiciv_icu.icustays
+    WHERE stay_id = ?
+    """
+    stay_info = query_db(sql, params=[stay_id])
+    
+    if len(stay_info) == 0:
+        raise ValueError(f"Stay ID {stay_id} not found")
+    
+    subject_id = int(stay_info.iloc[0]['subject_id'])
+    hadm_id = int(stay_info.iloc[0]['hadm_id'])
+    intime = stay_info.iloc[0]['intime']
+    
+    # Calculate first day end time (24 hours from ICU admission)
+    intime_dt = datetime.strptime(str(intime), '%Y-%m-%d %H:%M:%S')
+    first_day_end = intime_dt + timedelta(hours=24)
+    first_day_end_str = first_day_end.strftime('%Y-%m-%d %H:%M:%S')
+    
+    # Get patient age
+    sql = """
+    SELECT anchor_age
+    FROM mimiciv_hosp.patients
+    WHERE subject_id = ?
+    """
+    patient_info = query_db(sql, params=[subject_id])
+    age = int(patient_info.iloc[0]['anchor_age']) if len(patient_info) > 0 else None
+    
+    # Get admission type for chronic health evaluation
+    sql = """
+    SELECT admission_type
+    FROM mimiciv_hosp.admissions
+    WHERE hadm_id = ?
+    """
+    admission_info = query_db(sql, params=[hadm_id])
+    admission_type = admission_info.iloc[0]['admission_type'] if len(admission_info) > 0 else None
+    
+    # Determine if postoperative (elective vs emergency)
+    is_elective_postop = 'ELECT' in str(admission_type).upper() if admission_type else False
+    is_emergency_postop = 'EMER' in str(admission_type).upper() if admission_type else False
+    is_non_operative = not is_elective_postop and not is_emergency_postop
+    
+    # Get all chartevents for first 24 hours
+    sql = """
+    SELECT itemid, valuenum, charttime
+    FROM mimiciv_icu.chartevents
+    WHERE stay_id = ?
+      AND charttime >= ?
+      AND charttime <= ?
+      AND valuenum IS NOT NULL
+    """
+    chartevents = query_db(sql, params=[stay_id, intime, first_day_end_str])
+    
+    # Create lookup for chartevents by itemid
+    def get_values(itemids):
+        """Get all values for given itemids"""
+        if isinstance(itemids, int):
+            itemids = [itemids]
+        df = chartevents[chartevents['itemid'].isin(itemids)]
+        return df
+    
+    # Get vital signs
+    hr_df = get_values(220045)  # Heart Rate
+    map_df = get_values([220052, 220181])  # MAP (arterial and non-invasive)
+    rr_df = get_values(220210)  # Respiratory Rate
+    temp_df = get_values(223762)  # Temperature Celsius
+    
+    # Get lab values
+    hct_df = get_values(220545)  # Hematocrit
+    wbc_df = get_values(220546)  # WBC
+    creat_df = get_values(220615)  # Creatinine
+    bun_df = get_values(225624)  # BUN
+    na_df = get_values(220645)  # Sodium
+    glucose_df = get_values(220621)  # Glucose
+    albumin_df = get_values(227456)  # Albumin
+    bili_df = get_values(225690)  # Bilirubin
+    
+    # Get ABG values
+    ph_df = get_values(223830)  # pH
+    paco2_df = get_values(220235)  # PaCO2
+    pao2_df = get_values(220224)  # PaO2
+    fio2_df = get_values(223835)  # FiO2
+    
+    # Get GCS components
+    gcs_eye_df = get_values(220739)  # GCS Eye
+    gcs_verbal_df = get_values(223900)  # GCS Verbal
+    gcs_motor_df = get_values(223901)  # GCS Motor
+    
+    # Calculate worst values for each parameter
+    
+    # Heart Rate - find value with highest points
+    hr_values = hr_df['valuenum'].tolist() if len(hr_df) > 0 else []
+    hr_points = [apache_iii_heart_rate(hr) for hr in hr_values] if hr_values else [0]
+    hr_score = max(hr_points)
+    
+    # MAP - find value with highest points
+    map_values = map_df['valuenum'].tolist() if len(map_df) > 0 else []
+    map_points = [apache_iii_map(m) for m in map_values] if map_values else [0]
+    map_score = max(map_points)
+    
+    # Temperature - find value furthest from normal (37°C)
+    temp_values = temp_df['valuenum'].tolist() if len(temp_df) > 0 else []
+    temp_points = [apache_iii_temperature(t) for t in temp_values] if temp_values else [0]
+    temp_score = max(temp_points)
+    
+    # Respiratory Rate - find value with highest points
+    rr_values = rr_df['valuenum'].tolist() if len(rr_df) > 0 else []
+    rr_points = [apache_iii_respiratory_rate(r) for r in rr_values] if rr_values else [0]
+    rr_score = max(rr_points)
+    
+    # Oxygenation - need FiO2 to determine which formula to use
+    fio2_values = fio2_df['valuenum'].tolist() if len(fio2_df) > 0 else []
+    pao2_values = pao2_df['valuenum'].tolist() if len(pao2_df) > 0 else []
+    paco2_values = paco2_df['valuenum'].tolist() if len(paco2_df) > 0 else []
+    
+    # Calculate oxygenation score
+    oxygenation_score = 0
+    if pao2_values:
+        if fio2_values:
+            max_fio2 = max(fio2_values)
+            if max_fio2 > 1:
+                max_fio2 = max_fio2 / 100.0
+            
+            min_pao2 = min(pao2_values)
+            avg_paco2 = sum(paco2_values) / len(paco2_values) if paco2_values else 40
+            
+            if max_fio2 < 0.5:
+                oxygenation_score = apache_iii_pao2(min_pao2)
+            else:
+                aado2 = (max_fio2 * 713) - (avg_paco2 / 0.8) - min_pao2
+                oxygenation_score = apache_iii_aado2(aado2)
+        else:
+            oxygenation_score = apache_iii_pao2(min(pao2_values))
+    
+    # Hematocrit - find value with highest points
+    hct_values = hct_df['valuenum'].tolist() if len(hct_df) > 0 else []
+    hct_points = [apache_iii_hematocrit(h) for h in hct_values] if hct_values else [0]
+    hct_score = max(hct_points)
+    
+    # WBC - find value with highest points
+    wbc_values = wbc_df['valuenum'].tolist() if len(wbc_df) > 0 else []
+    wbc_points = [apache_iii_wbc(w) for w in wbc_values] if wbc_values else [0]
+    wbc_score = max(wbc_points)
+    
+    # Creatinine - check for ARF (acute renal failure)
+    creat_values = creat_df['valuenum'].tolist() if len(creat_df) > 0 else []
+    max_creat = max(creat_values) if creat_values else None
+    
+    # Get urine output
+    sql = """
+    SELECT value
+    FROM mimiciv_icu.outputevents
+    WHERE stay_id = ?
+      AND itemid IN (226566, 226627, 226631, 227489)
+      AND charttime >= ?
+      AND charttime <= ?
+      AND value IS NOT NULL
+    """
+    urine_df = query_db(sql, params=[stay_id, intime, first_day_end_str])
+    urine_values = urine_df['value'].astype(float).tolist() if len(urine_df) > 0 else []
+    total_urine = sum(urine_values) if urine_values else None
+    
+    # Determine ARF status
+    has_arf = False
+    if max_creat is not None and max_creat >= 1.7:
+        if total_urine is not None and total_urine < 500:
+            has_arf = True
+    
+    creat_points = [apache_iii_creatinine(c, has_arf) for c in creat_values] if creat_values else [0]
+    creat_score = max(creat_points)
+    
+    # Urine output score
+    urine_score = apache_iii_urine_output(total_urine)
+    
+    # BUN - find value with highest points
+    bun_values = bun_df['valuenum'].tolist() if len(bun_df) > 0 else []
+    bun_points = [apache_iii_bun(b) for b in bun_values] if bun_values else [0]
+    bun_score = max(bun_points)
+    
+    # Sodium - find value with highest points
+    na_values = na_df['valuenum'].tolist() if len(na_df) > 0 else []
+    na_points = [apache_iii_sodium(n) for n in na_values] if na_values else [0]
+    na_score = max(na_points)
+    
+    # Albumin - find value with highest points
+    albumin_values = albumin_df['valuenum'].tolist() if len(albumin_df) > 0 else []
+    albumin_points = [apache_iii_albumin(a) for a in albumin_values] if albumin_values else [0]
+    albumin_score = max(albumin_points)
+    
+    # Bilirubin - find value with highest points
+    bili_values = bili_df['valuenum'].tolist() if len(bili_df) > 0 else []
+    bili_points = [apache_iii_bilirubin(b) for b in bili_values] if bili_values else [0]
+    bili_score = max(bili_points)
+    
+    # Glucose - find value with highest points
+    glucose_values = glucose_df['valuenum'].tolist() if len(glucose_df) > 0 else []
+    glucose_points = [apache_iii_glucose(g) for g in glucose_values] if glucose_values else [0]
+    glucose_score = max(glucose_points)
+    
+    # Acid-base status - need to find the worst combination
+    ph_values = ph_df['valuenum'].tolist() if len(ph_df) > 0 else []
+    paco2_values = paco2_df['valuenum'].tolist() if len(paco2_df) > 0 else []
+    
+    acid_base_score = 0
+    if ph_values and paco2_values:
+        max_points = 0
+        for ph in ph_values:
+            for paco2 in paco2_values:
+                points = apache_iii_acid_base(ph, paco2)
+                if points > max_points:
+                    max_points = points
+        acid_base_score = max_points
+    
+    # GCS - find lowest total GCS
+    gcs_eye_values = gcs_eye_df['valuenum'].tolist() if len(gcs_eye_df) > 0 else []
+    gcs_verbal_values = gcs_verbal_df['valuenum'].tolist() if len(gcs_verbal_df) > 0 else []
+    gcs_motor_values = gcs_motor_df['valuenum'].tolist() if len(gcs_motor_df) > 0 else []
+    
+    gcs_score = 0
+    if gcs_eye_values and gcs_verbal_values and gcs_motor_values:
+        min_gcs = min(gcs_eye_values) + min(gcs_verbal_values) + min(gcs_motor_values)
+        gcs_score = apache_iii_gcs(min_gcs)
+    
+    # Calculate APS score
+    aps_score = (hr_score + map_score + temp_score + rr_score + 
+                 oxygenation_score + hct_score + wbc_score + 
+                 creat_score + urine_score + bun_score + 
+                 na_score + albumin_score + bili_score + 
+                 glucose_score + acid_base_score + gcs_score)
+    
+    # Age points
+    age_points = apache_iii_age(age)
+    
+    # Chronic health evaluation
+    chronic_health_points = 0
+    
+    # Check for chronic conditions using ICD codes
+    # Note: ICD codes in MIMIC are stored without decimal points (e.g., 571.5 -> 5715)
+    sql = """
+    SELECT icd_code
+    FROM mimiciv_hosp.diagnoses_icd
+    WHERE hadm_id = ?
+    """
+    diagnoses = query_db(sql, params=[hadm_id])
+    icd_codes = diagnoses['icd_code'].tolist() if len(diagnoses) > 0 else []
+    
+    # Define ICD-9/ICD-10 codes for chronic conditions (without decimal points)
+    aids_codes = ['042', '043', 'B20', 'B21', 'B22', 'B23', 'B24']
+    hepatic_codes = ['5715', '5716', '5718', '5719', 'K72', 'K74']
+    lymphoma_codes = ['200', '201', '202', '203', 'C81', 'C82', 'C83', 'C84', 'C85']
+    metastatic_codes = ['196', '197', '198', '199', 'C77', 'C78', 'C79']
+    leukemia_codes = ['204', '205', '206', '207', '208', 'C91', 'C92', 'C93', 'C94', 'C95']
+    immunosuppression_codes = ['2791', 'D89', 'Z44']
+    
+    # Check for each condition
+    has_aids = any(code in aids_codes for code in icd_codes)
+    has_hepatic = any(code in hepatic_codes for code in icd_codes)
+    has_lymphoma = any(code in lymphoma_codes for code in icd_codes)
+    has_metastatic = any(code in metastatic_codes for code in icd_codes)
+    has_leukemia = any(code in leukemia_codes for code in icd_codes)
+    has_immunosuppression = any(code in immunosuppression_codes for code in icd_codes)
+    
+    # Calculate chronic health points
+    chronic_points = []
+    
+    if has_aids:
+        chronic_points.append(23 if is_elective_postop else 1
+
+=== Step 4 ===
+# Clinical Coding Agent Memory - APACHE III Implementation
+
+## Schema Facts
+
+### Tables
+- **mimiciv_icu.icustays**: subject_id, hadm_id, stay_id, first_careunit, last_careunit, intime, outtime, los
+- **mimiciv_icu.chartevents**: subject_id, hadm_id, stay_id, caregiver_id, charttime, storetime, itemid, value, valuenum, valueuom
+- **mimiciv_icu.outputevents**: subject_id, hadm_id, stay_id, caregiver_id, charttime, storetime, itemid, value, valueuom
+- **mimiciv_icu.d_items**: itemid, label, category
+- **mimiciv_hosp.d_labitems**: itemid, label, category
+- **mimiciv_hosp.patients**: subject_id, gender, anchor_age, anchor_year, anchor_year_group, dod
+- **mimiciv_hosp.admissions**: subject_id, hadm_id, admittime, dischtime, deathtime, admission_type, admit_provider_id, admission_location, discharge_location, insurance, language, marital_status, race, edregtime, edouttime, hospital_expire_flag
+- **mimiciv_hosp.diagnoses_icd**: hadm_id, icd_code
+
+### Key Item IDs
+| Variable | Item ID | Unit | Source |
+|----------|---------|------|--------|
+| Heart Rate | 220045 | bpm | chartevents |
+| MAP (Arterial) | 220052 | mmHg | chartevents |
+| MAP (Non-invasive) | 220181 | mmHg | chartevents |
+| Temperature (Celsius) | 223762 | °C | chartevents |
+| Respiratory Rate | 220210 | breaths/min | chartevents |
+| PaO2 | 220224 | mmHg | chartevents |
+| PaCO2 | 220235 | mmHg | chartevents |
+| pH (Arterial) | 223830 | pH | chartevents |
+| FiO2 | 223835 | % | chartevents |
+| Hematocrit | 220545 | % | chartevents |
+| WBC | 220546 | K/uL | chartevents |
+| Creatinine | 220615 | mg/dL | chartevents |
+| BUN | 225624 | mg/dL | chartevents |
+| Sodium | 220645 | mEq/L | chartevents |
+| Glucose | 220621 | mg/dL | chartevents |
+| Albumin | 227456 | g/dL | chartevents |
+| Bilirubin | 225690 | mg/dL | chartevents |
+| GCS Eye | 220739 | score | chartevents |
+| GCS Verbal | 223900 | score | chartevents |
+| GCS Motor | 223901 | score | chartevents |
+| Urine Output | 226566, 226627, 226631, 227489 | mL | outputevents |
+
+### APACHE III Scoring Ranges
+- **Total Score**: 0-299 points
+- **Acute Physiology Score (APS)**: 0-252 points (17 variables)
+- **Age Points**: 0-24 points
+- **Chronic Health Evaluation**: 0-23 points
+
+### Scoring Rules
+- All acute physiology variables use **worst (most abnormal) value** in first 24 hours of ICU admission
+- GCS uses **lowest** value in first 24 hours
+- If FiO₂ < 0.5: use PaO₂ for oxygenation scoring
+- If FiO₂ ≥ 0.5: use A-aDO₂ for oxygenation scoring
+- A-aDO₂ = (FiO₂ × 713) − (PaCO₂ / 0.8) − PaO₂
+- Creatinine points doubled if acute renal failure (ARF) present
+- **ICD codes in MIMIC stored without decimal points** (e.g., 571.5 → 5715)
+
+### Admission Type Classification (MIMIC-IV)
+| Admission Type | Classification |
+|----------------|----------------|
+| ELECTIVE | Elective postoperative |
+| SURGICAL SAME DAY ADMISSION | Emergency postoperative |
+| URGENT (not OBSERVATION) | Emergency postoperative |
+| EW EMER. | Emergency non-operative |
+| DIRECT EMER. | Emergency non-operative |
+| OBSERVATION types | Non-operative |
+
+## Complete Function Source Code
+
+```python
+def apache_iii_heart_rate(hr):
+    """Calculate APACHE III points for heart rate"""
+    if hr is None:
+        return 0
+    if hr <= 39:
+        return 8
+    elif hr <= 49:
+        return 5
+    elif hr <= 99:
+        return 0
+    elif hr <= 109:
+        return 1
+    elif hr <= 119:
+        return 5
+    elif hr <= 139:
+        return 7
+    elif hr <= 154:
+        return 13
+    else:  # >= 155
+        return 17
+
+def apache_iii_map(map_val):
+    """Calculate APACHE III points for mean arterial pressure"""
+    if map_val is None:
+        return 0
+    if map_val <= 39:
+        return 23
+    elif map_val <= 59:
+        return 15
+    elif map_val <= 69:
+        return 7
+    elif map_val <= 79:
+        return 6
+    elif map_val <= 99:
+        return 0
+    elif map_val <= 119:
+        return 4
+    elif map_val <= 129:
+        return 7
+    elif map_val <= 139:
+        return 9
+    else:  # >= 140
+        return 10
+
+def apache_iii_temperature(temp):
+    """Calculate APACHE III points for temperature (Celsius)"""
+    if temp is None:
+        return 0
+    if temp <= 32.9:
+        return 20
+    elif temp <= 33.4:
+        return 16
+    elif temp <= 33.9:
+        return 13
+    elif temp <= 34.9:
+        return 8
+    elif temp <= 35.9:
+        return 2
+    elif temp <= 39.9:
+        return 0
+    else:  # >= 40.0
+        return 4
+
+def apache_iii_respiratory_rate(rr):
+    """Calculate APACHE III points for respiratory rate"""
+    if rr is None:
+        return 0
+    if rr <= 5:
+        return 17
+    elif rr <= 11:
+        return 8
+    elif rr <= 13:
+        return 7
+    elif rr <= 24:
+        return 0
+    elif rr <= 34:
+        return 6
+    elif rr <= 39:
+        return 9
+    elif rr <= 49:
+        return 11
+    else:  # >= 50
+        return 18
+
+def apache_iii_pao2(pao2):
+    """Calculate APACHE III points for PaO2 (when FiO2 < 0.5)"""
+    if pao2 is None:
+        return 0
+    if pao2 >= 80:
+        return 0
+    elif pao2 >= 70:
+        return 2
+    elif pao2 >= 60:
+        return 7
+    elif pao2 >= 50:
+        return 11
+    else:  # < 50
+        return 15
+
+def apache_iii_aado2(aado2):
+    """Calculate APACHE III points for A-aDO2 (when FiO2 >= 0.5)"""
+    if aado2 is None:
+        return 0
+    if aado2 < 100:
+        return 0
+    elif aado2 <= 249:
+        return 7
+    elif aado2 <= 349:
+        return 9
+    elif aado2 <= 499:
+        return 11
+    else:  # >= 500
+        return 14
+
+def apache_iii_hematocrit(hct):
+    """Calculate APACHE III points for hematocrit"""
+    if hct is None:
+        return 0
+    if hct < 41:
+        return 3
+    elif hct <= 49:
+        return 0
+    else:  # >= 50
+        return 3
+
+def apache_iii_wbc(wbc):
+    """Calculate APACHE III points for WBC"""
+    if wbc is None:
+        return 0
+    if wbc < 1.0:
+        return 19
+    elif wbc <= 2.9:
+        return 5
+    elif wbc <= 19.9:
+        return 0
+    elif wbc <= 24.9:
+        return 1
+    else:  # >= 25.0
+        return 5
+
+def apache_iii_creatinine(creat, has_arf=False):
+    """Calculate APACHE III points for creatinine"""
+    if creat is None:
+        return 0
+    if creat <= 0.4:
+        return 3
+    elif creat <= 1.4:
+        return 0
+    elif creat <= 1.94:
+        points = 4
+    else:  # >= 1.95
+        points = 7
+    
+    if has_arf and points > 0:
+        return points * 2
+    return points
+
+def apache_iii_urine_output(urine):
+    """Calculate APACHE III points for urine output (mL/24h)"""
+    if urine is None:
+        return 0
+    if urine < 400:
+        return 15
+    elif urine <= 599:
+        return 8
+    elif urine <= 899:
+        return 7
+    elif urine <= 1499:
+        return 5
+    elif urine <= 1999:
+        return 4
+    elif urine <= 3999:
+        return 0
+    else:  # >= 4000
+        return 1
+
+def apache_iii_bun(bun):
+    """Calculate APACHE III points for BUN"""
+    if bun is None:
+        return 0
+    if bun <= 16.9:
+        return 0
+    elif bun <= 19:
+        return 2
+    elif bun <= 39:
+        return 7
+    elif bun <= 79:
+        return 11
+    else:  # >= 80
+        return 12
+
+def apache_iii_sodium(na):
+    """Calculate APACHE III points for sodium"""
+    if na is None:
+        return 0
+    if na <= 119:
+        return 3
+    elif na <= 134:
+        return 2
+    elif na <= 145:
+        return 0
+    elif na <= 154:
+        return 1
+    else:  # >= 155
+        return 4
+
+def apache_iii_albumin(albumin):
+    """Calculate APACHE III points for albumin"""
+    if albumin is None:
+        return 0
+    if albumin < 2.0:
+        return 11
+    elif albumin <= 2.4:
+        return 6
+    else:  # >= 2.5
+        return 0
+
+def apache_iii_bilirubin(bili):
+    """Calculate APACHE III points for bilirubin"""
+    if bili is None:
+        return 0
+    if bili < 2.0:
+        return 0
+    elif bili <= 2.9:
+        return 5
+    elif bili <= 4.9:
+        return 6
+    elif bili <= 7.9:
+        return 8
+    else:  # >= 8.0
+        return 16
+
+def apache_iii_glucose(glucose):
+    """Calculate APACHE III points for glucose"""
+    if glucose is None:
+        return 0
+    if glucose <= 39:
+        return 8
+    elif glucose <= 59:
+        return 9
+    elif glucose <= 199:
+        return 0
+    elif glucose <= 349:
+        return 3
+    else:  # >= 350
+        return 5
+
+def apache_iii_acid_base(ph, paco2):
+    """Calculate APACHE III points for acid-base status (pH x PaCO2 matrix)"""
+    if ph is None or paco2 is None:
+        return 0
+    
+    # pH row
+    if ph < 7.15:
+        ph_row = 0
+    elif ph <= 7.19:
+        ph_row = 1
+    elif ph <= 7.24:
+        ph_row = 2
+    elif ph <= 7.29:
+        ph_row = 3
+    elif ph <= 7.34:
+        ph_row = 4
+    elif ph <= 7.39:
+        ph_row = 5
+    elif ph <= 7.44:
+        ph_row = 6
+    elif ph <= 7.49:
+        ph_row = 7
+    elif ph <= 7.54:
+        ph_row = 8
+    elif ph <= 7.59:
+        ph_row = 9
+    elif ph <= 7.64:
+        ph_row = 10
+    else:  # >= 7.65
+        ph_row = 11
+    
+    # PaCO2 column
+    if paco2 < 25:
+        paco2_col = 0
+    elif paco2 <= 29:
+        paco2_col = 1
+    elif paco2 <= 34:
+        paco2_col = 2
+    elif paco2 <= 39:
+        paco2_col = 3
+    elif paco2 <= 44:
+        paco2_col = 4
+    elif paco2 <= 49:
+        paco2_col = 5
+    elif paco2 <= 54:
+        paco2_col = 6
+    elif paco2 <= 59:
+        paco2_col = 7
+    elif paco2 <= 64:
+        paco2_col = 8
+    else:  # >= 65
+        paco2_col = 9
+    
+    # Acid-base matrix
+    acid_base_matrix = [
+        [12, 4, 6, 7, 7, 0, 0, 0, 0, 0],   # < 7.15
+        [12, 4, 3, 3, 2, 0, 0, 0, 0, 0],   # 7.15-7.19
+        [12, 2, 1, 1, 0, 0, 0, 0, 0, 0],   # 7.20-7.24
+        [9, 2, 1, 0, 0, 0, 0, 0, 0, 0],    # 7.25-7.29
+        [7, 2, 0, 0, 0, 1, 1, 0, 0, 0],    # 7.30-7.34
+        [7, 0, 0, 0, 0, 0, 1, 3, 0, 0],    # 7.35-7.39
+        [6, 0, 0, 0, 0, 0, 1, 3, 5, 0],    # 7.40-7.44
+        [3, 0, 0, 0, 0, 0, 2, 5, 7, 9],    # 7.45-7.49
+        [3, 2, 2, 2, 0, 0, 3, 7, 9, 11],   # 7.50-7.54
+        [0, 3, 3, 3, 2, 3, 5, 9, 11, 12],  # 7.55-7.59
+        [0, 3, 5, 5, 3, 5, 7, 11, 12, 12], # 7.60-7.64
+        [0, 3, 12, 12, 12, 12, 12, 12, 12, 12]  # >= 7.65
+    ]
+    
+    return acid_base_matrix[ph_row][paco2_col]
+
+def apache_iii_gcs(gcs_total):
+    """Calculate APACHE III points for GCS"""
+    if gcs_total is None:
+        return 0
+    gcs_points = {
+        15: 0, 14: 3, 13: 5, 12: 7, 11: 10, 10: 13,
+        9: 15, 8: 18, 7: 22, 6: 26, 5: 33, 4: 39, 3: 48
+    }
+    return gcs_points.get(gcs_total, 0)
+
+def apache_iii_age(age):
+    """Calculate APACHE III points for age"""
+    if age is None:
+        return 0
+    if age < 45:
+        return 0
+    elif age <= 59:
+        return 5
+    elif age <= 64:
+        return 11
+    elif age <= 69:
+        return 13
+    elif age <= 74:
+        return 16
+    elif age <= 84:
+        return 17
+    else:  # >= 85
+        return 24
+
+def compute_apache_iii(stay_id):
+    """
+    Compute APACHE III score for a given ICU stay.
+    
+    Parameters
+    ----------
+    stay_id : int
+        The ICU stay identifier.
+    
+    Returns
+    -------
+    dict
+        Dictionary containing:
+        - 'stay_id': The ICU stay ID
+        - 'subject_id': Patient identifier
+        - 'hadm_id': Hospital admission ID
+        - 'intime': ICU admission time
+        - 'aps_score': Acute Physiology Score (0-252)
+        - 'age_points': Age points (0-24)
+        - 'chronic_health_points': Chronic health points (0-23)
+        - 'total_score': Total APACHE III score (0-299)
+        - 'component_scores': Dictionary with individual component scores
+    """
+    from datetime import datetime, timedelta
+    
+    # Get ICU stay information
+    sql = """
+    SELECT subject_id, hadm_id, intime
+    FROM mimiciv_icu.icustays
+    WHERE stay_id = ?
+    """
+    stay_info = query_db(sql, params=[stay_id])
+    
+    if len(stay_info) == 0:
+        raise ValueError(f"Stay ID {stay_id} not found")
+    
+    subject_id = int(stay_info.iloc[0]['subject_id'])
+    hadm_id = int(stay_info.iloc[0]['hadm_id'])
+    intime = stay_info.iloc[0]['intime']
+    
+    # Calculate first day end time (24 hours from ICU admission)
+    intime_dt = datetime.strptime(str(intime), '%Y-%m-%d %H:%M:%S')
+    first_day_end = intime_dt + timedelta(hours=24)
+    first_day_end_str = first_day_end.strftime('%Y-%m-%d %H:%M:%S')
+    
+    # Get patient age
+    sql = """
+    SELECT anchor_age
+    FROM mimiciv_hosp.patients
+    WHERE subject_id = ?
+    """
+    patient_info = query_db(sql, params=[subject_id])
+    age = int(patient_info.iloc[0]['anchor_age']) if len(patient_info) > 0 else None
+    
+    # Get admission type for chronic health evaluation
+    sql = """
+    SELECT admission_type
+    FROM mimiciv_hosp.admissions
+    WHERE hadm_id = ?
+    """
+    admission_info = query_db(sql, params=[hadm_id])
+    admission_type = admission_info.iloc[0]['admission_type'] if len(admission_info) > 0 else None
+    
+    # Determine if postoperative (elective vs emergency)
+    # Based on MIMIC-IV admission types:
+    # - ELECTIVE = elective postoperative
+    # - SURGICAL SAME DAY ADMISSION = emergency postoperative
+    # - URGENT (not OBSERVATION) = emergency postoperative
+    # - EW EMER., DIRECT EMER. = emergency non-operative
+    # - OBSERVATION types = non-operative
+    admission_type_str = str(admission_type).upper() if admission_type else ""
+    
+    is_elective_postop = 'ELECTIVE' in admission_type_str
+    is_emergency_postop = 'SURGICAL SAME DAY' in admission_type_str or ('URGENT' in admission_type_str and 'OBSERVATION' not in admission_type_str)
+    is_non_operative = not is_elective_postop and not is_emergency_postop
+    
+    # Get all chartevents for first 24 hours
+    sql = """
+    SELECT itemid, valuenum, charttime
+    FROM mimiciv_icu.chartevents
+    WHERE stay_id = ?
+      AND charttime >= ?
+      AND charttime <= ?
+      AND valuenum IS NOT NULL
+    """
+    chartevents = query_db(sql, params=[stay_id, intime, first_day_end_str])
+    
+    # Create lookup for chartevents by itemid
+    def get_values(itemids):
+        """Get all values for given itemids"""
+        if isinstance(itemids, int):
+            itemids = [itemids]
+        df = chartevents[chartevents['itemid'].isin(itemids)]
+        return df
+    
+    # Get vital signs
+    hr_df = get_values(220045)  # Heart Rate
+    map_df = get_values([220052, 220181])  # MAP (arterial and non-invasive)
+    rr_df = get_values(220210)  # Respiratory Rate
+    temp_df = get_values(223762)  # Temperature Celsius
+    
+    # Get lab values
+    hct_df = get_values(220545)  # Hematocrit
+    wbc_df = get_values(220546)  # WBC
+    creat_df = get_values(220615)  # Creatinine
+    bun_df = get_values(225624)  # BUN
+    na_df = get_values(220645)  # Sodium
+    glucose_df = get_values(220621)  # Glucose
+    albumin_df = get_values(227456)  # Albumin
+    bili_df = get_values(225690)  # Bilirubin
+    
+    # Get ABG values
+    ph_df = get_values(223830)  # pH
+    paco2_df = get_values(220235)  # PaCO2
+    pao2_df = get_values(220224)  # PaO2
+    fio2_df = get_values(223835)  # FiO2
+    
+    # Get GCS components
+    gcs_eye_df = get_values(220739)  # GCS Eye
+    gcs_verbal_df = get_values(223900)  # GCS Verbal
+    gcs_motor_df = get_values(223901)  # GCS Motor
+    
+    # Calculate worst values for each parameter
+    
+    # Heart Rate - find value with highest points
+    hr_values = hr_df['valuenum'].tolist() if len(hr_df) > 0 else []
+    hr_points = [apache_iii_heart_rate(hr) for hr in hr_values] if hr_values else [0]
+    hr_score = max(hr_points)
+    
+    # MAP - find value with highest points
+    map_values = map_df['valuenum'].tolist() if len(map_df) > 0 else []
+    map_points = [apache_iii_map(m) for m in map_values] if map_values else [0]
+    map_score = max(map_points)
+    
+    # Temperature - find value furthest from normal (37°C)
+    temp_values = temp_df['valuenum'].tolist() if len(temp_df) > 0 else []
+    temp_points = [apache_iii_temperature(t) for t in temp_values] if temp_values else [0]
+    temp_score = max(temp_points)
+    
+    # Respiratory Rate - find value with highest points
+    rr_values = rr_df['valuenum'].tolist() if len(rr_df) > 0 else []
+    rr_points = [apache_iii_respiratory_rate(r) for r in rr_values] if rr_values else [0]
+    rr_score = max(rr_points)
+    
+    # Oxygenation - need FiO2 to determine which formula to use
+    fio2_values = fio2_df['valuenum'].tolist() if len(fio2_df) > 0 else []
+    pao2_values = pao2_df['valuenum'].tolist() if len(pao2_df) > 0 else []
+    paco2_values = paco2_df['valuenum'].tolist() if len(paco2_df) > 0 else []
+    
+    # Calculate oxygenation score
+    oxygenation_score = 0
+    if pao2_values:
+        if fio2_values:
+            max_fio2 = max(fio2_values)
+            if max_fio2 > 1:
+                max_fio2 = max_fio2 / 100.0
+            
+            min_pao2 = min(pao2_values)
+            avg_paco2 = sum(paco2_values) / len(paco2_values) if paco2_values else 40
+            
+            if max_fio2 < 0.5:
+                oxygenation_score = apache_iii_pao2(min_pao2)
+            else:
+                aado2 = (max_fio2 * 713) - (avg_paco2 / 0.8) - min_pao2
+                oxygenation_score = apache_iii_aado2(aado2)
+        else:
+            oxygenation_score = apache_iii_pao2(min(pao2_values))
+    
+    # Hematocrit - find value with highest points
+    hct_values = hct_df['valuenum'].tolist() if len(hct_df) > 0 else []
+    hct_points = [apache_iii_hematocrit(h) for h in hct_values] if hct_values else [0]
+    hct_score = max(hct_points)
+    
+    # WBC - find value with highest points
+    wbc_values = wbc_df['valuenum'].tolist() if len(wbc_df) > 0 else []
+    wbc_points = [apache_iii_wbc(w) for w in wbc_values] if wbc_values else [0]
+    wbc_score = max(wbc_points)
+    
+    # Creatinine - check for ARF (acute renal failure)
+    creat_values = creat_df['valuenum'].tolist() if len(creat_df) > 0 else []
+    max_creat = max(creat_values) if creat_values else None
+    
+    # Get urine output
+    sql = """
+    SELECT value
+    FROM mimiciv_icu.outputevents
+    WHERE stay_id = ?
+      AND itemid IN (226566, 226627, 226631, 227489)
+      AND charttime >= ?
+      AND charttime <= ?
+      AND value IS NOT NULL
+    """
+    urine_df = query_db(sql, params=[stay_id, intime, first_day_end_str])
+    urine_values = urine_df['value'].astype(float).tolist() if len(urine_df) > 0 else []
+    total_urine = sum(urine_values) if urine_values else None
+    
+    # Determine ARF status
+    has_arf = False
+    if max_creat is not None and max_creat >= 1.7:
+        if total_urine is not None and total_urine < 500:
+            has_arf = True
+    
+    creat_points = [apache_iii_creatinine(c, has_arf) for c in creat_values] if creat_values else [0]
+    creat_score = max(creat_points)
+    
+    # Urine output score
+    urine_score = apache_iii_urine_output(total_urine)
+    
+    # BUN - find value with highest points
+    bun_values = bun_df['valuenum'].tolist() if len(bun_df) > 0 else []
+    bun_points = [apache_iii_bun(b) for b in bun_values] if bun_values else [0]
+    bun_score = max(bun_points)
+    
+    # Sodium - find value with highest points
+    na_values = na_df['valuenum'].tolist() if len(na_df) > 0 else []
+    na_points = [apache_iii_sodium(n) for n in na_values] if na_values else [0]
+    na_score = max(na_points)
+    
+    # Albumin - find value with highest points
+    albumin_values = albumin_df['valuenum'].tolist() if len(albumin_df) > 0 else []
+    albumin_points = [apache_iii_albumin(a) for a in albumin_values] if albumin_values else [0]
+    albumin_score = max(albumin_points)
+    
+    # Bilirubin - find value with highest points
+    bili_values = bili_df['valuenum'].tolist() if len(bili_df) > 0 else []
+    bili_points = [apache_iii_bilirubin(b) for b in bili_values] if bili_values else [0]
+    bili_score = max(bili_points)
+    
+    # Glucose - find value with highest points
+    glucose_values = glucose_df['valuenum'].tolist() if len(glucose_df) > 0 else []
+    glucose_points = [apache_iii_glucose(g) for g in glucose_values] if glucose_values else [0]
+    glucose_score = max(glucose_points)
+    
+    # Acid-base status - need to find the worst combination
+    ph_values = ph_df['valuenum'].tolist() if len(ph_df) > 0 else []
+    paco2_values = paco2_df['valuenum'].tolist() if len(paco2_df) > 0 else []
+    
+    acid_base_score = 0
+    if ph_values and paco2_values:
+        max_points = 0
+        for ph in ph_values:
+            for paco2 in paco2_values:
+                points = apache_iii_acid_base(ph, paco2)
+                if points > max_points:
+                    max_points = points
+        acid_base_score = max_points
+    
+    # GCS - find lowest total GCS
+    gcs_eye_values = gcs_eye_df['valuenum'].tolist() if len(gcs_eye_df) > 0 else []
+    gcs_verbal_values = gcs_verbal_df['valuenum'].tolist() if len(gcs_verbal_df) > 0 else []
+    gcs_motor_values = gcs_motor_df['valuenum'].tolist() if len(gcs_motor_df) > 0 else []
+    
+    gcs_score = 0
+    if gcs_eye_values and gcs_verbal_values and gcs_motor_values:
+        min_gcs = min(gcs_eye_values) + min(gcs_verbal_values) + min(gcs_motor_values)
+        gcs_score = apache_iii_gcs(min_gcs)
+    
+    # Calculate APS score
+    aps_score
+
+=== Step 5 ===
+# Clinical Coding Agent Memory - APACHE III Implementation
+
+## Schema Facts
+
+### Tables
+- **mimiciv_icu.icustays**: subject_id, hadm_id, stay_id, first_careunit, last_careunit, intime, outtime, los
+- **mimiciv_icu.chartevents**: subject_id, hadm_id, stay_id, caregiver_id, charttime, storetime, itemid, value, valuenum, valueuom
+- **mimiciv_icu.outputevents**: subject_id, hadm_id, stay_id, caregiver_id, charttime, storetime, itemid, value, valueuom
+- **mimiciv_icu.d_items**: itemid, label, category
+- **mimiciv_hosp.d_labitems**: itemid, label, category
+- **mimiciv_hosp.patients**: subject_id, gender, anchor_age, anchor_year, anchor_year_group, dod
+- **mimiciv_hosp.admissions**: subject_id, hadm_id, admittime, dischtime, deathtime, admission_type, admit_provider_id, admission_location, discharge_location, insurance, language, marital_status, race, edregtime, edouttime, hospital_expire_flag
+- **mimiciv_hosp.diagnoses_icd**: hadm_id, icd_code
+
+### Key Item IDs
+| Variable | Item ID | Unit | Source |
+|----------|---------|------|--------|
+| Heart Rate | 220045 | bpm | chartevents |
+| MAP (Arterial) | 220052 | mmHg | chartevents |
+| MAP (Non-invasive) | 220181 | mmHg | chartevents |
+| Temperature (Celsius) | 223762 | °C | chartevents |
+| Respiratory Rate | 220210 | breaths/min | chartevents |
+| PaO2 | 220224 | mmHg | chartevents |
+| PaCO2 | 220235 | mmHg | chartevents |
+| pH (Arterial) | 223830 | pH | chartevents |
+| FiO2 | 223835 | % | chartevents |
+| Hematocrit | 220545 | % | chartevents |
+| WBC | 220546 | K/uL | chartevents |
+| Creatinine | 220615 | mg/dL | chartevents |
+| BUN | 225624 | mg/dL | chartevents |
+| Sodium | 220645 | mEq/L | chartevents |
+| Glucose | 220621 | mg/dL | chartevents |
+| Albumin | 227456 | g/dL | chartevents |
+| Bilirubin | 225690 | mg/dL | chartevents |
+| GCS Eye | 220739 | score | chartevents |
+| GCS Verbal | 223900 | score | chartevents |
+| GCS Motor | 223901 | score | chartevents |
+| Urine Output | 226566, 226627, 226631, 227489 | mL | outputevents |
+
+### APACHE III Scoring Ranges
+- **Total Score**: 0-299 points
+- **Acute Physiology Score (APS)**: 0-252 points (17 variables)
+- **Age Points**: 0-24 points
+- **Chronic Health Evaluation**: 0-23 points
+
+### Scoring Rules
+- All acute physiology variables use **worst (most abnormal) value** in first 24 hours of ICU admission
+- GCS uses **lowest** value in first 24 hours
+- If FiO₂ < 0.5: use PaO₂ for oxygenation scoring
+- If FiO₂ ≥ 0.5: use A-aDO₂ for oxygenation scoring
+- A-aDO₂ = (FiO₂ × 713) − (PaCO₂ / 0.8) − PaO₂
+- Creatinine points doubled if acute renal failure (ARF) present
+- **ICD codes in MIMIC stored without decimal points** (e.g., 571.5 → 5715)
+- **Missing values**: If a lab test is not measured, assign 0 points (assume normal)
+- **Albumin and bilirubin**: Optional, default to 0 points if not measured
+- **GCS under sedation**: If no pre-sedation GCS available, use GCS=15 (normal) = 0 points
+
+### Chronic Health Evaluation Rules (CRITICAL UPDATE)
+- **Only the SINGLE HIGHEST applicable chronic health score is used (NOT additive)**
+- Scoring depends on admission type:
+
+| Condition | Elective Postoperative | Emergency Postoperative or Non-operative |
+|-----------|----------------------|-----------------------------------------|
+| AIDS | 23 | 11 |
+| Hepatic failure | 4 | 4 |
+| Lymphoma | 13 | 13 |
+| Metastatic cancer | 11 | 14 |
+| Leukemia / myeloma | 10 | 10 |
+| Immunosuppression | 10 | 10 |
+
+### Chronic Conditions Definitions
+- **AIDS**: Confirmed HIV with opportunistic infection or Kaposi sarcoma
+- **Hepatic failure**: Biopsy-proven cirrhosis, portal hypertension, prior hepatic encephalopathy or variceal bleeding
+- **Lymphoma**: Documented lymphoma diagnosis
+- **Metastatic cancer**: Documented distant metastases
+- **Leukemia / multiple myeloma**: Documented hematologic malignancy
+- **Immunosuppression**: Immunosuppressive therapy, chemotherapy, radiation, high-dose steroids, or disease-related immunocompromise
+- **Chronic renal failure**: Chronic dialysis dependency (ESRD) - handled separately
+
+### Admission Type Classification (MIMIC-IV)
+| Admission Type | Classification |
+|----------------|----------------|
+| ELECTIVE | Elective postoperative |
+| SURGICAL SAME DAY ADMISSION | Emergency postoperative |
+| URGENT (not OBSERVATION) | Emergency postoperative |
+| EW EMER. | Emergency non-operative |
+| DIRECT EMER. | Emergency non-operative |
+| OBSERVATION types | Non-operative |
+
+## Test Results and Error Fixes
+
+### Test Run (Step 6)
+```
+stay_id: 39553978
+subject_id: 10000032
+hadm_id: 29079034
+intime: 2180-07-23 14:00:00
+aps_score: 28
+age_points: 5
+chronic_health_points: 25  # BUG: Should be max 23
+total_score: 58
+component_scores: {'heart_rate': 1, 'map': 15, 'temperature': 0, 'respiratory_rate': 0, 
+                   'oxygenation': 0, 'hematocrit': 0, 'wbc': 0, 'creatinine': 0, 
+                   'urine_output': 0, 'bun': 7, 'sodium': 2, 'albumin': 0, 
+                   'bilirubin': 0, 'glucose': 0, 'acid_base': 0, 'gcs': 3}
+```
+
+### Identified Bugs
+1. **Chronic health points = 25** exceeds maximum of 23 - implementation is ADDING points for multiple conditions instead of taking MAXIMUM
+2. Need to verify acid-base matrix implementation against guideline
+3. Need to properly identify chronic conditions from ICD codes
+
+## Complete Function Source Code
+
+```python
+def apache_iii_heart_rate(hr):
+    """Calculate APACHE III points for heart rate"""
+    if hr is None:
+        return 0
+    if hr <= 39:
+        return 8
+    elif hr <= 49:
+        return 5
+    elif hr <= 99:
+        return 0
+    elif hr <= 109:
+        return 1
+    elif hr <= 119:
+        return 5
+    elif hr <= 139:
+        return 7
+    elif hr <= 154:
+        return 13
+    else:  # >= 155
+        return 17
+
+def apache_iii_map(map_val):
+    """Calculate APACHE III points for mean arterial pressure"""
+    if map_val is None:
+        return 0
+    if map_val <= 39:
+        return 23
+    elif map_val <= 59:
+        return 15
+    elif map_val <= 69:
+        return 7
+    elif map_val <= 79:
+        return 6
+    elif map_val <= 99:
+        return 0
+    elif map_val <= 119:
+        return 4
+    elif map_val <= 129:
+        return 7
+    elif map_val <= 139:
+        return 9
+    else:  # >= 140
+        return 10
+
+def apache_iii_temperature(temp):
+    """Calculate APACHE III points for temperature (Celsius)"""
+    if temp is None:
+        return 0
+    if temp <= 32.9:
+        return 20
+    elif temp <= 33.4:
+        return 16
+    elif temp <= 33.9:
+        return 13
+    elif temp <= 34.9:
+        return 8
+    elif temp <= 35.9:
+        return 2
+    elif temp <= 39.9:
+        return 0
+    else:  # >= 40.0
+        return 4
+
+def apache_iii_respiratory_rate(rr):
+    """Calculate APACHE III points for respiratory rate"""
+    if rr is None:
+        return 0
+    if rr <= 5:
+        return 17
+    elif rr <= 11:
+        return 8
+    elif rr <= 13:
+        return 7
+    elif rr <= 24:
+        return 0
+    elif rr <= 34:
+        return 6
+    elif rr <= 39:
+        return 9
+    elif rr <= 49:
+        return 11
+    else:  # >= 50
+        return 18
+
+def apache_iii_pao2(pao2):
+    """Calculate APACHE III points for PaO2 (when FiO2 < 0.5)"""
+    if pao2 is None:
+        return 0
+    if pao2 >= 80:
+        return 0
+    elif pao2 >= 70:
+        return 2
+    elif pao2 >= 60:
+        return 7
+    elif pao2 >= 50:
+        return 11
+    else:  # < 50
+        return 15
+
+def apache_iii_aado2(aado2):
+    """Calculate APACHE III points for A-aDO2 (when FiO2 >= 0.5)"""
+    if aado2 is None:
+        return 0
+    if aado2 < 100:
+        return 0
+    elif aado2 <= 249:
+        return 7
+    elif aado2 <= 349:
+        return 9
+    elif aado2 <= 499:
+        return 11
+    else:  # >= 500
+        return 14
+
+def apache_iii_hematocrit(hct):
+    """Calculate APACHE III points for hematocrit"""
+    if hct is None:
+        return 0
+    if hct < 41:
+        return 3
+    elif hct <= 49:
+        return 0
+    else:  # >= 50
+        return 3
+
+def apache_iii_wbc(wbc):
+    """Calculate APACHE III points for WBC"""
+    if wbc is None:
+        return 0
+    if wbc < 1.0:
+        return 19
+    elif wbc <= 2.9:
+        return 5
+    elif wbc <= 19.9:
+        return 0
+    elif wbc <= 24.9:
+        return 1
+    else:  # >= 25.0
+        return 5
+
+def apache_iii_creatinine(creat, has_arf=False):
+    """Calculate APACHE III points for creatinine"""
+    if creat is None:
+        return 0
+    if creat <= 0.4:
+        return 3
+    elif creat <= 1.4:
+        return 0
+    elif creat <= 1.94:
+        points = 4
+    else:  # >= 1.95
+        points = 7
+    
+    if has_arf and points > 0:
+        return points * 2
+    return points
+
+def apache_iii_urine_output(urine):
+    """Calculate APACHE III points for urine output (mL/24h)"""
+    if urine is None:
+        return 0
+    if urine < 400:
+        return 15
+    elif urine <= 599:
+        return 8
+    elif urine <= 899:
+        return 7
+    elif urine <= 1499:
+        return 5
+    elif urine <= 1999:
+        return 4
+    elif urine <= 3999:
+        return 0
+    else:  # >= 4000
+        return 1
+
+def apache_iii_bun(bun):
+    """Calculate APACHE III points for BUN"""
+    if bun is None:
+        return 0
+    if bun <= 16.9:
+        return 0
+    elif bun <= 19:
+        return 2
+    elif bun <= 39:
+        return 7
+    elif bun <= 79:
+        return 11
+    else:  # >= 80
+        return 12
+
+def apache_iii_sodium(na):
+    """Calculate APACHE III points for sodium"""
+    if na is None:
+        return 0
+    if na <= 119:
+        return 3
+    elif na <= 134:
+        return 2
+    elif na <= 145:
+        return 0
+    elif na <= 154:
+        return 1
+    else:  # >= 155
+        return 4
+
+def apache_iii_albumin(albumin):
+    """Calculate APACHE III points for albumin"""
+    if albumin is None:
+        return 0
+    if albumin < 2.0:
+        return 11
+    elif albumin <= 2.4:
+        return 6
+    else:  # >= 2.5
+        return 0
+
+def apache_iii_bilirubin(bili):
+    """Calculate APACHE III points for bilirubin"""
+    if bili is None:
+        return 0
+    if bili < 2.0:
+        return 0
+    elif bili <= 2.9:
+        return 5
+    elif bili <= 4.9:
+        return 6
+    elif bili <= 7.9:
+        return 8
+    else:  # >= 8.0
+        return 16
+
+def apache_iii_glucose(glucose):
+    """Calculate APACHE III points for glucose"""
+    if glucose is None:
+        return 0
+    if glucose <= 39:
+        return 8
+    elif glucose <= 59:
+        return 9
+    elif glucose <= 199:
+        return 0
+    elif glucose <= 349:
+        return 3
+    else:  # >= 350
+        return 5
+
+def apache_iii_acid_base(ph, paco2):
+    """Calculate APACHE III points for acid-base status (pH x PaCO2 matrix)"""
+    if ph is None or paco2 is None:
+        return 0
+    
+    # pH row
+    if ph < 7.15:
+        ph_row = 0
+    elif ph <= 7.19:
+        ph_row = 1
+    elif ph <= 7.24:
+        ph_row = 2
+    elif ph <= 7.29:
+        ph_row = 3
+    elif ph <= 7.34:
+        ph_row = 4
+    elif ph <= 7.39:
+        ph_row = 5
+    elif ph <= 7.44:
+        ph_row = 6
+    elif ph <= 7.49:
+        ph_row = 7
+    elif ph <= 7.54:
+        ph_row = 8
+    elif ph <= 7.59:
+        ph_row = 9
+    elif ph <= 7.64:
+        ph_row = 10
+    else:  # >= 7.65
+        ph_row = 11
+    
+    # PaCO2 column
+    if paco2 < 25:
+        paco2_col = 0
+    elif paco2 <= 29:
+        paco2_col = 1
+    elif paco2 <= 34:
+        paco2_col = 2
+    elif paco2 <= 39:
+        paco2_col = 3
+    elif paco2 <= 44:
+        paco2_col = 4
+    elif paco2 <= 49:
+        paco2_col = 5
+    elif paco2 <= 54:
+        paco2_col = 6
+    elif paco2 <= 59:
+        paco2_col = 7
+    elif paco2 <= 64:
+        paco2_col = 8
+    else:  # >= 65
+        paco2_col = 9
+    
+    # Acid-base matrix
+    acid_base_matrix = [
+        [12, 4, 6, 7, 7, 0, 0, 0, 0, 0],   # < 7.15
+        [12, 4, 3, 3, 2, 0, 0, 0, 0, 0],   # 7.15-7.19
+        [12, 2, 1, 1, 0, 0, 0, 0, 0, 0],   # 7.20-7.24
+        [9, 2, 1, 0, 0, 0, 0, 0, 0, 0],    # 7.25-7.29
+        [7, 2, 0, 0, 0, 1, 1, 0, 0, 0],    # 7.30-7.34
+        [7, 0, 0, 0, 0, 0, 1, 3, 0, 0],    # 7.35-7.39
+        [6, 0, 0, 0, 0, 0, 1, 3, 5, 0],    # 7.40-7.44
+        [3, 0, 0, 0, 0, 0, 2, 5, 7, 9],    # 7.45-7.49
+        [3, 2, 2, 2, 0, 0, 3, 7, 9, 11],   # 7.50-7.54
+        [0, 3, 3, 3, 2, 3, 5, 9, 11, 12],  # 7.55-7.59
+        [0, 3, 5, 5, 3, 5, 7, 11, 12, 12], # 7.60-7.64
+        [0, 3, 12, 12, 12, 12, 12, 12, 12, 12]  # >= 7.65
+    ]
+    
+    return acid_base_matrix[ph_row][paco2_col]
+
+def apache_iii_gcs(gcs_total):
+    """Calculate APACHE III points for GCS"""
+    if gcs_total is None:
+        return 0
+    gcs_points = {
+        15: 0, 14: 3, 13: 5, 12: 7, 11: 10, 10: 13,
+        9: 15, 8: 18, 7: 22, 6: 26, 5: 33, 4: 39, 3: 48
+    }
+    return gcs_points.get(gcs_total, 0)
+
+def apache_iii_age(age):
+    """Calculate APACHE III points for age"""
+    if age is None:
+        return 0
+    if age < 45:
+        return 0
+    elif age <= 59:
+        return 5
+    elif age <= 64:
+        return 11
+    elif age <= 69:
+        return 13
+    elif age <= 74:
+        return 16
+    elif age <= 84:
+        return 17
+    else:  # >= 85
+        return 24
+
+def compute_apache_iii(stay_id):
+    """
+    Compute APACHE III score for a given ICU stay.
+    
+    Parameters
+    ----------
+    stay_id : int
+        The ICU stay identifier.
+    
+    Returns
+    -------
+    dict
+        Dictionary containing:
+        - 'stay_id': The ICU stay ID
+        - 'subject_id': Patient identifier
+        - 'hadm_id': Hospital admission ID
+        - 'intime': ICU admission time
+        - 'aps_score': Acute Physiology Score (0-252)
+        - 'age_points': Age points (0-24)
+        - 'chronic_health_points': Chronic health points (0-23)
+        - 'total_score': Total APACHE III score (0-299)
+        - 'component_scores': Dictionary with individual component scores
+    """
+    from datetime import datetime, timedelta
+    
+    # Get ICU stay information
+    sql = """
+    SELECT subject_id, hadm_id, intime
+    FROM mimiciv_icu.icustays
+    WHERE stay_id = ?
+    """
+    stay_info = query_db(sql, params=[stay_id])
+    
+    if len(stay_info) == 0:
+        raise ValueError(f"Stay ID {stay_id} not found")
+    
+    subject_id = int(stay_info.iloc[0]['subject_id'])
+    hadm_id = int(stay_info.iloc[0]['hadm_id'])
+    intime = stay_info.iloc[0]['intime']
+    
+    # Calculate first day end time (24 hours from ICU admission)
+    intime_dt = datetime.strptime(str(intime), '%Y-%m-%d %H:%M:%S')
+    first_day_end = intime_dt + timedelta(hours=24)
+    first_day_end_str = first_day_end.strftime('%Y-%m-%d %H:%M:%S')
+    
+    # Get patient age
+    sql = """
+    SELECT anchor_age
+    FROM mimiciv_hosp.patients
+    WHERE subject_id = ?
+    """
+    patient_info = query_db(sql, params=[subject_id])
+    age = int(patient_info.iloc[0]['anchor_age']) if len(patient_info) > 0 else None
+    
+    # Get admission type for chronic health evaluation
+    sql = """
+    SELECT admission_type
+    FROM mimiciv_hosp.admissions
+    WHERE hadm_id = ?
+    """
+    admission_info = query_db(sql, params=[hadm_id])
+    admission_type = admission_info.iloc[0]['admission_type'] if len(admission_info) > 0 else None
+    
+    # Determine if postoperative (elective vs emergency)
+    # Based on MIMIC-IV admission types:
+    # - ELECTIVE = elective postoperative
+    # - SURGICAL SAME DAY ADMISSION = emergency postoperative
+    # - URGENT (not OBSERVATION) = emergency postoperative
+    # - EW EMER., DIRECT EMER. = emergency non-operative
+    # - OBSERVATION types = non-operative
+    admission_type_str = str(admission_type).upper() if admission_type else ""
+    
+    is_elective_postop = 'ELECTIVE' in admission_type_str
+    is_emergency_postop = 'SURGICAL SAME DAY' in admission_type_str or ('URGENT' in admission_type_str and 'OBSERVATION' not in admission_type_str)
+    is_non_operative = not is_elective_postop and not is_emergency_postop
+    
+    # Get all chartevents for first 24 hours
+    sql = """
+    SELECT itemid, valuenum, charttime
+    FROM mimiciv_icu.chartevents
+    WHERE stay_id = ?
+      AND charttime >= ?
+      AND charttime <= ?
+      AND valuenum IS NOT NULL
+    """
+    chartevents = query_db(sql, params=[stay_id, intime, first_day_end_str])
+    
+    # Create lookup for chartevents by itemid
+    def get_values(itemids):
+        """Get all values for given itemids"""
+        if isinstance(itemids, int):
+            itemids = [itemids]
+        df = chartevents[chartevents['itemid'].isin(itemids)]
+        return df
+    
+    # Get vital signs
+    hr_df = get_values(220045)  # Heart Rate
+    map_df = get_values([220052, 220181])  # MAP (arterial and non-invasive)
+    rr_df = get_values(220210)  # Respiratory Rate
+    temp_df = get_values(223762)  # Temperature Celsius
+    
+    # Get lab values
+    hct_df = get_values(220545)  # Hematocrit
+    wbc_df = get_values(220546)  # WBC
+    creat_df = get_values(220615)  # Creatinine
+    bun_df = get_values(225624)  # BUN
+    na_df = get_values(220645)  # Sodium
+    glucose_df = get_values(220621)  # Glucose
+    albumin_df = get_values(227456)  # Albumin
+    bili_df = get_values(225690)  # Bilirubin
+    
+    # Get ABG values
+    ph_df = get_values(223830)  # pH
+    paco2_df = get_values(220235)  # PaCO2
+    pao2_df = get_values(220224)  # PaO2
+    fio2_df = get_values(223835)  # FiO2
+    
+    # Get GCS components
+    gcs_eye_df = get_values(220739)  # GCS Eye
+    gcs_verbal_df = get_values(223900)  # GCS Verbal
+    gcs_motor_df = get_values(223901)  # GCS Motor
+    
+    # Calculate worst values for each parameter
+    
+    # Heart Rate - find value with highest points
+    hr_values = hr_df['valuenum'].tolist() if len(hr_df) > 0 else []
+    hr_points = [apache_iii_heart_rate(hr) for hr in hr_values] if hr_values else [0]
+    hr_score = max(hr_points)
+    
+    # MAP - find value with highest points
+    map_values = map_df['valuenum'].tolist() if len(map_df) > 0 else []
+    map_points = [apache_iii_map(m) for m in map_values] if map_values else [0]
+    map_score = max(map_points)
+    
+    # Temperature - find value furthest from normal (37°C)
+    temp_values = temp_df['valuenum'].tolist() if len(temp_df) > 0 else []
+    temp_points = [apache_iii_temperature(t) for t in temp_values] if temp_values else [0]
+    temp_score = max(temp_points)
+    
+    # Respiratory Rate - find value with highest points
+    rr_values = rr_df['valuenum'].tolist() if len(rr_df) > 0 else []
+    rr_points = [apache_iii_respiratory_rate(r) for r in rr_values] if rr_values else [0]
+    rr_score = max(rr_points)
+    
+    # Oxygenation - need FiO2 to determine which formula to use
+    fio2_values = fio2_df['valuenum'].tolist() if len(fio2_df) > 0 else []
+    pao2_values = pao2_df['valuenum'].tolist() if len(pao2_df) > 0 else []
+    paco2_values = paco2_df['valuenum'].tolist() if len(paco2_df) > 0 else []
+    
+    # Calculate oxygenation score
+    oxygenation_score = 0
+    if pao2_values:
+        if fio2_values:
+            max_fio2 = max(fio2_values)
+            if max_fio2 > 1:
+                max_fio2 = max_fio2 / 100.0
+            
+            min_pao2 = min(pao2_values)
+            avg_paco2 = sum(paco2_values) / len(paco2_values) if paco2_values else 40
+            
+            if max_fio2 < 0.5:
+                oxygenation_score = apache_iii_pao2(min_pao2)
+            else:
+                aado2 = (max_fio2 * 713) - (avg_paco2 / 0.8) - min_pao2
+                oxygenation_score = apache_iii_aado2(aado2)
+        else:
+            oxygenation_score = apache_iii_pao2(min(pao2_values))
+    
+    # Hematocrit - find value with highest points
+    hct_values = hct_df['valuenum'].tolist() if len(hct_df) > 0 else []
+    hct_points = [apache_iii_hematocrit(h) for h in hct_values] if hct_values else [0]
+    hct_score = max(hct_points)
+    
+    # WBC - find value with highest points
+    wbc_values = wbc_df['valuenum'].tolist() if len(wbc_df) > 0 else []
+    wbc_points = [apache_iii_wbc(w) for w in wbc_values] if wbc_values else [0]
+    wbc_score = max(wbc_points)
+    
+    # Creatinine - check for ARF (acute renal failure)
+    creat_values = creat_df['valuenum'].tolist() if len(creat_df) > 0 else []
+    max_creat = max(creat_values) if creat_values else None
+    
+    # Get urine output
+    sql = """
+    SELECT value
+    FROM mimiciv_icu.outputevents
+    WHERE stay_id = ?
+      AND itemid IN (226566, 226627, 226631, 227489)
+      AND charttime >= ?
+      AND charttime <= ?
+      AND value IS NOT NULL
+    """
+    urine_df = query_db(sql, params=[stay_id, intime, first_day_end_str])
+    urine_values = urine_df['value'].astype(float).tolist() if len(urine_df) > 0 else []
+    total_urine = sum(urine_values) if urine_values else None
+    
+    # Determine ARF status
+    has_arf = False
+    if max_creat is not None and max_creat >= 1.7:
+        if total_urine is not None and total_urine < 500:
+            has_arf = True
+    
+    creat_points = [apache_iii_creatinine(c, has_arf) for c in creat_values] if creat_values else [0]
+    creat_score = max(creat_points)
+    
+    # Urine output score
+    urine_score = apache_iii_urine_output(total_urine)
+    
+    # BUN - find value with highest points
+    bun_values = bun_df['valuenum'].tolist() if len(bun_df) > 0 else []
+    bun_points = [apache_iii_bun(b) for b in bun_values] if bun_values else [0]
+    bun_score = max(bun_points)
+    
+    # Sodium - find value with highest points
+    na_values = na_df['valuenum'].tolist() if len(na_df) > 0 else []
+    na_points = [apache_iii_sodium(n) for n in na_values] if na_values else [0]
+    na_score = max(na_points)
+    
+    # Albumin - find value with highest points
+    albumin_values = albumin_df['valuenum'].tolist() if len(albumin_df) > 0 else []
+    albumin_points = [apache_iii_albumin(a) for a in albumin_values] if album
+
+=== Step 6 ===
+# Clinical Coding Agent Memory - APACHE III Implementation
+
+## Schema Facts
+
+### Tables
+- **mimiciv_icu.icustays**: subject_id, hadm_id, stay_id, first_careunit, last_careunit, intime, outtime, los
+- **mimiciv_icu.chartevents**: subject_id, hadm_id, stay_id, caregiver_id, charttime, storetime, itemid, value, valuenum, valueuom
+- **mimiciv_icu.outputevents**: subject_id, hadm_id, stay_id, caregiver_id, charttime, storetime, itemid, value, valueuom
+- **mimiciv_icu.d_items**: itemid, label, category
+- **mimiciv_hosp.d_labitems**: itemid, label, category
+- **mimiciv_hosp.patients**: subject_id, gender, anchor_age, anchor_year, anchor_year_group, dod
+- **mimiciv_hosp.admissions**: subject_id, hadm_id, admittime, dischtime, deathtime, admission_type, admit_provider_id, admission_location, discharge_location, insurance, language, marital_status, race, edregtime, edouttime, hospital_expire_flag
+- **mimiciv_hosp.diagnoses_icd**: hadm_id, icd_code
+
+### Key Item IDs
+| Variable | Item ID | Unit | Source |
+|----------|---------|------|--------|
+| Heart Rate | 220045 | bpm | chartevents |
+| MAP (Arterial) | 220052 | mmHg | chartevents |
+| MAP (Non-invasive) | 220181 | mmHg | chartevents |
+| Temperature (Celsius) | 223762 | °C | chartevents |
+| Respiratory Rate | 220210 | breaths/min | chartevents |
+| PaO2 | 220224 | mmHg | chartevents |
+| PaCO2 | 220235 | mmHg | chartevents |
+| pH (Arterial) | 223830 | pH | chartevents |
+| FiO2 | 223835 | % | chartevents |
+| Hematocrit | 220545 | % | chartevents |
+| WBC | 220546 | K/uL | chartevents |
+| Creatinine | 220615 | mg/dL | chartevents |
+| BUN | 225624 | mg/dL | chartevents |
+| Sodium | 220645 | mEq/L | chartevents |
+| Glucose | 220621 | mg/dL | chartevents |
+| Albumin | 227456 | g/dL | chartevents |
+| Bilirubin | 225690 | mg/dL | chartevents |
+| GCS Eye | 220739 | score | chartevents |
+| GCS Verbal | 223900 | score | chartevents |
+| GCS Motor | 223901 | score | chartevents |
+| Urine Output | 226566, 226627, 226631, 227489 | mL | outputevents |
+
+### APACHE III Scoring Ranges
+- **Total Score**: 0-299 points
+- **Acute Physiology Score (APS)**: 0-252 points (17 variables)
+- **Age Points**: 0-24 points
+- **Chronic Health Evaluation**: 0-23 points
+
+### Scoring Rules
+- All acute physiology variables use **worst (most abnormal) value** in first 24 hours of ICU admission
+- GCS uses **lowest** value in first 24 hours
+- If FiO₂ < 0.5: use PaO₂ for oxygenation scoring
+- If FiO₂ ≥ 0.5: use A-aDO₂ for oxygenation scoring
+- A-aDO₂ = (FiO₂ × 713) − (PaCO₂ / 0.8) − PaO₂
+- Creatinine points doubled if acute renal failure (ARF) present
+- **ICD codes in MIMIC stored without decimal points** (e.g., 571.5 → 5715)
+- **Missing values**: If a lab test is not measured, assign 0 points (assume normal)
+- **Albumin and bilirubin**: Optional, default to 0 points if not measured
+- **GCS under sedation**: If no pre-sedation GCS available, use GCS=15 (normal) = 0 points
+
+### Chronic Health Evaluation Rules (CRITICAL)
+- **Only the SINGLE HIGHEST applicable chronic health score is used (NOT additive)**
+- Scoring depends on admission type:
+
+| Condition | Elective Postoperative | Emergency Postoperative or Non-operative |
+|-----------|----------------------|-----------------------------------------|
+| AIDS | 23 | 11 |
+| Hepatic failure | 4 | 4 |
+| Lymphoma | 13 | 13 |
+| Metastatic cancer | 11 | 14 |
+| Leukemia / myeloma | 10 | 10 |
+| Immunosuppression | 10 | 10 |
+
+### Chronic Conditions Definitions
+- **AIDS**: Confirmed HIV with opportunistic infection or Kaposi sarcoma (ICD: 042, 043.x, V08)
+- **Hepatic failure**: Biopsy-proven cirrhosis, portal hypertension, prior hepatic encephalopathy or variceal bleeding (ICD: 571.2-571.9, 456.0-456.2, 572.2-572.4, 573.2-573.3)
+- **Lymphoma**: Documented lymphoma diagnosis (ICD: 200.x, 202.x, 203.x)
+- **Metastatic cancer**: Documented distant metastases (ICD: 196.x, 197.x, 198.x, 199.x)
+- **Leukemia / multiple myeloma**: Documented hematologic malignancy (ICD: 204.x-208.x, 203.0-203.9)
+- **Immunosuppression**: Immunosuppressive therapy, chemotherapy, radiation, high-dose steroids, or disease-related immunocompromise (ICD: V58.1, V58.61-63, V58.67)
+
+### Admission Type Classification (MIMIC-IV)
+| Admission Type | Classification |
+|----------------|----------------|
+| ELECTIVE | Elective postoperative |
+| SURGICAL SAME DAY ADMISSION | Emergency postoperative |
+| URGENT (not OBSERVATION) | Emergency postoperative |
+| EW EMER. | Emergency non-operative |
+| DIRECT EMER. | Emergency non-operative |
+| OBSERVATION types | Non-operative |
+
+## Test Results and Error Fixes
+
+### Test Run (Step 6)
+```
+stay_id: 39553978
+subject_id: 10000032
+hadm_id: 29079034
+intime: 2180-07-23 14:00:00
+aps_score: 28
+age_points: 5
+chronic_health_points: 25  # BUG: Should be max 23
+total_score: 58
+```
+
+### Identified Bugs (FIXED in Step 9)
+1. **Chronic health points = 25** exceeded maximum of 23 - implementation was ADDING points for multiple conditions instead of taking MAXIMUM
+2. Fixed: `get_chronic_health_points()` now returns `max(points_list)` instead of `sum(points_list)`
+
+### Verification (Steps 10-11)
+- Retrieved APACHE III guideline confirming scoring rules
+- Confirmed chronic health evaluation uses SINGLE HIGHEST score, not additive
+- Confirmed all scoring ranges match guideline
+
+## Complete Function Source Code
+
+```python
+def apache_iii_heart_rate(hr):
+    """Calculate APACHE III points for heart rate"""
+    if hr is None:
+        return 0
+    if hr <= 39:
+        return 8
+    elif hr <= 49:
+        return 5
+    elif hr <= 99:
+        return 0
+    elif hr <= 109:
+        return 1
+    elif hr <= 119:
+        return 5
+    elif hr <= 139:
+        return 7
+    elif hr <= 154:
+        return 13
+    else:
+        return 17
+
+def apache_iii_map(map_val):
+    """Calculate APACHE III points for mean arterial pressure"""
+    if map_val is None:
+        return 0
+    if map_val <= 39:
+        return 23
+    elif map_val <= 59:
+        return 15
+    elif map_val <= 69:
+        return 7
+    elif map_val <= 79:
+        return 6
+    elif map_val <= 99:
+        return 0
+    elif map_val <= 119:
+        return 4
+    elif map_val <= 129:
+        return 7
+    elif map_val <= 139:
+        return 9
+    else:
+        return 10
+
+def apache_iii_temperature(temp):
+    """Calculate APACHE III points for temperature (Celsius)"""
+    if temp is None:
+        return 0
+    if temp <= 32.9:
+        return 20
+    elif temp <= 33.4:
+        return 16
+    elif temp <= 33.9:
+        return 13
+    elif temp <= 34.9:
+        return 8
+    elif temp <= 35.9:
+        return 2
+    elif temp <= 39.9:
+        return 0
+    else:
+        return 4
+
+def apache_iii_respiratory_rate(rr):
+    """Calculate APACHE III points for respiratory rate"""
+    if rr is None:
+        return 0
+    if rr <= 5:
+        return 17
+    elif rr <= 11:
+        return 8
+    elif rr <= 13:
+        return 7
+    elif rr <= 24:
+        return 0
+    elif rr <= 34:
+        return 6
+    elif rr <= 39:
+        return 9
+    elif rr <= 49:
+        return 11
+    else:
+        return 18
+
+def apache_iii_pao2(pao2):
+    """Calculate APACHE III points for PaO2 (when FiO2 < 0.5)"""
+    if pao2 is None:
+        return 0
+    if pao2 >= 80:
+        return 0
+    elif pao2 >= 70:
+        return 2
+    elif pao2 >= 60:
+        return 7
+    elif pao2 >= 50:
+        return 11
+    else:
+        return 15
+
+def apache_iii_aado2(aado2):
+    """Calculate APACHE III points for A-aDO2 (when FiO2 >= 0.5)"""
+    if aado2 is None:
+        return 0
+    if aado2 < 100:
+        return 0
+    elif aado2 <= 249:
+        return 7
+    elif aado2 <= 349:
+        return 9
+    elif aado2 <= 499:
+        return 11
+    else:
+        return 14
+
+def apache_iii_hematocrit(hct):
+    """Calculate APACHE III points for hematocrit"""
+    if hct is None:
+        return 0
+    if hct < 41:
+        return 3
+    elif hct <= 49:
+        return 0
+    else:
+        return 3
+
+def apache_iii_wbc(wbc):
+    """Calculate APACHE III points for WBC"""
+    if wbc is None:
+        return 0
+    if wbc < 1.0:
+        return 19
+    elif wbc <= 2.9:
+        return 5
+    elif wbc <= 19.9:
+        return 0
+    elif wbc <= 24.9:
+        return 1
+    else:
+        return 5
+
+def apache_iii_creatinine(creat, has_arf=False):
+    """Calculate APACHE III points for creatinine"""
+    if creat is None:
+        return 0
+    if creat <= 0.4:
+        return 3
+    elif creat <= 1.4:
+        return 0
+    elif creat <= 1.94:
+        points = 4
+    else:
+        points = 7
+    if has_arf and points > 0:
+        return points * 2
+    return points
+
+def apache_iii_urine_output(urine):
+    """Calculate APACHE III points for urine output (mL/24h)"""
+    if urine is None:
+        return 0
+    if urine < 400:
+        return 15
+    elif urine <= 599:
+        return 8
+    elif urine <= 899:
+        return 7
+    elif urine <= 1499:
+        return 5
+    elif urine <= 1999:
+        return 4
+    elif urine <= 3999:
+        return 0
+    else:
+        return 1
+
+def apache_iii_bun(bun):
+    """Calculate APACHE III points for BUN"""
+    if bun is None:
+        return 0
+    if bun <= 16.9:
+        return 0
+    elif bun <= 19:
+        return 2
+    elif bun <= 39:
+        return 7
+    elif bun <= 79:
+        return 11
+    else:
+        return 12
+
+def apache_iii_sodium(na):
+    """Calculate APACHE III points for sodium"""
+    if na is None:
+        return 0
+    if na <= 119:
+        return 3
+    elif na <= 134:
+        return 2
+    elif na <= 145:
+        return 0
+    elif na <= 154:
+        return 1
+    else:
+        return 4
+
+def apache_iii_albumin(albumin):
+    """Calculate APACHE III points for albumin"""
+    if albumin is None:
+        return 0
+    if albumin < 2.0:
+        return 11
+    elif albumin <= 2.4:
+        return 6
+    else:
+        return 0
+
+def apache_iii_bilirubin(bili):
+    """Calculate APACHE III points for bilirubin"""
+    if bili is None:
+        return 0
+    if bili < 2.0:
+        return 0
+    elif bili <= 2.9:
+        return 5
+    elif bili <= 4.9:
+        return 6
+    elif bili <= 7.9:
+        return 8
+    else:
+        return 16
+
+def apache_iii_glucose(glucose):
+    """Calculate APACHE III points for glucose"""
+    if glucose is None:
+        return 0
+    if glucose <= 39:
+        return 8
+    elif glucose <= 59:
+        return 9
+    elif glucose <= 199:
+        return 0
+    elif glucose <= 349:
+        return 3
+    else:
+        return 5
+
+def apache_iii_acid_base(ph, paco2):
+    """Calculate APACHE III points for acid-base status (pH x PaCO2 matrix)"""
+    if ph is None or paco2 is None:
+        return 0
+    if ph < 7.15:
+        ph_row = 0
+    elif ph <= 7.19:
+        ph_row = 1
+    elif ph <= 7.24:
+        ph_row = 2
+    elif ph <= 7.29:
+        ph_row = 3
+    elif ph <= 7.34:
+        ph_row = 4
+    elif ph <= 7.39:
+        ph_row = 5
+    elif ph <= 7.44:
+        ph_row = 6
+    elif ph <= 7.49:
+        ph_row = 7
+    elif ph <= 7.54:
+        ph_row = 8
+    elif ph <= 7.59:
+        ph_row = 9
+    elif ph <= 7.64:
+        ph_row = 10
+    else:
+        ph_row = 11
+    if paco2 < 25:
+        paco2_col = 0
+    elif paco2 <= 29:
+        paco2_col = 1
+    elif paco2 <= 34:
+        paco2_col = 2
+    elif paco2 <= 39:
+        paco2_col = 3
+    elif paco2 <= 44:
+        paco2_col = 4
+    elif paco2 <= 49:
+        paco2_col = 5
+    elif paco2 <= 54:
+        paco2_col = 6
+    elif paco2 <= 59:
+        paco2_col = 7
+    elif paco2 <= 64:
+        paco2_col = 8
+    else:
+        paco2_col = 9
+    acid_base_matrix = [
+        [12, 4, 6, 7, 7, 0, 0, 0, 0, 0],
+        [12, 4, 3, 3, 2, 0, 0, 0, 0, 0],
+        [12, 2, 1, 1, 0, 0, 0, 0, 0, 0],
+        [9, 2, 1, 0, 0, 0, 0, 0, 0, 0],
+        [7, 2, 0, 0, 0, 1, 1, 0, 0, 0],
+        [7, 0, 0, 0, 0, 0, 1, 3, 0, 0],
+        [6, 0, 0, 0, 0, 0, 1, 3, 5, 0],
+        [3, 0, 0, 0, 0, 0, 2, 5, 7, 9],
+        [3, 2, 2, 2, 0, 0, 3, 7, 9, 11],
+        [0, 3, 3, 3, 2, 3, 5, 9, 11, 12],
+        [0, 3, 5, 5, 3, 5, 7, 11, 12, 12],
+        [0, 3, 12, 12, 12, 12, 12, 12, 12, 12]
+    ]
+    return acid_base_matrix[ph_row][paco2_col]
+
+def apache_iii_gcs(gcs_total):
+    """Calculate APACHE III points for GCS"""
+    if gcs_total is None:
+        return 0
+    gcs_points = {15: 0, 14: 3, 13: 5, 12: 7, 11: 10, 10: 13, 9: 15, 8: 18, 7: 22, 6: 26, 5: 33, 4: 39, 3: 48}
+    return gcs_points.get(gcs_total, 0)
+
+def apache_iii_age(age):
+    """Calculate APACHE III points for age"""
+    if age is None:
+        return 0
+    if age < 45:
+        return 0
+    elif age <= 59:
+        return 5
+    elif age <= 64:
+        return 11
+    elif age <= 69:
+        return 13
+    elif age <= 74:
+        return 16
+    elif age <= 84:
+        return 17
+    else:
+        return 24
+
+def has_chronic_condition(icd_codes, condition_type):
+    """Check if patient has a specific chronic condition based on ICD-9 codes."""
+    icd_strs = [str(code) for code in icd_codes if pd.notna(code)]
+    if condition_type == 'aids':
+        for code in icd_strs:
+            if code == '042' or code.startswith('043') or code == 'V08':
+                return True
+        return False
+    elif condition_type == 'hepatic_failure':
+        for code in icd_strs:
+            if code in ['5712', '5715', '5716', '5718', '5719', '5714', '4560', '4561', '4562', '5722', '5723', '5724', '5732', '5733']:
+                return True
+        return False
+    elif condition_type == 'lymphoma':
+        for code in icd_strs:
+            if code.startswith('200') or code.startswith('202') or code.startswith('203'):
+                return True
+        return False
+    elif condition_type == 'metastatic_cancer':
+        for code in icd_strs:
+            if code.startswith('196') or code.startswith('197') or code.startswith('198') or code.startswith('199'):
+                return True
+        return False
+    elif condition_type == 'leukemia_myeloma':
+        for code in icd_strs:
+            if code.startswith('204') or code.startswith('205') or code.startswith('206') or code.startswith('207') or code.startswith('208'):
+                return True
+            if code.startswith('2030') or code.startswith('2031') or code.startswith('2032') or code.startswith('2033') or code.startswith('2034') or code.startswith('2035') or code.startswith('2036') or code.startswith('2037') or code.startswith('2038') or code.startswith('2039'):
+                return True
+        return False
+    elif condition_type == 'immunosuppression':
+        for code in icd_strs:
+            if code.startswith('V581') or code.startswith('V586'):
+                return True
+        return False
+    return False
+
+def get_chronic_health_points(icd_codes, admission_type_str):
+    """Calculate chronic health points for APACHE III. Returns MAXIMUM, not sum."""
+    admission_type_upper = str(admission_type_str).upper() if admission_type_str else ""
+    is_elective_postop = 'ELECTIVE' in admission_type_upper
+    is_emergency_postop = 'SURGICAL SAME DAY' in admission_type_upper or ('URGENT' in admission_type_upper and 'OBSERVATION' not in admission_type_upper)
+    is_non_operative = not is_elective_postop and not is_emergency_postop
+    if is_elective_postop:
+        return 0
+    points_list = []
+    if has_chronic_condition(icd_codes, 'aids'):
+        points_list.append(11)
+    if has_chronic_condition(icd_codes, 'hepatic_failure'):
+        points_list.append(4)
+    if has_chronic_condition(icd_codes, 'lymphoma'):
+        points_list.append(13)
+    if has_chronic_condition(icd_codes, 'metastatic_cancer'):
+        points_list.append(14)
+    if has_chronic_condition(icd_codes, 'leukemia_myeloma'):
+        points_list.append(10)
+    if has_chronic_condition(icd_codes, 'immunosuppression'):
+        points_list.append(10)
+    return max(points_list) if points_list else 0
+
+def compute_apache_iii(stay_id):
+    """Compute APACHE III score for a given ICU stay."""
+    from datetime import datetime, timedelta
+    sql = "SELECT subject_id, hadm_id, intime FROM mimiciv_icu.icustays WHERE stay_id = ?"
+    stay_info = query_db(sql, params=[stay_id])
+    if len(stay_info) == 0:
+        raise ValueError(f"Stay ID {stay_id} not found")
+    subject_id = int(stay_info.iloc[0]['subject_id'])
+    hadm_id = int(stay_info.iloc[0]['hadm_id'])
+    intime = stay_info.iloc[0]['intime']
+    intime_dt = datetime.strptime(str(intime), '%Y-%m-%d %H:%M:%S')
+    first_day_end = intime_dt + timedelta(hours=24)
+    first_day_end_str = first_day_end.strftime('%Y-%m-%d %H:%M:%S')
+    sql = "SELECT anchor_age FROM mimiciv_hosp.patients WHERE subject_id = ?"
+    patient_info = query_db(sql, params=[subject_id])
+    age = int(patient_info.iloc[0]['anchor_age']) if len(patient_info) > 0 else None
+    sql = "SELECT admission_type FROM mimiciv_hosp.admissions WHERE hadm_id = ?"
+    admission_info = query_db(sql, params=[hadm_id])
+    admission_type = admission_info.iloc[0]['admission_type'] if len(admission_info) > 0 else None
+    sql = "SELECT icd_code FROM mimiciv_hosp.diagnoses_icd WHERE hadm_id = ?"
+    icd_info = query_db(sql, params=[hadm_id])
+    icd_codes = icd_info['icd_code'].tolist() if len(icd_info) > 0 else []
+    sql = "SELECT itemid, valuenum, charttime FROM mimiciv_icu.chartevents WHERE stay_id = ? AND charttime >= ? AND charttime <= ? AND valuenum IS NOT NULL"
+    chartevents = query_db(sql, params=[stay_id, intime, first_day_end_str])
+    def get_values(itemids):
+        if isinstance(itemids, int):
+            itemids = [itemids]
+        return chartevents[chartevents['itemid'].isin(itemids)]
+    hr_df = get_values(220045)
+    map_df = get_values([220052, 220181])
+    rr_df = get_values(220210)
+    temp_df = get_values(223762)
+    hct_df = get_values(220545)
+    wbc_df = get_values(220546)
+    creat_df = get_values(220615)
+    bun_df = get_values(225624)
+    na_df = get_values(220645)
+    glucose_df = get_values(220621)
+    albumin_df = get_values(227456)
+    bili_df = get_values(225690)
+    ph_df = get_values(223830)
+    paco2_df = get_values(220235)
+    pao2_df = get_values(220224)
+    fio2_df = get_values(223835)
+    gcs_eye_df = get_values(220739)
+    gcs_verbal_df = get_values(223900)
+    gcs_motor_df = get_values(223901)
+    hr_values = hr_df['valuenum'].tolist() if len(hr_df) > 0 else []
+    hr_points = [apache_iii_heart_rate(hr) for hr in hr_values] if hr_values else [0]
+    hr_score = max(hr_points)
+    map_values = map_df['valuenum'].tolist() if len(map_df) > 0 else []
+    map_points = [apache_iii_map(m) for m in map_values] if map_values else [0]
+    map_score = max(map_points)
+    temp_values = temp_df['valuenum'].tolist() if len(temp_df) > 0 else []
+    temp_points = [apache_iii_temperature(t) for t in temp_values] if temp_values else [0]
+    temp_score = max(temp_points)
+    rr_values = rr_df['valuenum'].tolist() if len(rr_df) > 0 else []
+    rr_points = [apache_iii_respiratory_rate(r) for r in rr_values] if rr_values else [0]
+    rr_score = max(rr_points)
+    fio2_values = fio2_df['valuenum'].tolist() if len(fio2_df) > 0 else []
+    pao2_values = pao2_df['valuenum'].tolist() if len(pao2_df) > 0 else []
+    paco2_values = paco2_df['valuenum'].tolist() if len(paco2_df) > 0 else []
+    oxygenation_score = 0
+    if pao2_values:
+        if fio2_values:
+            max_fio2 = max(fio2_values)
+            if max_fio2 > 1:
+                max_fio2 = max_fio2 / 100.0
+            min_pao2 = min(pao2_values)
+            avg_paco2 = sum(paco2_values) / len(paco2_values) if paco2_values else 40
+            if max_fio2 < 0.5:
+                oxygenation_score = apache_iii_pao2(min_pao2)
+            else:
+                aado2 = (max_fio2 * 713) - (avg_paco2 / 0.8) - min_pao2
+                oxygenation_score = apache_iii_aado2(aado2)
+        else:
+            oxygenation_score = apache_iii_pao2(min(pao2_values))
+    hct_values = hct_df['valuenum'].tolist() if len(hct_df) > 0 else []
+    hct_points = [apache_iii_hematocrit(h) for h in hct_values] if hct_values else [0]
+    hct_score = max(hct_points)
+    wbc_values = wbc_df['valuenum'].tolist() if len(wbc_df) > 0 else []
+    wbc_points = [apache_iii_wbc(w) for w in wbc_values] if wbc_values else [0]
+    wbc_score = max(wbc_points)
+    creat_values = creat_df['valuenum'].tolist() if len(creat_df) > 0 else []
+    max_creat = max(creat_values) if creat_values else None
+    sql = "SELECT value FROM mimiciv_icu.outputevents WHERE stay_id = ? AND itemid IN (226566, 226627, 226631, 227489) AND charttime >= ? AND charttime <= ? AND value IS NOT NULL"
+    urine_df = query_db(sql, params=[stay_id, intime, first_day_end_str])
+    urine_values = urine_df['value'].astype(float).tolist() if len(urine_df) > 0 else []
+    total_urine = sum(urine_values) if urine_values else None
+    has_arf = False
+    if max_creat is not None and max_creat >= 1.7:
+        if total_urine is not None and total_urine < 500:
+            has_arf = True
+    creat_points = [apache_iii_creatinine(c, has_arf) for c in creat_values] if creat_values else [0]
+    creat_score = max(creat_points)
+    urine_score = apache_iii_urine_output(total_urine)
+    bun_values = bun_df['valuenum'].tolist() if len(bun_df) > 0 else []
+    bun_points = [apache_iii_bun(b) for b in bun_values] if bun_values else [0]
+    bun_score = max(bun_points)
+    na_values = na_df['valuenum'].tolist() if len(na_df) > 0 else []
+    na_points = [apache_iii_sodium(n) for n in na_values] if na_values else [0]
+    na_score = max(na_points)
+    albumin_values = albumin_df['valuenum'].tolist() if len(albumin_df) > 0 else []
+    albumin_points = [apache_iii_albumin(a) for a in albumin_values] if albumin_values else [0]
+    albumin_score = max(albumin_points)
+    bili_values = bili_df['valuenum'].tolist() if len(bili_df) > 0 else []
+    bili_points = [apache_iii_bilirubin(b) for b in bili_values] if bili_values else [0]
+    bili_score = max(bili_points)
+    glucose_values = glucose_df['valuenum'].tolist() if len(glucose_df) > 0 else []
+    glucose_points = [apache_iii_glucose(g) for g in glucose_values] if glucose_values else [0]
+    glucose_score = max(glucose_points)
+    ph_values = ph_df['valuenum'].tolist() if len(ph_df) > 0 else []
+    paco2_values = paco2_df['valuenum'].tolist() if len(paco2_df) > 0 else []
+    acid_base_score = 0
+    if ph_values and paco2_values:
+        max_ab_points = 0
+        for ph in ph_values:
+            for paco2 in paco2_values
+
