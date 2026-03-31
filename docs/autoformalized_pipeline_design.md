@@ -22,6 +22,12 @@ These are orthogonal:
 - `task_mode` controls prompt/controller behavior and dataset validation
 - `tool_backend` controls how concept-layer tool outputs are produced
 
+`single` does not select a task automatically. The single task comes from the dataset:
+
+- sepsis CSV -> single-task sepsis
+- AKI CSV -> single-task AKI
+- respiratory support CSV -> single-task respiratory support
+
 ## Current execution model
 
 The benchmark loop is still unchanged at a high level:
@@ -123,6 +129,12 @@ Verified locally:
 - unit tests pass
 - compile checks pass
 - CLI smoke test passes on the official single-task path
+- CLI smoke tests also pass for:
+  - official multitask
+  - autoformalized single-task sepsis
+  - autoformalized single-task AKI
+  - autoformalized single-task respiratory support
+  - autoformalized multitask
 
 Not fully verified in this local environment:
 
@@ -137,4 +149,4 @@ On the GPU/runtime machine, run:
 3. Qwen + official backend
 4. Qwen + autoformalized backend
 
-with `--sample-size 3` and `--events-output` enabled.
+with `--sample-size 3`, `--events-output`, and `--evaluation-output` enabled.

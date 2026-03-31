@@ -1,0 +1,52 @@
+{
+  "task_mode": "single",
+  "tool_backend": "official",
+  "dataset": "data/sample_trajectories.json",
+  "num_trajectories": 1,
+  "sample_size": 1,
+  "agent": "heuristic",
+  "metrics": {
+    "task_name": "sepsis",
+    "step_level": {
+      "accuracy": 0.8571,
+      "macro_f1": 0.8413,
+      "per_class": {
+        "keep_monitoring": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0
+        },
+        "infection_suspect": {
+          "precision": 1.0,
+          "recall": 0.5,
+          "f1": 0.6667
+        },
+        "trigger_sepsis_alert": {
+          "precision": 0.75,
+          "recall": 1.0,
+          "f1": 0.8571
+        }
+      }
+    },
+    "transition_timing": {
+      "infection": {
+        "exact_match_rate": 1.0,
+        "mean_absolute_error_hours": 0.0,
+        "early_rate": 0.0,
+        "late_rate": 0.0,
+        "missed_rate": 0.0
+      },
+      "sepsis_alert": {
+        "exact_match_rate": 0.0,
+        "mean_absolute_error_hours": 4.0,
+        "early_rate": 1.0,
+        "late_rate": 0.0,
+        "missed_rate": 0.0
+      }
+    },
+    "tool_grounding": {
+      "infection_predictions_grounded_rate": 1.0,
+      "alert_predictions_grounded_rate": 1.0
+    }
+  }
+}

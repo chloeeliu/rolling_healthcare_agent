@@ -1,3 +1,4 @@
+import argparse
 import json
 import sys
 import tempfile
@@ -7,7 +8,8 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
-from sepsis_mvp.agent import QwenChatAgent, _coerce_agent_output, HeuristicAgent
+from sepsis_mvp.agent import QwenChatAgent, _build_messages, _coerce_agent_output, HeuristicAgent
+from sepsis_mvp.cli import run_command
 from sepsis_mvp.dataset import (
     build_dataset,
     load_concept_tables,
@@ -68,6 +70,22 @@ class PipelineTest(unittest.TestCase):
                 "respiratory_support": "room_air_or_low_support",
             },
         )
+
+    def test_prompt_includes_basic_clinical_guidance(self):
+        messages = _build_messages(
+            self._multitask_step_input(),
+            history=[],
+            available_tools=[
+                "query_suspicion_of_infection",
+                "query_sofa",
+                "query_kdigo_stage",
+                "query_ventilation_status",
+            ],
+        )
+        system_prompt = messages[0]["content"]
+        self.assertIn("SOFA is 2 or higher", system_prompt)
+        self.assertIn("KDIGO stage is 2 or 3", system_prompt)
+        self.assertIn("Map HFNC and non-invasive ventilation", system_prompt)
 
     def test_qwen_agent_forces_next_required_tool_when_model_skips_tool_use(self):
         class FakeClient:
@@ -269,6 +287,39 @@ class PipelineTest(unittest.TestCase):
             payload = json.loads(output.read_text())
             self.assertEqual(len(payload), 2)
 
+    def test_run_command_writes_evaluation_summary(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            evaluation_output = Path(tmpdir) / "evaluation.json"
+            args = argparse.Namespace(
+                concepts=str(SAMPLE),
+                db_path=None,
+                dataset=str(ROOT / "data" / "sample_trajectories.json"),
+                task_mode="single",
+                tool_backend="official",
+                autoformalized_library=str(ROOT / "autoformalized_library"),
+                include_out_of_scope=False,
+                agent="heuristic",
+                model="Qwen/Qwen3.5-9B",
+                temperature=0.0,
+                top_p=0.95,
+                max_new_tokens=250,
+                sample_size=1,
+                sofa_alert_threshold=2,
+                rollouts_output=None,
+                evaluation_output=str(evaluation_output),
+                events_output=None,
+                trajectory_output=None,
+            )
+            exit_code = run_command(args)
+            self.assertEqual(exit_code, 0)
+            payload = json.loads(evaluation_output.read_text())
+            self.assertEqual(payload["task_mode"], "single")
+            self.assertEqual(payload["tool_backend"], "official")
+            self.assertEqual(payload["agent"], "heuristic")
+            self.assertIn("metrics", payload)
+            self.assertIn("infection_predictions_grounded_rate", payload["metrics"]["tool_grounding"])
+            self.assertIn("alert_predictions_grounded_rate", payload["metrics"]["tool_grounding"])
+
     def test_csv_loader_filters_out_of_scope_trajectory_in_strict_mode(self):
         csv_text = """trajectory_id,subject_id,hadm_id,stay_id,icu_intime,icu_outtime,icu_los_hours,is_sepsis,infection_start_time,organ_dysfunction_start_time,sepsis_start_time,infection_start_hour,organ_dysfunction_start_hour,sepsis_start_hour,t_hour,checkpoint_time,state_label,terminal
 mimiciv_stay_1,10,20,30,2150-01-01T00:00:00,2150-01-02T00:00:00,24,1,2150-01-01T02:00:00,2150-01-01T08:00:00,2150-01-01T12:00:00,4,8,12,0,2150-01-01T00:00:00,keep_monitoring,false
@@ -458,7 +509,8 @@ mimiciv_stay_1,10,20,30,2150-01-01T00:00:00,2150-01-02T00:00:00,24,high,2150-01-
         )
         metrics = evaluate_rollouts([trajectory], [rollout])
         self.assertEqual(metrics["task_name"], "aki")
-        self.assertIn("suspect_aki", metrics["transition_timing"])
+        self.assertIn("aki_suspect", metrics["transition_timing"])
+        self.assertIn("alert_predictions_grounded_rate", metrics["tool_grounding"])
 
     def test_environment_rejects_task_mode_mismatch(self):
         concepts = load_concept_tables(SAMPLE)

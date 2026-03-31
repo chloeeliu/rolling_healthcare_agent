@@ -116,10 +116,21 @@ def run_command(args: argparse.Namespace) -> int:
             )
 
     evaluation = evaluate_rollouts(trajectories, rollouts)
+    evaluation_summary = {
+        "task_mode": args.task_mode,
+        "tool_backend": args.tool_backend,
+        "dataset": args.dataset,
+        "num_trajectories": len(trajectories),
+        "sample_size": args.sample_size,
+        "agent": args.agent,
+        "metrics": evaluation,
+    }
 
     if args.rollouts_output:
         Path(args.rollouts_output).write_text(json.dumps(rollout_to_dicts(rollouts), indent=2))
-    print(json.dumps(evaluation, indent=2))
+    if args.evaluation_output:
+        Path(args.evaluation_output).write_text(json.dumps(evaluation_summary, indent=2))
+    print(json.dumps(evaluation_summary, indent=2))
     return 0
 
 
@@ -178,6 +189,10 @@ def build_parser() -> argparse.ArgumentParser:
     run_parser.add_argument("--sample-size", type=int, help="Run only the first N trajectories.")
     run_parser.add_argument("--sofa-alert-threshold", type=int, default=2)
     run_parser.add_argument("--rollouts-output", help="Optional path to save rollout logs.")
+    run_parser.add_argument(
+        "--evaluation-output",
+        help="Optional path to save the final evaluation summary JSON.",
+    )
     run_parser.add_argument("--events-output", help="Optional JSONL file for per-tool-call/per-step events.")
     run_parser.add_argument("--trajectory-output", help="Optional JSONL file for per-stay completed rollouts.")
     run_parser.set_defaults(func=run_command)

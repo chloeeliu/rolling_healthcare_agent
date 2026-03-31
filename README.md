@@ -47,6 +47,36 @@ For the `official` backend, these are backed by:
 - `mimiciv_derived.kdigo_stages`
 - `mimiciv_derived.ventilation`
 
+## Modes
+
+The runner has two independent mode choices:
+
+- `--task-mode`
+  - `auto`: infer from the dataset you pass
+  - `single`: require a single-task dataset
+  - `multitask`: require a multitask dataset
+- `--tool-backend`
+  - `official`: visible tools come from official derived DuckDB concepts
+  - `autoformalized`: visible tools come from generated functions in `autoformalized_library`
+
+Important:
+
+- `single` does not choose the event type by itself
+- the event type comes from the dataset
+
+Examples:
+
+- `rolling_monitor_dataset/sepsis/rolling_sepsis.csv` + `--task-mode single`
+  runs single-task sepsis
+- `rolling_monitor_dataset/aki/rolling_aki.csv` + `--task-mode single`
+  runs single-task AKI
+- `rolling_monitor_dataset/respiratory_support/rolling_respiratory_support.csv` + `--task-mode single`
+  runs single-task respiratory support
+- `rolling_monitor_dataset/multitask/rolling_multitask.csv` + `--task-mode multitask`
+  runs joint sepsis + AKI + respiratory support monitoring
+
+If you use `--task-mode auto`, the pipeline infers this from the dataset format and task metadata.
+
 ## Agent contract
 
 Single-task sepsis mode returns:
@@ -107,7 +137,8 @@ PYTHONPATH=src python3 -m sepsis_mvp.cli run \
   --sample-size 5 \
   --events-output data/multitask_events.jsonl \
   --trajectory-output data/multitask_trajectories.jsonl \
-  --rollouts-output data/multitask_rollouts.json
+  --rollouts-output data/multitask_rollouts.json \
+  --evaluation-output data/multitask_eval.json
 ```
 
 Single-task sepsis smoke test:
@@ -119,7 +150,8 @@ PYTHONPATH=src python3 -m sepsis_mvp.cli run \
   --agent heuristic \
   --task-mode single \
   --tool-backend official \
-  --sample-size 1
+  --sample-size 1 \
+  --evaluation-output data/sample_eval.json
 ```
 
 ### 3. Run the local Qwen model
@@ -141,7 +173,8 @@ PYTHONPATH=src python3 -m sepsis_mvp.cli run \
   --sample-size 10 \
   --events-output data/qwen_multitask_events.jsonl \
   --trajectory-output data/qwen_multitask_trajectories.jsonl \
-  --rollouts-output data/qwen_multitask_rollouts.json
+  --rollouts-output data/qwen_multitask_rollouts.json \
+  --evaluation-output data/qwen_multitask_eval.json
 ```
 
 To run the same benchmark with generated concept functions instead of official derived tables:
@@ -158,7 +191,8 @@ PYTHONPATH=src python3 -m sepsis_mvp.cli run \
   --sample-size 10 \
   --events-output data/qwen_multitask_autoform_events.jsonl \
   --trajectory-output data/qwen_multitask_autoform_trajectories.jsonl \
-  --rollouts-output data/qwen_multitask_autoform_rollouts.json
+  --rollouts-output data/qwen_multitask_autoform_rollouts.json \
+  --evaluation-output data/qwen_multitask_autoform_eval.json
 ```
 
 ## Debug outputs
@@ -173,8 +207,27 @@ Useful flags:
 - `--events-output path.jsonl` also captures raw Qwen outputs, repair outputs, and any controller-forced tool corrections
 - `--trajectory-output path.jsonl`: append each completed stay rollout immediately
 - `--rollouts-output path.json`: write the final full in-memory rollout list at the end
+- `--evaluation-output path.json`: save the final evaluation summary with task mode, backend, sample size, and metrics
 
 This means partial progress survives long runs and crashes.
+
+For single-task runs, the saved metrics are task-specific and detailed:
+
+- sepsis:
+  - `transition_timing.infection`
+  - `transition_timing.sepsis_alert`
+  - `tool_grounding.infection_predictions_grounded_rate`
+  - `tool_grounding.alert_predictions_grounded_rate`
+- AKI:
+  - `transition_timing.aki_suspect`
+  - `transition_timing.aki_alert`
+  - `tool_grounding.suspect_predictions_grounded_rate`
+  - `tool_grounding.alert_predictions_grounded_rate`
+- respiratory support:
+  - `transition_timing.medium_support`
+  - `transition_timing.invasive_support`
+  - `tool_grounding.medium_support_predictions_grounded_rate`
+  - `tool_grounding.invasive_support_predictions_grounded_rate`
 
 ## Prompting notes
 
@@ -183,6 +236,10 @@ The local Qwen path is prompt-tuned for strict JSON output:
 - no free-text reasoning
 - no `<think>` tags
 - single-task and multitask prompts are now generated separately
+- both prompt modes share a basic clinical guidance block:
+  sepsis uses infection evidence plus SOFA>=2 as alert-level guidance,
+  AKI uses KDIGO stage 1 vs stage>=2,
+  respiratory support uses low vs HFNC/NIV vs invasive/trach mapping
 - fixed-key `task_actions` object in multitask mode
 - one-shot repair retry if the first generation is not valid JSON
 - deterministic required-tool guard based on the monitored task set

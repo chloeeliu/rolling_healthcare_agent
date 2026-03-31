@@ -39,6 +39,26 @@ TOOL_DESCRIPTIONS = {
     "query_ventilation_status": "current and highest visible respiratory support up to this checkpoint",
 }
 
+CLINICAL_GUIDANCE = {
+    "sepsis": [
+        "If suspected infection is not visible yet, prefer keep_monitoring.",
+        "If suspected infection is visible but alert-level organ dysfunction is not yet visible, prefer infection_suspect.",
+        "If suspected infection is visible and SOFA is 2 or higher, this is usually alert-level evidence for trigger_sepsis_alert.",
+        "Do not skip the intermediate infection_suspect state when infection is visible but sepsis alert evidence is not yet established.",
+    ],
+    "aki": [
+        "If visible KDIGO stage is 0 or absent, prefer keep_monitoring.",
+        "If visible KDIGO stage is 1, prefer suspect_aki.",
+        "If visible KDIGO stage is 2 or 3, or stage-3/CRRT evidence is present, prefer trigger_aki_alert.",
+    ],
+    "respiratory_support": [
+        "Map None and SupplementalOxygen to room_air_or_low_support.",
+        "Map HFNC and non-invasive ventilation to high_flow_or_noninvasive_support.",
+        "Map invasive ventilation and tracheostomy-level support to invasive_vent_required.",
+        "If current support is unclear but highest support seen so far is higher, do not de-escalate below the highest visible support for this checkpoint.",
+    ],
+}
+
 
 def _resolved_task_names(step_input: dict[str, Any]) -> list[str]:
     task_names = step_input.get("task_names") or []
@@ -97,6 +117,15 @@ def _summarize_history(history: list[dict[str, Any]]) -> dict[str, Any]:
     return {"tool_calls": tool_calls, "tool_results": tool_results}
 
 
+def _clinical_guidance_text(task_names: list[str]) -> str:
+    lines = ["Clinical guidance:"]
+    for task_name in task_names:
+        lines.append(f"- {task_name}:")
+        for rule in CLINICAL_GUIDANCE[task_name]:
+            lines.append(f"  {rule}")
+    return "\n".join(lines)
+
+
 def _build_messages(
     step_input: dict[str, Any],
     history: list[dict[str, Any]],
@@ -127,6 +156,10 @@ def _build_messages(
         for tool_name in required_tool_order:
             system_prompt += f"- {tool_name}: {TOOL_DESCRIPTIONS[tool_name]}\n"
         system_prompt += (
+            "\n"
+            + _clinical_guidance_text(task_names)
+            + "\n"
+            "\n"
             "\nRecommended decision pattern:\n"
             "1. Collect all required tool outputs for the current checkpoint.\n"
             "2. Use the visible evidence to assign one decision per task.\n"
@@ -187,6 +220,10 @@ def _build_messages(
         for tool_name in required_tool_order:
             system_prompt += f"- {tool_name}: {TOOL_DESCRIPTIONS[tool_name]}\n"
         system_prompt += (
+            "\n"
+            + _clinical_guidance_text([task_name])
+            + "\n"
+            "\n"
             "\nTool call format:\n"
             f'{{"tool_name":"{required_tool_order[0]}","arguments":{{"stay_id":{stay_id},"t_hour":{t_hour}}}}}\n\n'
             "Final action format:\n"

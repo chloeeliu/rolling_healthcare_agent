@@ -262,8 +262,7 @@ def evaluate_single_task_rollouts(trajectories: list[Trajectory], rollouts: list
     transition_fields = TASK_TRANSITION_FIELDS.get(task_name, {})
     gt_hours_by_action = {action: [] for action in transition_fields}
     pred_hours_by_action = {action: [] for action in transition_fields}
-    grounded_predictions = 0
-    total_nonbaseline_predictions = 0
+    grounding_counts = _single_task_grounding_counters(task_name)
 
     for rollout in rollouts:
         trajectory = trajectory_by_id[rollout.trajectory_id]
@@ -272,10 +271,7 @@ def evaluate_single_task_rollouts(trajectories: list[Trajectory], rollouts: list
             if step.gt_action == step.predicted_action:
                 correct_steps += 1
             confusion[(step.gt_action, step.predicted_action)] += 1
-            if step.predicted_action is not None and step.predicted_action != baseline_action:
-                total_nonbaseline_predictions += 1
-                if _is_grounded(task_name, step.tool_calls):
-                    grounded_predictions += 1
+            _update_single_task_grounding(task_name, step.predicted_action, step.tool_calls, grounding_counts)
 
         predicted_hours = (rollout.first_predicted_task_hours or {}).get(task_name, {})
         for action, transition_field in transition_fields.items():
@@ -299,11 +295,7 @@ def evaluate_single_task_rollouts(trajectories: list[Trajectory], rollouts: list
         action: _timing_metrics(gt_hours_by_action[action], pred_hours_by_action[action])
         for action in transition_fields
     }
-    if task_name == "sepsis":
-        transition_timing = {
-            "infection": transition_timing.get("infection_suspect"),
-            "sepsis_alert": transition_timing.get("trigger_sepsis_alert"),
-        }
+    transition_timing = _format_single_task_transition_timing(task_name, transition_timing)
 
     return {
         "task_name": task_name,
@@ -313,13 +305,7 @@ def evaluate_single_task_rollouts(trajectories: list[Trajectory], rollouts: list
             "per_class": per_class,
         },
         "transition_timing": transition_timing,
-        "tool_grounding": {
-            "nonbaseline_predictions_grounded_rate": round(
-                grounded_predictions / total_nonbaseline_predictions, 4
-            )
-            if total_nonbaseline_predictions
-            else None,
-        },
+        "tool_grounding": _finalize_single_task_grounding(grounding_counts),
     }
 
 
@@ -391,6 +377,87 @@ def _is_grounded(task_name: str, tool_calls: list[dict[str, Any]]) -> bool:
     if task_name == "respiratory_support":
         return "query_ventilation_status" in tools
     return False
+
+
+def _single_task_grounding_spec(task_name: str) -> dict[str, tuple[str, set[str]]]:
+    if task_name == "sepsis":
+        return {
+            "infection_suspect": ("infection_predictions_grounded_rate", {"query_suspicion_of_infection"}),
+            "trigger_sepsis_alert": (
+                "alert_predictions_grounded_rate",
+                {"query_suspicion_of_infection", "query_sofa"},
+            ),
+        }
+    if task_name == "aki":
+        return {
+            "suspect_aki": ("suspect_predictions_grounded_rate", {"query_kdigo_stage"}),
+            "trigger_aki_alert": ("alert_predictions_grounded_rate", {"query_kdigo_stage"}),
+        }
+    if task_name == "respiratory_support":
+        return {
+            "high_flow_or_noninvasive_support": (
+                "medium_support_predictions_grounded_rate",
+                {"query_ventilation_status"},
+            ),
+            "invasive_vent_required": (
+                "invasive_support_predictions_grounded_rate",
+                {"query_ventilation_status"},
+            ),
+        }
+    return {}
+
+
+def _single_task_grounding_counters(task_name: str) -> dict[str, dict[str, int]]:
+    return {
+        metric_name: {"num": 0, "den": 0}
+        for metric_name, _tools in _single_task_grounding_spec(task_name).values()
+    }
+
+
+def _update_single_task_grounding(
+    task_name: str,
+    predicted_action: str | None,
+    tool_calls: list[dict[str, Any]],
+    grounding_counts: dict[str, dict[str, int]],
+) -> None:
+    if predicted_action is None:
+        return
+    tools = {call["tool_name"] for call in tool_calls}
+    for action_name, (metric_name, required_tools) in _single_task_grounding_spec(task_name).items():
+        if predicted_action != action_name:
+            continue
+        grounding_counts[metric_name]["den"] += 1
+        if tools & required_tools:
+            grounding_counts[metric_name]["num"] += 1
+
+
+def _finalize_single_task_grounding(grounding_counts: dict[str, dict[str, int]]) -> dict[str, float | None]:
+    return {
+        metric_name: round(counts["num"] / counts["den"], 4) if counts["den"] else None
+        for metric_name, counts in grounding_counts.items()
+    }
+
+
+def _format_single_task_transition_timing(
+    task_name: str,
+    transition_timing: dict[str, dict[str, Any]],
+) -> dict[str, dict[str, Any]]:
+    if task_name == "sepsis":
+        return {
+            "infection": transition_timing.get("infection_suspect"),
+            "sepsis_alert": transition_timing.get("trigger_sepsis_alert"),
+        }
+    if task_name == "aki":
+        return {
+            "aki_suspect": transition_timing.get("suspect_aki"),
+            "aki_alert": transition_timing.get("trigger_aki_alert"),
+        }
+    if task_name == "respiratory_support":
+        return {
+            "medium_support": transition_timing.get("high_flow_or_noninvasive_support"),
+            "invasive_support": transition_timing.get("invasive_vent_required"),
+        }
+    return transition_timing
 
 
 def _timing_metrics(gt_hours: list[int | None], pred_hours: list[int | None]) -> dict[str, Any]:
