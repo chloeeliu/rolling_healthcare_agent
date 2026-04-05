@@ -168,6 +168,219 @@ Clinical characteristics:
 - allows reasonable clinical nuance
 - but does not yet maintain the same prefix-time behavior or internal consistency as the official layer
 
+## Logic Comparison In Detail
+
+This section compares the underlying function logic itself, independent of the saved agent trajectories.
+
+### `query_suspicion_of_infection`: official logic
+
+The official wrapper in [/Users/chloe/Documents/New project/src/sepsis_mvp/tools.py](/Users/chloe/Documents/New%20project/src/sepsis_mvp/tools.py) is intentionally thin.
+
+It does not infer suspicion from raw events. Instead, it trusts the already-derived MIMIC concept table and applies only runtime time-gating:
+
+1. look up ICU `intime` for `stay_id`
+2. compute `visible_until = intime + t_hour`
+3. read from `mimiciv_derived.suspicion_of_infection`
+4. keep only rows where:
+   - `suspected_infection = 1`
+   - `suspected_infection_time IS NOT NULL`
+   - `suspected_infection_time <= visible_until`
+5. order by earliest visible `suspected_infection_time`
+6. emit:
+   - `has_suspected_infection = true` if any qualifying row exists
+   - `first_visible_suspected_infection_time`
+   - `first_visible_suspected_infection_hour`
+   - compact evidence rows
+
+Conceptually, this means the official backend inherits the MIMIC derived rule:
+
+- suspicion is a formal antibiotic-culture pairing event
+- the visible onset time is the concept’s `suspected_infection_time`
+- evidence and boolean status are coupled by construction
+
+### `query_suspicion_of_infection`: autoformalized logic
+
+The autoformalized backend splits the logic across:
+
+- raw generated function in [/Users/chloe/Documents/New project/autoformalized_library/functions/suspicion_of_infection.py](/Users/chloe/Documents/New%20project/autoformalized_library/functions/suspicion_of_infection.py)
+- adapter in [/Users/chloe/Documents/New project/src/sepsis_mvp/autoformalized.py](/Users/chloe/Documents/New%20project/src/sepsis_mvp/autoformalized.py)
+
+The generated function reasons from raw tables and uses a broader heuristic:
+
+1. pull microbiology events
+2. remove screening cultures such as:
+   - `MRSA SCREEN`
+   - `CRE Screen`
+   - related screening labels
+3. pull antibiotic administrations from:
+   - ICU `inputevents`
+   - hospital `prescriptions`
+4. identify likely treatment antibiotics with broad drug-name matching
+5. filter out likely prophylaxis patterns:
+   - cefazolin-like prophylaxis
+   - vancomycin-only cardiac surgery prophylaxis in some cases
+6. call infection suspicion true if either:
+   - any non-screening diagnostic culture exists
+   - or a treatment pattern exists, such as repeated doses or multiple distinct antibiotics
+
+Then the adapter does a second layer of interpretation:
+
+1. collect returned culture rows and antibiotic administrations
+2. reconstruct `evidence`
+3. compute `first_visible_suspected_infection_time` from the earliest observed evidence timestamp
+4. expose `has_suspected_infection` from the generated boolean field `has_suspicion_of_infection`
+
+This is why the current auto backend can produce:
+
+- non-empty evidence
+- non-null first visible suspicion time
+- but `has_suspected_infection = false`
+
+The boolean and the evidence timestamp are not derived from exactly the same criterion.
+
+### Infection logic difference summary
+
+Official suspicion function:
+
+- uses a fixed derived concept
+- relies on an explicit temporal pairing rule
+- treats the concept timestamp as authoritative
+- is narrow, stable, and benchmark-aligned
+
+Autoformalized suspicion function:
+
+- reasons from raw clinical events
+- treats cultures and treatment patterns as separate evidence channels
+- explicitly tries to exclude screening and prophylaxis
+- is broader, more clinically interpretive, and more adapter-sensitive
+
+Clinically, that difference is not inherently wrong. A broader suspicion function can still be useful under Sepsis-3-style monitoring. The current issue is not that it differs. The issue is that its emitted JSON is not always self-consistent.
+
+### `query_sofa`: official logic
+
+The official SOFA wrapper in [/Users/chloe/Documents/New project/src/sepsis_mvp/tools.py](/Users/chloe/Documents/New%20project/src/sepsis_mvp/tools.py) also stays thin.
+
+It assumes `mimiciv_derived.sofa` already contains one row per stay per ICU-relative hour and simply:
+
+1. filters rows to `hr <= t_hour`
+2. selects the latest visible row
+3. computes `max_sofa_24hours_so_far`
+4. returns the latest component-level 24-hour values
+
+Conceptually, this means the official backend answers:
+
+- what is the latest hourly rolling SOFA visible at this checkpoint?
+- what is the maximum rolling SOFA seen so far?
+
+This is tightly aligned with Sepsis-3 benchmarking because the organ dysfunction signal is explicitly time-localized.
+
+### `query_sofa`: autoformalized logic
+
+The autoformalized SOFA path is much more reconstructive.
+
+The generated function in [/Users/chloe/Documents/New project/autoformalized_library/functions/sofa.py](/Users/chloe/Documents/New%20project/autoformalized_library/functions/sofa.py):
+
+1. reads ICU stay info
+2. queries raw events and labs inside the visible prefix
+3. computes component scores directly from raw measurements
+
+Respiration:
+
+- gets PaO2 from raw `chartevents`
+- gets FiO2 from raw `chartevents`
+- matches them within a 2-hour window
+- infers ventilator support from vent mode or PEEP-related signals
+
+Coagulation:
+
+- uses minimum platelet count over the visible prefix
+
+Liver:
+
+- uses maximum bilirubin over the visible prefix
+
+Cardiovascular:
+
+- uses minimum MAP
+- uses maximum vasopressor rates over the visible prefix
+
+CNS:
+
+- uses minimum eye, verbal, and motor subscores separately
+- sums them into a worst observed GCS-like value
+
+Renal:
+
+- currently uses maximum creatinine over the visible prefix
+- does not currently incorporate urine output into the returned score
+
+Then the adapter in [/Users/chloe/Documents/New project/src/sepsis_mvp/autoformalized.py](/Users/chloe/Documents/New%20project/src/sepsis_mvp/autoformalized.py):
+
+1. takes the generated `total_score`
+2. exposes it as both:
+   - `latest_sofa_24hours`
+   - `max_sofa_24hours_so_far`
+3. maps component fields into the benchmark response shape
+
+### SOFA logic difference summary
+
+Official SOFA function:
+
+- hourly
+- rolling-window based
+- derived-table backed
+- time-localized
+- includes urine-output-aware renal logic through the concept table
+
+Autoformalized SOFA function:
+
+- visible-prefix based
+- raw-data recomputed
+- not truly hourly in its returned representation
+- not truly a rolling 24-hour concept in the benchmark sense
+- more sensitive to raw signal selection and matching rules
+
+Clinically, this means the two backends can differ in two distinct ways:
+
+- timing difference: when dysfunction becomes visible
+- attribution difference: which organ system appears to drive the score
+
+### Time-gating difference
+
+The two backends also differ in *how* they become longitudinal.
+
+Official backend:
+
+- starts from already-derived concept tables
+- time-gates by filtering concept rows
+
+Autoformalized backend:
+
+- starts from raw event tables
+- creates checkpoint-scoped DuckDB views in [/Users/chloe/Documents/New project/src/sepsis_mvp/autoformalized.py](/Users/chloe/Documents/New%20project/src/sepsis_mvp/autoformalized.py)
+- reruns the generated function inside that truncated data world
+
+That makes the autoformalized backend far more general, but it also means:
+
+- more SQL assumptions are exposed
+- more raw-table edge cases matter
+- early-prefix instability is more likely
+
+### What this means for the benchmark
+
+From a benchmark-design perspective, the difference is:
+
+- official functions are concept wrappers
+- autoformalized functions are concept generators plus adapters
+
+So a fair expectation is not exact equality. A fair expectation is:
+
+- Sepsis-3-style directional agreement
+- reasonable longitudinal behavior
+- internally coherent output fields
+
+The official backend already satisfies that. The autoformalized backend is promising, but it still needs tighter alignment between its boolean flags, timestamps, and evidence payloads.
+
 ## Detailed Function Differences
 
 ### `query_suspicion_of_infection`
