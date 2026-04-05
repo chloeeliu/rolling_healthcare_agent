@@ -141,6 +141,23 @@ PYTHONPATH=src python3 -m sepsis_mvp.cli run \
   --evaluation-output data/multitask_eval.json
 ```
 
+To resume a long run without reprocessing completed stays, reuse the same output paths and add `--resume`:
+
+```bash
+PYTHONPATH=src python3 -m sepsis_mvp.cli run \
+  --db-path /Users/chloe/Desktop/healthcare/mimic-iv-3.1/buildmimic/duckdb/mimic4_dk.db \
+  --dataset /Users/chloe/Documents/New\ project/rolling_monitor_dataset/multitask/rolling_multitask.csv \
+  --agent qwen \
+  --task-mode multitask \
+  --tool-backend official \
+  --trajectory-output data/qwen_multitask_trajectories.jsonl \
+  --rollouts-output data/qwen_multitask_rollouts.json \
+  --evaluation-output data/qwen_multitask_eval.json \
+  --resume
+```
+
+`--resume` checks existing completed rollouts in `--trajectory-output` first, then `--rollouts-output`, skips any matching `trajectory_id`s in the current dataset, and evaluates on the combined old-plus-new set.
+
 Single-task sepsis smoke test:
 
 ```bash
@@ -200,6 +217,7 @@ PYTHONPATH=src python3 -m sepsis_mvp.cli run \
 Useful flags:
 
 - `--sample-size N`: run only the first `N` trajectories
+- `--resume`: skip already-completed `trajectory_id`s found in the existing rollout files and continue with the remaining trajectories
 - `--task-mode auto|single|multitask`: validate the dataset against a requested task layout
 - `--tool-backend official|autoformalized`: choose the visible concept backend
 - `--autoformalized-library path`: root folder for generated functions when using the autoformalized backend
@@ -208,6 +226,12 @@ Useful flags:
 - `--trajectory-output path.jsonl`: append each completed stay rollout immediately
 - `--rollouts-output path.json`: write the final full in-memory rollout list at the end
 - `--evaluation-output path.json`: save the final evaluation summary with task mode, backend, sample size, and metrics
+
+Resume behavior:
+
+- `--trajectory-output` is the preferred checkpoint source because it is appended after every completed stay
+- if both `--trajectory-output` and `--rollouts-output` exist, the runner uses the trajectory JSONL first and fills any missing IDs from the final rollouts JSON
+- if `--resume` is set and all sampled trajectories are already complete, the runner skips model execution and just writes the merged evaluation summary
 
 This means partial progress survives long runs and crashes.
 

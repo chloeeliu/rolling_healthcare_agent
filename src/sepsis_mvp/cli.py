@@ -12,6 +12,7 @@ from .dataset import (
     save_trajectories,
 )
 from .environment import BenchmarkEnvironment, evaluate_rollouts, rollout_to_dicts
+from .schemas import StepRecord, TrajectoryRollout
 from .tools import build_tool_runtime
 
 
@@ -27,6 +28,56 @@ class JsonlSink:
         with self.path.open("a") as handle:
             handle.write(json.dumps(payload) + "\n")
             handle.flush()
+
+
+def _rollout_from_dict(payload: dict) -> TrajectoryRollout:
+    return TrajectoryRollout(
+        trajectory_id=payload["trajectory_id"],
+        stay_id=int(payload["stay_id"]),
+        steps=[StepRecord(**step) for step in payload["steps"]],
+        first_predicted_infection_hour=payload.get("first_predicted_infection_hour"),
+        first_predicted_alert_hour=payload.get("first_predicted_alert_hour"),
+        first_predicted_task_hours=payload.get("first_predicted_task_hours"),
+    )
+
+
+def _load_jsonl_dicts(path: Path) -> list[dict]:
+    payloads = []
+    with path.open() as handle:
+        for line in handle:
+            line = line.strip()
+            if line:
+                payloads.append(json.loads(line))
+    return payloads
+
+
+def _load_existing_rollouts(
+    trajectory_output: str | None,
+    rollouts_output: str | None,
+) -> tuple[list[TrajectoryRollout], list[str]]:
+    existing_by_id: dict[str, TrajectoryRollout] = {}
+    sources: list[str] = []
+
+    if trajectory_output:
+        trajectory_path = Path(trajectory_output)
+        if trajectory_path.exists():
+            for payload in _load_jsonl_dicts(trajectory_path):
+                rollout = _rollout_from_dict(payload)
+                existing_by_id[rollout.trajectory_id] = rollout
+            sources.append(str(trajectory_path))
+
+    if rollouts_output:
+        rollouts_path = Path(rollouts_output)
+        if rollouts_path.exists():
+            raw = json.loads(rollouts_path.read_text())
+            if not isinstance(raw, list):
+                raise ValueError(f"Expected a JSON list in {rollouts_path}")
+            for payload in raw:
+                rollout = _rollout_from_dict(payload)
+                existing_by_id.setdefault(rollout.trajectory_id, rollout)
+            sources.append(str(rollouts_path))
+
+    return list(existing_by_id.values()), sources
 
 
 def build_dataset_command(args: argparse.Namespace) -> int:
@@ -58,71 +109,130 @@ def run_command(args: argparse.Namespace) -> int:
     trajectories = load_dataset_auto(args.dataset, strict_mvp=not args.include_out_of_scope)
     if args.sample_size is not None:
         trajectories = trajectories[: args.sample_size]
-    runtime = build_tool_runtime(
-        tool_backend=args.tool_backend,
-        db_path=args.db_path,
-        concepts=args.concepts,
-        autoformalized_library=args.autoformalized_library,
-    )
+    all_target_trajectories = list(trajectories)
 
-    events_sink = JsonlSink(args.events_output)
-    trajectories_sink = JsonlSink(args.trajectory_output)
-    environment = BenchmarkEnvironment(
-        trajectories,
-        runtime,
-        event_callback=events_sink.write,
-        tool_backend=args.tool_backend,
-        task_mode=args.task_mode,
-    )
-    if args.agent == "heuristic":
-        agent = HeuristicAgent(sofa_alert_threshold=args.sofa_alert_threshold)
-    else:
-        agent = QwenChatAgent(
-            model=args.model,
-            temperature=args.temperature,
-            top_p=args.top_p,
-            max_new_tokens=args.max_new_tokens,
-            trace_callback=events_sink.write,
+    existing_rollouts: list[TrajectoryRollout] = []
+    existing_ids: set[str] = set()
+    resume_sources: list[str] = []
+    if args.resume:
+        if not args.trajectory_output and not args.rollouts_output:
+            raise SystemExit(
+                "--resume requires at least one existing output source: --trajectory-output or --rollouts-output"
+            )
+        existing_rollouts, resume_sources = _load_existing_rollouts(
+            args.trajectory_output,
+            args.rollouts_output,
         )
+        dataset_ids = {trajectory.trajectory_id for trajectory in all_target_trajectories}
+        existing_rollouts = [rollout for rollout in existing_rollouts if rollout.trajectory_id in dataset_ids]
+        existing_ids = {rollout.trajectory_id for rollout in existing_rollouts}
+        trajectories = [
+            trajectory for trajectory in all_target_trajectories if trajectory.trajectory_id not in existing_ids
+        ]
+    else:
+        trajectories = all_target_trajectories
 
-    total = len(trajectories)
-    rollouts = []
-    start_time = time.time()
-    print(f"Starting run on {total} trajectories", flush=True)
-    for index, trajectory in enumerate(trajectories, start=1):
+    rollouts = list(existing_rollouts)
+    total_target = len(all_target_trajectories)
+    newly_processed = 0
+
+    if args.resume:
         print(
-            f"[{index}/{total}] stay_id={trajectory.stay_id} trajectory_id={trajectory.trajectory_id} "
-            f"task_mode={args.task_mode} tool_backend={args.tool_backend} start",
+            f"Resume enabled: found {len(existing_rollouts)} completed trajectories from "
+            + (", ".join(resume_sources) if resume_sources else "no existing files"),
             flush=True,
         )
-        rollout = environment.run_trajectory(trajectory, agent)
-        rollouts.append(rollout)
-        trajectories_sink.write(rollout.to_dict())
-        elapsed = time.time() - start_time
-        if trajectory.is_multitask():
-            print(
-                f"[{index}/{total}] stay_id={trajectory.stay_id} done "
-                f"task_firsts={rollout.first_predicted_task_hours} "
-                f"elapsed_sec={elapsed:.1f}",
-                flush=True,
-            )
+        print(
+            f"Skipping {len(existing_rollouts)} existing trajectories; {len(trajectories)} remaining",
+            flush=True,
+        )
+
+    runtime = None
+    environment = None
+    agent = None
+    if trajectories:
+        runtime = build_tool_runtime(
+            tool_backend=args.tool_backend,
+            db_path=args.db_path,
+            concepts=args.concepts,
+            autoformalized_library=args.autoformalized_library,
+        )
+
+        events_sink = JsonlSink(args.events_output)
+        trajectories_sink = JsonlSink(args.trajectory_output)
+        environment = BenchmarkEnvironment(
+            trajectories,
+            runtime,
+            event_callback=events_sink.write,
+            tool_backend=args.tool_backend,
+            task_mode=args.task_mode,
+        )
+        if args.agent == "heuristic":
+            agent = HeuristicAgent(sofa_alert_threshold=args.sofa_alert_threshold)
         else:
-            print(
-                f"[{index}/{total}] stay_id={trajectory.stay_id} done "
-                f"first_infection={rollout.first_predicted_infection_hour} "
-                f"first_alert={rollout.first_predicted_alert_hour} "
-                f"elapsed_sec={elapsed:.1f}",
-                flush=True,
+            agent = QwenChatAgent(
+                model=args.model,
+                temperature=args.temperature,
+                top_p=args.top_p,
+                max_new_tokens=args.max_new_tokens,
+                trace_callback=events_sink.write,
             )
 
-    evaluation = evaluate_rollouts(trajectories, rollouts)
+        start_time = time.time()
+        print(f"Starting run on {len(trajectories)} remaining trajectories", flush=True)
+        for index, trajectory in enumerate(trajectories, start=1):
+            processed_index = len(existing_rollouts) + index
+            print(
+                f"[{processed_index}/{total_target}] stay_id={trajectory.stay_id} "
+                f"trajectory_id={trajectory.trajectory_id} task_mode={args.task_mode} "
+                f"tool_backend={args.tool_backend} start",
+                flush=True,
+            )
+            rollout = environment.run_trajectory(trajectory, agent)
+            rollouts.append(rollout)
+            trajectories_sink.write(rollout.to_dict())
+            newly_processed += 1
+            elapsed = time.time() - start_time
+            if trajectory.is_multitask():
+                print(
+                    f"[{processed_index}/{total_target}] stay_id={trajectory.stay_id} done "
+                    f"task_firsts={rollout.first_predicted_task_hours} "
+                    f"elapsed_sec={elapsed:.1f}",
+                    flush=True,
+                )
+            else:
+                print(
+                    f"[{processed_index}/{total_target}] stay_id={trajectory.stay_id} done "
+                    f"first_infection={rollout.first_predicted_infection_hour} "
+                    f"first_alert={rollout.first_predicted_alert_hour} "
+                    f"elapsed_sec={elapsed:.1f}",
+                    flush=True,
+                )
+    else:
+        print("No remaining trajectories to process; using existing completed rollouts only", flush=True)
+
+    if len(rollouts) != total_target:
+        missing = sorted(
+            trajectory.trajectory_id
+            for trajectory in all_target_trajectories
+            if trajectory.trajectory_id not in {rollout.trajectory_id for rollout in rollouts}
+        )
+        raise SystemExit(
+            "Resume/evaluation mismatch: missing completed rollouts for "
+            f"{len(missing)} trajectories. First missing IDs: {missing[:5]}"
+        )
+
+    evaluation = evaluate_rollouts(all_target_trajectories, rollouts)
     evaluation_summary = {
         "task_mode": args.task_mode,
         "tool_backend": args.tool_backend,
         "dataset": args.dataset,
-        "num_trajectories": len(trajectories),
+        "num_trajectories": total_target,
         "sample_size": args.sample_size,
         "agent": args.agent,
+        "resume": args.resume,
+        "existing_completed_trajectories": len(existing_rollouts),
+        "newly_processed_trajectories": newly_processed,
         "metrics": evaluation,
     }
 
@@ -187,6 +297,11 @@ def build_parser() -> argparse.ArgumentParser:
     run_parser.add_argument("--top-p", type=float, default=0.95)
     run_parser.add_argument("--max-new-tokens", type=int, default=250)
     run_parser.add_argument("--sample-size", type=int, help="Run only the first N trajectories.")
+    run_parser.add_argument(
+        "--resume",
+        action="store_true",
+        help="Skip trajectories already present in --trajectory-output or --rollouts-output and resume from the next unfinished trajectory.",
+    )
     run_parser.add_argument("--sofa-alert-threshold", type=int, default=2)
     run_parser.add_argument("--rollouts-output", help="Optional path to save rollout logs.")
     run_parser.add_argument(

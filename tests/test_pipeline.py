@@ -304,6 +304,7 @@ class PipelineTest(unittest.TestCase):
                 top_p=0.95,
                 max_new_tokens=250,
                 sample_size=1,
+                resume=False,
                 sofa_alert_threshold=2,
                 rollouts_output=None,
                 evaluation_output=str(evaluation_output),
@@ -319,6 +320,69 @@ class PipelineTest(unittest.TestCase):
             self.assertIn("metrics", payload)
             self.assertIn("infection_predictions_grounded_rate", payload["metrics"]["tool_grounding"])
             self.assertIn("alert_predictions_grounded_rate", payload["metrics"]["tool_grounding"])
+
+    def test_run_command_can_resume_from_existing_trajectory_output(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            tmpdir = Path(tmpdir)
+            concepts = load_concept_tables(SAMPLE)
+            trajectories = build_dataset(concepts)
+            dataset_path = tmpdir / "dataset.json"
+            save_trajectories(trajectories, dataset_path)
+
+            runtime = ConceptToolRuntime(concepts)
+            environment = BenchmarkEnvironment(trajectories[:1], runtime)
+            existing_rollout = environment.run_all(HeuristicAgent())[0]
+
+            trajectory_output = tmpdir / "trajectories.jsonl"
+            with trajectory_output.open("w") as handle:
+                handle.write(json.dumps(existing_rollout.to_dict()) + "\n")
+
+            evaluation_output = tmpdir / "evaluation.json"
+            rollouts_output = tmpdir / "rollouts.json"
+            args = argparse.Namespace(
+                concepts=str(SAMPLE),
+                db_path=None,
+                dataset=str(dataset_path),
+                task_mode="single",
+                tool_backend="official",
+                autoformalized_library=str(ROOT / "autoformalized_library"),
+                include_out_of_scope=False,
+                agent="heuristic",
+                model="Qwen/Qwen3.5-9B",
+                temperature=0.0,
+                top_p=0.95,
+                max_new_tokens=250,
+                sample_size=None,
+                resume=True,
+                sofa_alert_threshold=2,
+                rollouts_output=str(rollouts_output),
+                evaluation_output=str(evaluation_output),
+                events_output=None,
+                trajectory_output=str(trajectory_output),
+            )
+
+            exit_code = run_command(args)
+            self.assertEqual(exit_code, 0)
+
+            trajectory_lines = [
+                json.loads(line)
+                for line in trajectory_output.read_text().splitlines()
+                if line.strip()
+            ]
+            self.assertEqual(len(trajectory_lines), len(trajectories))
+            self.assertEqual(
+                {item["trajectory_id"] for item in trajectory_lines},
+                {trajectory.trajectory_id for trajectory in trajectories},
+            )
+
+            payload = json.loads(evaluation_output.read_text())
+            self.assertTrue(payload["resume"])
+            self.assertEqual(payload["existing_completed_trajectories"], 1)
+            self.assertEqual(payload["newly_processed_trajectories"], len(trajectories) - 1)
+            self.assertEqual(payload["num_trajectories"], len(trajectories))
+
+            saved_rollouts = json.loads(rollouts_output.read_text())
+            self.assertEqual(len(saved_rollouts), len(trajectories))
 
     def test_csv_loader_filters_out_of_scope_trajectory_in_strict_mode(self):
         csv_text = """trajectory_id,subject_id,hadm_id,stay_id,icu_intime,icu_outtime,icu_los_hours,is_sepsis,infection_start_time,organ_dysfunction_start_time,sepsis_start_time,infection_start_hour,organ_dysfunction_start_hour,sepsis_start_hour,t_hour,checkpoint_time,state_label,terminal
