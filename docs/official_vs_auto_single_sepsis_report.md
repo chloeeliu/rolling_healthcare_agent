@@ -7,352 +7,256 @@ This report compares two saved single-task sepsis runs under [/Users/chloe/Docum
 - official visible concepts: [/Users/chloe/Documents/New project/result/single_sepsis_Qwen3-30B-A3B-Instruct-2507](/Users/chloe/Documents/New%20project/result/single_sepsis_Qwen3-30B-A3B-Instruct-2507)
 - autoformalized visible concepts: [/Users/chloe/Documents/New project/result/auto_single_sepsis_Qwen3-30B-A3B-Instruct-2507](/Users/chloe/Documents/New%20project/result/auto_single_sepsis_Qwen3-30B-A3B-Instruct-2507)
 
-Both runs use the same model family, `Qwen3-30B-A3B-Instruct-2507`.
-
-This version supersedes the earlier partial-run comparison. The updated auto result folder now contains a full run, so this is a true matched-cohort A/B:
+Both runs use the same model family, `Qwen3-30B-A3B-Instruct-2507`, and both now cover the same saved cohort:
 
 - official trajectories: `98`
 - auto trajectories: `98`
 - overlap: `98`
 
-One caveat remains: this saved 98-stay result cohort appears to predate the latest revised sepsis CSV currently in the repo, so this report is intentionally centered on the saved run artifacts themselves.
+So this is a true matched run-to-run comparison on the saved result set.
+
+One caveat: this 98-stay saved cohort appears older than the latest revised sepsis CSV currently in the repo. To avoid mixing cohorts, this report uses the saved rollout artifacts themselves as the comparison source of truth.
 
 ## Executive Summary
 
-The official backend remains the stronger benchmark-facing baseline for single-task sepsis surveillance.
+The official backend is still the stronger single-sepsis baseline.
 
-Its strengths are:
+Why:
 
-- higher step accuracy: `0.8003` vs `0.6589`
-- stronger macro F1: `0.6152` vs `0.5463`
-- cleaner early infection visibility
-- more stable, internally coherent tool outputs
+- better step accuracy: `0.8003` vs `0.6589`
+- better macro F1: `0.6152` vs `0.5463`
+- much stronger early infection visibility
+- no internal contradiction between infection flag and evidence payload
 
-The autoformalized backend is still scientifically valuable, but the refreshed full run makes its current weaknesses much clearer:
+The autoformalized backend is still valuable, but the refreshed full comparison makes its current weakness very specific:
 
-- it suppresses early infection visibility much more aggressively
-- it delays infection transitions in many trajectories
-- it still produces many steps where infection evidence exists while the boolean infection flag remains false
-- it uses `infection_suspect` more often than the official backend, but not enough to offset the evidence-quality gap
+- it often suppresses or delays infection visibility
+- it changes the early surveillance state much more than the official backend
+- it still returns many steps with evidence present but `has_suspected_infection = false`
 
-The practical read is:
+So the main conclusion is not “autoformalized is clinically invalid.” It is:
 
-- official backend is the better current baseline
-- autoformalized backend is a meaningful alternative visible concept layer, but still not robust enough to replace the official one for sepsis
+- some clinical nuance is acceptable under Sepsis-3-style monitoring
+- but the current autoformalized visible concept layer is not yet internally coherent enough to support a clean replacement of the official one
 
-## Comparison Setup
+## 1. Function Logic Comparison
 
-### Artifact completeness
+This is the most important difference. The two agents are using the same model family and the same tool loop. The main thing that changes is the visible concept layer.
 
-Official folder:
+### Official functions
 
-- `qwen_events.jsonl`
-- `qwen_rollouts.json`
-- `qwen_trajectories.jsonl`
+The official backend in [/Users/chloe/Documents/New project/src/sepsis_mvp/tools.py](/Users/chloe/Documents/New%20project/src/sepsis_mvp/tools.py) is a thin wrapper over MIMIC derived concepts.
 
-Autoformalized folder:
+`query_suspicion_of_infection`
 
-- `auto_qwen_multitask_events.jsonl`
-- `auto_qwen_multitask_rollouts.json`
-- `auto_qwen_multitask_trajectories.jsonl`
-- `auto_qwen_multitask_qwen_eval.json`
+- source: `mimiciv_derived.suspicion_of_infection`
+- time gating:
+  - look up ICU `intime`
+  - compute `visible_until = intime + t_hour`
+  - keep rows with `suspected_infection_time <= visible_until`
+- logic:
+  - only rows with `suspected_infection = 1`
+  - first visible suspicion time comes directly from the derived concept
+- output:
+  - `has_suspected_infection`
+  - first visible hour/time
+  - paired antibiotic-culture evidence
 
-The auto filenames still say `multitask`, but the contents are single-task sepsis trajectories.
+`query_sofa`
 
-Both event logs are now complete.
+- source: `mimiciv_derived.sofa`
+- time gating:
+  - keep rows with `hr <= t_hour`
+  - select the latest visible row
+- logic:
+  - uses the hourly rolling 24-hour SOFA concept
+  - returns both latest visible SOFA and max SOFA so far
+- output:
+  - `latest_sofa_24hours`
+  - `max_sofa_24hours_so_far`
+  - latest component-level 24-hour values
 
-Official event counts:
+Engineering characteristics:
 
-- `trajectory_start`: `98`
-- `step_start`: `686`
-- `tool_call`: `1372`
-- `tool_output`: `1372`
-- `action`: `686`
-- `trajectory_complete`: `98`
+- simple wrappers
+- low adapter risk
+- stable JSON contract
+- boolean flags and evidence are coupled
 
-Autoformalized event counts:
+Clinical characteristics:
 
-- `trajectory_start`: `98`
-- `step_start`: `686`
-- `model_output_raw`: `2058`
-- `tool_call`: `1372`
-- `tool_output`: `1372`
-- `action`: `686`
-- `trajectory_complete`: `98`
+- strongly aligned with MIMIC’s Sepsis-3 operationalization
+- supports pre-ICU visible infection evidence at `t=0`
+- treats SOFA as a rolling hourly surveillance concept
 
-Both runs are fully tool-grounded. The difference is not that one run failed to call tools. The difference is the evidence returned by those tools.
+### Autoformalized functions
 
-## Function Logic Comparison
+The autoformalized backend in [/Users/chloe/Documents/New project/src/sepsis_mvp/autoformalized.py](/Users/chloe/Documents/New%20project/src/sepsis_mvp/autoformalized.py) is different in kind, not just degree.
 
-This is the core difference between the two systems.
+It does not wrap an already-derived concept table. It:
 
-### Official backend
+1. builds checkpoint-scoped DuckDB views for the current `stay_id, t_hour`
+2. truncates raw tables to the visible prefix
+3. loads generated `FINAL_FUNCTION`s from [/Users/chloe/Documents/New project/autoformalized_library/functions](/Users/chloe/Documents/New%20project/autoformalized_library/functions)
+4. runs them inside that truncated DB context
+5. adapts their outputs back into the benchmark tool schema
 
-The official runtime in [/Users/chloe/Documents/New project/src/sepsis_mvp/tools.py](/Users/chloe/Documents/New%20project/src/sepsis_mvp/tools.py) is a thin wrapper over MIMIC derived concepts.
+This means the auto backend is a concept generator plus adapter, not just a concept wrapper.
 
-`query_suspicion_of_infection`:
+### How `query_suspicion_of_infection` differs
 
-- reads `mimiciv_derived.suspicion_of_infection`
-- filters to rows where:
-  - `suspected_infection = 1`
-  - `suspected_infection_time IS NOT NULL`
-  - `suspected_infection_time <= visible_until`
-- takes the first visible derived concept timestamp as authoritative
-- returns compact paired evidence:
-  - antibiotic
-  - antibiotic time
-  - culture time
-  - specimen
-  - positive culture
+Generated logic in [/Users/chloe/Documents/New project/autoformalized_library/functions/suspicion_of_infection.py](/Users/chloe/Documents/New%20project/autoformalized_library/functions/suspicion_of_infection.py):
 
-`query_sofa`:
-
-- reads `mimiciv_derived.sofa`
-- filters to `hr <= t_hour`
-- returns the latest visible hourly row
-- also returns `max_sofa_24hours_so_far`
-- uses the concept table’s rolling 24-hour component logic
-
-Engineering properties:
-
-- simple
-- stable
-- low adapter burden
-- boolean flags and evidence are internally coherent
-
-Clinical properties:
-
-- closely aligned to MIMIC’s Sepsis-3 operationalization
-- pre-ICU infection evidence can already be visible at `t=0`
-- SOFA is genuinely hourly and rolling-window-based
-
-### Autoformalized backend
-
-The autoformalized runtime in [/Users/chloe/Documents/New project/src/sepsis_mvp/autoformalized.py](/Users/chloe/Documents/New%20project/src/sepsis_mvp/autoformalized.py):
-
-- creates checkpoint-scoped DuckDB views
-- truncates raw tables to the visible prefix
-- executes generated functions from [/Users/chloe/Documents/New project/autoformalized_library/functions](/Users/chloe/Documents/New%20project/autoformalized_library/functions)
-- adapts the returned dicts into the benchmark tool schema
-
-`query_suspicion_of_infection` comes from [/Users/chloe/Documents/New project/autoformalized_library/functions/suspicion_of_infection.py](/Users/chloe/Documents/New%20project/autoformalized_library/functions/suspicion_of_infection.py).
-
-Its logic is broader than the official derived concept:
-
-- uses raw microbiology and raw antibiotic administrations
+- reads raw microbiology events
 - excludes screening cultures such as `MRSA SCREEN`
-- excludes likely prophylaxis patterns such as cefazolin
-- has a special carveout for vancomycin-only cardiac surgery prophylaxis
-- treats suspicion as:
+- reads ICU antibiotic administrations and hospital prescriptions
+- matches broad antibiotic names
+- excludes likely prophylaxis patterns:
+  - cefazolin-like prophylaxis
+  - some vancomycin-only cardiac surgery cases
+- defines suspicion using a broader heuristic:
   - any non-screening diagnostic culture, or
   - an antibiotic treatment pattern such as repeated doses or multiple distinct antibiotics
 
-`query_sofa` comes from [/Users/chloe/Documents/New project/autoformalized_library/functions/sofa.py](/Users/chloe/Documents/New%20project/autoformalized_library/functions/sofa.py).
+Adapter logic in [/Users/chloe/Documents/New project/src/sepsis_mvp/autoformalized.py](/Users/chloe/Documents/New%20project/src/sepsis_mvp/autoformalized.py):
 
-Its logic is raw-data recomputation rather than concept wrapping:
+- pulls `culture_orders` and `antibiotic_administrations` from the generated function output
+- reconstructs `evidence`
+- reconstructs `first_visible_suspected_infection_time` from the earliest evidence timestamp
+- takes `has_suspected_infection` from the generated boolean `has_suspicion_of_infection`
 
-- respiration from PaO2/FiO2 matching within a time window
-- cardiovascular from minimum MAP and vasopressor rates
-- coagulation from minimum platelets
-- liver from maximum bilirubin
-- CNS from worst eye/verbal/motor combination
-- renal from maximum creatinine
+That last split is the current problem:
 
-Important difference:
+- evidence time is reconstructed one way
+- boolean suspicion is taken from another field
 
-- official SOFA returns an hourly rolling concept row
-- autoformalized SOFA returns a visible-prefix score and exposes it as both “latest” and “max so far”
+So the auto backend can emit:
 
-Engineering properties:
+- evidence present
+- first visible suspicion time present
+- but `has_suspected_infection = false`
 
-- more general and extensible
-- more sensitive to raw-table assumptions
-- higher adapter complexity
+The official backend never does that.
 
-Clinical properties:
+### How `query_sofa` differs
 
-- closer to a free-form Sepsis-3-style formalization than an exact MIMIC replica
-- allows clinically plausible nuance
-- but currently behaves differently enough that it often changes the effective surveillance state
+Generated logic in [/Users/chloe/Documents/New project/autoformalized_library/functions/sofa.py](/Users/chloe/Documents/New%20project/autoformalized_library/functions/sofa.py):
 
-## Most Important Logic Differences
+- computes component scores directly from raw events in the visible prefix
+- respiration:
+  - PaO2/FiO2 matching within a time window
+  - ventilation inferred from vent mode or PEEP
+- coagulation:
+  - minimum platelets
+- liver:
+  - maximum bilirubin
+- cardiovascular:
+  - minimum MAP
+  - maximum vasopressor rates
+- CNS:
+  - minimum eye, verbal, and motor subscores combined into a worst GCS-like score
+- renal:
+  - maximum creatinine
 
-### Infection suspicion
+Adapter logic:
 
-Official:
+- maps the generated `total_score` into:
+  - `latest_sofa_24hours`
+  - `max_sofa_24hours_so_far`
+- maps the component scores into the benchmark response fields
 
-- suspicion is a formal derived event
-- flag and evidence are tightly coupled
-- if `has_suspected_infection = false`, evidence is empty
+So the auto SOFA tool is not truly returning an hourly rolling SOFA row. It is returning a visible-prefix SOFA-like summary and exposing it in the old schema.
 
-Autoformalized:
-
-- suspicion is inferred from broader raw evidence
-- flag comes from the generated function’s boolean
-- evidence and first visible time are reconstructed separately by the adapter
-
-That separation causes the main autoformalized consistency problem:
-
-- evidence can exist
-- first visible suspicion time can be non-null
-- but `has_suspected_infection` can still be `false`
-
-In the full saved auto run, this happened on `125 / 686` steps.
-
-Official had `0 / 686` such steps.
-
-This is the biggest logic-quality issue in the current autoformalized sepsis backend.
-
-### SOFA
+### Logic difference summary
 
 Official:
 
-- hourly rolling concept
-- includes urine-output-aware renal logic through the concept table
-- designed for time-localized surveillance
+- derived concept wrapper
+- narrow and stable
+- concept timestamp is authoritative
+- rolling hourly SOFA is preserved
 
 Autoformalized:
 
-- visible-prefix recomputation
-- not truly hourly in the returned schema
-- currently does not expose urine-output-based renal logic in the benchmark response
-- more likely to differ in both timing and organ attribution
+- raw-data concept generator plus adapter
+- broader infection suspicion heuristic
+- visible-prefix SOFA summary rather than official hourly rolling SOFA
+- more clinically flexible, but much more sensitive to adapter quality
 
-This is not necessarily wrong clinically, but it is a different operationalization.
+Clinical nuance is acceptable here. Exact identity is not required. But internal coherence is required, and the current auto suspicion wrapper still violates that.
 
-## Direct Same-Stay Tool Comparison
+## 2. Statistic Results Comparison
 
-I reran both backends directly against the current DuckDB for the same `stay_id, t_hour` checkpoints.
-
-### `30135840` at `t=0`
-
-Official:
-
-- infection visible before ICU start
-- `first_visible_suspected_infection_hour = -8.96`
-- SOFA at entry is `4`
-
-Autoformalized:
-
-- infection not visible
-- no evidence returned
-- SOFA at entry is `0`
-
-Clinical meaning:
-
-- official: already infected and organ dysfunctional at ICU entry
-- autoformalized: clinically quiet at ICU entry
-
-This is a large state change, not a small nuance.
-
-### `30246991` at `t=4`
-
-Official:
-
-- infection visible at hour `1.31`
-- evidence is linked to MRSA-screen-related culture timing plus antibiotics
-- SOFA is `1`
-
-Autoformalized:
-
-- infection visible earlier at hour `-3.69`
-- evidence is antibiotic-driven
-- SOFA is also `1`
-
-This is the kind of difference that is clinically acceptable:
-
-- same broad surveillance state
-- different interpretation of what counted as suspicion and when it began
-
-### `30382114` at `t=0`
-
-Official:
-
-- infection already visible before ICU start
-- SOFA `1`
-
-Autoformalized:
-
-- infection still not visible
-- SOFA `3`
-
-This is not just a timing tweak. It flips the surveillance story:
-
-- official: infection already known, mild dysfunction
-- autoformalized: no infection yet, stronger organ dysfunction
-
-## Full-Cohort Behavior Comparison
+To keep the comparison apples-to-apples, the statistics below are derived from the saved trajectory files for both runs.
 
 ### Step-level performance
 
 Official:
 
-- accuracy: `0.8003`
+- step accuracy: `0.8003`
 - macro F1: `0.6152`
 
 Per class:
 
-- `keep_monitoring`: F1 `0.8535`
-- `infection_suspect`: F1 `0.1609`
-- `trigger_sepsis_alert`: F1 `0.8313`
+- `keep_monitoring`: precision `0.8834`, recall `0.8256`, F1 `0.8535`
+- `infection_suspect`: precision `0.3889`, recall `0.1014`, F1 `0.1609`
+- `trigger_sepsis_alert`: precision `0.7354`, recall `0.9560`, F1 `0.8313`
 
 Autoformalized:
 
-- accuracy: `0.6589`
+- step accuracy: `0.6589`
 - macro F1: `0.5463`
 
 Per class:
 
-- `keep_monitoring`: F1 `0.6854`
-- `infection_suspect`: F1 `0.2174`
-- `trigger_sepsis_alert`: F1 `0.7361`
+- `keep_monitoring`: precision `0.7484`, recall `0.6322`, F1 `0.6854`
+- `infection_suspect`: precision `0.2174`, recall `0.2174`, F1 `0.2174`
+- `trigger_sepsis_alert`: precision `0.6678`, recall `0.8200`, F1 `0.7361`
 
-Interpretation:
+Main insight:
 
-- official is clearly stronger overall
-- autoformalized is still weak overall
-- autoformalized does somewhat better on the intermediate state than official, but only modestly
-- official remains much stronger on `keep_monitoring` and `trigger_sepsis_alert`
+- official is clearly better overall
+- official is especially stronger on `keep_monitoring` and `trigger_sepsis_alert`
+- autoformalized is only modestly better on the intermediate state, and that gain is not enough to close the larger accuracy gap
 
 ### Transition timing
-
-From the saved trajectories:
 
 Official infection timing:
 
 - exact match `0.6875`
-- MAE `3.17` hours
+- mean absolute error `3.17` hours
 - late rate `0.3125`
 - missed rate `0.0`
 
 Autoformalized infection timing:
 
 - exact match `0.1667`
-- MAE `6.0` hours
+- mean absolute error `6.0` hours
 - late rate `0.8333`
 - missed rate `0.0`
 
 Official alert timing:
 
 - exact match `0.3958`
-- MAE `2.92` hours
+- mean absolute error `2.92` hours
 - early rate `0.4792`
+- late rate `0.1250`
 - missed rate `0.0`
 
 Autoformalized alert timing:
 
-- exact match `0.5`
-- MAE `3.74` hours
+- exact match `0.5000`
+- mean absolute error `3.74` hours
 - early rate `0.0833`
-- late rate `0.375`
+- late rate `0.3750`
 - missed rate `0.0417`
 
-Interpretation:
+Main insight:
 
-- official detects infection substantially earlier and more accurately
-- autoformalized is much more delayed on infection transition
-- official is more aggressive and early on sepsis alerts
-- autoformalized is less aggressively early, but more often late and occasionally misses the alert entirely
+- official is substantially better at infection timing
+- autoformalized is much later on infection in most positive cases
+- official is more aggressive and earlier on alerting
+- autoformalized is less aggressively early, but more often late and occasionally misses alerts
 
 ### Prediction distributions
 
@@ -374,228 +278,259 @@ Autoformalized predictions:
 - `infection_suspect`: `69`
 - `trigger_sepsis_alert`: `307`
 
-This is an important pattern.
+Main insight:
 
-Official underuses `infection_suspect` dramatically.
+- official underpredicts `infection_suspect` very heavily
+- autoformalized predicts `infection_suspect` as often as it appears in the labels, but mostly not at the right times
+- so auto is not truly “solving” the middle state; it is redistributing predictions more evenly over a noisier evidence surface
 
-Autoformalized predicts `infection_suspect` exactly as often as it appears in the labels, but that does **not** mean it places it correctly. Its recall and precision for that class are both only `0.2174`.
-
-So the auto backend is not really solving the intermediate state. It is redistributing predictions more evenly, but often at the wrong times.
-
-## Evidence-State Analysis
-
-I grouped each step by two visible tool conditions:
-
-- `has_suspected_infection`
-- `latest_sofa_24hours >= 2`
-
-### Official backend pattern
-
-When infection is visible but SOFA is still below 2:
-
-- observed steps: `79`
-- predicted `keep_monitoring`: `79`
-- ground-truth `infection_suspect`: `37`
-
-This is the clearest official failure mode. The agent almost never uses `infection_suspect` when only infection is visible.
-
-When infection and SOFA are both positive:
-
-- observed steps: `346`
-- predicted `trigger_sepsis_alert`: `323`
-- predicted `infection_suspect`: `18`
-
-So official behaves like a near two-threshold policy:
-
-- infection only -> still often `keep_monitoring`
-- infection plus elevated SOFA -> alert
-
-### Autoformalized backend pattern
-
-When infection is visible but SOFA is still below 2:
-
-- observed steps: `69`
-- predicted `infection_suspect`: `69`
-
-This looks good at first glance, but the ground truth for those same steps is:
-
-- `infection_suspect`: `15`
-- `keep_monitoring`: `43`
-- `trigger_sepsis_alert`: `11`
-
-So the autoformalized backend is not simply “better at the middle state.” It often makes infection visible in places where the benchmark labels still say:
-
-- no infection suspicion yet, or
-- already alert-level
-
-When infection and SOFA are both positive:
-
-- observed steps: `256`
-- predicted `trigger_sepsis_alert`: `256`
-
-So autoformalized uses a cleaner decision rule than official:
-
-- infection only -> suspicion
-- infection plus elevated SOFA -> alert
-
-But it applies that rule to a much noisier evidence surface.
-
-## Early-Checkpoint Behavior
-
-This is where the two backends diverge most sharply.
+### Early-checkpoint evidence contrast
 
 At `t=0` across the 98 stays:
 
 Official:
 
-- suspected infection visible in `44 / 98`
+- infection visible in `44 / 98`
 - SOFA >= 2 in `43 / 98`
 - both present in `22 / 98`
 
 Autoformalized:
 
-- suspected infection visible in `0 / 98`
+- infection visible in `0 / 98`
 - SOFA >= 2 in `3 / 98`
 - both present in `0 / 98`
 
-That is a major structural difference.
+This is the single strongest statistical signal in the comparison.
 
-The official backend allows many stays to begin the ICU trajectory with already-visible infection evidence, which is clinically consistent with the benchmark design.
+Main insight:
 
-The current autoformalized backend effectively suppresses that early state almost completely.
+- the official backend lets many stays start as “already infected” at ICU entry
+- the current autoformalized backend almost completely suppresses that early state
+- this explains a large share of its lower infection accuracy and later infection transitions
 
-This single pattern explains a large portion of:
+### Evidence consistency statistic
 
-- lower infection accuracy
-- later infection transitions
-- lower overall step accuracy
+Official:
 
-## Trajectory-Level Divergence
+- steps with evidence present but `has_suspected_infection = false`: `0 / 686`
 
-Comparing first predicted transition times across the same 98 stays:
+Autoformalized:
 
-Infection prediction comparison:
+- steps with evidence present but `has_suspected_infection = false`: `125 / 686`
 
-- same as official: `33`
-- auto later than official: `36`
-- auto earlier than official: `10`
-- auto predicts infection when official never does: `17`
-- official predicts infection when auto never does: `2`
+Main insight:
 
-Alert prediction comparison:
+- this is not a small statistical quirk
+- it is the clearest engineering-quality issue in the current auto suspicion wrapper
 
-- same as official: `42`
-- auto later than official: `31`
-- auto earlier than official: `11`
-- auto predicts alert when official never does: `9`
-- official predicts alert when auto never does: `5`
+## 3. Case Analysis
 
-So the dominant pattern is:
+These cases show how the function-layer differences change downstream agent behavior.
 
-- autoformalized tends to move infection later
-- autoformalized also shifts many alerts later, though less uniformly
+### Case A: pre-ICU infected patient missed early by auto
 
-## Clinical Interpretation
+Trajectory: `mimiciv_stay_30135840`
 
-### What differences are acceptable
+Ground truth:
 
-It is reasonable for the autoformalized functions to differ from the official MIMIC concepts.
+- `t=0`: `infection_suspect`
+- `t=4+`: `trigger_sepsis_alert`
 
-Sepsis-3 gives a clinical framework, not a single universally mandated SQL implementation. Reasonable differences include:
+Official behavior:
 
-- which cultures count as infection suspicion
-- how prophylaxis is filtered
-- how suspicion is inferred from treatment patterns
-- how early organ dysfunction is summarized from raw ICU signals
+- `t=0`: infection visible at `-8.96h`, SOFA `4`
+- predicts alert immediately
 
-That kind of clinical nuance is acceptable.
+Autoformalized behavior:
 
-### What is still not acceptable
+- `t=0`: no infection visible, SOFA `0`
+- `t=4`: still no infection visible
+- `t=8`: infection finally appears at `5.59h`, SOFA `4`, then alert
 
-The current autoformalized backend still has issues that are bigger than clinical nuance:
+What it shows:
 
-1. output inconsistency
+- official and auto are not just choosing different labels
+- they are starting from a very different clinical state at ICU entry
+- this is a backend evidence issue first, not a prompt issue
 
-- `125` steps have evidence and a timestamp but `has_suspected_infection = false`
+### Case B: official collapses the intermediate state, auto handles it better
 
-2. early-prefix suppression
+Trajectory: `mimiciv_stay_30246991`
 
-- `0 / 98` infection-positive steps at `t=0`, compared with `44 / 98` in the official backend
+Ground truth:
 
-3. large state shifts
+- `t=0`: `keep_monitoring`
+- `t=4-16`: `infection_suspect`
+- `t=20+`: `trigger_sepsis_alert`
 
-- some stays move from “infected with dysfunction at ICU entry” to “no infection and SOFA 0”
+Official behavior:
 
-Those are engineering-quality and longitudinal-behavior issues, not just alternate clinical interpretation.
+- infection visible from `t=4`
+- SOFA stays `1`
+- still predicts `keep_monitoring` through `t=16`
+- jumps to alert at `t=20`
 
-## Engineering Interpretation
+Autoformalized behavior:
 
-Official backend strengths:
+- evidence appears even earlier
+- from `t=4-16`, predicts `infection_suspect`
+- alerts at `t=20`
 
-- simpler wrapper logic
-- more stable JSON contract
-- concept rows and timestamps already aligned
-- clean run artifacts
+What it shows:
 
-Autoformalized backend strengths:
+- official backend plus agent policy tends to ignore “infection only” states
+- autoformalized can sometimes produce cleaner ladder behavior when the evidence surface happens to align well
 
-- more general architecture
-- closer to the long-term autoformalization goal
-- richer raw-data reasoning
+### Case C: auto over-alerts because its state story is different
 
-Autoformalized backend current weaknesses:
+Trajectory: `mimiciv_stay_30382114`
 
-- adapter mismatch between boolean flag and evidence payload
-- greater sensitivity to raw-table timing assumptions
-- weaker early-prefix behavior for infection and SOFA
-- current result filenames still carry old `multitask` naming
+Ground truth:
 
-## Practical Conclusions
+- `t=0-20`: `infection_suspect`
+- `t=24`: `trigger_sepsis_alert`
 
-### Baseline recommendation
+Official behavior:
 
-Use the official backend as the primary single-sepsis benchmark baseline.
+- infection already visible before ICU start
+- SOFA stays low early
+- delays until `t=20`, then alerts slightly early
 
-Reasons:
+Autoformalized behavior:
 
-- better accuracy
-- better infection timing
-- more coherent outputs
-- stronger early surveillance signal
+- `t=0`: no infection visible, SOFA `3`
+- `t=4`: infection appears, SOFA still `3`
+- predicts `trigger_sepsis_alert` from `t=4` onward
 
-### Research recommendation
+What it shows:
 
-Keep the autoformalized backend as the main experimental path for visible concept replacement.
+- autoformalized can combine delayed infection with higher dysfunction
+- that can yield a qualitatively different surveillance state from the official backend
 
-Reasons:
+### Case D: non-sepsis false alert under auto
 
-- it is already fully runnable end to end
-- it exposes clinically meaningful behavior changes
-- it is much closer to the long-term “autoformalization + longitudinal agent” objective
+Trajectory: `mimiciv_stay_30192858`
 
-### Highest-value next fix
+Ground truth:
 
-The first thing to tighten is not prompt tuning. It is the autoformalized suspicion adapter.
+- all checkpoints: `keep_monitoring`
 
-Specifically:
+Official behavior:
 
-- boolean suspicion flag
+- no infection evidence
+- SOFA `0`
+- stays `keep_monitoring`
+
+Autoformalized behavior:
+
+- `t=4`: infection appears at `0.77h`, SOFA `2`
+- predicts `trigger_sepsis_alert` from `t=4` onward
+
+What it shows:
+
+- autoformalized can create a complete false sepsis path on a non-sepsis trajectory
+- the issue here is not just “different nuance”; it is an overly permissive visible concept layer
+
+### Case E: hidden evidence appears before the flag flips
+
+Trajectory: `mimiciv_stay_31585193`
+
+Ground truth:
+
+- all checkpoints: `keep_monitoring`
+
+Official behavior:
+
+- no infection evidence throughout
+- SOFA elevated but no infection signal
+- correctly stays `keep_monitoring`
+
+Autoformalized behavior:
+
+- `t=4`: evidence exists and `first_visible_suspected_infection_hour = 0.08`, but `has_suspected_infection = false`
+- `t=12+`: infection flag turns true and the agent alerts
+
+What it shows:
+
+- the flag/evidence inconsistency is not theoretical
+- it can directly create false downstream escalation
+
+## 4. Next Steps And Useful Insights
+
+### Highest-priority fix
+
+Tighten the autoformalized `query_suspicion_of_infection` adapter.
+
+Right now the wrapper derives:
+
+- boolean suspicion
 - earliest visible suspicion time
-- emitted evidence rows
+- evidence payload
 
-should all be derived from one internally consistent criterion.
+from partially different signals.
 
-Once that is fixed, the next comparison will tell us much more cleanly whether the remaining gap is:
+Those three should be made consistent.
 
-- true clinical-definition drift
-- SOFA formalization drift
-- or mostly adapter inconsistency
+### Second-priority fix
 
-## Summary
+Decide whether the autoformalized SOFA tool should stay as:
 
-The full matched 98-stay comparison now makes the picture clear:
+- a visible-prefix summary
 
-- official backend is the stronger and cleaner sepsis baseline
-- autoformalized backend changes the agent’s behavior in meaningful ways, but currently degrades the visible infection signal too much
-- some clinical nuance is acceptable under Sepsis-3-style monitoring
-- the main current blocker is not acceptable nuance, but inconsistent and delayed infection visibility in the autoformalized concept layer
+or whether it should be upgraded toward:
+
+- a truly hourly rolling response closer to the benchmark contract
+
+Exact semantic identity is not required, but the current “latest equals max equals prefix total” mapping is a large departure from the official surveillance shape.
+
+### Third-priority experiment
+
+After fixing the suspicion adapter, rerun the same 98-stay cohort and compare:
+
+- early infection visibility at `t=0`
+- false-with-evidence count
+- infection timing exact match
+- non-sepsis false alert count
+
+Those four numbers should move quickly if the adapter fix is working.
+
+### Main research insight
+
+The current results suggest the biggest bottleneck is not the LLM itself.
+
+The same Qwen model family can do reasonably coherent tool use under both backends. What changes most is:
+
+- which evidence becomes visible
+- when it becomes visible
+- whether the evidence surface is internally coherent
+
+So for this project, the concept layer really is the main lever.
+
+### Main benchmark insight
+
+The official baseline is not perfect either.
+
+Its clearest weakness is:
+
+- when infection is visible but SOFA is still below 2, it almost always stays at `keep_monitoring`
+
+So the official backend is better overall, but it still behaves more like:
+
+- no strong dysfunction -> monitor
+- infection + elevated SOFA -> alert
+
+than like a well-calibrated 3-state surveillance monitor.
+
+That means there are two different next-step opportunities:
+
+1. improve autoformalized concept quality
+2. improve policy-level use of the intermediate `infection_suspect` state even for the official backend
+
+## Bottom Line
+
+The full matched 98-stay comparison makes the picture much clearer than the earlier partial run:
+
+- official backend is the stronger current sepsis baseline
+- autoformalized backend is a promising research direction, but its current infection concept layer is too delayed and too inconsistent
+- some clinical nuance is fine under Sepsis-3-style monitoring
+- the main current gap is not acceptable nuance, but inconsistent and weakened longitudinal infection visibility
