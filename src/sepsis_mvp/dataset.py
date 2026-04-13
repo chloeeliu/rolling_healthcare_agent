@@ -145,6 +145,8 @@ def load_dataset_auto(
             return load_multitask_csv_dataset(dataset_path).trajectories
         if "aki_stage1_start_hour" in first_row:
             return load_single_task_csv_dataset(dataset_path, task_name="aki").trajectories
+        if "current_aki_stage_smoothed" in first_row or "path_family" in first_row:
+            return load_single_task_csv_dataset(dataset_path, task_name="aki").trajectories
         if "medium_support_start_hour" in first_row or "invasive_support_start_hour" in first_row:
             return load_single_task_csv_dataset(dataset_path, task_name="respiratory_support").trajectories
         return load_rolling_csv_dataset(dataset_path, strict_mvp=strict_mvp).trajectories
