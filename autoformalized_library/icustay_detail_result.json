@@ -1,0 +1,24 @@
+{
+  "concept": "icustay_detail",
+  "status": "success",
+  "qa_eval_status": "success",
+  "autoformalize": {
+    "iterations": 15,
+    "train_qa_accuracy": 1.0,
+    "success": true,
+    "wall_time_sec": 564,
+    "summary_file": "autoformalized_library/icustay_detail_autoform_summary.json",
+    "log_file": "autoformalized_library/icustay_detail_autoformalize.log"
+  },
+  "qa_eval_test": {
+    "qa_accuracy": 0.9988888888888889,
+    "precision": 0.9966777408637874,
+    "recall": 1.0,
+    "correct": 899,
+    "total": 900,
+    "parse_errors": 0,
+    "wall_time_sec": 1392,
+    "output_file": "autoformalized_library/icustay_detail_qa_eval.json",
+    "log_file": "autoformalized_library/icustay_detail_qa_eval.log"
+  }
+}

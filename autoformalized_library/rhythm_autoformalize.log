@@ -1,0 +1,341 @@
+2026-03-25 03:44:10  INFO      Using database: /home/v-tiossowski/MIMIC-IV/mimic4.db
+2026-03-25 03:44:10  INFO      No --model_url provided; loading vLLM in-process …
+INFO 03-25 03:44:15 [utils.py:238] non-default args: {'trust_remote_code': True, 'max_model_len': 40000, 'disable_log_stats': True, 'model': 'Qwen/Qwen3.5-27B'}
+The argument `trust_remote_code` is to be used with Auto classes. It has no effect here and is ignored.
+The argument `trust_remote_code` is to be used with Auto classes. It has no effect here and is ignored.
+The argument `trust_remote_code` is to be used with Auto classes. It has no effect here and is ignored.
+INFO 03-25 03:44:15 [model.py:531] Resolved architecture: Qwen3_5ForConditionalGeneration
+INFO 03-25 03:44:15 [model.py:1554] Using max model len 40000
+INFO 03-25 03:44:16 [scheduler.py:231] Chunked prefill is enabled with max_num_batched_tokens=8192.
+INFO 03-25 03:44:17 [config.py:544] Setting attention block size to 784 tokens to ensure that attention page size is >= mamba page size.
+INFO 03-25 03:44:17 [config.py:575] Padding mamba page size by 0.13% to ensure that mamba page size and attention page size are exactly equal.
+INFO 03-25 03:44:17 [vllm.py:747] Asynchronous scheduling is enabled.
+WARNING 03-25 03:44:24 [system_utils.py:152] We must use the `spawn` multiprocessing start method. Overriding VLLM_WORKER_MULTIPROC_METHOD to 'spawn'. See https://docs.vllm.ai/en/latest/usage/troubleshooting.html#python-multiprocessing for more information. Reasons: CUDA is initialized
+(EngineCore_DP0 pid=3891337) INFO 03-25 03:44:29 [core.py:101] Initializing a V1 LLM engine (v0.17.1) with config: model='Qwen/Qwen3.5-27B', speculative_config=None, tokenizer='Qwen/Qwen3.5-27B', skip_tokenizer_init=False, tokenizer_mode=auto, revision=None, tokenizer_revision=None, trust_remote_code=True, dtype=torch.bfloat16, max_seq_len=40000, download_dir=None, load_format=auto, tensor_parallel_size=1, pipeline_parallel_size=1, data_parallel_size=1, disable_custom_all_reduce=False, quantization=None, enforce_eager=False, enable_return_routed_experts=False, kv_cache_dtype=auto, device_config=cuda, structured_outputs_config=StructuredOutputsConfig(backend='auto', disable_fallback=False, disable_any_whitespace=False, disable_additional_properties=False, reasoning_parser='', reasoning_parser_plugin='', enable_in_reasoning=False), observability_config=ObservabilityConfig(show_hidden_metrics_for_version=None, otlp_traces_endpoint=None, collect_detailed_traces=None, kv_cache_metrics=False, kv_cache_metrics_sample=0.01, cudagraph_metrics=False, enable_layerwise_nvtx_tracing=False, enable_mfu_metrics=False, enable_mm_processor_stats=False, enable_logging_iteration_details=False), seed=0, served_model_name=Qwen/Qwen3.5-27B, enable_prefix_caching=False, enable_chunked_prefill=True, pooler_config=None, compilation_config={'level': None, 'mode': <CompilationMode.VLLM_COMPILE: 3>, 'debug_dump_path': None, 'cache_dir': '', 'compile_cache_save_format': 'binary', 'backend': 'inductor', 'custom_ops': ['none'], 'splitting_ops': ['vllm::unified_attention', 'vllm::unified_attention_with_output', 'vllm::unified_mla_attention', 'vllm::unified_mla_attention_with_output', 'vllm::mamba_mixer2', 'vllm::mamba_mixer', 'vllm::short_conv', 'vllm::linear_attention', 'vllm::plamo2_mamba_mixer', 'vllm::gdn_attention_core', 'vllm::kda_attention', 'vllm::sparse_attn_indexer', 'vllm::rocm_aiter_sparse_attn_indexer', 'vllm::unified_kv_cache_update', 'vllm::unified_mla_kv_cache_update'], 'compile_mm_encoder': False, 'compile_sizes': [], 'compile_ranges_split_points': [8192], 'inductor_compile_config': {'enable_auto_functionalized_v2': False, 'combo_kernels': True, 'benchmark_combo_kernel': True}, 'inductor_passes': {}, 'cudagraph_mode': <CUDAGraphMode.FULL_AND_PIECEWISE: (2, 1)>, 'cudagraph_num_of_warmups': 1, 'cudagraph_capture_sizes': [1, 2, 4, 8, 16, 24, 32, 40, 48, 56, 64, 72, 80, 88, 96, 104, 112, 120, 128, 136, 144, 152, 160, 168, 176, 184, 192, 200, 208, 216, 224, 232, 240, 248, 256, 272, 288, 304, 320, 336, 352, 368, 384, 400, 416, 432, 448, 464, 480, 496, 512], 'cudagraph_copy_inputs': False, 'cudagraph_specialize_lora': True, 'use_inductor_graph_partition': False, 'pass_config': {'fuse_norm_quant': False, 'fuse_act_quant': False, 'fuse_attn_quant': False, 'enable_sp': False, 'fuse_gemm_comms': False, 'fuse_allreduce_rms': False}, 'max_cudagraph_capture_size': 512, 'dynamic_shapes_config': {'type': <DynamicShapesType.BACKED: 'backed'>, 'evaluate_guards': False, 'assume_32_bit_indexing': False}, 'local_cache_dir': None, 'fast_moe_cold_start': True, 'static_all_moe_layers': []}
+(EngineCore_DP0 pid=3891337) INFO 03-25 03:44:32 [parallel_state.py:1393] world_size=1 rank=0 local_rank=0 distributed_init_method=tcp://10.8.144.167:42695 backend=nccl
+(EngineCore_DP0 pid=3891337) INFO 03-25 03:44:32 [parallel_state.py:1715] rank 0 in world size 1 is assigned as DP rank 0, PP rank 0, PCP rank 0, TP rank 0, EP rank N/A, EPLB rank N/A
+(EngineCore_DP0 pid=3891337) INFO 03-25 03:44:38 [base.py:106] Offloader set to NoopOffloader
+(EngineCore_DP0 pid=3891337) INFO 03-25 03:44:38 [gpu_model_runner.py:4281] Starting to load model Qwen/Qwen3.5-27B...
+(EngineCore_DP0 pid=3891337) INFO 03-25 03:44:38 [cuda.py:453] Using backend AttentionBackendEnum.FLASH_ATTN for vit attention
+(EngineCore_DP0 pid=3891337) INFO 03-25 03:44:38 [mm_encoder_attention.py:215] Using AttentionBackendEnum.FLASH_ATTN for MMEncoderAttention.
+(EngineCore_DP0 pid=3891337) INFO 03-25 03:44:39 [cuda.py:405] Using FLASH_ATTN attention backend out of potential backends: ['FLASH_ATTN', 'FLASHINFER', 'TRITON_ATTN', 'FLEX_ATTENTION'].
+(EngineCore_DP0 pid=3891337) INFO 03-25 03:44:39 [flash_attn.py:587] Using FlashAttention version 2
+(EngineCore_DP0 pid=3891337) <frozen importlib._bootstrap_external>:1301: FutureWarning: The cuda.cudart module is deprecated and will be removed in a future release, please switch to use the cuda.bindings.runtime module instead.
+(EngineCore_DP0 pid=3891337) <frozen importlib._bootstrap_external>:1301: FutureWarning: The cuda.nvrtc module is deprecated and will be removed in a future release, please switch to use the cuda.bindings.nvrtc module instead.
+(EngineCore_DP0 pid=3891337) Loading safetensors checkpoint shards:   0% Completed | 0/11 [00:00<?, ?it/s]
+(EngineCore_DP0 pid=3891337) Loading safetensors checkpoint shards:   9% Completed | 1/11 [00:00<00:05,  1.88it/s]
+(EngineCore_DP0 pid=3891337) Loading safetensors checkpoint shards:  18% Completed | 2/11 [00:01<00:05,  1.68it/s]
+(EngineCore_DP0 pid=3891337) Loading safetensors checkpoint shards:  27% Completed | 3/11 [00:01<00:05,  1.58it/s]
+(EngineCore_DP0 pid=3891337) Loading safetensors checkpoint shards:  36% Completed | 4/11 [00:02<00:04,  1.51it/s]
+(EngineCore_DP0 pid=3891337) Loading safetensors checkpoint shards:  45% Completed | 5/11 [00:03<00:04,  1.49it/s]
+(EngineCore_DP0 pid=3891337) Loading safetensors checkpoint shards:  55% Completed | 6/11 [00:03<00:03,  1.47it/s]
+(EngineCore_DP0 pid=3891337) Loading safetensors checkpoint shards:  64% Completed | 7/11 [00:04<00:02,  1.46it/s]
+(EngineCore_DP0 pid=3891337) Loading safetensors checkpoint shards:  73% Completed | 8/11 [00:05<00:02,  1.46it/s]
+(EngineCore_DP0 pid=3891337) Loading safetensors checkpoint shards:  82% Completed | 9/11 [00:06<00:01,  1.45it/s]
+(EngineCore_DP0 pid=3891337) Loading safetensors checkpoint shards:  91% Completed | 10/11 [00:06<00:00,  1.44it/s]
+(EngineCore_DP0 pid=3891337) Loading safetensors checkpoint shards: 100% Completed | 11/11 [00:07<00:00,  1.61it/s]
+(EngineCore_DP0 pid=3891337) Loading safetensors checkpoint shards: 100% Completed | 11/11 [00:07<00:00,  1.53it/s]
+(EngineCore_DP0 pid=3891337) 
+(EngineCore_DP0 pid=3891337) INFO 03-25 03:44:46 [default_loader.py:293] Loading weights took 7.25 seconds
+(EngineCore_DP0 pid=3891337) INFO 03-25 03:44:47 [gpu_model_runner.py:4364] Model loading took 51.1 GiB memory and 8.293219 seconds
+(EngineCore_DP0 pid=3891337) INFO 03-25 03:44:47 [gpu_model_runner.py:5280] Encoder cache will be initialized with a budget of 16384 tokens, and profiled with 1 image items of the maximum feature size.
+(EngineCore_DP0 pid=3891337) INFO 03-25 03:44:55 [decorators.py:465] Directly load AOT compilation from path /home/v-tiossowski/.cache/vllm/torch_compile_cache/torch_aot_compile/0232891e22bd4d7db98ac2f43c441f0f81d0a431216053ca49fadeaff23e2af3/rank_0_0/model
+(EngineCore_DP0 pid=3891337) INFO 03-25 03:44:55 [backends.py:916] Using cache directory: /home/v-tiossowski/.cache/vllm/torch_compile_cache/feaf61af16/rank_0_0/backbone for vLLM's torch.compile
+(EngineCore_DP0 pid=3891337) INFO 03-25 03:44:55 [backends.py:976] Dynamo bytecode transform time: 3.55 s
+(EngineCore_DP0 pid=3891337) INFO 03-25 03:45:06 [backends.py:266] Directly load the compiled graph(s) for compile range (1, 8192) from the cache, took 9.490 s
+(EngineCore_DP0 pid=3891337) INFO 03-25 03:45:06 [monitor.py:35] torch.compile takes 13.89 s in total
+(EngineCore_DP0 pid=3891337) INFO 03-25 03:45:07 [gpu_worker.py:424] Available KV cache memory: 18.3 GiB
+(EngineCore_DP0 pid=3891337) INFO 03-25 03:45:07 [kv_cache_utils.py:1314] GPU KV cache size: 74,480 tokens
+(EngineCore_DP0 pid=3891337) INFO 03-25 03:45:07 [kv_cache_utils.py:1319] Maximum concurrency for 40,000 tokens per request: 6.95x
+(EngineCore_DP0 pid=3891337) Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):   0%|          | 0/51 [00:00<?, ?it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):   2%|▏         | 1/51 [00:00<00:08,  5.87it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):   4%|▍         | 2/51 [00:00<00:08,  6.10it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):   6%|▌         | 3/51 [00:00<00:07,  6.12it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):   8%|▊         | 4/51 [00:00<00:07,  6.10it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  10%|▉         | 5/51 [00:00<00:07,  6.18it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  12%|█▏        | 6/51 [00:00<00:07,  6.16it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  14%|█▎        | 7/51 [00:01<00:07,  6.20it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  16%|█▌        | 8/51 [00:01<00:06,  6.20it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  18%|█▊        | 9/51 [00:01<00:06,  6.55it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  20%|█▉        | 10/51 [00:01<00:06,  6.77it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  22%|██▏       | 11/51 [00:01<00:05,  6.80it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  24%|██▎       | 12/51 [00:01<00:05,  6.99it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  25%|██▌       | 13/51 [00:01<00:05,  7.13it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  27%|██▋       | 14/51 [00:02<00:05,  7.25it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  29%|██▉       | 15/51 [00:02<00:04,  7.33it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  31%|███▏      | 16/51 [00:02<00:04,  7.41it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  33%|███▎      | 17/51 [00:02<00:04,  7.72it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  35%|███▌      | 18/51 [00:02<00:04,  8.01it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  37%|███▋      | 19/51 [00:02<00:03,  8.21it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  39%|███▉      | 20/51 [00:02<00:03,  8.28it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  41%|████      | 21/51 [00:02<00:03,  8.36it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  43%|████▎     | 22/51 [00:03<00:03,  8.47it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  45%|████▌     | 23/51 [00:03<00:03,  8.47it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  47%|████▋     | 24/51 [00:03<00:03,  8.53it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  49%|████▉     | 25/51 [00:03<00:03,  8.58it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  51%|█████     | 26/51 [00:03<00:02,  8.65it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  53%|█████▎    | 27/51 [00:03<00:02,  8.66it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  55%|█████▍    | 28/51 [00:03<00:02,  8.70it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  57%|█████▋    | 29/51 [00:03<00:02,  8.73it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  59%|█████▉    | 30/51 [00:03<00:02,  8.77it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  61%|██████    | 31/51 [00:04<00:02,  8.80it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  63%|██████▎   | 32/51 [00:04<00:02,  8.81it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  67%|██████▋   | 34/51 [00:04<00:01,  9.24it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  71%|███████   | 36/51 [00:04<00:01,  9.46it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  75%|███████▍  | 38/51 [00:04<00:01,  9.70it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  78%|███████▊  | 40/51 [00:05<00:01,  9.83it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  82%|████████▏ | 42/51 [00:05<00:00, 10.02it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  86%|████████▋ | 44/51 [00:05<00:00, 10.18it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  90%|█████████ | 46/51 [00:05<00:00, 10.33it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  94%|█████████▍| 48/51 [00:05<00:00, 10.55it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  98%|█████████▊| 50/51 [00:05<00:00, 10.76it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE): 100%|██████████| 51/51 [00:06<00:00,  8.44it/s]
+(EngineCore_DP0 pid=3891337) Capturing CUDA graphs (decode, FULL):   0%|          | 0/35 [00:00<?, ?it/s]Capturing CUDA graphs (decode, FULL):   3%|▎         | 1/35 [00:00<00:05,  5.74it/s]Capturing CUDA graphs (decode, FULL):   6%|▌         | 2/35 [00:00<00:05,  6.19it/s]Capturing CUDA graphs (decode, FULL):   9%|▊         | 3/35 [00:00<00:04,  6.41it/s]Capturing CUDA graphs (decode, FULL):  11%|█▏        | 4/35 [00:00<00:04,  6.56it/s]Capturing CUDA graphs (decode, FULL):  14%|█▍        | 5/35 [00:00<00:04,  6.62it/s]Capturing CUDA graphs (decode, FULL):  17%|█▋        | 6/35 [00:00<00:04,  6.71it/s]Capturing CUDA graphs (decode, FULL):  20%|██        | 7/35 [00:01<00:04,  6.77it/s]Capturing CUDA graphs (decode, FULL):  23%|██▎       | 8/35 [00:01<00:03,  6.84it/s]Capturing CUDA graphs (decode, FULL):  26%|██▌       | 9/35 [00:01<00:03,  6.88it/s]Capturing CUDA graphs (decode, FULL):  29%|██▊       | 10/35 [00:01<00:03,  6.92it/s]Capturing CUDA graphs (decode, FULL):  31%|███▏      | 11/35 [00:01<00:03,  6.95it/s]Capturing CUDA graphs (decode, FULL):  34%|███▍      | 12/35 [00:01<00:03,  6.99it/s]Capturing CUDA graphs (decode, FULL):  37%|███▋      | 13/35 [00:01<00:03,  7.05it/s]Capturing CUDA graphs (decode, FULL):  40%|████      | 14/35 [00:02<00:02,  7.13it/s]Capturing CUDA graphs (decode, FULL):  43%|████▎     | 15/35 [00:02<00:02,  7.20it/s]Capturing CUDA graphs (decode, FULL):  46%|████▌     | 16/35 [00:02<00:02,  7.26it/s]Capturing CUDA graphs (decode, FULL):  49%|████▊     | 17/35 [00:02<00:02,  7.52it/s]Capturing CUDA graphs (decode, FULL):  51%|█████▏    | 18/35 [00:02<00:02,  7.79it/s]Capturing CUDA graphs (decode, FULL):  54%|█████▍    | 19/35 [00:02<00:01,  8.01it/s]Capturing CUDA graphs (decode, FULL):  57%|█████▋    | 20/35 [00:02<00:01,  8.19it/s]Capturing CUDA graphs (decode, FULL):  60%|██████    | 21/35 [00:02<00:01,  8.35it/s]Capturing CUDA graphs (decode, FULL):  63%|██████▎   | 22/35 [00:03<00:01,  8.42it/s]Capturing CUDA graphs (decode, FULL):  66%|██████▌   | 23/35 [00:03<00:01,  8.39it/s]Capturing CUDA graphs (decode, FULL):  69%|██████▊   | 24/35 [00:03<00:01,  8.48it/s]Capturing CUDA graphs (decode, FULL):  71%|███████▏  | 25/35 [00:03<00:01,  8.67it/s]Capturing CUDA graphs (decode, FULL):  74%|███████▍  | 26/35 [00:03<00:01,  8.82it/s]Capturing CUDA graphs (decode, FULL):  77%|███████▋  | 27/35 [00:03<00:00,  8.73it/s]Capturing CUDA graphs (decode, FULL):  80%|████████  | 28/35 [00:03<00:00,  8.80it/s]Capturing CUDA graphs (decode, FULL):  83%|████████▎ | 29/35 [00:03<00:00,  8.92it/s]Capturing CUDA graphs (decode, FULL):  86%|████████▌ | 30/35 [00:03<00:00,  8.96it/s]Capturing CUDA graphs (decode, FULL):  89%|████████▊ | 31/35 [00:04<00:00,  9.07it/s]Capturing CUDA graphs (decode, FULL):  91%|█████████▏| 32/35 [00:04<00:00,  9.16it/s]Capturing CUDA graphs (decode, FULL):  94%|█████████▍| 33/35 [00:04<00:00,  9.21it/s]Capturing CUDA graphs (decode, FULL):  97%|█████████▋| 34/35 [00:04<00:00,  9.18it/s]Capturing CUDA graphs (decode, FULL): 100%|██████████| 35/35 [00:04<00:00,  9.32it/s]Capturing CUDA graphs (decode, FULL): 100%|██████████| 35/35 [00:04<00:00,  7.85it/s]
+(EngineCore_DP0 pid=3891337) INFO 03-25 03:45:18 [gpu_model_runner.py:5386] Graph capturing finished in 11 secs, took 1.13 GiB
+(EngineCore_DP0 pid=3891337) INFO 03-25 03:45:18 [core.py:282] init engine (profile, create kv cache, warmup model) took 31.17 seconds
+(EngineCore_DP0 pid=3891337) INFO 03-25 03:45:18 [vllm.py:747] Asynchronous scheduling is enabled.
+INFO 03-25 03:45:18 [llm.py:388] Supported tasks: ['generate']
+2026-03-25 03:45:18  INFO      Loading QA dataset from /home/v-tiossowski/HealthcareAgent/mimic-code/data/MIMICIV_rhythm_dataset/rhythm.csv
+2026-03-25 03:45:19  INFO      Dataset: 1000 rows, columns: ['subject_id', 'hadm_id', 'stay_id', 'intime', 'outtime', 'first_careunit', 'last_careunit', 'gt_label', 'question', 'gt_answer_type', 'split', 'afib_any', 'ectopy_any', 'vtach_any']
+2026-03-25 03:45:19  INFO      Filtered to train split: 100 rows
+2026-03-25 03:45:19  INFO      Auto-discovered ground-truth SQL: /home/v-tiossowski/HealthcareAgent/mimic-code/mimic-iv/concepts_duckdb/measurement/rhythm.sql
+2026-03-25 03:45:19  INFO      === Iteration 1/100  run=rhythm  best_qa=0.0% ===
+INFO 03-25 03:45:21 [hf.py:318] Detected the chat template content format to be 'string'. You can set `--chat-template-content-format` to override this.
+2026-03-25 03:45:35  INFO      Exec block 1/1 …
+2026-03-25 03:45:35  INFO      Output: []
+
+2026-03-25 03:45:35  INFO      === Iteration 2/100  run=rhythm  best_qa=0.0% ===
+2026-03-25 03:45:37  INFO      Exec block 1/1 …
+2026-03-25 03:45:37  INFO      Output: []
+
+2026-03-25 03:45:37  INFO      === Iteration 3/100  run=rhythm  best_qa=0.0% ===
+2026-03-25 03:45:40  INFO      Exec block 1/1 …
+2026-03-25 03:45:40  INFO      Output: ['acidosis_guideline', 'acute_decompensated_heart_failure_guideline', 'acute_hepatic_failure_guideline', 'adverse_effect_of_anticoagulants_guideline', 'alcohol_withdrawal_syndrome_guideline', 'anemia_icu_critically_ill_hemoglobin_transfusion_guideline', 'apache_iii_guideline', 'atrial_fibrillation_guideline', 'bradycardia_guideline', 'cerebral_infarction_guideline', 'coma_altered_consciousness_icu_guideline', 'copd_exacerbation_guideline', 'coronary_artery_disease_guideline', 'deep_vein_thrombos
+2026-03-25 03:45:40  INFO      === Iteration 4/100  run=rhythm  best_qa=0.0% ===
+2026-03-25 03:45:43  INFO      Exec block 1/1 …
+2026-03-25 03:45:43  INFO      Output: "# atrial fibrillation — Clinical Guideline\n# Generated by generate_guidelines.py\n# Source articles: 10 (PMID29627355, PMID40336017, PMID40960600, PMID27885969, PMID41016469...)\n############################################################\n\n# Clinical Guideline: Atrial Fibrillation in the Intensive Care Unit\n\n---\n\n## 1. Definition\n\n**Atrial fibrillation (AF)** is a supraventricular tachyarrhythmia characterized by disorganised, rapid electrical activity in the atria leading to the loss
+2026-03-25 03:45:43  INFO      === Iteration 5/100  run=rhythm  best_qa=0.0% ===
+2026-03-25 03:45:46  INFO      Exec block 1/1 …
+2026-03-25 03:45:46  INFO      Output: '# bradycardia — Clinical Guideline\n# Generated by generate_guidelines.py\n# Source articles: 10 (PMID30412776, PMID30412708, PMID30586773, PMID10796212, PMID32644480...)\n############################################################\n\n# Clinical Guideline: Bradycardia\n\n---\n\n## 1. Definition\n\n**Bradycardia** is defined as a heart rate (HR) below **60 beats per minute (bpm)** in adults [training knowledge]. It represents a deviation from the normal resting sinus rate range of 60–100 bpm. I
+2026-03-25 03:45:46  INFO      === Iteration 6/100  run=rhythm  best_qa=0.0% ===
+2026-03-25 03:45:50  INFO      Exec block 1/1 …
+2026-03-25 03:45:50  INFO      Output: ['age', 'bg', 'blood_differential', 'cardiac_marker', 'chemistry', 'coagulation', 'complete_blood_count', 'enzyme', 'gcs', 'height', 'icp', 'icustay_detail', 'inflammation', 'weight_durations']
+
+2026-03-25 03:45:50  INFO      === Iteration 7/100  run=rhythm  best_qa=0.0% ===
+2026-03-25 03:45:56  INFO      Exec block 1/1 …
+2026-03-25 03:45:56  INFO      Output:     table_schema          table_name
+0   mimiciv_hosp          admissions
+1   mimiciv_hosp             d_hcpcs
+2   mimiciv_hosp     d_icd_diagnoses
+3   mimiciv_hosp    d_icd_procedures
+4   mimiciv_hosp          d_labitems
+5   mimiciv_hosp       diagnoses_icd
+6   mimiciv_hosp            drgcodes
+7   mimiciv_hosp                emar
+8   mimiciv_hosp         emar_detail
+9   mimiciv_hosp         hcpcsevents
+10  mimiciv_hosp           labevents
+11  mimiciv_hosp  microbiologyevents
+12  mimiciv_hosp   
+2026-03-25 03:45:56  INFO      === Iteration 8/100  run=rhythm  best_qa=0.0% ===
+2026-03-25 03:46:06  INFO      Exec block 1/1 …
+2026-03-25 03:46:06  INFO      Output:     itemid                                         label                     category
+0   220048                                  Heart Rhythm          Routine Vital Signs
+1   220125            Left Ventricular Assit Device Flow                 Hemodynamics
+2   220128          Right Ventricular Assist Device Flow                 Hemodynamics
+3   224390                         Temporary Atrial Sens  Cardiovascular (Pacer Data)
+4   224650                                 Ectopy Type 1          Rout
+2026-03-25 03:46:06  INFO      === Iteration 9/100  run=rhythm  best_qa=0.0% ===
+2026-03-25 03:46:15  INFO      Exec block 1/1 …
+2026-03-25 03:46:15  INFO      Output:    itemid          label    category
+0  229872  Flutter Valve  Treatments
+
+2026-03-25 03:46:15  INFO      === Iteration 10/100  run=rhythm  best_qa=0.0% ===
+2026-03-25 03:46:22  INFO      Exec block 1/1 …
+2026-03-25 03:46:22  INFO      Output:                                                          value
+0                              1st AV (First degree AV Block) 
+1               2nd AV M2 (Second degree AV Block - Mobitz 2) 
+2   2nd AV W-M1 (Second degree AV Block Wenckebach - Mobitz1) 
+3                               3rd AV (Complete Heart Block) 
+4                                     A Flut (Atrial Flutter) 
+5                                                      A Paced
+6                                     AF (Atrial Fibrillati
+2026-03-25 03:46:22  INFO      === Iteration 11/100  run=rhythm  best_qa=0.0% ===
+2026-03-25 03:46:32  INFO      Exec block 1/1 …
+2026-03-25 03:46:33  INFO      Output:                value
+0     A Quadrigeminy
+1    Atrial Bigeminy
+2   Atrial Trigeminy
+3       Fusion Beats
+4     N Quadrigeminy
+5    Nod/Junc Escape
+6     Nodal Bigeminy
+7    Nodal Trigeminy
+8               None
+9              PAC's
+10             PNC's
+11             PVC's
+12    V Quadrigenimy
+13    Vent. Bigeminy
+14      Vent. Escape
+15   Vent. Trigeminy
+
+2026-03-25 03:46:33  INFO      === Iteration 12/100  run=rhythm  best_qa=0.0% ===
+2026-03-25 03:46:37  INFO      Exec block 1/1 …
+2026-03-25 03:46:37  INFO      Output: 'def icustay_detail(stay_id):\n    """\n    Extract critical clinical information for an ICU stay.\n\n    This function retrieves comprehensive details about a specific ICU stay,\n    including mortality status, length of stay, and whether this is the first\n    ICU admission during the hospitalization.\n\n    Parameters\n    ----------\n    stay_id : int\n        The ICU stay identifier.\n\n    Returns\n    -------\n    dict or None\n        A dictionary containing the following keys:\n        
+2026-03-25 03:46:37  INFO      === Iteration 13/100  run=rhythm  best_qa=0.0% ===
+2026-03-25 03:46:56  INFO      Exec block 1/1 …
+2026-03-25 03:46:56  INFO      Output:     subject_id   hadm_id   stay_id  itemid           charttime                    value
+0     10000032  29079034  39553978  220048 2180-07-23 14:00:00        SR (Sinus Rhythm)
+1     10000032  29079034  39553978  224650 2180-07-23 14:00:00                     None
+2     10000032  29079034  39553978  220048 2180-07-23 14:30:00        SR (Sinus Rhythm)
+3     10000032  29079034  39553978  224650 2180-07-23 14:30:00                     None
+4     10000032  29079034  39553978  220048 2180-07-23 15:00:
+2026-03-25 03:46:56  INFO      === Iteration 14/100  run=rhythm  best_qa=0.0% ===
+2026-03-25 03:47:03  INFO      Exec block 1/1 …
+2026-03-25 03:47:03  INFO      Output:    subject_id   hadm_id   stay_id
+0    10135398  28054572  36223916
+1    10444484  27161321  31924428
+2    10723529  24766931  39208819
+3    11079788  27746565  34528479
+4    11200811  22450456  39599237
+5    11762318  23394346  34849495
+6    11872366  24985138  31592274
+7    11937809  22536779  35589858
+8    12035173  29109331  34909617
+9    12267995  21762182  38630877
+
+2026-03-25 03:47:03  INFO      === Iteration 15/100  run=rhythm  best_qa=0.0% ===
+2026-03-25 03:47:10  INFO      Exec block 1/1 …
+2026-03-25 03:47:10  INFO      Output:    subject_id   hadm_id   stay_id
+0    10213338  21882253  31276057
+1    12378259  26780128  33109356
+2    12917345  22725279  39107382
+3    13698034  20572259  39480033
+4    15621522  25440811  38280952
+5    15688456  23276383  38342854
+6    15812903  23133491  34859091
+7    16225912  22760915  32470453
+8    18734116  29742461  33164343
+9    10600393  25629995  30379622
+
+2026-03-25 03:47:10  INFO      === Iteration 16/100  run=rhythm  best_qa=0.0% ===
+2026-03-25 03:47:18  INFO      Exec block 1/1 …
+2026-03-25 03:47:18  INFO      Output:     subject_id   hadm_id   stay_id            value
+0     10057482  25416257  38980177  Vent. Trigeminy
+1     10058868  25385222  36959122            PVC's
+2     10059952  26572318  38456169            PVC's
+3     10133367  28722095  32715099            PAC's
+4     10135398  28054572  36223916            PVC's
+5     10135595  29216481  38628397            PVC's
+6     10250582  25099107  30788654            PVC's
+7     10251521  21838901  35557157            PVC's
+8     10383860  29313728  332780
+2026-03-25 03:47:18  INFO      === Iteration 17/100  run=rhythm  best_qa=0.0% ===
+2026-03-25 03:47:30  INFO      Exec block 1/1 …
+2026-03-25 03:47:30  INFO      Output:              charttime                    value
+0  2153-09-26 00:30:00  ST (Sinus Tachycardia) 
+1  2153-09-26 02:00:00  ST (Sinus Tachycardia) 
+2  2153-09-26 04:00:00  ST (Sinus Tachycardia) 
+3  2153-09-26 06:00:00  ST (Sinus Tachycardia) 
+4  2153-09-26 08:00:00  ST (Sinus Tachycardia) 
+5  2153-09-26 14:00:00        SR (Sinus Rhythm)
+6  2153-09-26 14:30:00        SR (Sinus Rhythm)
+7  2153-09-26 14:51:00        SR (Sinus Rhythm)
+8  2153-09-26 15:00:00        SR (Sinus Rhythm)
+9  2153-09-26 15:15:
+2026-03-25 03:47:30  INFO      === Iteration 18/100  run=rhythm  best_qa=0.0% ===
+2026-03-25 03:47:38  INFO      Exec block 1/1 …
+2026-03-25 03:47:38  INFO      Output:             charttime                     value
+0 2153-09-28 10:00:00  AF (Atrial Fibrillation)
+1 2153-09-28 11:00:00  AF (Atrial Fibrillation)
+2 2153-09-28 12:00:00  AF (Atrial Fibrillation)
+3 2153-09-28 13:00:00  AF (Atrial Fibrillation)
+4 2153-09-28 14:00:00  AF (Atrial Fibrillation)
+5 2153-09-28 15:00:00  AF (Atrial Fibrillation)
+6 2153-09-28 16:00:00  AF (Atrial Fibrillation)
+7 2153-09-28 17:00:00  AF (Atrial Fibrillation)
+8 2153-09-28 18:00:00  AF (Atrial Fibrillation)
+9 2153-09-28 19:00:0
+2026-03-25 03:47:38  INFO      === Iteration 19/100  run=rhythm  best_qa=0.0% ===
+2026-03-25 03:47:49  INFO      Exec block 1/1 …
+2026-03-25 03:47:49  INFO      Output:     stay_id  subject_id   hadm_id              intime             outtime
+0  36223916    10135398  28054572 2153-09-25 23:39:00 2153-10-08 22:22:14
+
+2026-03-25 03:47:49  INFO      === Iteration 20/100  run=rhythm  best_qa=0.0% ===
+2026-03-25 03:48:52  INFO      Exec block 1/1 …
+2026-03-25 03:48:52  INFO      Output: Testing with stay_id 36223916 (known to have AF):
+Has AF: True
+Has ectopy: True
+Has VT: False
+All rhythms: ['ST (Sinus Tachycardia) ', 'SR (Sinus Rhythm)', 'AF (Atrial Fibrillation)', 'SA (Sinus Arrhythmia)']
+All ectopy types: ["PAC's", "PVC's"]
+
+2026-03-25 03:48:52  INFO      === Iteration 21/100  run=rhythm  best_qa=0.0% ===
+2026-03-25 03:49:03  INFO      Exec block 1/1 …
+2026-03-25 03:49:03  INFO      Output: 
+Testing with stay_id 31276057 (known to have VT):
+Has AF: False
+Has ectopy: False
+Has VT: True
+All rhythms: ['SR (Sinus Rhythm)', 'ST (Sinus Tachycardia) ', 'SVT (Supra Ventricular Tachycardia)']
+All ectopy types: []
+
+2026-03-25 03:49:03  INFO      === Iteration 22/100  run=rhythm  best_qa=0.0% ===
+2026-03-25 03:49:12  INFO      Exec block 1/1 …
+2026-03-25 03:49:12  INFO      Output:              charttime                    value
+0  2166-10-21 03:14:00        SR (Sinus Rhythm)
+1  2166-10-21 04:00:00        SR (Sinus Rhythm)
+2  2166-10-21 05:00:00        SR (Sinus Rhythm)
+3  2166-10-21 06:00:00        SR (Sinus Rhythm)
+4  2166-10-21 07:00:00        SR (Sinus Rhythm)
+5  2166-10-21 08:00:00        SR (Sinus Rhythm)
+6  2166-10-21 09:00:00        SR (Sinus Rhythm)
+7  2166-10-21 10:00:00  ST (Sinus Tachycardia) 
+8  2166-10-21 11:00:00  ST (Sinus Tachycardia) 
+9  2166-10-21 12:00:
+2026-03-25 03:49:12  INFO      === Iteration 23/100  run=rhythm  best_qa=0.0% ===
+2026-03-25 03:49:21  INFO      Exec block 1/1 …
+2026-03-25 03:49:21  INFO      Output:             charttime                                value
+0 2166-10-23 11:00:00  SVT (Supra Ventricular Tachycardia)
+1 2166-10-23 12:00:00  SVT (Supra Ventricular Tachycardia)
+
+2026-03-25 03:49:21  INFO      === Iteration 24/100  run=rhythm  best_qa=0.0% ===
+2026-03-25 03:49:31  INFO      Exec block 1/1 …
+2026-03-25 03:49:31  INFO      Output:    subject_id   hadm_id   stay_id                                value
+0    10564844  22721259  33305539  SVT (Supra Ventricular Tachycardia)
+1    11832245  25474938  34643053  SVT (Supra Ventricular Tachycardia)
+2    11959638  24816314  37064466        VT (Ventricular Tachycardia) 
+3    13036533  26616618  38642559  SVT (Supra Ventricular Tachycardia)
+4    14917039  29533037  37066980  SVT (Supra Ventricular Tachycardia)
+5    16826447  24069995  33547852  SVT (Supra Ventricular Tachycardia)
+6  
+2026-03-25 03:49:31  INFO      === Iteration 25/100  run=rhythm  best_qa=0.0% ===
+2026-03-25 03:49:43  INFO      Exec block 1/1 …
+2026-03-25 03:49:43  INFO      Output: 
+Testing with stay_id 37064466 (known to have VT):
+Has AF: False
+Has ectopy: True
+Has VT: True
+All rhythms: ['1st AV (First degree AV Block) ', 'RBBB (Right Bundle Branch Block) ', 'SR (Sinus Rhythm)', 'ST (Sinus Tachycardia) ', 'SB (Sinus Bradycardia)', 'VT (Ventricular Tachycardia) ']
+All ectopy types: ["PVC's", 'Vent. Trigeminy', "PAC's", 'Vent. Bigeminy']
+
+2026-03-25 03:49:43  INFO      === Iteration 26/100  run=rhythm  best_qa=0.0% ===
+2026-03-25 03:49:55  INFO      Exec block 1/1 …
+2026-03-25 03:49:55  INFO      Output: 
+Testing with stay_id 39553978 (original test patient):
+Has AF: False
+Has ectopy: False
+Has VT: False
+All rhythms: ['SR (Sinus Rhythm)', 'ST (Sinus Tachycardia) ']
+All ectopy types: []
+
+2026-03-25 03:49:55  INFO      === Iteration 27/100  run=rhythm  best_qa=0.0% ===
+2026-03-25 03:50:07  INFO      Exec block 1/1 …
+2026-03-25 03:50:07  INFO      Output: 
+Testing with stay_id 34763877 (another VT case):
+Has AF: False
+Has ectopy: True
+Has VT: True
+All rhythms: ['ST (Sinus Tachycardia) ', 'SR (Sinus Rhythm)', 'VT (Ventricular Tachycardia) ', 'SB (Sinus Bradycardia)']
+
+2026-03-25 03:50:07  INFO      === Iteration 28/100  run=rhythm  best_qa=0.0% ===
+2026-03-25 03:51:05  INFO      Exec block 1/1 …
+2026-03-25 03:51:05  INFO      Output: Code executed successfully (no output).
+2026-03-25 03:51:05  INFO      Debug conversations will be saved to debug_logs
+2026-03-25 03:51:05  INFO      Using question from dataset column: Does this patient have atrial fibrillation documented during their ICU stay?
+2026-03-25 03:51:05  INFO      Answer type for 'rhythm': binary (per_row=True)
+2026-03-25 03:51:05  INFO      ReACT iteration 1/5 — 20 active patients
+Rendering conversations:   0%|          | 0/20 [00:00<?, ?it/s]Rendering conversations: 100%|██████████| 20/20 [00:00<00:00, 491.93it/s]
+Processed prompts:   0%|          | 0/20 [00:00<?, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s]Processed prompts:   5%|▌         | 1/20 [00:12<03:56, 12.45s/it, est. speed input: 71.73 toks/s, output: 14.30 toks/s]Processed prompts:  15%|█▌        | 3/20 [00:12<00:55,  3.28s/it, est. speed input: 212.83 toks/s, output: 42.74 toks/s]Processed prompts:  35%|███▌      | 7/20 [00:12<00:13,  1.07s/it, est. speed input: 491.68 toks/s, output: 99.77 toks/s]Processed prompts:  50%|█████     | 10/20 [00:12<00:06,  1.55it/s, est. speed input: 693.20 toks/s, output: 142.07 toks/s]Processed prompts:  65%|██████▌   | 13/20 [00:13<00:02,  2.36it/s, est. speed input: 889.91 toks/s, output: 184.36 toks/s]Processed prompts:  80%|████████  | 16/20 [00:13<00:01,  3.45it/s, est. speed input: 1085.32 toks/s, output: 227.25 toks/s]Processed prompts:  95%|█████████▌| 19/20 [00:13<00:00,  4.34it/s, est. speed input: 1256.56 toks/s, output: 266.13 toks/s]Processed prompts: 100%|██████████| 20/20 [00:13<00:00,  4.34it/s, est. speed input: 1308.34 toks/s, output: 278.55 toks/s]Processed prompts: 100%|██████████| 20/20 [00:13<00:00,  1.46it/s, est. speed input: 1308.34 toks/s, output: 278.55 toks/s]
+2026-03-25 03:51:19  INFO      ReACT iteration 2/5 — 20 active patients
+Rendering conversations:   0%|          | 0/20 [00:00<?, ?it/s]Rendering conversations:  85%|████████▌ | 17/20 [00:00<00:00, 162.96it/s]Rendering conversations: 100%|██████████| 20/20 [00:00<00:00, 159.44it/s]
+Processed prompts:   0%|          | 0/20 [00:00<?, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s]Processed prompts:   5%|▌         | 1/20 [00:23<07:20, 23.20s/it, est. speed input: 207.45 toks/s, output: 2.76 toks/s]Processed prompts:  10%|█         | 2/20 [00:23<02:53,  9.67s/it, est. speed input: 409.57 toks/s, output: 5.77 toks/s]Processed prompts:  25%|██▌       | 5/20 [00:24<00:43,  2.90s/it, est. speed input: 937.86 toks/s, output: 14.32 toks/s]Processed prompts:  30%|███       | 6/20 [00:24<00:30,  2.19s/it, est. speed input: 1136.86 toks/s, output: 17.67 toks/s]Processed prompts:  35%|███▌      | 7/20 [00:24<00:21,  1.67s/it, est. speed input: 1326.53 toks/s, output: 20.96 toks/s]Processed prompts:  45%|████▌     | 9/20 [00:24<00:11,  1.08s/it, est. speed input: 1688.15 toks/s, output: 28.21 toks/s]Processed prompts:  55%|█████▌    | 11/20 [00:25<00:06,  1.45it/s, est. speed input: 1888.01 toks/s, output: 36.51 toks/s]Processed prompts:  60%|██████    | 12/20 [00:25<00:05,  1.51it/s, est. speed input: 2032.64 toks/s, output: 40.25 toks/s]Processed prompts:  65%|██████▌   | 13/20 [00:25<00:03,  1.81it/s, est. speed input: 2169.14 toks/s, output: 44.84 toks/s]Processed prompts:  80%|████████  | 16/20 [00:26<00:01,  2.98it/s, est. speed input: 2635.09 toks/s, output: 58.41 toks/s]Processed prompts:  90%|█████████ | 18/20 [00:26<00:00,  3.78it/s, est. speed input: 2863.38 toks/s, output: 68.11 toks/s]Processed prompts:  95%|█████████▌| 19/20 [00:27<00:00,  1.99it/s, est. speed input: 2872.46 toks/s, output: 70.82 toks/s]Processed prompts: 100%|██████████| 20/20 [00:30<00:00,  1.11it/s, est. speed input: 2689.44 toks/s, output: 73.32 toks/s]Processed prompts: 100%|██████████| 20/20 [00:30<00:00,  1.11it/s, est. speed input: 2689.44 toks/s, output: 73.32 toks/s]Processed prompts: 100%|██████████| 20/20 [00:30<00:00,  1.52s/it, est. speed input: 2689.44 toks/s, output: 73.32 toks/s]
+2026-03-25 03:51:50  INFO      ReACT iteration 3/5 — 1 active patients
+Rendering conversations:   0%|          | 0/1 [00:00<?, ?it/s]Rendering conversations: 100%|██████████| 1/1 [00:00<00:00, 279.03it/s]
+Processed prompts:   0%|          | 0/1 [00:00<?, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s]Processed prompts: 100%|██████████| 1/1 [00:07<00:00,  7.54s/it, est. speed input: 245.25 toks/s, output: 25.33 toks/s]Processed prompts: 100%|██████████| 1/1 [00:07<00:00,  7.54s/it, est. speed input: 245.25 toks/s, output: 25.33 toks/s]Processed prompts: 100%|██████████| 1/1 [00:07<00:00,  7.54s/it, est. speed input: 245.25 toks/s, output: 25.33 toks/s]
+2026-03-25 03:51:57  INFO      ReACT iteration 4/5 — 1 active patients
+Rendering conversations:   0%|          | 0/1 [00:00<?, ?it/s]Rendering conversations: 100%|██████████| 1/1 [00:00<00:00, 216.97it/s]
+Processed prompts:   0%|          | 0/1 [00:00<?, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s]Processed prompts: 100%|██████████| 1/1 [00:11<00:00, 11.08s/it, est. speed input: 211.21 toks/s, output: 25.54 toks/s]Processed prompts: 100%|██████████| 1/1 [00:11<00:00, 11.08s/it, est. speed input: 211.21 toks/s, output: 25.54 toks/s]Processed prompts: 100%|██████████| 1/1 [00:11<00:00, 11.08s/it, est. speed input: 211.21 toks/s, output: 25.54 toks/s]
+2026-03-25 03:52:08  INFO      ReACT iteration 5/5 — 1 active patients
+Rendering conversations:   0%|          | 0/1 [00:00<?, ?it/s]Rendering conversations: 100%|██████████| 1/1 [00:00<00:00, 154.61it/s]
+Processed prompts:   0%|          | 0/1 [00:00<?, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s]Processed prompts: 100%|██████████| 1/1 [00:10<00:00, 10.39s/it, est. speed input: 317.54 toks/s, output: 24.93 toks/s]Processed prompts: 100%|██████████| 1/1 [00:10<00:00, 10.39s/it, est. speed input: 317.54 toks/s, output: 24.93 toks/s]Processed prompts: 100%|██████████| 1/1 [00:10<00:00, 10.39s/it, est. speed input: 317.54 toks/s, output: 24.93 toks/s]
+2026-03-25 03:52:19  INFO      QA accuracy: 90.0%  (correct=18/20, parse_errors=1)
+2026-03-25 03:52:19  INFO      SUCCESS: 90.0% QA accuracy for 'rhythm' at iteration 28
+2026-03-25 03:52:19  INFO      Function code saved to autoformalized_library/functions/rhythm.py
+2026-03-25 03:52:19  INFO      Summary saved to autoformalized_library/summary.json
+
+======================================================================
+AUTOFORMALIZATION COMPLETE
+======================================================================
+  Output dir      : autoformalized_library
+  Model           : Qwen/Qwen3.5-27B
+  Dataset         : /home/v-tiossowski/HealthcareAgent/mimic-code/data/MIMICIV_rhythm_dataset/rhythm.csv
+  Run name        : rhythm
+  Status          : SUCCESS
+  QA accuracy     : 90.0%
+  Iterations      : 28
+  Total tokens    : 113,843  (prompt 107,078 / completion 6,765)
+  LLM calls       : 71
+  SQL queries     : 91
+  Function saved  : autoformalized_library/functions/rhythm.py
+======================================================================
+[rank0]:[W325 03:52:19.780711675 ProcessGroupNCCL.cpp:1553] Warning: WARNING: destroy_process_group() was not called before program exit, which can leak resources. For more info, please see https://pytorch.org/docs/stable/distributed.html#shutdown (function operator())

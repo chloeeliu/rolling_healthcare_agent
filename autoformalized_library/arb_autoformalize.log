@@ -1,0 +1,425 @@
+2026-03-25 07:04:17  INFO      Using database: /home/v-tiossowski/MIMIC-IV/mimic4.db
+2026-03-25 07:04:17  INFO      No --model_url provided; loading vLLM in-process …
+INFO 03-25 07:04:22 [utils.py:238] non-default args: {'trust_remote_code': True, 'max_model_len': 40000, 'disable_log_stats': True, 'model': 'Qwen/Qwen3.5-27B'}
+The argument `trust_remote_code` is to be used with Auto classes. It has no effect here and is ignored.
+The argument `trust_remote_code` is to be used with Auto classes. It has no effect here and is ignored.
+The argument `trust_remote_code` is to be used with Auto classes. It has no effect here and is ignored.
+INFO 03-25 07:04:22 [model.py:531] Resolved architecture: Qwen3_5ForConditionalGeneration
+INFO 03-25 07:04:22 [model.py:1554] Using max model len 40000
+INFO 03-25 07:04:22 [scheduler.py:231] Chunked prefill is enabled with max_num_batched_tokens=8192.
+INFO 03-25 07:04:24 [config.py:544] Setting attention block size to 784 tokens to ensure that attention page size is >= mamba page size.
+INFO 03-25 07:04:24 [config.py:575] Padding mamba page size by 0.13% to ensure that mamba page size and attention page size are exactly equal.
+INFO 03-25 07:04:24 [vllm.py:747] Asynchronous scheduling is enabled.
+WARNING 03-25 07:04:31 [system_utils.py:152] We must use the `spawn` multiprocessing start method. Overriding VLLM_WORKER_MULTIPROC_METHOD to 'spawn'. See https://docs.vllm.ai/en/latest/usage/troubleshooting.html#python-multiprocessing for more information. Reasons: CUDA is initialized
+(EngineCore_DP0 pid=3979138) INFO 03-25 07:04:36 [core.py:101] Initializing a V1 LLM engine (v0.17.1) with config: model='Qwen/Qwen3.5-27B', speculative_config=None, tokenizer='Qwen/Qwen3.5-27B', skip_tokenizer_init=False, tokenizer_mode=auto, revision=None, tokenizer_revision=None, trust_remote_code=True, dtype=torch.bfloat16, max_seq_len=40000, download_dir=None, load_format=auto, tensor_parallel_size=1, pipeline_parallel_size=1, data_parallel_size=1, disable_custom_all_reduce=False, quantization=None, enforce_eager=False, enable_return_routed_experts=False, kv_cache_dtype=auto, device_config=cuda, structured_outputs_config=StructuredOutputsConfig(backend='auto', disable_fallback=False, disable_any_whitespace=False, disable_additional_properties=False, reasoning_parser='', reasoning_parser_plugin='', enable_in_reasoning=False), observability_config=ObservabilityConfig(show_hidden_metrics_for_version=None, otlp_traces_endpoint=None, collect_detailed_traces=None, kv_cache_metrics=False, kv_cache_metrics_sample=0.01, cudagraph_metrics=False, enable_layerwise_nvtx_tracing=False, enable_mfu_metrics=False, enable_mm_processor_stats=False, enable_logging_iteration_details=False), seed=0, served_model_name=Qwen/Qwen3.5-27B, enable_prefix_caching=False, enable_chunked_prefill=True, pooler_config=None, compilation_config={'level': None, 'mode': <CompilationMode.VLLM_COMPILE: 3>, 'debug_dump_path': None, 'cache_dir': '', 'compile_cache_save_format': 'binary', 'backend': 'inductor', 'custom_ops': ['none'], 'splitting_ops': ['vllm::unified_attention', 'vllm::unified_attention_with_output', 'vllm::unified_mla_attention', 'vllm::unified_mla_attention_with_output', 'vllm::mamba_mixer2', 'vllm::mamba_mixer', 'vllm::short_conv', 'vllm::linear_attention', 'vllm::plamo2_mamba_mixer', 'vllm::gdn_attention_core', 'vllm::kda_attention', 'vllm::sparse_attn_indexer', 'vllm::rocm_aiter_sparse_attn_indexer', 'vllm::unified_kv_cache_update', 'vllm::unified_mla_kv_cache_update'], 'compile_mm_encoder': False, 'compile_sizes': [], 'compile_ranges_split_points': [8192], 'inductor_compile_config': {'enable_auto_functionalized_v2': False, 'combo_kernels': True, 'benchmark_combo_kernel': True}, 'inductor_passes': {}, 'cudagraph_mode': <CUDAGraphMode.FULL_AND_PIECEWISE: (2, 1)>, 'cudagraph_num_of_warmups': 1, 'cudagraph_capture_sizes': [1, 2, 4, 8, 16, 24, 32, 40, 48, 56, 64, 72, 80, 88, 96, 104, 112, 120, 128, 136, 144, 152, 160, 168, 176, 184, 192, 200, 208, 216, 224, 232, 240, 248, 256, 272, 288, 304, 320, 336, 352, 368, 384, 400, 416, 432, 448, 464, 480, 496, 512], 'cudagraph_copy_inputs': False, 'cudagraph_specialize_lora': True, 'use_inductor_graph_partition': False, 'pass_config': {'fuse_norm_quant': False, 'fuse_act_quant': False, 'fuse_attn_quant': False, 'enable_sp': False, 'fuse_gemm_comms': False, 'fuse_allreduce_rms': False}, 'max_cudagraph_capture_size': 512, 'dynamic_shapes_config': {'type': <DynamicShapesType.BACKED: 'backed'>, 'evaluate_guards': False, 'assume_32_bit_indexing': False}, 'local_cache_dir': None, 'fast_moe_cold_start': True, 'static_all_moe_layers': []}
+(EngineCore_DP0 pid=3979138) INFO 03-25 07:04:38 [parallel_state.py:1393] world_size=1 rank=0 local_rank=0 distributed_init_method=tcp://10.8.144.167:39123 backend=nccl
+(EngineCore_DP0 pid=3979138) INFO 03-25 07:04:38 [parallel_state.py:1715] rank 0 in world size 1 is assigned as DP rank 0, PP rank 0, PCP rank 0, TP rank 0, EP rank N/A, EPLB rank N/A
+(EngineCore_DP0 pid=3979138) INFO 03-25 07:04:44 [base.py:106] Offloader set to NoopOffloader
+(EngineCore_DP0 pid=3979138) INFO 03-25 07:04:44 [gpu_model_runner.py:4281] Starting to load model Qwen/Qwen3.5-27B...
+(EngineCore_DP0 pid=3979138) INFO 03-25 07:04:45 [cuda.py:453] Using backend AttentionBackendEnum.FLASH_ATTN for vit attention
+(EngineCore_DP0 pid=3979138) INFO 03-25 07:04:45 [mm_encoder_attention.py:215] Using AttentionBackendEnum.FLASH_ATTN for MMEncoderAttention.
+(EngineCore_DP0 pid=3979138) INFO 03-25 07:04:45 [cuda.py:405] Using FLASH_ATTN attention backend out of potential backends: ['FLASH_ATTN', 'FLASHINFER', 'TRITON_ATTN', 'FLEX_ATTENTION'].
+(EngineCore_DP0 pid=3979138) INFO 03-25 07:04:45 [flash_attn.py:587] Using FlashAttention version 2
+(EngineCore_DP0 pid=3979138) <frozen importlib._bootstrap_external>:1301: FutureWarning: The cuda.cudart module is deprecated and will be removed in a future release, please switch to use the cuda.bindings.runtime module instead.
+(EngineCore_DP0 pid=3979138) <frozen importlib._bootstrap_external>:1301: FutureWarning: The cuda.nvrtc module is deprecated and will be removed in a future release, please switch to use the cuda.bindings.nvrtc module instead.
+(EngineCore_DP0 pid=3979138) Loading safetensors checkpoint shards:   0% Completed | 0/11 [00:00<?, ?it/s]
+(EngineCore_DP0 pid=3979138) Loading safetensors checkpoint shards:   9% Completed | 1/11 [00:00<00:05,  1.88it/s]
+(EngineCore_DP0 pid=3979138) Loading safetensors checkpoint shards:  18% Completed | 2/11 [00:01<00:05,  1.68it/s]
+(EngineCore_DP0 pid=3979138) Loading safetensors checkpoint shards:  27% Completed | 3/11 [00:01<00:05,  1.59it/s]
+(EngineCore_DP0 pid=3979138) Loading safetensors checkpoint shards:  36% Completed | 4/11 [00:02<00:04,  1.53it/s]
+(EngineCore_DP0 pid=3979138) Loading safetensors checkpoint shards:  45% Completed | 5/11 [00:03<00:04,  1.49it/s]
+(EngineCore_DP0 pid=3979138) Loading safetensors checkpoint shards:  55% Completed | 6/11 [00:03<00:03,  1.48it/s]
+(EngineCore_DP0 pid=3979138) Loading safetensors checkpoint shards:  64% Completed | 7/11 [00:04<00:02,  1.46it/s]
+(EngineCore_DP0 pid=3979138) Loading safetensors checkpoint shards:  73% Completed | 8/11 [00:05<00:02,  1.46it/s]
+(EngineCore_DP0 pid=3979138) Loading safetensors checkpoint shards:  82% Completed | 9/11 [00:06<00:01,  1.45it/s]
+(EngineCore_DP0 pid=3979138) Loading safetensors checkpoint shards:  91% Completed | 10/11 [00:06<00:00,  1.44it/s]
+(EngineCore_DP0 pid=3979138) Loading safetensors checkpoint shards: 100% Completed | 11/11 [00:07<00:00,  1.61it/s]
+(EngineCore_DP0 pid=3979138) Loading safetensors checkpoint shards: 100% Completed | 11/11 [00:07<00:00,  1.54it/s]
+(EngineCore_DP0 pid=3979138) 
+(EngineCore_DP0 pid=3979138) INFO 03-25 07:04:53 [default_loader.py:293] Loading weights took 7.23 seconds
+(EngineCore_DP0 pid=3979138) INFO 03-25 07:04:53 [gpu_model_runner.py:4364] Model loading took 51.1 GiB memory and 8.232122 seconds
+(EngineCore_DP0 pid=3979138) INFO 03-25 07:04:53 [gpu_model_runner.py:5280] Encoder cache will be initialized with a budget of 16384 tokens, and profiled with 1 image items of the maximum feature size.
+(EngineCore_DP0 pid=3979138) INFO 03-25 07:05:02 [decorators.py:465] Directly load AOT compilation from path /home/v-tiossowski/.cache/vllm/torch_compile_cache/torch_aot_compile/0232891e22bd4d7db98ac2f43c441f0f81d0a431216053ca49fadeaff23e2af3/rank_0_0/model
+(EngineCore_DP0 pid=3979138) INFO 03-25 07:05:02 [backends.py:916] Using cache directory: /home/v-tiossowski/.cache/vllm/torch_compile_cache/feaf61af16/rank_0_0/backbone for vLLM's torch.compile
+(EngineCore_DP0 pid=3979138) INFO 03-25 07:05:02 [backends.py:976] Dynamo bytecode transform time: 3.54 s
+(EngineCore_DP0 pid=3979138) INFO 03-25 07:05:12 [backends.py:266] Directly load the compiled graph(s) for compile range (1, 8192) from the cache, took 9.637 s
+(EngineCore_DP0 pid=3979138) INFO 03-25 07:05:12 [monitor.py:35] torch.compile takes 14.02 s in total
+(EngineCore_DP0 pid=3979138) INFO 03-25 07:05:13 [gpu_worker.py:424] Available KV cache memory: 18.3 GiB
+(EngineCore_DP0 pid=3979138) INFO 03-25 07:05:13 [kv_cache_utils.py:1314] GPU KV cache size: 74,480 tokens
+(EngineCore_DP0 pid=3979138) INFO 03-25 07:05:13 [kv_cache_utils.py:1319] Maximum concurrency for 40,000 tokens per request: 6.95x
+(EngineCore_DP0 pid=3979138) Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):   0%|          | 0/51 [00:00<?, ?it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):   2%|▏         | 1/51 [00:00<00:08,  5.76it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):   4%|▍         | 2/51 [00:00<00:08,  6.01it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):   6%|▌         | 3/51 [00:00<00:07,  6.13it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):   8%|▊         | 4/51 [00:00<00:07,  6.16it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  10%|▉         | 5/51 [00:00<00:07,  6.23it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  12%|█▏        | 6/51 [00:00<00:07,  6.23it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  14%|█▎        | 7/51 [00:01<00:07,  6.20it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  16%|█▌        | 8/51 [00:01<00:06,  6.20it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  18%|█▊        | 9/51 [00:01<00:06,  6.55it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  20%|█▉        | 10/51 [00:01<00:06,  6.82it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  22%|██▏       | 11/51 [00:01<00:05,  6.84it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  24%|██▎       | 12/51 [00:01<00:05,  7.04it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  25%|██▌       | 13/51 [00:01<00:05,  7.16it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  27%|██▋       | 14/51 [00:02<00:05,  7.20it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  29%|██▉       | 15/51 [00:02<00:04,  7.24it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  31%|███▏      | 16/51 [00:02<00:04,  7.27it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  33%|███▎      | 17/51 [00:02<00:04,  7.54it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  35%|███▌      | 18/51 [00:02<00:04,  7.89it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  37%|███▋      | 19/51 [00:02<00:03,  8.13it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  39%|███▉      | 20/51 [00:02<00:03,  8.34it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  41%|████      | 21/51 [00:02<00:03,  8.36it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  43%|████▎     | 22/51 [00:03<00:03,  8.47it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  45%|████▌     | 23/51 [00:03<00:03,  8.55it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  47%|████▋     | 24/51 [00:03<00:03,  8.61it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  49%|████▉     | 25/51 [00:03<00:03,  8.64it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  51%|█████     | 26/51 [00:03<00:02,  8.67it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  53%|█████▎    | 27/51 [00:03<00:02,  8.61it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  55%|█████▍    | 28/51 [00:03<00:02,  8.66it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  57%|█████▋    | 29/51 [00:03<00:02,  8.60it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  59%|█████▉    | 30/51 [00:04<00:02,  8.58it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  61%|██████    | 31/51 [00:04<00:02,  8.57it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  63%|██████▎   | 32/51 [00:04<00:02,  8.61it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  65%|██████▍   | 33/51 [00:04<00:02,  8.95it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  67%|██████▋   | 34/51 [00:04<00:01,  9.23it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  69%|██████▊   | 35/51 [00:04<00:01,  9.38it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  71%|███████   | 36/51 [00:04<00:01,  9.53it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  73%|███████▎  | 37/51 [00:04<00:01,  9.64it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  76%|███████▋  | 39/51 [00:04<00:01,  9.79it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  78%|███████▊  | 40/51 [00:05<00:01,  9.80it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  80%|████████  | 41/51 [00:05<00:01,  9.75it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  84%|████████▍ | 43/51 [00:05<00:00,  9.97it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  88%|████████▊ | 45/51 [00:05<00:00, 10.16it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  92%|█████████▏| 47/51 [00:05<00:00, 10.29it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  96%|█████████▌| 49/51 [00:05<00:00, 10.51it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE): 100%|██████████| 51/51 [00:06<00:00, 10.58it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE): 100%|██████████| 51/51 [00:06<00:00,  8.37it/s]
+(EngineCore_DP0 pid=3979138) Capturing CUDA graphs (decode, FULL):   0%|          | 0/35 [00:00<?, ?it/s]Capturing CUDA graphs (decode, FULL):   3%|▎         | 1/35 [00:00<00:05,  5.68it/s]Capturing CUDA graphs (decode, FULL):   6%|▌         | 2/35 [00:00<00:05,  6.15it/s]Capturing CUDA graphs (decode, FULL):   9%|▊         | 3/35 [00:00<00:05,  6.31it/s]Capturing CUDA graphs (decode, FULL):  11%|█▏        | 4/35 [00:00<00:04,  6.47it/s]Capturing CUDA graphs (decode, FULL):  14%|█▍        | 5/35 [00:00<00:04,  6.50it/s]Capturing CUDA graphs (decode, FULL):  17%|█▋        | 6/35 [00:00<00:04,  6.54it/s]Capturing CUDA graphs (decode, FULL):  20%|██        | 7/35 [00:01<00:04,  6.61it/s]Capturing CUDA graphs (decode, FULL):  23%|██▎       | 8/35 [00:01<00:04,  6.69it/s]Capturing CUDA graphs (decode, FULL):  26%|██▌       | 9/35 [00:01<00:03,  6.74it/s]Capturing CUDA graphs (decode, FULL):  29%|██▊       | 10/35 [00:01<00:03,  6.82it/s]Capturing CUDA graphs (decode, FULL):  31%|███▏      | 11/35 [00:01<00:03,  6.86it/s]Capturing CUDA graphs (decode, FULL):  34%|███▍      | 12/35 [00:01<00:03,  6.95it/s]Capturing CUDA graphs (decode, FULL):  37%|███▋      | 13/35 [00:01<00:03,  7.05it/s]Capturing CUDA graphs (decode, FULL):  40%|████      | 14/35 [00:02<00:02,  7.12it/s]Capturing CUDA graphs (decode, FULL):  43%|████▎     | 15/35 [00:02<00:02,  7.12it/s]Capturing CUDA graphs (decode, FULL):  46%|████▌     | 16/35 [00:02<00:02,  7.22it/s]Capturing CUDA graphs (decode, FULL):  49%|████▊     | 17/35 [00:02<00:02,  7.46it/s]Capturing CUDA graphs (decode, FULL):  51%|█████▏    | 18/35 [00:02<00:02,  7.68it/s]Capturing CUDA graphs (decode, FULL):  54%|█████▍    | 19/35 [00:02<00:02,  7.89it/s]Capturing CUDA graphs (decode, FULL):  57%|█████▋    | 20/35 [00:02<00:01,  8.04it/s]Capturing CUDA graphs (decode, FULL):  60%|██████    | 21/35 [00:02<00:01,  8.18it/s]Capturing CUDA graphs (decode, FULL):  63%|██████▎   | 22/35 [00:03<00:01,  8.10it/s]Capturing CUDA graphs (decode, FULL):  66%|██████▌   | 23/35 [00:03<00:01,  8.28it/s]Capturing CUDA graphs (decode, FULL):  69%|██████▊   | 24/35 [00:03<00:01,  8.37it/s]Capturing CUDA graphs (decode, FULL):  71%|███████▏  | 25/35 [00:03<00:01,  8.54it/s]Capturing CUDA graphs (decode, FULL):  74%|███████▍  | 26/35 [00:03<00:01,  8.49it/s]Capturing CUDA graphs (decode, FULL):  77%|███████▋  | 27/35 [00:03<00:00,  8.62it/s]Capturing CUDA graphs (decode, FULL):  80%|████████  | 28/35 [00:03<00:00,  8.69it/s]Capturing CUDA graphs (decode, FULL):  83%|████████▎ | 29/35 [00:03<00:00,  8.79it/s]Capturing CUDA graphs (decode, FULL):  86%|████████▌ | 30/35 [00:03<00:00,  8.82it/s]Capturing CUDA graphs (decode, FULL):  89%|████████▊ | 31/35 [00:04<00:00,  8.87it/s]Capturing CUDA graphs (decode, FULL):  91%|█████████▏| 32/35 [00:04<00:00,  8.94it/s]Capturing CUDA graphs (decode, FULL):  94%|█████████▍| 33/35 [00:04<00:00,  9.01it/s]Capturing CUDA graphs (decode, FULL):  97%|█████████▋| 34/35 [00:04<00:00,  9.02it/s]Capturing CUDA graphs (decode, FULL): 100%|██████████| 35/35 [00:04<00:00,  9.03it/s]Capturing CUDA graphs (decode, FULL): 100%|██████████| 35/35 [00:04<00:00,  7.72it/s]
+(EngineCore_DP0 pid=3979138) INFO 03-25 07:05:25 [gpu_model_runner.py:5386] Graph capturing finished in 11 secs, took 1.13 GiB
+(EngineCore_DP0 pid=3979138) INFO 03-25 07:05:25 [core.py:282] init engine (profile, create kv cache, warmup model) took 31.49 seconds
+(EngineCore_DP0 pid=3979138) INFO 03-25 07:05:25 [vllm.py:747] Asynchronous scheduling is enabled.
+INFO 03-25 07:05:25 [llm.py:388] Supported tasks: ['generate']
+2026-03-25 07:05:25  INFO      Loading QA dataset from /home/v-tiossowski/HealthcareAgent/mimic-code/data/MIMICIV_arb_dataset/arb.csv
+2026-03-25 07:05:25  INFO      Dataset: 1000 rows, columns: ['subject_id', 'hadm_id', 'stay_id', 'intime', 'outtime', 'first_careunit', 'last_careunit', 'gt_label', 'question', 'gt_answer_type', 'split', 'received_arb']
+2026-03-25 07:05:25  INFO      Filtered to train split: 100 rows
+2026-03-25 07:05:25  INFO      Auto-discovered ground-truth SQL: /home/v-tiossowski/HealthcareAgent/mimic-code/mimic-iv/concepts_duckdb/medication/arb.sql
+2026-03-25 07:05:25  INFO      === Iteration 1/100  run=arb  best_qa=0.0% ===
+INFO 03-25 07:05:27 [hf.py:318] Detected the chat template content format to be 'string'. You can set `--chat-template-content-format` to override this.
+2026-03-25 07:05:42  INFO      Exec block 1/1 …
+2026-03-25 07:05:42  INFO      Output: Guidelines found: []
+
+2026-03-25 07:05:42  INFO      === Iteration 2/100  run=arb  best_qa=0.0% ===
+2026-03-25 07:05:48  INFO      Exec block 1/1 …
+2026-03-25 07:05:48  INFO      Output: RAAS guidelines: []
+ACE guidelines: ['copd_exacerbation_guideline', 'nontraumatic_intracerebral_hemorrhage_guideline']
+Hypertension guidelines: ['pulmonary_hypertension_guideline']
+
+All available guidelines: ['acidosis_guideline', 'acute_decompensated_heart_failure_guideline', 'acute_hepatic_failure_guideline', 'adverse_effect_of_anticoagulants_guideline', 'alcohol_withdrawal_syndrome_guideline', 'anemia_icu_critically_ill_hemoglobin_transfusion_guideline', 'apache_iii_guideline', 'atrial_fibril
+2026-03-25 07:05:48  INFO      === Iteration 3/100  run=arb  best_qa=0.0% ===
+2026-03-25 07:05:52  INFO      Exec block 1/1 …
+2026-03-25 07:05:52  INFO      Output: # acute decompensated heart failure — Clinical Guideline
+# Generated by generate_guidelines.py
+# Source articles: 10 (PMID36326565, PMID40892348, PMID24801076, PMID38864971, PMID32423556...)
+############################################################
+
+# Clinical Guideline: Acute Decompensated Heart Failure (ADHF)
+
+---
+
+## 1. Definition
+
+**Acute decompensated heart failure (ADHF)** refers to the rapid onset or worsening of signs and symptoms of heart failure, typically involving congestion (elev
+2026-03-25 07:05:52  INFO      === Iteration 4/100  run=arb  best_qa=0.0% ===
+2026-03-25 07:05:56  INFO      Exec block 1/1 …
+2026-03-25 07:05:56  INFO      Output: Available functions: ['acei', 'age', 'antibiotic', 'bg', 'blood_differential', 'cardiac_marker', 'chemistry', 'coagulation', 'complete_blood_count', 'enzyme', 'gcs', 'height', 'icp', 'icustay_detail', 'inflammation', 'rhythm', 'urine_output', 'vitalsign', 'weight_durations']
+
+2026-03-25 07:05:56  INFO      === Iteration 5/100  run=arb  best_qa=0.0% ===
+2026-03-25 07:06:01  INFO      Exec block 1/1 …
+2026-03-25 07:06:01  INFO      Output: def get_acei_info(subject_id, hadm_id):
+    """
+    Extract ACE inhibitor (ACEI) medication information for a patient during a hospital admission.
+
+    This function queries the prescriptions table to identify ACE inhibitor medications
+    prescribed to a patient during their hospital admission. ACE inhibitors are commonly
+    used for heart failure, hypertension, and other cardiovascular conditions.
+
+    Parameters:
+    -----------
+    subject_id : int
+        The unique patient identifier in t
+2026-03-25 07:06:01  INFO      === Iteration 6/100  run=arb  best_qa=0.0% ===
+2026-03-25 07:06:10  INFO      Exec block 1/1 …
+2026-03-25 07:06:10  INFO      Output: Loaded acei function
+Available tables:
+    table_schema          table_name
+0   mimiciv_hosp          admissions
+1   mimiciv_hosp             d_hcpcs
+2   mimiciv_hosp     d_icd_diagnoses
+3   mimiciv_hosp    d_icd_procedures
+4   mimiciv_hosp          d_labitems
+5   mimiciv_hosp       diagnoses_icd
+6   mimiciv_hosp            drgcodes
+7   mimiciv_hosp                emar
+8   mimiciv_hosp         emar_detail
+9   mimiciv_hosp         hcpcsevents
+10  mimiciv_hosp           labevents
+11  mimiciv_hosp 
+2026-03-25 07:06:10  INFO      === Iteration 7/100  run=arb  best_qa=0.0% ===
+2026-03-25 07:06:15  INFO      Exec block 1/1 …
+2026-03-25 07:06:15  INFO      Output: Prescriptions table structure:
+   subject_id   hadm_id  pharmacy_id  ... form_unit_disp  doses_per_24_hrs  route
+0    10000032  22595853     12775705  ...            TAB               1.0  PO/NG
+1    10000032  22595853     18415984  ...           VIAL               4.0     IH
+2    10000032  22595853     23637373  ...            TAB               1.0  PO/NG
+3    10000032  22595853     26862314  ...            TAB               1.0     PO
+4    10000032  22595853     30740602  ...            SYR   
+2026-03-25 07:06:15  INFO      === Iteration 8/100  run=arb  best_qa=0.0% ===
+2026-03-25 07:06:25  INFO      Exec block 1/1 …
+2026-03-25 07:06:26  INFO      Output: ARB drugs found in prescriptions:
+                                           drug
+0                                      Losartan
+1                         Sacubitril-Valsartan 
+2                                  Candesartan 
+3                irbesartan-hydrochlorothiazide
+4                Candesartan (Atacand) 32mg TAB
+5                              irbesartan 300mg
+6                                   Irbesartan 
+7                olmesartan-hydrochlorothiazide
+8                                 
+2026-03-25 07:06:26  INFO      === Iteration 9/100  run=arb  best_qa=0.0% ===
+2026-03-25 07:06:37  INFO      Exec block 1/1 …
+2026-03-25 07:06:37  INFO      Output: ACEi drugs found in prescriptions:
+                              drug
+0            Lotensin (benazepril)
+1    moexipril-hydrochlorothiazide
+2                    INV-Enalapril
+3              Captopril (Capoten)
+4          benazepril-hctz 20-25mg
+5                        quinapril
+6                        moexipril
+7             perindopril erbumine
+8   benazepril-hydrochlorothiazide
+9                         ramipril
+10               enalapril maleate
+11           amlodipine-benazepril
+12        
+2026-03-25 07:06:37  INFO      === Iteration 10/100  run=arb  best_qa=0.0% ===
+2026-03-25 07:06:44  INFO      Exec block 1/1 …
+2026-03-25 07:06:44  INFO      Output: EMAR table structure:
+   subject_id   hadm_id  ...        scheduletime           storetime
+0    10000032  22595853  ... 2180-05-07 08:00:00 2180-05-07 07:56:00
+1    10000032  22595853  ... 2180-05-07 08:00:00 2180-05-07 07:56:00
+2    10000032  22595853  ... 2180-05-07 07:51:00 2180-05-07 07:56:00
+3    10000032  22595853  ... 2180-05-07 08:00:00 2180-05-07 07:57:00
+4    10000032  22595853  ... 2180-05-07 08:00:00 2180-05-07 09:27:00
+
+[5 rows x 12 columns]
+
+Column names: ['subject_id', 'hadm_id', 
+2026-03-25 07:06:44  INFO      === Iteration 11/100  run=arb  best_qa=0.0% ===
+2026-03-25 07:06:49  INFO      Exec block 1/1 …
+2026-03-25 07:06:49  INFO      Output: EMAR_detail table structure:
+   subject_id       emar_id  ...  site non_formulary_visual_verification
+0    10000032   10000032-10  ...  None                              None
+1    10000032   10000032-10  ...  None                              None
+2    10000032  10000032-100  ...  None                              None
+3    10000032  10000032-100  ...  None                              None
+4    10000032  10000032-101  ...  None                              None
+
+[5 rows x 33 columns]
+
+Column na
+2026-03-25 07:06:49  INFO      === Iteration 12/100  run=arb  best_qa=0.0% ===
+2026-03-25 07:07:01  INFO      Exec block 1/1 …
+2026-03-25 07:07:01  INFO      Output: ARB drugs in prescriptions table:
+  *nf* irbesartan
+  *nf* olmesartan medoxomil
+  avapro (irbesartan)
+  azor (amlodipine-olmesartan)
+  candesartan
+  candesartan 
+  candesartan (atacand) 32mg tab
+  candesartan 8 mg tab
+  candesartan cilexitil (atacand)
+  candesartan-hctz 32/25mg
+  candesartan-hydrochlorothiazid
+  diovan- hctz(valsartan-hydrochlorothiazide)
+  inv-valsartan
+  irbesartan
+  irbesartan 
+  irbesartan 300mg
+  irbesartan-hydrochlorothiazide
+  losartan
+  losartan potassium
+  losartan-hydr
+2026-03-25 07:07:01  INFO      === Iteration 13/100  run=arb  best_qa=0.0% ===
+2026-03-25 07:07:08  INFO      Exec block 1/1 …
+2026-03-25 07:07:08  INFO      Output: Pharmacy table structure:
+   subject_id   hadm_id  ...      dispensation fill_quantity
+0    10000032  22595853  ...          Omnicell          None
+1    10000032  22595853  ...          Omnicell          None
+2    10000032  22595853  ...          Omnicell          None
+3    10000032  22595853  ...          Omnicell          None
+4    10000032  22595853  ...  Floor Stock Item          None
+
+[5 rows x 27 columns]
+
+Column names: ['subject_id', 'hadm_id', 'pharmacy_id', 'poe_id', 'starttime', 'stopt
+2026-03-25 07:07:08  INFO      === Iteration 14/100  run=arb  best_qa=0.0% ===
+2026-03-25 07:07:25  INFO      Exec block 1/1 …
+2026-03-25 07:07:26  INFO      Output: ARB medications in EMAR table:
+  telmisartan
+  irbesartan-hydrochlorothiazide
+  *nf* irbesartan
+  sacubitril-valsartan
+  sacubitril/valsartan (lcz6969)/placebo
+  candesartan
+  sacubitril/valsartan/placebo
+  valsartan-hydrochlorothiazide
+  valsartan
+  sacubitril-valsartan (49mg-51mg)
+  losartan
+  irbesartan
+  sacubitril-valsartan (97mg-103mg)
+  sacubitril/valsartan(lcz696)/placebo
+  olmesartan-hydrochlorothiazide
+  olmesartan
+  candesartan-hydrochlorothiazid
+  losartan-hydrochlorothiazide
+  losar
+2026-03-25 07:07:26  INFO      === Iteration 15/100  run=arb  best_qa=0.0% ===
+2026-03-25 07:07:38  INFO      Exec block 1/1 …
+2026-03-25 07:07:39  INFO      Output: Sample patients with ARB prescriptions:
+   subject_id   hadm_id
+0    10484877  24516728
+1    10491496  23110411
+2    10498451  25312473
+3    10503869  27958586
+4    10504292  27762919
+
+2026-03-25 07:07:39  INFO      === Iteration 16/100  run=arb  best_qa=0.0% ===
+2026-03-25 07:07:49  INFO      Exec block 1/1 …
+2026-03-25 07:07:49  INFO      Output: ACEi result for sample patient:
+{'received_acei': False, 'acei_drugs': [], 'num_unique_drugs': 0, 'total_prescriptions': 0, 'first_prescription_time': None, 'last_prescription_time': None, 'prescriptions_df': Empty DataFrame
+Columns: [subject_id, hadm_id, drug, starttime, stoptime]
+Index: []}
+
+2026-03-25 07:07:49  INFO      === Iteration 17/100  run=arb  best_qa=0.0% ===
+2026-03-25 07:08:02  INFO      Exec block 1/1 …
+2026-03-25 07:08:02  INFO      Output: ARB prescriptions for test patient:
+   subject_id   hadm_id  ...           starttime            stoptime
+0    10484877  24516728  ... 2178-09-14 06:00:00 2178-09-17 16:00:00
+
+[1 rows x 5 columns]
+
+2026-03-25 07:08:02  INFO      === Iteration 18/100  run=arb  best_qa=0.0% ===
+2026-03-25 07:08:14  INFO      Exec block 1/1 …
+2026-03-25 07:08:14  INFO      Output: Full result:
+   subject_id   hadm_id  ...           starttime            stoptime
+0    10484877  24516728  ... 2178-09-14 06:00:00 2178-09-17 16:00:00
+
+[1 rows x 5 columns]
+
+2026-03-25 07:08:14  INFO      === Iteration 19/100  run=arb  best_qa=0.0% ===
+2026-03-25 07:08:25  INFO      Exec block 1/1 …
+2026-03-25 07:08:25  INFO      Output: Drug column:
+['Losartan Potassium']
+
+2026-03-25 07:08:25  INFO      === Iteration 20/100  run=arb  best_qa=0.0% ===
+2026-03-25 07:08:40  INFO      Exec block 1/1 …
+2026-03-25 07:08:40  INFO      Output: ARB medications in EMAR for test patient:
+   subject_id   hadm_id          medication           charttime
+0    10484877  24516728  Losartan Potassium 2178-09-14 07:51:00
+1    10484877  24516728  Losartan Potassium 2178-09-15 08:14:00
+2    10484877  24516728  Losartan Potassium 2178-09-16 09:10:00
+3    10484877  24516728  Losartan Potassium 2178-09-17 08:22:00
+
+2026-03-25 07:08:40  INFO      === Iteration 21/100  run=arb  best_qa=0.0% ===
+2026-03-25 07:09:46  INFO      Exec block 1/1 …
+2026-03-25 07:09:46  INFO      Output: ARB result for test patient:
+  received_arb: True
+  arb_drugs: ['Losartan Potassium']
+  num_unique_drugs: 1
+  total_prescriptions: 1
+  total_administrations: 4
+  first_prescription_time: 2178-09-14 06:00:00
+  last_prescription_time: 2178-09-17 16:00:00
+  first_administration_time: 2178-09-14 07:51:00
+  last_administration_time: 2178-09-17 08:22:00
+
+2026-03-25 07:09:46  INFO      === Iteration 22/100  run=arb  best_qa=0.0% ===
+2026-03-25 07:09:56  INFO      Exec block 1/1 …
+2026-03-25 07:09:56  INFO      Output: ARB result for patient 10491496:
+  received_arb: True
+  arb_drugs: ['Losartan Potassium']
+  total_prescriptions: 4
+  total_administrations: 10
+
+2026-03-25 07:09:56  INFO      === Iteration 23/100  run=arb  best_qa=0.0% ===
+2026-03-25 07:10:13  INFO      Exec block 1/1 …
+2026-03-25 07:10:13  INFO      Output: Patient without ARB:
+   subject_id   hadm_id
+0    10706639  29499604
+
+ARB result for patient without ARB:
+  received_arb: False
+  arb_drugs: []
+  total_prescriptions: 0
+  total_administrations: 0
+
+2026-03-25 07:10:13  INFO      === Iteration 24/100  run=arb  best_qa=0.0% ===
+2026-03-25 07:10:36  INFO      Exec block 1/1 …
+2026-03-25 07:10:36  INFO      Output: Patients with both ACEi and ARB:
+   subject_id   hadm_id
+0    10108609  21559203
+1    12324099  28395419
+2    13656933  22573203
+
+Testing patient 10108609, hadm_id 21559203:
+  ACEi received: True
+  ACEi drugs: ['Lisinopril']
+  ARB received: True
+  ARB drugs: ['Losartan Potassium']
+
+2026-03-25 07:10:36  INFO      === Iteration 25/100  run=arb  best_qa=0.0% ===
+2026-03-25 07:11:15  INFO      Exec block 1/1 …
+2026-03-25 07:11:15  INFO      Output: RAAS blockade result for patient with both ACEi and ARB:
+  received_raas_blockade: True
+  received_acei: True
+  received_arb: True
+  acei_drugs: ['Lisinopril']
+  arb_drugs: ['Losartan Potassium']
+  total_raas_drugs: 2
+
+RAAS blockade result for patient with only ARB:
+  received_raas_blockade: True
+  received_acei: False
+  received_arb: True
+  arb_drugs: ['Losartan Potassium']
+
+2026-03-25 07:11:15  INFO      === Iteration 26/100  run=arb  best_qa=0.0% ===
+2026-03-25 07:11:40  INFO      Exec block 1/1 …
+2026-03-25 07:11:41  INFO      Output: Patient with only ACEi:
+   subject_id   hadm_id
+0    11058119  26953929
+
+Testing patient 11058119, hadm_id 26953929:
+  ACEi received: True
+  ACEi drugs: ['Lisinopril']
+  ARB received: False
+  ARB drugs: []
+
+2026-03-25 07:11:41  INFO      === Iteration 27/100  run=arb  best_qa=0.0% ===
+2026-03-25 07:11:55  INFO      Exec block 1/1 …
+2026-03-25 07:11:55  INFO      Output: Random patient from admissions:
+   subject_id   hadm_id
+0    10000032  22595853
+
+Testing patient 10000032, hadm_id 22595853:
+  received_arb: False
+  arb_drugs: []
+  total_prescriptions: 0
+  total_administrations: 0
+
+2026-03-25 07:11:55  INFO      === Iteration 28/100  run=arb  best_qa=0.0% ===
+2026-03-25 07:12:09  INFO      Exec block 1/1 …
+2026-03-25 07:12:09  INFO      Output: Checking if acei function is available...
+ACEi function is available
+
+2026-03-25 07:12:09  INFO      === Iteration 29/100  run=arb  best_qa=0.0% ===
+2026-03-25 07:12:31  INFO      Exec block 1/1 …
+2026-03-25 07:12:31  INFO      Output: Final verification tests:
+Test 1 - Patient with ARB: received_arb=True, drugs=['Losartan Potassium']
+Test 2 - Patient without ARB: received_arb=False, drugs=[]
+Test 3 - Patient with both: received_arb=True, drugs=['Losartan Potassium']
+Test 4 - Patient with only ACEi: received_arb=False, drugs=[]
+
+All tests passed!
+
+2026-03-25 07:12:31  INFO      === Iteration 30/100  run=arb  best_qa=0.0% ===
+2026-03-25 07:14:08  INFO      Exec block 1/1 …
+2026-03-25 07:14:08  INFO      Output: Code executed successfully (no output).
+2026-03-25 07:14:08  INFO      Debug conversations will be saved to debug_logs
+2026-03-25 07:14:08  INFO      Using question from dataset column: Did this patient receive an angiotensin receptor blocker (ARB) during their hospital admission?
+2026-03-25 07:14:08  INFO      Answer type for 'arb': binary (per_row=True)
+2026-03-25 07:14:08  INFO      ReACT iteration 1/5 — 20 active patients
+Rendering conversations:   0%|          | 0/20 [00:00<?, ?it/s]Rendering conversations: 100%|██████████| 20/20 [00:00<00:00, 388.90it/s]
+Processed prompts:   0%|          | 0/20 [00:00<?, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s]Processed prompts:   5%|▌         | 1/20 [00:15<05:01, 15.89s/it, est. speed input: 71.51 toks/s, output: 14.16 toks/s]Processed prompts:  10%|█         | 2/20 [00:16<02:06,  7.00s/it, est. speed input: 136.32 toks/s, output: 28.08 toks/s]Processed prompts:  20%|██        | 4/20 [00:16<00:43,  2.71s/it, est. speed input: 269.09 toks/s, output: 56.64 toks/s]Processed prompts:  30%|███       | 6/20 [00:17<00:22,  1.57s/it, est. speed input: 390.62 toks/s, output: 84.01 toks/s]Processed prompts:  35%|███▌      | 7/20 [00:18<00:16,  1.28s/it, est. speed input: 445.25 toks/s, output: 97.36 toks/s]Processed prompts:  45%|████▌     | 9/20 [00:18<00:08,  1.30it/s, est. speed input: 567.45 toks/s, output: 127.07 toks/s]Processed prompts:  55%|█████▌    | 11/20 [00:18<00:05,  1.79it/s, est. speed input: 677.96 toks/s, output: 154.69 toks/s]Processed prompts:  60%|██████    | 12/20 [00:18<00:03,  2.14it/s, est. speed input: 734.34 toks/s, output: 169.15 toks/s]Processed prompts:  70%|███████   | 14/20 [00:18<00:01,  3.10it/s, est. speed input: 848.73 toks/s, output: 198.83 toks/s]Processed prompts:  75%|███████▌  | 15/20 [00:19<00:02,  2.33it/s, est. speed input: 871.42 toks/s, output: 206.52 toks/s]Processed prompts:  80%|████████  | 16/20 [00:20<00:02,  1.74it/s, est. speed input: 881.73 toks/s, output: 212.55 toks/s]Processed prompts:  85%|████████▌ | 17/20 [00:21<00:01,  1.71it/s, est. speed input: 909.65 toks/s, output: 223.30 toks/s]Processed prompts:  90%|█████████ | 18/20 [00:21<00:01,  1.70it/s, est. speed input: 936.28 toks/s, output: 234.24 toks/s]Processed prompts: 100%|██████████| 20/20 [00:23<00:00,  1.53it/s, est. speed input: 974.08 toks/s, output: 253.16 toks/s]Processed prompts: 100%|██████████| 20/20 [00:23<00:00,  1.53it/s, est. speed input: 974.08 toks/s, output: 253.16 toks/s]Processed prompts: 100%|██████████| 20/20 [00:23<00:00,  1.17s/it, est. speed input: 974.08 toks/s, output: 253.16 toks/s]
+2026-03-25 07:14:32  INFO      ReACT iteration 2/5 — 20 active patients
+Rendering conversations:   0%|          | 0/20 [00:00<?, ?it/s]Rendering conversations: 100%|██████████| 20/20 [00:00<00:00, 323.78it/s]
+Processed prompts:   0%|          | 0/20 [00:00<?, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s]Processed prompts:   5%|▌         | 1/20 [00:10<03:16, 10.36s/it, est. speed input: 136.68 toks/s, output: 6.56 toks/s]Processed prompts:  15%|█▌        | 3/20 [00:10<00:48,  2.86s/it, est. speed input: 387.97 toks/s, output: 19.78 toks/s]Processed prompts:  35%|███▌      | 7/20 [00:11<00:13,  1.00s/it, est. speed input: 861.46 toks/s, output: 47.65 toks/s]Processed prompts:  45%|████▌     | 9/20 [00:11<00:07,  1.42it/s, est. speed input: 1093.97 toks/s, output: 63.04 toks/s]Processed prompts:  55%|█████▌    | 11/20 [00:11<00:04,  1.88it/s, est. speed input: 1320.83 toks/s, output: 77.91 toks/s]Processed prompts:  60%|██████    | 12/20 [00:11<00:03,  2.15it/s, est. speed input: 1435.50 toks/s, output: 85.60 toks/s]Processed prompts:  70%|███████   | 14/20 [00:12<00:02,  2.73it/s, est. speed input: 1649.34 toks/s, output: 100.99 toks/s]Processed prompts:  75%|███████▌  | 15/20 [00:12<00:01,  3.08it/s, est. speed input: 1770.40 toks/s, output: 109.30 toks/s]Processed prompts:  80%|████████  | 16/20 [00:12<00:01,  3.02it/s, est. speed input: 1832.19 toks/s, output: 116.17 toks/s]Processed prompts:  85%|████████▌ | 17/20 [00:13<00:00,  3.47it/s, est. speed input: 1924.70 toks/s, output: 125.02 toks/s]Processed prompts:  90%|█████████ | 18/20 [00:13<00:00,  3.80it/s, est. speed input: 2021.51 toks/s, output: 133.67 toks/s]Processed prompts:  95%|█████████▌| 19/20 [00:13<00:00,  3.42it/s, est. speed input: 2063.66 toks/s, output: 140.67 toks/s]Processed prompts: 100%|██████████| 20/20 [00:13<00:00,  3.42it/s, est. speed input: 2179.45 toks/s, output: 150.75 toks/s]Processed prompts: 100%|██████████| 20/20 [00:13<00:00,  1.46it/s, est. speed input: 2179.45 toks/s, output: 150.75 toks/s]
+2026-03-25 07:14:46  INFO      QA accuracy: 100.0%  (correct=20/20, parse_errors=0)
+2026-03-25 07:14:46  INFO      SUCCESS: 100.0% QA accuracy for 'arb' at iteration 30
+2026-03-25 07:14:46  INFO      Function code saved to autoformalized_library/functions/arb.py
+2026-03-25 07:14:46  INFO      Summary saved to autoformalized_library/summary.json
+[rank0]:[W325 07:14:46.827791918 ProcessGroupNCCL.cpp:1553] Warning: WARNING: destroy_process_group() was not called before program exit, which can leak resources. For more info, please see https://pytorch.org/docs/stable/distributed.html#shutdown (function operator())
+
+======================================================================
+AUTOFORMALIZATION COMPLETE
+======================================================================
+  Output dir      : autoformalized_library
+  Model           : Qwen/Qwen3.5-27B
+  Dataset         : /home/v-tiossowski/HealthcareAgent/mimic-code/data/MIMICIV_arb_dataset/arb.csv
+  Run name        : arb
+  Status          : SUCCESS
+  QA accuracy     : 100.0%
+  Iterations      : 30
+  Total tokens    : 60,554  (prompt 52,569 / completion 7,985)
+  LLM calls       : 70
+  SQL queries     : 108
+  Function saved  : autoformalized_library/functions/arb.py
+======================================================================

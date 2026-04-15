@@ -1,0 +1,705 @@
+2026-03-25 13:39:25  INFO      Using database: /home/v-tiossowski/MIMIC-IV/mimic4.db
+2026-03-25 13:39:25  INFO      No --model_url provided; loading vLLM in-process …
+INFO 03-25 13:39:31 [utils.py:238] non-default args: {'trust_remote_code': True, 'max_model_len': 40000, 'disable_log_stats': True, 'model': 'Qwen/Qwen3.5-27B'}
+The argument `trust_remote_code` is to be used with Auto classes. It has no effect here and is ignored.
+The argument `trust_remote_code` is to be used with Auto classes. It has no effect here and is ignored.
+The argument `trust_remote_code` is to be used with Auto classes. It has no effect here and is ignored.
+INFO 03-25 13:39:31 [model.py:531] Resolved architecture: Qwen3_5ForConditionalGeneration
+INFO 03-25 13:39:31 [model.py:1554] Using max model len 40000
+INFO 03-25 13:39:31 [scheduler.py:231] Chunked prefill is enabled with max_num_batched_tokens=8192.
+INFO 03-25 13:39:32 [config.py:544] Setting attention block size to 784 tokens to ensure that attention page size is >= mamba page size.
+INFO 03-25 13:39:32 [config.py:575] Padding mamba page size by 0.13% to ensure that mamba page size and attention page size are exactly equal.
+INFO 03-25 13:39:32 [vllm.py:747] Asynchronous scheduling is enabled.
+WARNING 03-25 13:39:40 [system_utils.py:152] We must use the `spawn` multiprocessing start method. Overriding VLLM_WORKER_MULTIPROC_METHOD to 'spawn'. See https://docs.vllm.ai/en/latest/usage/troubleshooting.html#python-multiprocessing for more information. Reasons: CUDA is initialized
+(EngineCore_DP0 pid=4163564) INFO 03-25 13:39:45 [core.py:101] Initializing a V1 LLM engine (v0.17.1) with config: model='Qwen/Qwen3.5-27B', speculative_config=None, tokenizer='Qwen/Qwen3.5-27B', skip_tokenizer_init=False, tokenizer_mode=auto, revision=None, tokenizer_revision=None, trust_remote_code=True, dtype=torch.bfloat16, max_seq_len=40000, download_dir=None, load_format=auto, tensor_parallel_size=1, pipeline_parallel_size=1, data_parallel_size=1, disable_custom_all_reduce=False, quantization=None, enforce_eager=False, enable_return_routed_experts=False, kv_cache_dtype=auto, device_config=cuda, structured_outputs_config=StructuredOutputsConfig(backend='auto', disable_fallback=False, disable_any_whitespace=False, disable_additional_properties=False, reasoning_parser='', reasoning_parser_plugin='', enable_in_reasoning=False), observability_config=ObservabilityConfig(show_hidden_metrics_for_version=None, otlp_traces_endpoint=None, collect_detailed_traces=None, kv_cache_metrics=False, kv_cache_metrics_sample=0.01, cudagraph_metrics=False, enable_layerwise_nvtx_tracing=False, enable_mfu_metrics=False, enable_mm_processor_stats=False, enable_logging_iteration_details=False), seed=0, served_model_name=Qwen/Qwen3.5-27B, enable_prefix_caching=False, enable_chunked_prefill=True, pooler_config=None, compilation_config={'level': None, 'mode': <CompilationMode.VLLM_COMPILE: 3>, 'debug_dump_path': None, 'cache_dir': '', 'compile_cache_save_format': 'binary', 'backend': 'inductor', 'custom_ops': ['none'], 'splitting_ops': ['vllm::unified_attention', 'vllm::unified_attention_with_output', 'vllm::unified_mla_attention', 'vllm::unified_mla_attention_with_output', 'vllm::mamba_mixer2', 'vllm::mamba_mixer', 'vllm::short_conv', 'vllm::linear_attention', 'vllm::plamo2_mamba_mixer', 'vllm::gdn_attention_core', 'vllm::kda_attention', 'vllm::sparse_attn_indexer', 'vllm::rocm_aiter_sparse_attn_indexer', 'vllm::unified_kv_cache_update', 'vllm::unified_mla_kv_cache_update'], 'compile_mm_encoder': False, 'compile_sizes': [], 'compile_ranges_split_points': [8192], 'inductor_compile_config': {'enable_auto_functionalized_v2': False, 'combo_kernels': True, 'benchmark_combo_kernel': True}, 'inductor_passes': {}, 'cudagraph_mode': <CUDAGraphMode.FULL_AND_PIECEWISE: (2, 1)>, 'cudagraph_num_of_warmups': 1, 'cudagraph_capture_sizes': [1, 2, 4, 8, 16, 24, 32, 40, 48, 56, 64, 72, 80, 88, 96, 104, 112, 120, 128, 136, 144, 152, 160, 168, 176, 184, 192, 200, 208, 216, 224, 232, 240, 248, 256, 272, 288, 304, 320, 336, 352, 368, 384, 400, 416, 432, 448, 464, 480, 496, 512], 'cudagraph_copy_inputs': False, 'cudagraph_specialize_lora': True, 'use_inductor_graph_partition': False, 'pass_config': {'fuse_norm_quant': False, 'fuse_act_quant': False, 'fuse_attn_quant': False, 'enable_sp': False, 'fuse_gemm_comms': False, 'fuse_allreduce_rms': False}, 'max_cudagraph_capture_size': 512, 'dynamic_shapes_config': {'type': <DynamicShapesType.BACKED: 'backed'>, 'evaluate_guards': False, 'assume_32_bit_indexing': False}, 'local_cache_dir': None, 'fast_moe_cold_start': True, 'static_all_moe_layers': []}
+(EngineCore_DP0 pid=4163564) INFO 03-25 13:39:48 [parallel_state.py:1393] world_size=1 rank=0 local_rank=0 distributed_init_method=tcp://10.8.144.167:37127 backend=nccl
+(EngineCore_DP0 pid=4163564) INFO 03-25 13:39:48 [parallel_state.py:1715] rank 0 in world size 1 is assigned as DP rank 0, PP rank 0, PCP rank 0, TP rank 0, EP rank N/A, EPLB rank N/A
+(EngineCore_DP0 pid=4163564) INFO 03-25 13:39:54 [base.py:106] Offloader set to NoopOffloader
+(EngineCore_DP0 pid=4163564) INFO 03-25 13:39:54 [gpu_model_runner.py:4281] Starting to load model Qwen/Qwen3.5-27B...
+(EngineCore_DP0 pid=4163564) INFO 03-25 13:39:54 [cuda.py:453] Using backend AttentionBackendEnum.FLASH_ATTN for vit attention
+(EngineCore_DP0 pid=4163564) INFO 03-25 13:39:54 [mm_encoder_attention.py:215] Using AttentionBackendEnum.FLASH_ATTN for MMEncoderAttention.
+(EngineCore_DP0 pid=4163564) INFO 03-25 13:39:55 [cuda.py:405] Using FLASH_ATTN attention backend out of potential backends: ['FLASH_ATTN', 'FLASHINFER', 'TRITON_ATTN', 'FLEX_ATTENTION'].
+(EngineCore_DP0 pid=4163564) INFO 03-25 13:39:55 [flash_attn.py:587] Using FlashAttention version 2
+(EngineCore_DP0 pid=4163564) <frozen importlib._bootstrap_external>:1301: FutureWarning: The cuda.cudart module is deprecated and will be removed in a future release, please switch to use the cuda.bindings.runtime module instead.
+(EngineCore_DP0 pid=4163564) <frozen importlib._bootstrap_external>:1301: FutureWarning: The cuda.nvrtc module is deprecated and will be removed in a future release, please switch to use the cuda.bindings.nvrtc module instead.
+(EngineCore_DP0 pid=4163564) Loading safetensors checkpoint shards:   0% Completed | 0/11 [00:00<?, ?it/s]
+(EngineCore_DP0 pid=4163564) Loading safetensors checkpoint shards:   9% Completed | 1/11 [00:00<00:05,  1.81it/s]
+(EngineCore_DP0 pid=4163564) Loading safetensors checkpoint shards:  18% Completed | 2/11 [00:01<00:05,  1.61it/s]
+(EngineCore_DP0 pid=4163564) Loading safetensors checkpoint shards:  27% Completed | 3/11 [00:01<00:05,  1.51it/s]
+(EngineCore_DP0 pid=4163564) Loading safetensors checkpoint shards:  36% Completed | 4/11 [00:02<00:04,  1.45it/s]
+(EngineCore_DP0 pid=4163564) Loading safetensors checkpoint shards:  45% Completed | 5/11 [00:03<00:04,  1.43it/s]
+(EngineCore_DP0 pid=4163564) Loading safetensors checkpoint shards:  55% Completed | 6/11 [00:04<00:03,  1.41it/s]
+(EngineCore_DP0 pid=4163564) Loading safetensors checkpoint shards:  64% Completed | 7/11 [00:04<00:02,  1.39it/s]
+(EngineCore_DP0 pid=4163564) Loading safetensors checkpoint shards:  73% Completed | 8/11 [00:05<00:02,  1.40it/s]
+(EngineCore_DP0 pid=4163564) Loading safetensors checkpoint shards:  82% Completed | 9/11 [00:06<00:01,  1.39it/s]
+(EngineCore_DP0 pid=4163564) Loading safetensors checkpoint shards:  91% Completed | 10/11 [00:07<00:00,  1.38it/s]
+(EngineCore_DP0 pid=4163564) Loading safetensors checkpoint shards: 100% Completed | 11/11 [00:07<00:00,  1.54it/s]
+(EngineCore_DP0 pid=4163564) Loading safetensors checkpoint shards: 100% Completed | 11/11 [00:07<00:00,  1.47it/s]
+(EngineCore_DP0 pid=4163564) 
+(EngineCore_DP0 pid=4163564) INFO 03-25 13:40:03 [default_loader.py:293] Loading weights took 7.56 seconds
+(EngineCore_DP0 pid=4163564) INFO 03-25 13:40:04 [gpu_model_runner.py:4364] Model loading took 51.1 GiB memory and 8.681506 seconds
+(EngineCore_DP0 pid=4163564) INFO 03-25 13:40:04 [gpu_model_runner.py:5280] Encoder cache will be initialized with a budget of 16384 tokens, and profiled with 1 image items of the maximum feature size.
+(EngineCore_DP0 pid=4163564) INFO 03-25 13:40:12 [decorators.py:465] Directly load AOT compilation from path /home/v-tiossowski/.cache/vllm/torch_compile_cache/torch_aot_compile/0232891e22bd4d7db98ac2f43c441f0f81d0a431216053ca49fadeaff23e2af3/rank_0_0/model
+(EngineCore_DP0 pid=4163564) INFO 03-25 13:40:12 [backends.py:916] Using cache directory: /home/v-tiossowski/.cache/vllm/torch_compile_cache/feaf61af16/rank_0_0/backbone for vLLM's torch.compile
+(EngineCore_DP0 pid=4163564) INFO 03-25 13:40:12 [backends.py:976] Dynamo bytecode transform time: 3.81 s
+(EngineCore_DP0 pid=4163564) INFO 03-25 13:40:23 [backends.py:266] Directly load the compiled graph(s) for compile range (1, 8192) from the cache, took 9.466 s
+(EngineCore_DP0 pid=4163564) INFO 03-25 13:40:23 [monitor.py:35] torch.compile takes 14.21 s in total
+(EngineCore_DP0 pid=4163564) INFO 03-25 13:40:24 [gpu_worker.py:424] Available KV cache memory: 18.3 GiB
+(EngineCore_DP0 pid=4163564) INFO 03-25 13:40:24 [kv_cache_utils.py:1314] GPU KV cache size: 74,480 tokens
+(EngineCore_DP0 pid=4163564) INFO 03-25 13:40:24 [kv_cache_utils.py:1319] Maximum concurrency for 40,000 tokens per request: 6.95x
+(EngineCore_DP0 pid=4163564) Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):   0%|          | 0/51 [00:00<?, ?it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):   2%|▏         | 1/51 [00:00<00:08,  5.85it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):   4%|▍         | 2/51 [00:00<00:08,  6.09it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):   6%|▌         | 3/51 [00:00<00:07,  6.17it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):   8%|▊         | 4/51 [00:00<00:07,  6.18it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  10%|▉         | 5/51 [00:00<00:07,  6.16it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  12%|█▏        | 6/51 [00:00<00:07,  6.21it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  14%|█▎        | 7/51 [00:01<00:07,  6.24it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  16%|█▌        | 8/51 [00:01<00:06,  6.23it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  18%|█▊        | 9/51 [00:01<00:06,  6.51it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  20%|█▉        | 10/51 [00:01<00:06,  6.74it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  22%|██▏       | 11/51 [00:01<00:05,  6.78it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  24%|██▎       | 12/51 [00:01<00:05,  6.96it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  25%|██▌       | 13/51 [00:01<00:05,  7.12it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  27%|██▋       | 14/51 [00:02<00:05,  7.25it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  29%|██▉       | 15/51 [00:02<00:04,  7.30it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  31%|███▏      | 16/51 [00:02<00:04,  7.40it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  33%|███▎      | 17/51 [00:02<00:04,  7.74it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  35%|███▌      | 18/51 [00:02<00:04,  8.03it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  37%|███▋      | 19/51 [00:02<00:03,  8.25it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  39%|███▉      | 20/51 [00:02<00:03,  8.35it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  41%|████      | 21/51 [00:02<00:03,  8.48it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  43%|████▎     | 22/51 [00:03<00:03,  8.53it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  45%|████▌     | 23/51 [00:03<00:03,  8.59it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  47%|████▋     | 24/51 [00:03<00:03,  8.60it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  49%|████▉     | 25/51 [00:03<00:03,  8.56it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  51%|█████     | 26/51 [00:03<00:02,  8.53it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  53%|█████▎    | 27/51 [00:03<00:02,  8.50it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  55%|█████▍    | 28/51 [00:03<00:02,  8.50it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  57%|█████▋    | 29/51 [00:03<00:02,  8.58it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  59%|█████▉    | 30/51 [00:03<00:02,  8.63it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  61%|██████    | 31/51 [00:04<00:02,  8.58it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  63%|██████▎   | 32/51 [00:04<00:02,  8.58it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  65%|██████▍   | 33/51 [00:04<00:02,  8.91it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  69%|██████▊   | 35/51 [00:04<00:01,  9.35it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  73%|███████▎  | 37/51 [00:04<00:01,  9.63it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  75%|███████▍  | 38/51 [00:04<00:01,  9.69it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  76%|███████▋  | 39/51 [00:04<00:01,  9.75it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  78%|███████▊  | 40/51 [00:05<00:01,  9.80it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  82%|████████▏ | 42/51 [00:05<00:00, 10.04it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  86%|████████▋ | 44/51 [00:05<00:00, 10.22it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  90%|█████████ | 46/51 [00:05<00:00, 10.44it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  94%|█████████▍| 48/51 [00:05<00:00, 10.71it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  98%|█████████▊| 50/51 [00:05<00:00, 10.80it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE): 100%|██████████| 51/51 [00:06<00:00,  8.42it/s]
+(EngineCore_DP0 pid=4163564) Capturing CUDA graphs (decode, FULL):   0%|          | 0/35 [00:00<?, ?it/s]Capturing CUDA graphs (decode, FULL):   3%|▎         | 1/35 [00:00<00:06,  5.59it/s]Capturing CUDA graphs (decode, FULL):   6%|▌         | 2/35 [00:00<00:05,  6.07it/s]Capturing CUDA graphs (decode, FULL):   9%|▊         | 3/35 [00:00<00:05,  6.33it/s]Capturing CUDA graphs (decode, FULL):  11%|█▏        | 4/35 [00:00<00:04,  6.47it/s]Capturing CUDA graphs (decode, FULL):  14%|█▍        | 5/35 [00:00<00:04,  6.55it/s]Capturing CUDA graphs (decode, FULL):  17%|█▋        | 6/35 [00:00<00:04,  6.66it/s]Capturing CUDA graphs (decode, FULL):  20%|██        | 7/35 [00:01<00:04,  6.72it/s]Capturing CUDA graphs (decode, FULL):  23%|██▎       | 8/35 [00:01<00:03,  6.82it/s]Capturing CUDA graphs (decode, FULL):  26%|██▌       | 9/35 [00:01<00:03,  6.85it/s]Capturing CUDA graphs (decode, FULL):  29%|██▊       | 10/35 [00:01<00:03,  6.93it/s]Capturing CUDA graphs (decode, FULL):  31%|███▏      | 11/35 [00:01<00:03,  6.97it/s]Capturing CUDA graphs (decode, FULL):  34%|███▍      | 12/35 [00:01<00:03,  7.01it/s]Capturing CUDA graphs (decode, FULL):  37%|███▋      | 13/35 [00:01<00:03,  7.00it/s]Capturing CUDA graphs (decode, FULL):  40%|████      | 14/35 [00:02<00:02,  7.04it/s]Capturing CUDA graphs (decode, FULL):  43%|████▎     | 15/35 [00:02<00:02,  7.13it/s]Capturing CUDA graphs (decode, FULL):  46%|████▌     | 16/35 [00:02<00:02,  7.21it/s]Capturing CUDA graphs (decode, FULL):  49%|████▊     | 17/35 [00:02<00:02,  7.40it/s]Capturing CUDA graphs (decode, FULL):  51%|█████▏    | 18/35 [00:02<00:02,  7.65it/s]Capturing CUDA graphs (decode, FULL):  54%|█████▍    | 19/35 [00:02<00:02,  7.90it/s]Capturing CUDA graphs (decode, FULL):  57%|█████▋    | 20/35 [00:02<00:01,  8.10it/s]Capturing CUDA graphs (decode, FULL):  60%|██████    | 21/35 [00:02<00:01,  8.27it/s]Capturing CUDA graphs (decode, FULL):  63%|██████▎   | 22/35 [00:03<00:01,  8.26it/s]Capturing CUDA graphs (decode, FULL):  66%|██████▌   | 23/35 [00:03<00:01,  8.36it/s]Capturing CUDA graphs (decode, FULL):  69%|██████▊   | 24/35 [00:03<00:01,  8.43it/s]Capturing CUDA graphs (decode, FULL):  71%|███████▏  | 25/35 [00:03<00:01,  8.61it/s]Capturing CUDA graphs (decode, FULL):  74%|███████▍  | 26/35 [00:03<00:01,  8.73it/s]Capturing CUDA graphs (decode, FULL):  77%|███████▋  | 27/35 [00:03<00:00,  8.80it/s]Capturing CUDA graphs (decode, FULL):  80%|████████  | 28/35 [00:03<00:00,  8.86it/s]Capturing CUDA graphs (decode, FULL):  83%|████████▎ | 29/35 [00:03<00:00,  8.95it/s]Capturing CUDA graphs (decode, FULL):  86%|████████▌ | 30/35 [00:03<00:00,  9.05it/s]Capturing CUDA graphs (decode, FULL):  89%|████████▊ | 31/35 [00:04<00:00,  9.15it/s]Capturing CUDA graphs (decode, FULL):  91%|█████████▏| 32/35 [00:04<00:00,  9.00it/s]Capturing CUDA graphs (decode, FULL):  94%|█████████▍| 33/35 [00:04<00:00,  9.10it/s]Capturing CUDA graphs (decode, FULL):  97%|█████████▋| 34/35 [00:04<00:00,  9.02it/s]Capturing CUDA graphs (decode, FULL): 100%|██████████| 35/35 [00:04<00:00,  9.05it/s]Capturing CUDA graphs (decode, FULL): 100%|██████████| 35/35 [00:04<00:00,  7.78it/s]
+(EngineCore_DP0 pid=4163564) INFO 03-25 13:40:35 [gpu_model_runner.py:5386] Graph capturing finished in 11 secs, took 1.13 GiB
+(EngineCore_DP0 pid=4163564) INFO 03-25 13:40:35 [core.py:282] init engine (profile, create kv cache, warmup model) took 31.57 seconds
+(EngineCore_DP0 pid=4163564) INFO 03-25 13:40:35 [vllm.py:747] Asynchronous scheduling is enabled.
+INFO 03-25 13:40:35 [llm.py:388] Supported tasks: ['generate']
+2026-03-25 13:40:35  INFO      Loading QA dataset from /home/v-tiossowski/HealthcareAgent/mimic-code/data/MIMICIV_creatinine_baseline_dataset/creatinine_baseline.csv
+2026-03-25 13:40:36  INFO      Dataset: 1000 rows, columns: ['subject_id', 'hadm_id', 'stay_id', 'intime', 'outtime', 'first_careunit', 'last_careunit', 'gt_label', 'question', 'gt_answer_type', 'split', 'scr_baseline', 'ckd', 'scr_min']
+2026-03-25 13:40:36  INFO      Filtered to train split: 100 rows
+2026-03-25 13:40:36  INFO      Auto-discovered ground-truth SQL: /home/v-tiossowski/HealthcareAgent/mimic-code/mimic-iv/concepts_duckdb/measurement/creatinine_baseline.sql
+2026-03-25 13:40:36  INFO      === Iteration 1/100  run=creatinine_baseline  best_qa=0.0% ===
+INFO 03-25 13:40:38 [hf.py:318] Detected the chat template content format to be 'string'. You can set `--chat-template-content-format` to override this.
+2026-03-25 13:40:56  INFO      Exec block 1/1 …
+2026-03-25 13:40:56  INFO      Output: Guidelines related to creatinine:
+[]
+
+==================================================
+
+Guidelines related to kidney:
+[]
+
+==================================================
+
+Guidelines related to CKD:
+[]
+
+2026-03-25 13:40:56  INFO      === Iteration 2/100  run=creatinine_baseline  best_qa=0.0% ===
+2026-03-25 13:40:59  INFO      Exec block 1/1 …
+2026-03-25 13:40:59  INFO      Output: All available guidelines:
+['acidosis_guideline', 'acute_decompensated_heart_failure_guideline', 'acute_hepatic_failure_guideline', 'adverse_effect_of_anticoagulants_guideline', 'alcohol_withdrawal_syndrome_guideline', 'anemia_icu_critically_ill_hemoglobin_transfusion_guideline', 'apache_iii_guideline', 'atrial_fibrillation_guideline', 'bradycardia_guideline', 'cerebral_infarction_guideline', 'coma_altered_consciousness_icu_guideline', 'copd_exacerbation_guideline', 'coronary_artery_disease_guide
+2026-03-25 13:40:59  INFO      === Iteration 3/100  run=creatinine_baseline  best_qa=0.0% ===
+2026-03-25 13:41:05  INFO      Exec block 1/1 …
+2026-03-25 13:41:05  INFO      Output: Guidelines related to AKI:
+[]
+
+==================================================
+
+Guidelines related to acute:
+['acute_decompensated_heart_failure_guideline', 'acute_hepatic_failure_guideline']
+
+2026-03-25 13:41:05  INFO      === Iteration 4/100  run=creatinine_baseline  best_qa=0.0% ===
+2026-03-25 13:41:12  INFO      Exec block 1/1 …
+2026-03-25 13:41:12  INFO      Output: All available functions:
+['acei', 'age', 'antibiotic', 'arb', 'bg', 'blood_differential', 'cardiac_marker', 'charlson', 'chemistry', 'coagulation', 'code_status', 'complete_blood_count', 'crrt', 'dobutamine', 'dopamine', 'enzyme', 'epinephrine', 'gcs', 'height', 'icp', '... (15 more; pass a keyword to filter)']
+
+==================================================
+
+Functions related to creatinine:
+['kdigo_creatinine']
+
+==================================================
+
+Functions related to kidney
+2026-03-25 13:41:12  INFO      === Iteration 5/100  run=creatinine_baseline  best_qa=0.0% ===
+2026-03-25 13:41:15  INFO      Exec block 1/1 …
+2026-03-25 13:41:15  INFO      Output: kdigo_creatinine function info:
+def kdigo_creatinine(stay_id):
+    """
+    Calculate KDIGO AKI stage based on creatinine criteria for a patient's ICU stay.
+
+    KDIGO AKI Staging based on Creatinine:
+    - Stage 0: No AKI
+    - Stage 1: Serum creatinine increase ≥0.3 mg/dL within 48 hours OR 1.5-1.9 times baseline
+    - Stage 2: Serum creatinine increase 2.0-2.9 times baseline
+    - Stage 3: Serum creatinine increase ≥3.0 times baseline OR serum creatinine ≥4.0 mg/dL 
+               with an acut
+2026-03-25 13:41:15  INFO      === Iteration 6/100  run=creatinine_baseline  best_qa=0.0% ===
+2026-03-25 13:41:25  INFO      Exec block 1/1 …
+2026-03-25 13:41:25  INFO      Output: Creatinine-related lab items:
+    itemid                            label                fluid   category
+0    50841              Creatinine, Ascites              Ascites  Chemistry
+1    50912                       Creatinine                Blood  Chemistry
+2    51021          Creatinine, Joint Fluid          Joint Fluid  Chemistry
+3    51032           Creatinine, Body Fluid     Other Body Fluid  Chemistry
+4    51052              Creatinine, Pleural              Pleural  Chemistry
+5    51067    
+2026-03-25 13:41:25  INFO      === Iteration 7/100  run=creatinine_baseline  best_qa=0.0% ===
+2026-03-25 13:41:36  INFO      Exec block 1/1 …
+2026-03-25 13:41:36  INFO      Output: Sample labevents for Creatinine (itemid 50912):
+   labevent_id  subject_id   hadm_id  ...      flag  priority comments
+0           26    10000032      <NA>  ...       NaN   ROUTINE     None
+1          104    10000032      <NA>  ...  abnormal      STAT     None
+2          150    10000032  22595853  ...  abnormal   ROUTINE     None
+3          175    10000032      <NA>  ...       NaN   ROUTINE     None
+4          187    10000032      <NA>  ...       NaN   ROUTINE     None
+5          227    10000032
+2026-03-25 13:41:36  INFO      === Iteration 8/100  run=creatinine_baseline  best_qa=0.0% ===
+2026-03-25 13:41:46  INFO      Exec block 1/1 …
+2026-03-25 13:41:46  INFO      Output: Sample labevents for Creatinine (itemid 50912) with valuenum:
+   labevent_id  subject_id   hadm_id  ...           charttime valuenum  valueuom
+0           26    10000032      <NA>  ... 2180-03-23 11:51:00      0.4     mg/dL
+1          104    10000032      <NA>  ... 2180-05-06 22:25:00      0.3     mg/dL
+2          150    10000032  22595853  ... 2180-05-07 05:05:00      0.3     mg/dL
+3          175    10000032      <NA>  ... 2180-06-03 12:00:00      0.4     mg/dL
+4          187    10000032      <
+2026-03-25 13:41:46  INFO      === Iteration 9/100  run=creatinine_baseline  best_qa=0.0% ===
+2026-03-25 13:41:53  INFO      Exec block 1/1 …
+2026-03-25 13:41:53  INFO      Output: Creatinine-related items in ICU d_items:
+   itemid                     label  ... lownormalvalue highnormalvalue
+0  220615        Creatinine (serum)  ...            NaN             NaN
+1  226751   CreatinineApacheIIScore  ...            NaN             NaN
+2  226752   CreatinineApacheIIValue  ...            NaN             NaN
+3  227005       Creatinine_ApacheIV  ...            NaN             NaN
+4  229761  Creatinine (whole blood)  ...            NaN             NaN
+
+[5 rows x 9 columns]
+
+2026-03-25 13:41:53  INFO      === Iteration 10/100  run=creatinine_baseline  best_qa=0.0% ===
+2026-03-25 13:42:03  INFO      Exec block 1/1 …
+2026-03-25 13:42:03  INFO      Output: Error:
+Traceback (most recent call last):
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 643, in execute
+    _run_with_timeout(_do_execute, timeout)
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 174, in _run_with_timeout
+    raise error[0]
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 156, in target
+    result[0] = func(*args, **kwargs)
+                ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/v-tiossowsk
+2026-03-25 13:42:03  INFO      === Iteration 11/100  run=creatinine_baseline  best_qa=0.0% ===
+2026-03-25 13:42:09  INFO      Exec block 1/1 …
+2026-03-25 13:42:09  INFO      Output: d_icd_diagnoses table structure:
+  icd_code  icd_version                             long_title
+0     0010            9         Cholera due to vibrio cholerae
+1     0011            9  Cholera due to vibrio cholerae el tor
+2     0019            9                   Cholera, unspecified
+3     0020            9                          Typhoid fever
+4     0021            9                    Paratyphoid fever A
+
+==================================================
+
+Columns: ['icd_code', 'icd_version',
+2026-03-25 13:42:09  INFO      === Iteration 12/100  run=creatinine_baseline  best_qa=0.0% ===
+2026-03-25 13:42:19  INFO      Exec block 1/1 …
+2026-03-25 13:42:19  INFO      Output: CKD-related ICD diagnoses:
+   icd_code  icd_version                                         long_title
+0     28521            9                   Anemia in chronic kidney disease
+1     40300            9  Hypertensive chronic kidney disease, malignant...
+2     40301            9  Hypertensive chronic kidney disease, malignant...
+3     40310            9  Hypertensive chronic kidney disease, benign, w...
+4     40311            9  Hypertensive chronic kidney disease, benign, w...
+5     40390      
+2026-03-25 13:42:19  INFO      === Iteration 13/100  run=creatinine_baseline  best_qa=0.0% ===
+2026-03-25 13:42:28  INFO      Exec block 1/1 …
+2026-03-25 13:42:28  INFO      Output: Specific CKD ICD diagnoses:
+   icd_code  icd_version                                         long_title
+0     28521            9                   Anemia in chronic kidney disease
+1     40300            9  Hypertensive chronic kidney disease, malignant...
+2     40301            9  Hypertensive chronic kidney disease, malignant...
+3     40310            9  Hypertensive chronic kidney disease, benign, w...
+4     40311            9  Hypertensive chronic kidney disease, benign, w...
+5     40390     
+2026-03-25 13:42:28  INFO      === Iteration 14/100  run=creatinine_baseline  best_qa=0.0% ===
+2026-03-25 13:42:39  INFO      Exec block 1/1 …
+2026-03-25 13:42:39  INFO      Output: N18 CKD ICD diagnoses:
+   icd_code  icd_version                                   long_title
+0       N18           10                 Chronic kidney disease (CKD)
+1      N181           10              Chronic kidney disease, stage 1
+2      N182           10       Chronic kidney disease, stage 2 (mild)
+3      N183           10   Chronic kidney disease, stage 3 (moderate)
+4     N1830           10  Chronic kidney disease, stage 3 unspecified
+5     N1831           10             Chronic kidney disea
+2026-03-25 13:42:39  INFO      === Iteration 15/100  run=creatinine_baseline  best_qa=0.0% ===
+2026-03-25 13:42:46  INFO      Exec block 1/1 …
+2026-03-25 13:42:46  INFO      Output: Admissions table structure:
+   subject_id   hadm_id  ...           edouttime hospital_expire_flag
+0    10000032  22595853  ... 2180-05-06 23:30:00                    0
+1    10000032  22841357  ... 2180-06-26 21:31:00                    0
+2    10000032  25742920  ... 2180-08-06 01:44:00                    0
+3    10000032  29079034  ... 2180-07-23 14:00:00                    0
+4    10000068  25022803  ... 2160-03-04 06:26:00                    0
+
+[5 rows x 16 columns]
+
+============================
+2026-03-25 13:42:46  INFO      === Iteration 16/100  run=creatinine_baseline  best_qa=0.0% ===
+2026-03-25 13:42:53  INFO      Exec block 1/1 …
+2026-03-25 13:42:53  INFO      Output: Error:
+Traceback (most recent call last):
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 643, in execute
+    _run_with_timeout(_do_execute, timeout)
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 174, in _run_with_timeout
+    raise error[0]
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 156, in target
+    result[0] = func(*args, **kwargs)
+                ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/v-tiossowsk
+2026-03-25 13:42:53  INFO      === Iteration 17/100  run=creatinine_baseline  best_qa=0.0% ===
+2026-03-25 13:43:00  INFO      Exec block 1/1 …
+2026-03-25 13:43:00  INFO      Output: ICU stays table structure:
+   subject_id   hadm_id  ...             outtime       los
+0    10000032  29079034  ... 2180-07-23 23:50:47  0.410266
+1    10000690  25860671  ... 2150-11-06 17:03:17  3.893252
+2    10000980  26913865  ... 2189-06-27 20:38:27  0.497535
+3    10001217  24597018  ... 2157-11-21 22:08:00  1.118032
+4    10001217  27703517  ... 2157-12-20 14:27:41  0.948113
+
+[5 rows x 8 columns]
+
+==================================================
+
+Columns: ['subject_id', 'hadm_id', 'stay_id'
+2026-03-25 13:43:00  INFO      === Iteration 18/100  run=creatinine_baseline  best_qa=0.0% ===
+2026-03-25 13:43:08  INFO      Exec block 1/1 …
+2026-03-25 13:43:08  INFO      Output: Diagnoses ICD table structure:
+   subject_id   hadm_id  seq_num icd_code  icd_version
+0    10000032  22595853        1     5723            9
+1    10000032  22595853        2    78959            9
+2    10000032  22595853        3     5715            9
+3    10000032  22595853        4    07070            9
+4    10000032  22595853        5      496            9
+5    10000032  22595853        6    29680            9
+6    10000032  22595853        7    30981            9
+7    10000032  22595853      
+2026-03-25 13:43:08  INFO      === Iteration 19/100  run=creatinine_baseline  best_qa=0.0% ===
+2026-03-25 13:43:14  INFO      Exec block 1/1 …
+2026-03-25 13:43:14  INFO      Output: Error:
+Traceback (most recent call last):
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 643, in execute
+    _run_with_timeout(_do_execute, timeout)
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 174, in _run_with_timeout
+    raise error[0]
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 156, in target
+    result[0] = func(*args, **kwargs)
+                ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/v-tiossowsk
+2026-03-25 13:43:14  INFO      === Iteration 20/100  run=creatinine_baseline  best_qa=0.0% ===
+2026-03-25 13:43:21  INFO      Exec block 1/1 …
+2026-03-25 13:43:21  INFO      Output: Error:
+Traceback (most recent call last):
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 643, in execute
+    _run_with_timeout(_do_execute, timeout)
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 174, in _run_with_timeout
+    raise error[0]
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 156, in target
+    result[0] = func(*args, **kwargs)
+                ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/v-tiossowsk
+2026-03-25 13:43:21  INFO      === Iteration 21/100  run=creatinine_baseline  best_qa=0.0% ===
+2026-03-25 13:43:28  INFO      Exec block 1/1 …
+2026-03-25 13:43:28  INFO      Output: Sample ICU stays:
+    stay_id  subject_id   hadm_id              intime
+0  39553978    10000032  29079034 2180-07-23 14:00:00
+1  37081114    10000690  25860671 2150-11-02 19:37:00
+2  39765666    10000980  26913865 2189-06-27 08:42:00
+3  37067082    10001217  24597018 2157-11-20 19:18:02
+4  34592300    10001217  27703517 2157-12-19 15:42:24
+
+2026-03-25 13:43:28  INFO      === Iteration 22/100  run=creatinine_baseline  best_qa=0.0% ===
+2026-03-25 13:43:35  INFO      Exec block 1/1 …
+2026-03-25 13:43:35  INFO      Output: KDIGO creatinine result for stay_id 39553978:
+{'stay_id': 39553978, 'subject_id': np.int32(10000032), 'hadm_id': np.int32(29079034), 'intime': '2180-07-23 14:00:00', 'outtime': '2180-07-23 23:50:47', 'baseline_creatinine': np.float64(0.3), 'baseline_source': 'prior_3_months', 'max_creatinine': np.float64(0.5), 'max_creatinine_ratio': np.float64(1.67), 'max_absolute_increase': np.float64(0.2), 'kdigo_stage': 1, 'has_aki': True, 'has_stage_3': False, 'creatinine_values':              charttime  va
+2026-03-25 13:43:35  INFO      === Iteration 23/100  run=creatinine_baseline  best_qa=0.0% ===
+2026-03-25 13:43:53  INFO      Exec block 1/1 …
+2026-03-25 13:43:53  INFO      Output: All CKD-related ICD codes:
+   icd_code  icd_version                                         long_title
+0     28521            9                   Anemia in chronic kidney disease
+1     40300            9  Hypertensive chronic kidney disease, malignant...
+2     40301            9  Hypertensive chronic kidney disease, malignant...
+3     40310            9  Hypertensive chronic kidney disease, benign, w...
+4     40311            9  Hypertensive chronic kidney disease, benign, w...
+..      ...      
+2026-03-25 13:43:53  INFO      === Iteration 24/100  run=creatinine_baseline  best_qa=0.0% ===
+2026-03-25 13:44:14  INFO      Exec block 1/1 …
+2026-03-25 13:44:14  INFO      Output: Admission info:
+   subject_id   hadm_id   stay_id              intime           admittime
+0    10000032  29079034  39553978 2180-07-23 14:00:00 2180-07-23 12:35:00
+
+Creatinine values before/during ICU admission:
+            charttime  valuenum   hadm_id
+0 2180-07-23 06:39:00       0.7      <NA>
+1 2180-06-27 05:10:00       0.3  22841357
+2 2180-06-26 16:10:00       0.6      <NA>
+3 2180-06-22 11:15:00       0.3      <NA>
+4 2180-06-03 12:00:00       0.4      <NA>
+5 2180-06-03 12:00:00       0.4     
+2026-03-25 13:44:14  INFO      === Iteration 25/100  run=creatinine_baseline  best_qa=0.0% ===
+2026-03-25 13:44:26  INFO      Exec block 1/1 …
+2026-03-25 13:44:26  INFO      Output: Blood chemistry creatinine items:
+   itemid       label
+0   50912  Creatinine
+1   52546  Creatinine
+
+2026-03-25 13:44:26  INFO      === Iteration 26/100  run=creatinine_baseline  best_qa=0.0% ===
+2026-03-25 13:45:33  INFO      Exec block 1/1 …
+2026-03-25 13:45:33  INFO      Output: Creatinine baseline result for stay_id 39553978:
+  stay_id: 39553978
+  subject_id: 10000032
+  hadm_id: 29079034
+  intime: 2180-07-23 14:00:00
+  baseline_creatinine: 0.3
+  baseline_source: prior_3_months
+  has_ckd_diagnosis: False
+  ckd_codes: []
+  baseline_above_1_5: False
+  prior_creatinine_values: [0.3, 0.3, 0.4, 0.4, 0.3, 0.6, 0.3, 0.7]
+  icu_creatinine_values: [0.5]
+
+2026-03-25 13:45:33  INFO      === Iteration 27/100  run=creatinine_baseline  best_qa=0.0% ===
+2026-03-25 13:45:48  INFO      Exec block 1/1 …
+2026-03-25 13:45:48  INFO      Output: 
+Stay ID: 37081114
+  Subject ID: 10000690
+  Baseline creatinine: 0.8 mg/dL
+  Baseline source: prior_3_months
+  Has CKD diagnosis: False
+  CKD codes: []
+  Baseline > 1.5: False
+
+Stay ID: 39765666
+  Subject ID: 10000980
+  Baseline creatinine: 2.3 mg/dL
+  Baseline source: prior_3_months
+  Has CKD diagnosis: True
+  CKD codes: ['E1122', 'I130', '5854', 'D631', '40390', 'I129', 'N184', '28521', '5853']
+  Baseline > 1.5: True
+
+Stay ID: 37067082
+  Subject ID: 10001217
+  Baseline creatinine: 0.6 mg/dL
+  
+2026-03-25 13:45:48  INFO      === Iteration 28/100  run=creatinine_baseline  best_qa=0.0% ===
+2026-03-25 13:46:07  INFO      Exec block 1/1 …
+2026-03-25 13:46:07  INFO      Output: Sample stay IDs to test:
+    stay_id  subject_id   hadm_id              intime
+0  39553978    10000032  29079034 2180-07-23 14:00:00
+1  37081114    10000690  25860671 2150-11-02 19:37:00
+2  39765666    10000980  26913865 2189-06-27 08:42:00
+3  37067082    10001217  24597018 2157-11-20 19:18:02
+4  34592300    10001217  27703517 2157-12-19 15:42:24
+5  31205490    10001725  25563031 2110-04-11 15:52:22
+6  39698942    10001843  26133978 2134-12-05 18:50:03
+7  37510196    10001884  26184834 2131-01-1
+2026-03-25 13:46:07  INFO      === Iteration 29/100  run=creatinine_baseline  best_qa=0.0% ===
+2026-03-25 13:46:22  INFO      Exec block 1/1 …
+2026-03-25 13:46:23  INFO      Output: 
+Stay ID: 39698942
+  Subject ID: 10001843
+  Baseline creatinine: 1.7 mg/dL
+  Baseline source: first_icu_value
+  Has CKD diagnosis: True
+  Baseline > 1.5: True
+
+Stay ID: 37510196
+  Subject ID: 10001884
+  Baseline creatinine: 0.8 mg/dL
+  Baseline source: prior_3_months
+  Has CKD diagnosis: False
+  Baseline > 1.5: False
+
+Stay ID: 39060235
+  Subject ID: 10002013
+  Baseline creatinine: 0.9 mg/dL
+  Baseline source: prior_3_months
+  Has CKD diagnosis: True
+  Baseline > 1.5: False
+
+Stay ID: 34672098
+  S
+2026-03-25 13:46:23  INFO      === Iteration 30/100  run=creatinine_baseline  best_qa=0.0% ===
+2026-03-25 13:47:33  INFO      Exec block 1/1 …
+2026-03-25 13:47:33  INFO      Output: Code executed successfully (no output).
+2026-03-25 13:47:33  INFO      Debug conversations will be saved to debug_logs
+2026-03-25 13:47:33  INFO      Using question from dataset column: Does this patient have chronic kidney disease (CKD) based on their diagnosis codes?
+2026-03-25 13:47:33  INFO      Answer type for 'creatinine_baseline': numerical (per_row=True)
+2026-03-25 13:47:33  INFO      ReACT iteration 1/5 — 20 active patients
+Rendering conversations:   0%|          | 0/20 [00:00<?, ?it/s]Rendering conversations: 100%|██████████| 20/20 [00:00<00:00, 469.31it/s]
+Processed prompts:   0%|          | 0/20 [00:00<?, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s]Processed prompts:   5%|▌         | 1/20 [00:08<02:42,  8.56s/it, est. speed input: 107.53 toks/s, output: 10.52 toks/s]Processed prompts:  15%|█▌        | 3/20 [00:09<00:44,  2.64s/it, est. speed input: 286.10 toks/s, output: 30.55 toks/s]Processed prompts:  35%|███▌      | 7/20 [00:09<00:11,  1.15it/s, est. speed input: 660.19 toks/s, output: 77.10 toks/s]Processed prompts:  50%|█████     | 10/20 [00:09<00:05,  1.92it/s, est. speed input: 931.24 toks/s, output: 112.03 toks/s]Processed prompts:  60%|██████    | 12/20 [00:10<00:03,  2.46it/s, est. speed input: 1091.19 toks/s, output: 133.67 toks/s]Processed prompts:  70%|███████   | 14/20 [00:10<00:01,  3.27it/s, est. speed input: 1258.69 toks/s, output: 157.04 toks/s]Processed prompts:  80%|████████  | 16/20 [00:10<00:00,  4.08it/s, est. speed input: 1412.64 toks/s, output: 179.25 toks/s]Processed prompts:  90%|█████████ | 18/20 [00:11<00:00,  3.52it/s, est. speed input: 1481.12 toks/s, output: 193.58 toks/s]Processed prompts: 100%|██████████| 20/20 [00:14<00:00,  1.58it/s, est. speed input: 1307.44 toks/s, output: 181.45 toks/s]Processed prompts: 100%|██████████| 20/20 [00:14<00:00,  1.58it/s, est. speed input: 1307.44 toks/s, output: 181.45 toks/s]Processed prompts: 100%|██████████| 20/20 [00:14<00:00,  1.41it/s, est. speed input: 1307.44 toks/s, output: 181.45 toks/s]
+2026-03-25 13:47:48  INFO      ReACT iteration 2/5 — 20 active patients
+Rendering conversations:   0%|          | 0/20 [00:00<?, ?it/s]Rendering conversations: 100%|██████████| 20/20 [00:00<00:00, 359.46it/s]
+Processed prompts:   0%|          | 0/20 [00:00<?, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s]Processed prompts:   5%|▌         | 1/20 [00:08<02:46,  8.75s/it, est. speed input: 131.79 toks/s, output: 6.97 toks/s]Processed prompts:  15%|█▌        | 3/20 [00:08<00:39,  2.32s/it, est. speed input: 399.30 toks/s, output: 21.50 toks/s]Processed prompts:  20%|██        | 4/20 [00:09<00:25,  1.60s/it, est. speed input: 516.53 toks/s, output: 28.75 toks/s]Processed prompts:  30%|███       | 6/20 [00:09<00:11,  1.20it/s, est. speed input: 785.78 toks/s, output: 44.14 toks/s]Processed prompts:  40%|████      | 8/20 [00:10<00:08,  1.49it/s, est. speed input: 958.18 toks/s, output: 58.05 toks/s]Processed prompts:  45%|████▌     | 9/20 [00:10<00:06,  1.68it/s, est. speed input: 1041.74 toks/s, output: 66.03 toks/s]Processed prompts:  55%|█████▌    | 11/20 [00:10<00:03,  2.60it/s, est. speed input: 1279.87 toks/s, output: 85.09 toks/s]Processed prompts:  60%|██████    | 12/20 [00:10<00:02,  2.76it/s, est. speed input: 1356.62 toks/s, output: 93.05 toks/s]Processed prompts:  65%|██████▌   | 13/20 [00:11<00:02,  3.09it/s, est. speed input: 1437.05 toks/s, output: 101.94 toks/s]Processed prompts:  70%|███████   | 14/20 [00:11<00:02,  2.92it/s, est. speed input: 1493.34 toks/s, output: 109.47 toks/s]Processed prompts:  75%|███████▌  | 15/20 [00:11<00:01,  2.58it/s, est. speed input: 1536.01 toks/s, output: 116.47 toks/s]Processed prompts:  80%|████████  | 16/20 [00:12<00:01,  2.65it/s, est. speed input: 1588.53 toks/s, output: 125.15 toks/s]Processed prompts:  85%|████████▌ | 17/20 [00:12<00:01,  2.37it/s, est. speed input: 1612.11 toks/s, output: 132.55 toks/s]Processed prompts:  90%|█████████ | 18/20 [00:13<00:00,  2.02it/s, est. speed input: 1619.22 toks/s, output: 139.25 toks/s]Processed prompts:  95%|█████████▌| 19/20 [00:15<00:01,  1.04s/it, est. speed input: 1463.94 toks/s, output: 133.92 toks/s]Processed prompts: 100%|██████████| 20/20 [00:16<00:00,  1.26it/s, est. speed input: 1521.24 toks/s, output: 147.84 toks/s]Processed prompts: 100%|██████████| 20/20 [00:16<00:00,  1.26it/s, est. speed input: 1521.24 toks/s, output: 147.84 toks/s]Processed prompts: 100%|██████████| 20/20 [00:16<00:00,  1.24it/s, est. speed input: 1521.24 toks/s, output: 147.84 toks/s]
+2026-03-25 13:48:04  INFO      QA accuracy: 80.0%  (correct=16/20, parse_errors=0)
+2026-03-25 13:48:04  INFO      === Iteration 31/100  run=creatinine_baseline  best_qa=80.0% ===
+2026-03-25 13:48:36  INFO      Exec block 1/1 …
+2026-03-25 13:48:36  INFO      Output: ICU stay info:
+    stay_id  subject_id  ...             outtime           admittime
+0  37996602    11424857  ... 2155-06-21 15:55:47 2155-06-03 18:10:00
+
+[1 rows x 6 columns]
+
+All creatinine values for subject_id 11424857:
+             charttime  valuenum   hadm_id
+0  2153-12-24 14:43:00       0.6      <NA>
+1  2153-12-25 08:25:00       0.5  25085020
+2  2153-12-26 07:40:00       0.5  25085020
+3  2153-12-27 07:04:00       0.5  25085020
+4  2154-09-25 19:45:00       0.8      <NA>
+5  2154-09-26 07:50
+2026-03-25 13:48:36  INFO      === Iteration 32/100  run=creatinine_baseline  best_qa=80.0% ===
+2026-03-25 13:49:14  INFO      Exec block 1/1 …
+2026-03-25 13:49:14  INFO      Output: ICU stay info:
+    stay_id  subject_id  ...             outtime           admittime
+0  31870275    19626299  ... 2154-09-05 23:19:54 2154-09-02 19:54:00
+
+[1 rows x 6 columns]
+
+All creatinine values for subject_id 19626299:
+              charttime  valuenum   hadm_id
+0   2154-07-16 14:28:00       1.6      <NA>
+1   2154-07-16 21:51:00       2.4  23449269
+2   2154-07-17 06:55:00       2.5  23449269
+3   2154-07-18 07:00:00       2.7  23449269
+4   2154-07-19 06:03:00       2.9  23449269
+..           
+2026-03-25 13:49:14  INFO      === Iteration 33/100  run=creatinine_baseline  best_qa=80.0% ===
+2026-03-25 13:50:30  INFO      Exec block 1/1 …
+2026-03-25 13:50:30  INFO      Output: ICU stay info:
+    stay_id  subject_id  ...             outtime           admittime
+0  33813583    18233845  ... 2155-07-29 11:46:01 2155-07-28 21:00:00
+
+[1 rows x 6 columns]
+
+All creatinine values for subject_id 18233845:
+             charttime  valuenum   hadm_id
+0  2155-02-28 12:10:00       0.7      <NA>
+1  2155-06-20 11:30:00       0.5      <NA>
+2  2155-06-21 11:00:00       0.7  23284485
+3  2155-06-22 05:58:00       0.6  23284485
+4  2155-06-22 14:55:00       0.6  23284485
+5  2155-06-23 07:20
+2026-03-25 13:50:30  INFO      === Iteration 34/100  run=creatinine_baseline  best_qa=80.0% ===
+2026-03-25 13:52:04  INFO      Exec block 1/1 …
+2026-03-25 13:52:04  INFO      Output: ICU stay info:
+    stay_id  subject_id  ...             outtime           admittime
+0  35951395    19951256  ... 2152-02-28 03:04:19 2152-02-20 15:51:00
+
+[1 rows x 6 columns]
+
+All creatinine values for subject_id 19951256:
+             charttime  valuenum   hadm_id
+0  2149-09-02 21:26:00       0.7  20952163
+1  2149-09-03 06:20:00       0.5  20952163
+2  2149-09-04 06:40:00       0.5  20952163
+3  2151-12-28 15:20:00       0.8      <NA>
+4  2152-01-13 13:00:00       0.6      <NA>
+5  2152-01-14 23:10
+2026-03-25 13:52:04  INFO      === Iteration 35/100  run=creatinine_baseline  best_qa=80.0% ===
+2026-03-25 13:57:26  INFO      Exec block 1/1 …
+2026-03-25 13:57:26  INFO      Output: Error:
+Traceback (most recent call last):
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 643, in execute
+    _run_with_timeout(_do_execute, timeout)
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 174, in _run_with_timeout
+    raise error[0]
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 156, in target
+    result[0] = func(*args, **kwargs)
+                ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/v-tiossowsk
+2026-03-25 13:57:26  INFO      === Iteration 36/100  run=creatinine_baseline  best_qa=80.0% ===
+2026-03-25 13:58:28  INFO      Exec block 1/1 …
+2026-03-25 13:58:28  INFO      Output: Testing new logic on misclassified cases:
+==================================================
+Stay ID 37996602: baseline=0.7, source=current_admission_pre_icu
+  Current pre-ICU values: [0.7, 0.9, 1.0, 1.1, 1.6, 1.7, 1.7, 1.8, 1.8, 1.8, 1.8, 1.9, 1.9, 1.9, 2.0, 2.1, 2.4, 2.4, 2.4, 2.4, 2.7]
+  Prior values: []
+
+Stay ID 31870275: baseline=1.0, source=current_admission_pre_icu
+  Current pre-ICU values: [1.0]
+  Prior values: [0.7, 0.7, 0.8, 0.8, 0.8, 0.8, 0.8, 0.9, 0.9, 0.9, 0.9, 1.0, 1.0, 1.0, 1.0, 1
+2026-03-25 13:58:28  INFO      === Iteration 37/100  run=creatinine_baseline  best_qa=80.0% ===
+2026-03-25 13:58:28  INFO      Context approaching limit (20361 tokens, limit=25000) — forcing summarize + compress
+2026-03-25 14:00:46  INFO      Context compressed: 75 messages -> 2 messages
+2026-03-25 14:00:59  INFO      Exec block 1/1 …
+2026-03-25 14:00:59  INFO      Output: Guidelines found: []
+
+2026-03-25 14:00:59  INFO      === Iteration 38/100  run=creatinine_baseline  best_qa=80.0% ===
+2026-03-25 14:01:04  INFO      Exec block 1/1 …
+2026-03-25 14:01:04  INFO      Output: AKI Guidelines: []
+Kidney Guidelines: []
+Baseline Guidelines: []
+
+2026-03-25 14:01:04  INFO      === Iteration 39/100  run=creatinine_baseline  best_qa=80.0% ===
+2026-03-25 14:01:25  INFO      Exec block 1/1 …
+2026-03-25 14:01:25  INFO      Output: Stay info:
+    stay_id  subject_id  ...             outtime           admittime
+0  33813583    18233845  ... 2155-07-29 11:46:01 2155-07-28 21:00:00
+
+[1 rows x 6 columns]
+
+Subject: 18233845, Hadm: 28002266
+Admittime: 2155-07-28 21:00:00
+Intime: 2155-07-28 22:51:00
+
+All creatinine values for subject 18233845:
+             charttime  valuenum   hadm_id
+0  2155-02-28 12:10:00       0.7      <NA>
+1  2155-06-20 11:30:00       0.5      <NA>
+2  2155-06-21 11:00:00       0.7  23284485
+3  2155-06-22 05:5
+2026-03-25 14:01:25  INFO      === Iteration 40/100  run=creatinine_baseline  best_qa=80.0% ===
+2026-03-25 14:06:34  INFO      === Iteration 41/100  run=creatinine_baseline  best_qa=80.0% ===
+2026-03-25 14:07:30  INFO      Exec block 1/1 …
+2026-03-25 14:07:30  INFO      Output: Subject: 18233845, Hadm: 28002266
+Admittime: 2155-07-28 21:00:00
+Intime: 2155-07-28 22:51:00
+
+Values with NULL hadm_id before ICU:
+            charttime  valuenum  hadm_id
+0 2155-07-28 17:40:00       0.7     <NA>
+1 2155-07-19 16:18:00       0.8     <NA>
+2 2155-06-30 16:40:00       0.7     <NA>
+3 2155-06-20 11:30:00       0.5     <NA>
+4 2155-02-28 12:10:00       0.7     <NA>
+
+
+=== Checking stay 35951395 ===
+Subject: 19951256, Hadm: 29782309
+Admittime: 2152-02-20 15:51:00
+Intime: 2152-02-20 18:15:
+2026-03-25 14:07:30  INFO      === Iteration 42/100  run=creatinine_baseline  best_qa=80.0% ===
+2026-03-25 14:12:45  INFO      === Iteration 43/100  run=creatinine_baseline  best_qa=80.0% ===
+2026-03-25 14:12:45  INFO      Context approaching limit (24781 tokens, limit=25000) — forcing summarize + compress
+2026-03-25 14:14:53  INFO      Context compressed: 14 messages -> 2 messages
+2026-03-25 14:15:53  INFO      Exec block 1/1 …
+2026-03-25 14:15:53  INFO      Output: Stay Info:
+    stay_id  subject_id  ...             outtime           admittime
+0  33813583    18233845  ... 2155-07-29 11:46:01 2155-07-28 21:00:00
+
+[1 rows x 6 columns]
+
+Subject ID: 18233845, Hadm ID: 28002266
+Intime: 2155-07-28 22:51:00, Admittime: 2155-07-28 21:00:00
+
+All creatinine values in 3 months prior to ICU (n=14):
+             charttime  valuenum   hadm_id
+0  2155-06-20 11:30:00       0.5      <NA>
+1  2155-06-21 11:00:00       0.7  23284485
+2  2155-06-22 05:58:00       0.6  23284485
+
+2026-03-25 14:15:53  INFO      === Iteration 44/100  run=creatinine_baseline  best_qa=80.0% ===
+2026-03-25 14:19:14  INFO      Exec block 1/1 …
+2026-03-25 14:19:14  INFO      Output: Stay Info:
+    stay_id  subject_id  ...             outtime           admittime
+0  35951395    19951256  ... 2152-02-28 03:04:19 2152-02-20 15:51:00
+
+[1 rows x 6 columns]
+
+Subject ID: 19951256, Hadm ID: 29782309
+Intime: 2152-02-20 18:15:00, Admittime: 2152-02-20 15:51:00
+
+All creatinine values in 3 months prior to ICU (n=14):
+             charttime  valuenum   hadm_id
+0  2151-12-28 15:20:00       0.8      <NA>
+1  2152-01-13 13:00:00       0.6      <NA>
+2  2152-01-14 23:10:00       0.6      <NA>
+
+2026-03-25 14:19:14  INFO      === Iteration 45/100  run=creatinine_baseline  best_qa=80.0% ===
+2026-03-25 14:20:46  INFO      Exec block 1/1 …
+2026-03-25 14:20:46  INFO      Output: 
+============================================================
+Stay ID: 37996602, Expected: 0.7
+============================================================
+Current admission pre-ICU (admittime=2155-06-03 18:10:00, intime=2155-06-19 19:58:24):
+             charttime  valuenum   hadm_id
+0  2155-06-03 21:44:00       0.9  22010683
+1  2155-06-04 05:13:00       1.0  22010683
+2  2155-06-05 04:41:00       0.7  22010683
+3  2155-06-06 05:15:00       1.1  22010683
+4  2155-06-07 04:40:00       2.0  22010683
+2026-03-25 14:20:46  INFO      === Iteration 46/100  run=creatinine_baseline  best_qa=80.0% ===
+2026-03-25 14:21:41  INFO      Exec block 1/1 …
+2026-03-25 14:21:41  INFO      Output: Subject ID: 19951256, Hadm ID: 29782309
+Intime: 2152-02-20 18:15:00, Admittime: 2152-02-20 15:51:00
+
+All creatinine-related lab items:
+    itemid                            label                fluid   category
+0    50841              Creatinine, Ascites              Ascites  Chemistry
+1    50912                       Creatinine                Blood  Chemistry
+2    51021          Creatinine, Joint Fluid          Joint Fluid  Chemistry
+3    51032           Creatinine, Body Fluid     Other Body Fl
+2026-03-25 14:21:41  INFO      === Iteration 47/100  run=creatinine_baseline  best_qa=80.0% ===
+2026-03-25 14:22:18  INFO      Exec block 1/1 …
+2026-03-25 14:22:18  INFO      Output: Subject ID: 19951256, Hadm ID: 29782309
+Intime: 2152-02-20 18:15:00, Admittime: 2152-02-20 15:51:00
+
+Chart events creatinine values in 3 months prior to ICU:
+Empty DataFrame
+Columns: [charttime, valuenum, itemid]
+Index: []
+
+First ICU chart events creatinine values:
+            charttime  valuenum  itemid
+0 2152-02-21 00:16:00       1.0  220615
+1 2152-02-21 04:05:00       1.1  220615
+2 2152-02-21 13:04:00       1.3  220615
+3 2152-02-22 03:12:00       1.6  220615
+4 2152-02-22 13:02:00       2.0  2
+2026-03-25 14:22:18  INFO      === Iteration 48/100  run=creatinine_baseline  best_qa=80.0% ===
+2026-03-25 14:24:19  INFO      Exec block 1/1 …
+2026-03-25 14:24:19  INFO      Output: 
+============================================================
+Stay ID: 37996602, Expected: 0.7
+============================================================
+1. Current admission pre-ICU: 0.7 (n=21)
+2. First ICU value: 1.4
+3. Prior 3 months (excl. current): 1.2 (n=1)
+
+Calculated baseline: 0.7 (current_admission_pre_icu)
+Expected: 0.7, Match: True
+
+============================================================
+Stay ID: 31870275, Expected: 1.0
+==========================================================
+2026-03-25 14:24:19  INFO      === Iteration 49/100  run=creatinine_baseline  best_qa=80.0% ===
+2026-03-25 14:25:47  INFO      Exec block 1/1 …
+2026-03-25 14:25:47  INFO      Output: Testing creatinine_baseline function:
+============================================================
+✓ Stay 37996602: baseline=0.7, source=current_admission_pre_icu, expected=0.7
+✓ Stay 31870275: baseline=1.0, source=current_admission_pre_icu, expected=1.0
+✓ Stay 33813583: baseline=0.7, source=first_icu_value, expected=0.7
+✓ Stay 35951395: baseline=1.0, source=first_icu_value, expected=1.0
+✓ Stay 39553978: baseline=0.5, source=first_icu_value, expected=N/A
+✓ Stay 37081114: baseline=0.9, source=fir
+2026-03-25 14:25:47  INFO      === Iteration 50/100  run=creatinine_baseline  best_qa=80.0% ===
+2026-03-25 14:27:14  INFO      Exec block 1/1 …
+2026-03-25 14:27:15  INFO      Output: Final verification:
+============================================================
+✓ Stay 37996602: baseline=0.7, source=current_admission_pre_icu, expected=0.7
+✓ Stay 31870275: baseline=1.0, source=current_admission_pre_icu, expected=1.0
+✓ Stay 33813583: baseline=0.7, source=first_icu_value, expected=0.7
+✓ Stay 35951395: baseline=1.0, source=first_icu_value, expected=1.0
+✓ Stay 39553978: baseline=0.5, source=first_icu_value, expected=N/A
+✓ Stay 37081114: baseline=0.9, source=first_icu_value, expe
+2026-03-25 14:27:15  INFO      === Iteration 51/100  run=creatinine_baseline  best_qa=80.0% ===
+2026-03-25 14:28:31  INFO      Exec block 1/1 …
+2026-03-25 14:28:31  INFO      Output: Code executed successfully (no output).
+2026-03-25 14:28:31  INFO      Debug conversations will be saved to debug_logs
+2026-03-25 14:28:31  INFO      Using question from dataset column: Does this patient have chronic kidney disease (CKD) based on their diagnosis codes?
+2026-03-25 14:28:31  INFO      Answer type for 'creatinine_baseline': numerical (per_row=True)
+2026-03-25 14:28:31  INFO      ReACT iteration 1/5 — 20 active patients
+Rendering conversations:   0%|          | 0/20 [00:00<?, ?it/s]Rendering conversations: 100%|██████████| 20/20 [00:00<00:00, 542.80it/s]
+Processed prompts:   0%|          | 0/20 [00:00<?, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s]Processed prompts:   5%|▌         | 1/20 [00:08<02:45,  8.71s/it, est. speed input: 91.97 toks/s, output: 11.83 toks/s]Processed prompts:  15%|█▌        | 3/20 [00:08<00:39,  2.31s/it, est. speed input: 271.66 toks/s, output: 35.50 toks/s]Processed prompts:  30%|███       | 6/20 [00:09<00:15,  1.08s/it, est. speed input: 494.65 toks/s, output: 67.04 toks/s]Processed prompts:  35%|███▌      | 7/20 [00:09<00:11,  1.16it/s, est. speed input: 570.74 toks/s, output: 79.36 toks/s]Processed prompts:  40%|████      | 8/20 [00:09<00:08,  1.47it/s, est. speed input: 644.92 toks/s, output: 91.77 toks/s]Processed prompts:  60%|██████    | 12/20 [00:10<00:02,  3.31it/s, est. speed input: 958.44 toks/s, output: 143.53 toks/s]Processed prompts:  70%|███████   | 14/20 [00:12<00:03,  1.71it/s, est. speed input: 895.31 toks/s, output: 146.29 toks/s]Processed prompts:  80%|████████  | 16/20 [00:12<00:01,  2.30it/s, est. speed input: 1010.53 toks/s, output: 175.85 toks/s]Processed prompts:  90%|█████████ | 18/20 [00:12<00:00,  3.10it/s, est. speed input: 1126.55 toks/s, output: 206.05 toks/s]Processed prompts: 100%|██████████| 20/20 [00:13<00:00,  4.12it/s, est. speed input: 1240.87 toks/s, output: 236.24 toks/s]Processed prompts: 100%|██████████| 20/20 [00:13<00:00,  4.12it/s, est. speed input: 1240.87 toks/s, output: 236.24 toks/s]Processed prompts: 100%|██████████| 20/20 [00:13<00:00,  1.54it/s, est. speed input: 1240.87 toks/s, output: 236.24 toks/s]
+2026-03-25 14:28:45  INFO      ReACT iteration 2/5 — 20 active patients
+Rendering conversations:   0%|          | 0/20 [00:00<?, ?it/s]Rendering conversations: 100%|██████████| 20/20 [00:00<00:00, 378.84it/s]
+Processed prompts:   0%|          | 0/20 [00:00<?, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s]Processed prompts:   5%|▌         | 1/20 [00:07<02:31,  7.98s/it, est. speed input: 132.56 toks/s, output: 7.02 toks/s]Processed prompts:  15%|█▌        | 3/20 [00:08<00:36,  2.15s/it, est. speed input: 419.94 toks/s, output: 21.08 toks/s]Processed prompts:  25%|██▌       | 5/20 [00:08<00:16,  1.09s/it, est. speed input: 679.43 toks/s, output: 35.53 toks/s]Processed prompts:  35%|███▌      | 7/20 [00:08<00:09,  1.34it/s, est. speed input: 878.66 toks/s, output: 49.01 toks/s]Processed prompts:  40%|████      | 8/20 [00:09<00:07,  1.56it/s, est. speed input: 968.80 toks/s, output: 56.54 toks/s]Processed prompts:  45%|████▌     | 9/20 [00:09<00:06,  1.74it/s, est. speed input: 1039.68 toks/s, output: 64.11 toks/s]Processed prompts:  50%|█████     | 10/20 [00:10<00:05,  1.73it/s, est. speed input: 1084.59 toks/s, output: 70.95 toks/s]Processed prompts:  55%|█████▌    | 11/20 [00:10<00:04,  2.10it/s, est. speed input: 1172.31 toks/s, output: 80.31 toks/s]Processed prompts:  65%|██████▌   | 13/20 [00:12<00:05,  1.21it/s, est. speed input: 1119.53 toks/s, output: 86.73 toks/s]Processed prompts:  70%|███████   | 14/20 [00:13<00:04,  1.29it/s, est. speed input: 1151.19 toks/s, output: 97.06 toks/s]Processed prompts:  75%|███████▌  | 15/20 [00:13<00:03,  1.50it/s, est. speed input: 1205.42 toks/s, output: 108.96 toks/s]Processed prompts:  85%|████████▌ | 17/20 [00:14<00:01,  2.18it/s, est. speed input: 1326.87 toks/s, output: 134.87 toks/s]Processed prompts:  90%|█████████ | 18/20 [00:14<00:00,  2.46it/s, est. speed input: 1392.97 toks/s, output: 147.66 toks/s]Processed prompts:  95%|█████████▌| 19/20 [00:14<00:00,  2.70it/s, est. speed input: 1443.14 toks/s, output: 160.17 toks/s]Processed prompts: 100%|██████████| 20/20 [00:15<00:00,  2.57it/s, est. speed input: 1470.17 toks/s, output: 170.90 toks/s]Processed prompts: 100%|██████████| 20/20 [00:15<00:00,  2.57it/s, est. speed input: 1470.17 toks/s, output: 170.90 toks/s]Processed prompts: 100%|██████████| 20/20 [00:15<00:00,  1.32it/s, est. speed input: 1470.17 toks/s, output: 170.90 toks/s]
+2026-03-25 14:29:00  INFO      QA accuracy: 100.0%  (correct=20/20, parse_errors=0)
+2026-03-25 14:29:00  INFO      SUCCESS: 100.0% QA accuracy for 'creatinine_baseline' at iteration 51
+2026-03-25 14:29:00  INFO      Function code saved to autoformalized_library/functions/creatinine_baseline.py
+2026-03-25 14:29:00  INFO      Summary saved to autoformalized_library/summary.json
+[rank0]:[W325 14:29:00.864857200 ProcessGroupNCCL.cpp:1553] Warning: WARNING: destroy_process_group() was not called before program exit, which can leak resources. For more info, please see https://pytorch.org/docs/stable/distributed.html#shutdown (function operator())
+
+======================================================================
+AUTOFORMALIZATION COMPLETE
+======================================================================
+  Output dir      : autoformalized_library
+  Model           : Qwen/Qwen3.5-27B
+  Dataset         : /home/v-tiossowski/HealthcareAgent/mimic-code/data/MIMICIV_creatinine_baseline_dataset/creatinine_baseline.csv
+  Run name        : creatinine_baseline
+  Status          : SUCCESS
+  QA accuracy     : 100.0%
+  Iterations      : 51
+  Total tokens    : 44,155  (prompt 38,484 / completion 5,671)
+  LLM calls       : 93
+  SQL queries     : 378
+  Function saved  : autoformalized_library/functions/creatinine_baseline.py
+======================================================================

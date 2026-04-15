@@ -1,0 +1,24 @@
+{
+  "concept": "weight_durations",
+  "status": "success",
+  "qa_eval_status": "success",
+  "autoformalize": {
+    "iterations": 32,
+    "train_qa_accuracy": 0.99,
+    "success": true,
+    "wall_time_sec": 1018,
+    "summary_file": "autoformalized_library/weight_durations_autoform_summary.json",
+    "log_file": "autoformalized_library/weight_durations_autoformalize.log"
+  },
+  "qa_eval_test": {
+    "qa_accuracy": 0.97,
+    "precision": 0.967741935483871,
+    "recall": 1.0,
+    "correct": 873,
+    "total": 900,
+    "parse_errors": 1,
+    "wall_time_sec": 1565,
+    "output_file": "autoformalized_library/weight_durations_qa_eval.json",
+    "log_file": "autoformalized_library/weight_durations_qa_eval.log"
+  }
+}

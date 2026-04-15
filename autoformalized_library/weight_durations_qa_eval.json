@@ -1,0 +1,100 @@
+{
+  "concept": "weight_durations",
+  "func_dir": "autoformalized_library/functions",
+  "qa_accuracy": 0.97,
+  "precision": 0.967741935483871,
+  "recall": 1.0,
+  "correct": 873,
+  "total": 900,
+  "parse_errors": 1,
+  "mismatches": [
+    {
+      "subject_id": 19318813,
+      "hadm_id": 23778245,
+      "stay_id": 30385473,
+      "predicted": 73.22,
+      "actual": 94.54999923706056
+    },
+    {
+      "subject_id": 13969876,
+      "hadm_id": 20446047,
+      "stay_id": 38956722,
+      "predicted": "YES",
+      "actual": "NO"
+    },
+    {
+      "subject_id": 15611926,
+      "hadm_id": 26802070,
+      "stay_id": 36545848,
+      "predicted": "YES",
+      "actual": "NO"
+    },
+    {
+      "subject_id": 19687015,
+      "hadm_id": 27747598,
+      "stay_id": 34612105,
+      "predicted": "YES",
+      "actual": "NO"
+    },
+    {
+      "subject_id": 14191549,
+      "hadm_id": 20914648,
+      "stay_id": 34927143,
+      "predicted": 92.2,
+      "actual": 88.63333384195964
+    },
+    {
+      "subject_id": 16424233,
+      "hadm_id": 27556432,
+      "stay_id": 30329754,
+      "predicted": 66.46,
+      "actual": 65.83333333333333
+    },
+    {
+      "subject_id": 10208304,
+      "hadm_id": 28091374,
+      "stay_id": 32375956,
+      "predicted": 69.5999984741211,
+      "actual": 70.9749984741211
+    },
+    {
+      "subject_id": 15332552,
+      "hadm_id": 21505706,
+      "stay_id": 35283888,
+      "predicted": 84.85,
+      "actual": 84.73333231608073
+    },
+    {
+      "subject_id": 19970265,
+      "hadm_id": 24514478,
+      "stay_id": 38356273,
+      "predicted": 68.86153881366437,
+      "actual": 69.15
+    },
+    {
+      "subject_id": 19112081,
+      "hadm_id": 25999001,
+      "stay_id": 36929294,
+      "predicted": 71.60000133514404,
+      "actual": 72.42857251848493
+    }
+  ],
+  "details": "QA Accuracy: 97.0%  (correct=873/900, parse_errors=1)\nPrecision: 96.8%  Recall: 100.0%\n  Binary (600): acc=98.3%  prec=96.8%  rec=100.0%  parse_errors=0\n  Numerical (300): acc=94.3%  parse_errors=1\nTokens: 3235642 prompt + 416837 completion = 3652479 total\nLLM calls: 3902\nSQL queries: 914  (8.4s)\nEval wall time: 1494.5s\n--- Per question averages ---\n  Avg tokens: 3595 prompt + 463 completion\n  Avg LLM calls: 4.3\n  Avg SQL queries: 1.0  (0.0s)\n  Avg wall time: 1.7s\nSample misclassifications:\n  subject_id=19318813, hadm_id=23778245, stay_id=30385473: predicted=73.22 actual=94.54999923706056\n  subject_id=13969876, hadm_id=20446047, stay_id=38956722: predicted=YES actual=NO\n  subject_id=15611926, hadm_id=26802070, stay_id=36545848: predicted=YES actual=NO\n  subject_id=19687015, hadm_id=27747598, stay_id=34612105: predicted=YES actual=NO\n  subject_id=14191549, hadm_id=20914648, stay_id=34927143: predicted=92.2 actual=88.63333384195964",
+  "stats": {
+    "prompt_tokens": 3235642,
+    "completion_tokens": 416837,
+    "total_tokens": 3652479,
+    "llm_calls": 3902,
+    "query_count": 914,
+    "query_time_sec": 8.372,
+    "eval_wall_time_sec": 1494.459,
+    "per_question": {
+      "avg_prompt_tokens": 3595.2,
+      "avg_completion_tokens": 463.2,
+      "avg_llm_calls": 4.34,
+      "avg_query_count": 1.02,
+      "avg_query_time_sec": 0.009,
+      "avg_wall_time_sec": 1.661
+    }
+  }
+}

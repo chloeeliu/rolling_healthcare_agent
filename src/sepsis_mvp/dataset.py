@@ -10,14 +10,26 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-from .schemas import Checkpoint, ICUStay, Sepsis3Row, SofaRow, SuspicionOfInfectionRow, Trajectory
+from .schemas import (
+    AKI_ACTIONS,
+    AKI_NON_MONOTONIC_ACTIONS,
+    DEFAULT_TOOL_NAMES,
+    MULTITASK_TOOL_NAMES,
+    RESP_SUPPORT_ACTIONS,
+    SEPSIS_ACTIONS,
+    TASK_BASELINE_ACTION,
+    TASK_LABEL_SPACES,
+    TASK_TOOL_NAMES,
+    Checkpoint,
+    ICUStay,
+    Sepsis3Row,
+    SofaRow,
+    SuspicionOfInfectionRow,
+    Trajectory,
+)
 
 
-MVP_ACTIONS = {
-    "keep_monitoring",
-    "infection_suspect",
-    "trigger_sepsis_alert",
-}
+MVP_ACTIONS = set(SEPSIS_ACTIONS)
 
 
 @dataclass(slots=True)
@@ -110,6 +122,11 @@ def load_trajectories(path: str | Path) -> list[Trajectory]:
                 icu_outtime=item.get("icu_outtime"),
                 icu_los_hours=item.get("icu_los_hours"),
                 is_sepsis=item.get("is_sepsis"),
+                task_name=item.get("task_name"),
+                task_variant=item.get("task_variant"),
+                task_names=item.get("task_names"),
+                tool_names=item.get("tool_names"),
+                label_spaces=item.get("label_spaces"),
             )
         )
     return trajectories
@@ -123,6 +140,17 @@ def load_dataset_auto(
     dataset_path = Path(path)
     suffix = dataset_path.suffix.lower()
     if suffix == ".csv":
+        with dataset_path.open() as handle:
+            reader = csv.DictReader(handle)
+            first_row = next(reader)
+        if "sepsis_label" in first_row:
+            return load_multitask_csv_dataset(dataset_path).trajectories
+        if "aki_stage1_start_hour" in first_row:
+            return load_single_task_csv_dataset(dataset_path, task_name="aki").trajectories
+        if "current_aki_stage_smoothed" in first_row or "path_family" in first_row:
+            return load_single_task_csv_dataset(dataset_path, task_name="aki").trajectories
+        if "medium_support_start_hour" in first_row or "invasive_support_start_hour" in first_row:
+            return load_single_task_csv_dataset(dataset_path, task_name="respiratory_support").trajectories
         return load_rolling_csv_dataset(dataset_path, strict_mvp=strict_mvp).trajectories
     if suffix == ".json":
         return load_trajectories(dataset_path)
@@ -191,6 +219,82 @@ def load_rolling_csv_dataset(
             Checkpoint(
                 t_hour=int(row["t_hour"]),
                 state_label=row["state_label"],
+                checkpoint_time=row.get("checkpoint_time") or None,
+                terminal=_parse_bool(row.get("terminal")),
+            )
+            for row in rows
+        ]
+        step_hours = checkpoints[1].t_hour - checkpoints[0].t_hour if len(checkpoints) > 1 else 4
+        horizon_hours = checkpoints[-1].t_hour
+
+        transitions = {
+            "infection_start_hour": _parse_optional_int(first.get("infection_start_hour")),
+            "sepsis_start_hour": _parse_optional_int(first.get("sepsis_start_hour")),
+            "infection_start_time": first.get("infection_start_time") or None,
+            "sepsis_start_time": first.get("sepsis_start_time") or None,
+        }
+        organ_dysfunction_start_hour = _parse_optional_int(first.get("organ_dysfunction_start_hour"))
+        organ_dysfunction_start_time = first.get("organ_dysfunction_start_time") or None
+        if organ_dysfunction_start_hour is not None or organ_dysfunction_start_time is not None:
+            transitions["organ_dysfunction_start_hour"] = organ_dysfunction_start_hour
+            transitions["organ_dysfunction_start_time"] = organ_dysfunction_start_time
+
+        trajectories.append(
+            Trajectory(
+                trajectory_id=trajectory_id,
+                stay_id=int(first["stay_id"]),
+                subject_id=int(first["subject_id"]),
+                hadm_id=int(first["hadm_id"]),
+                anchor="icu_intime",
+                step_hours=step_hours,
+                horizon_hours=horizon_hours,
+                transitions=transitions,
+                checkpoints=checkpoints,
+                icu_intime=first.get("icu_intime") or None,
+                icu_outtime=first.get("icu_outtime") or None,
+                icu_los_hours=_parse_optional_float(first.get("icu_los_hours")),
+                is_sepsis=_parse_bool(first.get("is_sepsis")),
+                task_name="sepsis",
+                task_names=["sepsis"],
+                tool_names=list(DEFAULT_TOOL_NAMES),
+                label_spaces={"sepsis": list(SEPSIS_ACTIONS)},
+            )
+        )
+
+    return CSVLoadResult(
+        trajectories=trajectories,
+        included_trajectories=len(trajectories),
+        skipped_trajectories=sum(skipped_reasons.values()),
+        skipped_reasons=dict(skipped_reasons),
+    )
+
+
+def load_multitask_csv_dataset(path: str | Path) -> CSVLoadResult:
+    grouped_rows: dict[str, list[dict[str, str]]] = defaultdict(list)
+    with Path(path).open() as handle:
+        reader = csv.DictReader(handle)
+        for row in reader:
+            grouped_rows[row["trajectory_id"]].append(row)
+
+    trajectories: list[Trajectory] = []
+    for trajectory_id, rows in sorted(grouped_rows.items()):
+        rows.sort(key=lambda row: int(row["t_hour"]))
+        first = rows[0]
+        checkpoints = [
+            Checkpoint(
+                t_hour=int(row["t_hour"]),
+                checkpoint_time=row.get("checkpoint_time") or None,
+                task_labels={
+                    "sepsis": row["sepsis_label"],
+                    "aki": row["aki_label"],
+                    "respiratory_support": row["respiratory_support_label"],
+                },
+                terminal_by_task={
+                    "sepsis": _parse_bool(row.get("sepsis_terminal")) or False,
+                    "aki": _parse_bool(row.get("aki_terminal")) or False,
+                    "respiratory_support": _parse_bool(row.get("respiratory_support_terminal")) or False,
+                },
+                terminal=_parse_bool(row.get("terminal_any")),
             )
             for row in rows
         ]
@@ -207,26 +311,143 @@ def load_rolling_csv_dataset(
                 step_hours=step_hours,
                 horizon_hours=horizon_hours,
                 transitions={
-                    "infection_start_hour": _parse_optional_int(first.get("infection_start_hour")),
-                    "organ_dysfunction_start_hour": _parse_optional_int(first.get("organ_dysfunction_start_hour")),
-                    "sepsis_start_hour": _parse_optional_int(first.get("sepsis_start_hour")),
-                    "infection_start_time": first.get("infection_start_time") or None,
-                    "organ_dysfunction_start_time": first.get("organ_dysfunction_start_time") or None,
-                    "sepsis_start_time": first.get("sepsis_start_time") or None,
+                    "sepsis": {
+                        "infection_start_hour": _parse_optional_int(first.get("infection_start_hour")),
+                        "sepsis_start_hour": _parse_optional_int(first.get("sepsis_start_hour")),
+                        "infection_start_time": first.get("infection_start_time") or None,
+                        "sepsis_start_time": first.get("sepsis_start_time") or None,
+                    },
+                    "aki": {
+                        "aki_stage1_start_hour": _parse_optional_int(first.get("aki_stage1_start_hour")),
+                        "aki_stage23_start_hour": _parse_optional_int(first.get("aki_stage23_start_hour")),
+                        "aki_stage1_start_time": first.get("aki_stage1_start_time") or None,
+                        "aki_stage23_start_time": first.get("aki_stage23_start_time") or None,
+                    },
+                    "respiratory_support": {
+                        "medium_support_start_hour": _parse_optional_int(first.get("medium_support_start_hour")),
+                        "invasive_support_start_hour": _parse_optional_int(first.get("invasive_support_start_hour")),
+                        "medium_support_start_time": first.get("medium_support_start_time") or None,
+                        "invasive_support_start_time": first.get("invasive_support_start_time") or None,
+                    },
                 },
                 checkpoints=checkpoints,
                 icu_intime=first.get("icu_intime") or None,
                 icu_outtime=first.get("icu_outtime") or None,
                 icu_los_hours=_parse_optional_float(first.get("icu_los_hours")),
                 is_sepsis=_parse_bool(first.get("is_sepsis")),
+                task_name="multitask",
+                task_names=["sepsis", "aki", "respiratory_support"],
+                tool_names=list(MULTITASK_TOOL_NAMES),
+                label_spaces={task: labels[:] for task, labels in TASK_LABEL_SPACES.items()},
             )
         )
 
     return CSVLoadResult(
         trajectories=trajectories,
         included_trajectories=len(trajectories),
-        skipped_trajectories=sum(skipped_reasons.values()),
-        skipped_reasons=dict(skipped_reasons),
+        skipped_trajectories=0,
+        skipped_reasons={},
+    )
+
+
+def load_single_task_csv_dataset(path: str | Path, *, task_name: str) -> CSVLoadResult:
+    grouped_rows: dict[str, list[dict[str, str]]] = defaultdict(list)
+    with Path(path).open() as handle:
+        reader = csv.DictReader(handle)
+        for row in reader:
+            grouped_rows[row["trajectory_id"]].append(row)
+
+    if task_name == "aki":
+        is_non_monotonic = any(
+            key in grouped_rows[next(iter(grouped_rows))]
+            for key in ("current_aki_stage_smoothed", "path_family")
+        )
+        if is_non_monotonic:
+            transition_keys = {
+                "path_family": "path_family",
+                "path_0_24": "path_0_24",
+                "max_stage_24h": "max_stage_24h",
+                "has_up_24h": "has_up_24h",
+                "has_down_24h": "has_down_24h",
+                "num_changes_24h": "num_changes_24h",
+            }
+        else:
+            transition_keys = {
+                "aki_stage1_start_hour": "aki_stage1_start_hour",
+                "aki_stage23_start_hour": "aki_stage23_start_hour",
+                "aki_stage1_start_time": "aki_stage1_start_time",
+                "aki_stage23_start_time": "aki_stage23_start_time",
+            }
+    elif task_name == "respiratory_support":
+        transition_keys = {
+            "medium_support_start_hour": "medium_support_start_hour",
+            "invasive_support_start_hour": "invasive_support_start_hour",
+            "medium_support_start_time": "medium_support_start_time",
+            "invasive_start_time": "invasive_support_start_time",
+            "invasive_support_start_time": "invasive_support_start_time",
+        }
+    else:
+        raise ValueError(f"Unsupported single-task CSV type: {task_name}")
+
+    trajectories: list[Trajectory] = []
+    for trajectory_id, rows in sorted(grouped_rows.items()):
+        rows.sort(key=lambda row: int(row["t_hour"]))
+        first = rows[0]
+        checkpoints = [
+            Checkpoint(
+                t_hour=int(row["t_hour"]),
+                state_label=row["state_label"],
+                checkpoint_time=row.get("checkpoint_time") or None,
+                terminal=_parse_bool(row.get("terminal")),
+            )
+            for row in rows
+        ]
+        step_hours = checkpoints[1].t_hour - checkpoints[0].t_hour if len(checkpoints) > 1 else 4
+        horizon_hours = checkpoints[-1].t_hour
+        transitions = {}
+        for source_key, target_key in transition_keys.items():
+            if source_key.endswith("_hour"):
+                transitions[target_key] = _parse_optional_int(first.get(source_key))
+            elif source_key in {"max_stage_24h", "num_changes_24h"}:
+                transitions[target_key] = _parse_optional_int(first.get(source_key))
+            elif source_key in {"has_up_24h", "has_down_24h"}:
+                transitions[target_key] = _parse_bool(first.get(source_key))
+            else:
+                transitions[target_key] = first.get(source_key) or None
+
+        task_variant = None
+        label_space = list(TASK_LABEL_SPACES[task_name])
+        if task_name == "aki" and "current_aki_stage_smoothed" in first:
+            task_variant = "non_monotonic_current_state"
+            label_space = list(AKI_NON_MONOTONIC_ACTIONS)
+
+        trajectories.append(
+            Trajectory(
+                trajectory_id=trajectory_id,
+                stay_id=int(first["stay_id"]),
+                subject_id=int(first["subject_id"]),
+                hadm_id=int(first["hadm_id"]),
+                anchor="icu_intime",
+                step_hours=step_hours,
+                horizon_hours=horizon_hours,
+                transitions=transitions,
+                checkpoints=checkpoints,
+                icu_intime=first.get("icu_intime") or None,
+                icu_outtime=first.get("icu_outtime") or None,
+                icu_los_hours=_parse_optional_float(first.get("icu_los_hours")),
+                task_name=task_name,
+                task_variant=task_variant,
+                task_names=[task_name],
+                tool_names=list(TASK_TOOL_NAMES[task_name]),
+                label_spaces={task_name: label_space},
+            )
+        )
+
+    return CSVLoadResult(
+        trajectories=trajectories,
+        included_trajectories=len(trajectories),
+        skipped_trajectories=0,
+        skipped_reasons={},
     )
 
 
@@ -329,6 +550,10 @@ def build_dataset(
                     "sepsis_start_hour": sepsis_start_hour,
                 },
                 checkpoints=checkpoints,
+                task_name="sepsis",
+                task_names=["sepsis"],
+                tool_names=list(DEFAULT_TOOL_NAMES),
+                label_spaces={"sepsis": list(SEPSIS_ACTIONS)},
             )
         )
 

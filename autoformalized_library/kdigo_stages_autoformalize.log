@@ -1,0 +1,1266 @@
+2026-03-26 04:15:28  INFO      Using database: /home/v-tiossowski/MIMIC-IV/mimic4.db
+2026-03-26 04:15:28  INFO      No --model_url provided; loading vLLM in-process …
+INFO 03-26 04:15:33 [utils.py:238] non-default args: {'trust_remote_code': True, 'max_model_len': 40000, 'disable_log_stats': True, 'model': 'Qwen/Qwen3.5-27B'}
+The argument `trust_remote_code` is to be used with Auto classes. It has no effect here and is ignored.
+The argument `trust_remote_code` is to be used with Auto classes. It has no effect here and is ignored.
+The argument `trust_remote_code` is to be used with Auto classes. It has no effect here and is ignored.
+INFO 03-26 04:15:34 [model.py:531] Resolved architecture: Qwen3_5ForConditionalGeneration
+INFO 03-26 04:15:34 [model.py:1554] Using max model len 40000
+INFO 03-26 04:15:34 [scheduler.py:231] Chunked prefill is enabled with max_num_batched_tokens=8192.
+INFO 03-26 04:15:35 [config.py:544] Setting attention block size to 784 tokens to ensure that attention page size is >= mamba page size.
+INFO 03-26 04:15:35 [config.py:575] Padding mamba page size by 0.13% to ensure that mamba page size and attention page size are exactly equal.
+INFO 03-26 04:15:35 [vllm.py:747] Asynchronous scheduling is enabled.
+WARNING 03-26 04:15:43 [system_utils.py:152] We must use the `spawn` multiprocessing start method. Overriding VLLM_WORKER_MULTIPROC_METHOD to 'spawn'. See https://docs.vllm.ai/en/latest/usage/troubleshooting.html#python-multiprocessing for more information. Reasons: CUDA is initialized
+(EngineCore_DP0 pid=480965) INFO 03-26 04:15:48 [core.py:101] Initializing a V1 LLM engine (v0.17.1) with config: model='Qwen/Qwen3.5-27B', speculative_config=None, tokenizer='Qwen/Qwen3.5-27B', skip_tokenizer_init=False, tokenizer_mode=auto, revision=None, tokenizer_revision=None, trust_remote_code=True, dtype=torch.bfloat16, max_seq_len=40000, download_dir=None, load_format=auto, tensor_parallel_size=1, pipeline_parallel_size=1, data_parallel_size=1, disable_custom_all_reduce=False, quantization=None, enforce_eager=False, enable_return_routed_experts=False, kv_cache_dtype=auto, device_config=cuda, structured_outputs_config=StructuredOutputsConfig(backend='auto', disable_fallback=False, disable_any_whitespace=False, disable_additional_properties=False, reasoning_parser='', reasoning_parser_plugin='', enable_in_reasoning=False), observability_config=ObservabilityConfig(show_hidden_metrics_for_version=None, otlp_traces_endpoint=None, collect_detailed_traces=None, kv_cache_metrics=False, kv_cache_metrics_sample=0.01, cudagraph_metrics=False, enable_layerwise_nvtx_tracing=False, enable_mfu_metrics=False, enable_mm_processor_stats=False, enable_logging_iteration_details=False), seed=0, served_model_name=Qwen/Qwen3.5-27B, enable_prefix_caching=False, enable_chunked_prefill=True, pooler_config=None, compilation_config={'level': None, 'mode': <CompilationMode.VLLM_COMPILE: 3>, 'debug_dump_path': None, 'cache_dir': '', 'compile_cache_save_format': 'binary', 'backend': 'inductor', 'custom_ops': ['none'], 'splitting_ops': ['vllm::unified_attention', 'vllm::unified_attention_with_output', 'vllm::unified_mla_attention', 'vllm::unified_mla_attention_with_output', 'vllm::mamba_mixer2', 'vllm::mamba_mixer', 'vllm::short_conv', 'vllm::linear_attention', 'vllm::plamo2_mamba_mixer', 'vllm::gdn_attention_core', 'vllm::kda_attention', 'vllm::sparse_attn_indexer', 'vllm::rocm_aiter_sparse_attn_indexer', 'vllm::unified_kv_cache_update', 'vllm::unified_mla_kv_cache_update'], 'compile_mm_encoder': False, 'compile_sizes': [], 'compile_ranges_split_points': [8192], 'inductor_compile_config': {'enable_auto_functionalized_v2': False, 'combo_kernels': True, 'benchmark_combo_kernel': True}, 'inductor_passes': {}, 'cudagraph_mode': <CUDAGraphMode.FULL_AND_PIECEWISE: (2, 1)>, 'cudagraph_num_of_warmups': 1, 'cudagraph_capture_sizes': [1, 2, 4, 8, 16, 24, 32, 40, 48, 56, 64, 72, 80, 88, 96, 104, 112, 120, 128, 136, 144, 152, 160, 168, 176, 184, 192, 200, 208, 216, 224, 232, 240, 248, 256, 272, 288, 304, 320, 336, 352, 368, 384, 400, 416, 432, 448, 464, 480, 496, 512], 'cudagraph_copy_inputs': False, 'cudagraph_specialize_lora': True, 'use_inductor_graph_partition': False, 'pass_config': {'fuse_norm_quant': False, 'fuse_act_quant': False, 'fuse_attn_quant': False, 'enable_sp': False, 'fuse_gemm_comms': False, 'fuse_allreduce_rms': False}, 'max_cudagraph_capture_size': 512, 'dynamic_shapes_config': {'type': <DynamicShapesType.BACKED: 'backed'>, 'evaluate_guards': False, 'assume_32_bit_indexing': False}, 'local_cache_dir': None, 'fast_moe_cold_start': True, 'static_all_moe_layers': []}
+(EngineCore_DP0 pid=480965) INFO 03-26 04:15:50 [parallel_state.py:1393] world_size=1 rank=0 local_rank=0 distributed_init_method=tcp://10.8.144.167:35779 backend=nccl
+(EngineCore_DP0 pid=480965) INFO 03-26 04:15:50 [parallel_state.py:1715] rank 0 in world size 1 is assigned as DP rank 0, PP rank 0, PCP rank 0, TP rank 0, EP rank N/A, EPLB rank N/A
+(EngineCore_DP0 pid=480965) INFO 03-26 04:15:57 [base.py:106] Offloader set to NoopOffloader
+(EngineCore_DP0 pid=480965) INFO 03-26 04:15:57 [gpu_model_runner.py:4281] Starting to load model Qwen/Qwen3.5-27B...
+(EngineCore_DP0 pid=480965) INFO 03-26 04:15:57 [cuda.py:453] Using backend AttentionBackendEnum.FLASH_ATTN for vit attention
+(EngineCore_DP0 pid=480965) INFO 03-26 04:15:57 [mm_encoder_attention.py:215] Using AttentionBackendEnum.FLASH_ATTN for MMEncoderAttention.
+(EngineCore_DP0 pid=480965) INFO 03-26 04:15:58 [cuda.py:405] Using FLASH_ATTN attention backend out of potential backends: ['FLASH_ATTN', 'FLASHINFER', 'TRITON_ATTN', 'FLEX_ATTENTION'].
+(EngineCore_DP0 pid=480965) INFO 03-26 04:15:58 [flash_attn.py:587] Using FlashAttention version 2
+(EngineCore_DP0 pid=480965) <frozen importlib._bootstrap_external>:1301: FutureWarning: The cuda.cudart module is deprecated and will be removed in a future release, please switch to use the cuda.bindings.runtime module instead.
+(EngineCore_DP0 pid=480965) <frozen importlib._bootstrap_external>:1301: FutureWarning: The cuda.nvrtc module is deprecated and will be removed in a future release, please switch to use the cuda.bindings.nvrtc module instead.
+(EngineCore_DP0 pid=480965) Loading safetensors checkpoint shards:   0% Completed | 0/11 [00:00<?, ?it/s]
+(EngineCore_DP0 pid=480965) Loading safetensors checkpoint shards:   9% Completed | 1/11 [00:00<00:05,  1.84it/s]
+(EngineCore_DP0 pid=480965) Loading safetensors checkpoint shards:  18% Completed | 2/11 [00:01<00:05,  1.64it/s]
+(EngineCore_DP0 pid=480965) Loading safetensors checkpoint shards:  27% Completed | 3/11 [00:01<00:05,  1.51it/s]
+(EngineCore_DP0 pid=480965) Loading safetensors checkpoint shards:  36% Completed | 4/11 [00:02<00:04,  1.45it/s]
+(EngineCore_DP0 pid=480965) Loading safetensors checkpoint shards:  45% Completed | 5/11 [00:03<00:04,  1.44it/s]
+(EngineCore_DP0 pid=480965) Loading safetensors checkpoint shards:  55% Completed | 6/11 [00:04<00:03,  1.42it/s]
+(EngineCore_DP0 pid=480965) Loading safetensors checkpoint shards:  64% Completed | 7/11 [00:04<00:02,  1.39it/s]
+(EngineCore_DP0 pid=480965) Loading safetensors checkpoint shards:  73% Completed | 8/11 [00:05<00:02,  1.40it/s]
+(EngineCore_DP0 pid=480965) Loading safetensors checkpoint shards:  82% Completed | 9/11 [00:06<00:01,  1.40it/s]
+(EngineCore_DP0 pid=480965) Loading safetensors checkpoint shards:  91% Completed | 10/11 [00:06<00:00,  1.39it/s]
+(EngineCore_DP0 pid=480965) Loading safetensors checkpoint shards: 100% Completed | 11/11 [00:07<00:00,  1.57it/s]
+(EngineCore_DP0 pid=480965) Loading safetensors checkpoint shards: 100% Completed | 11/11 [00:07<00:00,  1.48it/s]
+(EngineCore_DP0 pid=480965) 
+(EngineCore_DP0 pid=480965) INFO 03-26 04:16:06 [default_loader.py:293] Loading weights took 7.49 seconds
+(EngineCore_DP0 pid=480965) INFO 03-26 04:16:06 [gpu_model_runner.py:4364] Model loading took 51.1 GiB memory and 8.551050 seconds
+(EngineCore_DP0 pid=480965) INFO 03-26 04:16:06 [gpu_model_runner.py:5280] Encoder cache will be initialized with a budget of 16384 tokens, and profiled with 1 image items of the maximum feature size.
+(EngineCore_DP0 pid=480965) INFO 03-26 04:16:15 [decorators.py:465] Directly load AOT compilation from path /home/v-tiossowski/.cache/vllm/torch_compile_cache/torch_aot_compile/0232891e22bd4d7db98ac2f43c441f0f81d0a431216053ca49fadeaff23e2af3/rank_0_0/model
+(EngineCore_DP0 pid=480965) INFO 03-26 04:16:15 [backends.py:916] Using cache directory: /home/v-tiossowski/.cache/vllm/torch_compile_cache/feaf61af16/rank_0_0/backbone for vLLM's torch.compile
+(EngineCore_DP0 pid=480965) INFO 03-26 04:16:15 [backends.py:976] Dynamo bytecode transform time: 3.56 s
+(EngineCore_DP0 pid=480965) INFO 03-26 04:16:25 [backends.py:266] Directly load the compiled graph(s) for compile range (1, 8192) from the cache, took 9.438 s
+(EngineCore_DP0 pid=480965) INFO 03-26 04:16:25 [monitor.py:35] torch.compile takes 13.89 s in total
+(EngineCore_DP0 pid=480965) INFO 03-26 04:16:26 [gpu_worker.py:424] Available KV cache memory: 18.3 GiB
+(EngineCore_DP0 pid=480965) INFO 03-26 04:16:26 [kv_cache_utils.py:1314] GPU KV cache size: 74,480 tokens
+(EngineCore_DP0 pid=480965) INFO 03-26 04:16:26 [kv_cache_utils.py:1319] Maximum concurrency for 40,000 tokens per request: 6.95x
+(EngineCore_DP0 pid=480965) Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):   0%|          | 0/51 [00:00<?, ?it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):   2%|▏         | 1/51 [00:00<00:08,  5.84it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):   4%|▍         | 2/51 [00:00<00:08,  6.02it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):   6%|▌         | 3/51 [00:00<00:07,  6.06it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):   8%|▊         | 4/51 [00:00<00:07,  6.08it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  10%|▉         | 5/51 [00:00<00:07,  6.14it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  12%|█▏        | 6/51 [00:00<00:07,  6.19it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  14%|█▎        | 7/51 [00:01<00:07,  6.19it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  16%|█▌        | 8/51 [00:01<00:07,  6.12it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  18%|█▊        | 9/51 [00:01<00:06,  6.41it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  20%|█▉        | 10/51 [00:01<00:06,  6.60it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  22%|██▏       | 11/51 [00:01<00:06,  6.63it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  24%|██▎       | 12/51 [00:01<00:05,  6.83it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  25%|██▌       | 13/51 [00:02<00:05,  6.92it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  27%|██▋       | 14/51 [00:02<00:05,  7.07it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  29%|██▉       | 15/51 [00:02<00:05,  7.19it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  31%|███▏      | 16/51 [00:02<00:04,  7.29it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  33%|███▎      | 17/51 [00:02<00:04,  7.56it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  35%|███▌      | 18/51 [00:02<00:04,  7.77it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  37%|███▋      | 19/51 [00:02<00:03,  8.02it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  39%|███▉      | 20/51 [00:02<00:03,  8.19it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  41%|████      | 21/51 [00:03<00:03,  8.35it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  43%|████▎     | 22/51 [00:03<00:03,  8.44it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  45%|████▌     | 23/51 [00:03<00:03,  8.49it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  47%|████▋     | 24/51 [00:03<00:03,  8.52it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  49%|████▉     | 25/51 [00:03<00:03,  8.44it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  51%|█████     | 26/51 [00:03<00:02,  8.36it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  53%|█████▎    | 27/51 [00:03<00:02,  8.41it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  55%|█████▍    | 28/51 [00:03<00:02,  8.44it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  57%|█████▋    | 29/51 [00:03<00:02,  8.43it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  59%|█████▉    | 30/51 [00:04<00:02,  8.41it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  61%|██████    | 31/51 [00:04<00:02,  8.49it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  63%|██████▎   | 32/51 [00:04<00:02,  8.57it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  65%|██████▍   | 33/51 [00:04<00:02,  8.94it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  69%|██████▊   | 35/51 [00:04<00:01,  9.42it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  73%|███████▎  | 37/51 [00:04<00:01,  9.63it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  75%|███████▍  | 38/51 [00:04<00:01,  9.70it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  78%|███████▊  | 40/51 [00:05<00:01,  9.81it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  82%|████████▏ | 42/51 [00:05<00:00,  9.97it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  86%|████████▋ | 44/51 [00:05<00:00, 10.03it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  90%|█████████ | 46/51 [00:05<00:00, 10.14it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  94%|█████████▍| 48/51 [00:05<00:00, 10.38it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  98%|█████████▊| 50/51 [00:06<00:00, 10.39it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE): 100%|██████████| 51/51 [00:06<00:00,  8.28it/s]
+(EngineCore_DP0 pid=480965) Capturing CUDA graphs (decode, FULL):   0%|          | 0/35 [00:00<?, ?it/s]Capturing CUDA graphs (decode, FULL):   3%|▎         | 1/35 [00:00<00:06,  5.62it/s]Capturing CUDA graphs (decode, FULL):   6%|▌         | 2/35 [00:00<00:05,  6.12it/s]Capturing CUDA graphs (decode, FULL):   9%|▊         | 3/35 [00:00<00:05,  6.28it/s]Capturing CUDA graphs (decode, FULL):  11%|█▏        | 4/35 [00:00<00:04,  6.40it/s]Capturing CUDA graphs (decode, FULL):  14%|█▍        | 5/35 [00:00<00:04,  6.50it/s]Capturing CUDA graphs (decode, FULL):  17%|█▋        | 6/35 [00:00<00:04,  6.62it/s]Capturing CUDA graphs (decode, FULL):  20%|██        | 7/35 [00:01<00:04,  6.72it/s]Capturing CUDA graphs (decode, FULL):  23%|██▎       | 8/35 [00:01<00:03,  6.80it/s]Capturing CUDA graphs (decode, FULL):  26%|██▌       | 9/35 [00:01<00:03,  6.81it/s]Capturing CUDA graphs (decode, FULL):  29%|██▊       | 10/35 [00:01<00:03,  6.86it/s]Capturing CUDA graphs (decode, FULL):  31%|███▏      | 11/35 [00:01<00:03,  6.91it/s]Capturing CUDA graphs (decode, FULL):  34%|███▍      | 12/35 [00:01<00:03,  6.97it/s]Capturing CUDA graphs (decode, FULL):  37%|███▋      | 13/35 [00:01<00:03,  7.05it/s]Capturing CUDA graphs (decode, FULL):  40%|████      | 14/35 [00:02<00:03,  6.99it/s]Capturing CUDA graphs (decode, FULL):  43%|████▎     | 15/35 [00:02<00:02,  7.04it/s]Capturing CUDA graphs (decode, FULL):  46%|████▌     | 16/35 [00:02<00:02,  7.03it/s]Capturing CUDA graphs (decode, FULL):  49%|████▊     | 17/35 [00:02<00:02,  7.35it/s]Capturing CUDA graphs (decode, FULL):  51%|█████▏    | 18/35 [00:02<00:02,  7.50it/s]Capturing CUDA graphs (decode, FULL):  54%|█████▍    | 19/35 [00:02<00:02,  7.68it/s]Capturing CUDA graphs (decode, FULL):  57%|█████▋    | 20/35 [00:02<00:01,  7.92it/s]Capturing CUDA graphs (decode, FULL):  60%|██████    | 21/35 [00:02<00:01,  8.14it/s]Capturing CUDA graphs (decode, FULL):  63%|██████▎   | 22/35 [00:03<00:01,  8.14it/s]Capturing CUDA graphs (decode, FULL):  66%|██████▌   | 23/35 [00:03<00:01,  8.25it/s]Capturing CUDA graphs (decode, FULL):  69%|██████▊   | 24/35 [00:03<00:01,  8.13it/s]Capturing CUDA graphs (decode, FULL):  71%|███████▏  | 25/35 [00:03<00:01,  8.11it/s]Capturing CUDA graphs (decode, FULL):  74%|███████▍  | 26/35 [00:03<00:01,  8.28it/s]Capturing CUDA graphs (decode, FULL):  77%|███████▋  | 27/35 [00:03<00:00,  8.42it/s]Capturing CUDA graphs (decode, FULL):  80%|████████  | 28/35 [00:03<00:00,  8.44it/s]Capturing CUDA graphs (decode, FULL):  83%|████████▎ | 29/35 [00:03<00:00,  8.54it/s]Capturing CUDA graphs (decode, FULL):  86%|████████▌ | 30/35 [00:04<00:00,  8.52it/s]Capturing CUDA graphs (decode, FULL):  89%|████████▊ | 31/35 [00:04<00:00,  8.43it/s]Capturing CUDA graphs (decode, FULL):  91%|█████████▏| 32/35 [00:04<00:00,  8.41it/s]Capturing CUDA graphs (decode, FULL):  94%|█████████▍| 33/35 [00:04<00:00,  8.36it/s]Capturing CUDA graphs (decode, FULL):  97%|█████████▋| 34/35 [00:04<00:00,  8.36it/s]Capturing CUDA graphs (decode, FULL): 100%|██████████| 35/35 [00:04<00:00,  8.57it/s]Capturing CUDA graphs (decode, FULL): 100%|██████████| 35/35 [00:04<00:00,  7.57it/s]
+(EngineCore_DP0 pid=480965) INFO 03-26 04:16:38 [gpu_model_runner.py:5386] Graph capturing finished in 12 secs, took 1.13 GiB
+(EngineCore_DP0 pid=480965) INFO 03-26 04:16:38 [core.py:282] init engine (profile, create kv cache, warmup model) took 31.58 seconds
+(EngineCore_DP0 pid=480965) INFO 03-26 04:16:38 [vllm.py:747] Asynchronous scheduling is enabled.
+INFO 03-26 04:16:38 [llm.py:388] Supported tasks: ['generate']
+2026-03-26 04:16:38  INFO      Loading QA dataset from /home/v-tiossowski/HealthcareAgent/mimic-code/data/MIMICIV_kdigo_stages_dataset/kdigo_stages.csv
+2026-03-26 04:16:38  INFO      Dataset: 1000 rows, columns: ['subject_id', 'hadm_id', 'stay_id', 'intime', 'outtime', 'first_careunit', 'last_careunit', 'gt_label', 'question', 'gt_answer_type', 'split', 'max_aki_stage', 'max_aki_stage_creat', 'max_aki_stage_uo', 'max_aki_stage_crrt']
+2026-03-26 04:16:38  INFO      Filtered to train split: 100 rows
+2026-03-26 04:16:38  INFO      Auto-discovered ground-truth SQL: /home/v-tiossowski/HealthcareAgent/mimic-code/mimic-iv/concepts_duckdb/organfailure/kdigo_stages.sql
+2026-03-26 04:16:38  INFO      === Iteration 1/100  run=kdigo_stages  best_qa=0.0% ===
+INFO 03-26 04:16:40 [hf.py:318] Detected the chat template content format to be 'string'. You can set `--chat-template-content-format` to override this.
+2026-03-26 04:16:54  INFO      Exec block 1/1 …
+2026-03-26 04:16:54  INFO      Output: []
+
+2026-03-26 04:16:54  INFO      === Iteration 2/100  run=kdigo_stages  best_qa=0.0% ===
+2026-03-26 04:16:57  INFO      Exec block 1/1 …
+2026-03-26 04:16:57  INFO      Output: []
+
+2026-03-26 04:16:57  INFO      === Iteration 3/100  run=kdigo_stages  best_qa=0.0% ===
+2026-03-26 04:16:59  INFO      Exec block 1/1 …
+2026-03-26 04:16:59  INFO      Output: ['acidosis_guideline', 'acute_decompensated_heart_failure_guideline', 'acute_hepatic_failure_guideline', 'adverse_effect_of_anticoagulants_guideline', 'alcohol_withdrawal_syndrome_guideline', 'anemia_icu_critically_ill_hemoglobin_transfusion_guideline', 'apache_iii_guideline', 'atrial_fibrillation_guideline', 'bradycardia_guideline', 'cerebral_infarction_guideline', 'coma_altered_consciousness_icu_guideline', 'copd_exacerbation_guideline', 'coronary_artery_disease_guideline', 'deep_vein_thrombos
+2026-03-26 04:16:59  INFO      === Iteration 4/100  run=kdigo_stages  best_qa=0.0% ===
+2026-03-26 04:17:01  INFO      Exec block 1/1 …
+2026-03-26 04:17:01  INFO      Output: []
+
+2026-03-26 04:17:01  INFO      === Iteration 5/100  run=kdigo_stages  best_qa=0.0% ===
+2026-03-26 04:17:03  INFO      Exec block 1/1 …
+2026-03-26 04:17:03  INFO      Output: ['kdigo_creatinine', 'kdigo_uo']
+
+2026-03-26 04:17:03  INFO      === Iteration 6/100  run=kdigo_stages  best_qa=0.0% ===
+2026-03-26 04:17:06  INFO      Exec block 1/1 …
+2026-03-26 04:17:06  INFO      Output: 'def kdigo_creatinine(stay_id):\n    """\n    Calculate KDIGO AKI stage based on creatinine criteria for a patient\'s ICU stay.\n\n    KDIGO AKI Staging based on Creatinine:\n    - Stage 0: No AKI\n    - Stage 1: Serum creatinine increase ≥0.3 mg/dL within 48 hours OR 1.5-1.9 times baseline\n    - Stage 2: Serum creatinine increase 2.0-2.9 times baseline\n    - Stage 3: Serum creatinine increase ≥3.0 times baseline OR serum creatinine ≥4.0 mg/dL \n               with an acute increase ≥0.5 mg/dL
+2026-03-26 04:17:06  INFO      === Iteration 7/100  run=kdigo_stages  best_qa=0.0% ===
+2026-03-26 04:17:08  INFO      Exec block 1/1 …
+2026-03-26 04:17:08  INFO      Output: 'def kdigo_uo(stay_id):\n    """\n    Calculate KDIGO AKI stage based on urine output criteria for a patient\'s ICU stay.\n\n    KDIGO AKI Staging based on Urine Output:\n    - Stage 0: No AKI (urine output >= 0.5 mL/kg/hr)\n    - Stage 1: Urine output < 0.5 mL/kg/hr for 6 consecutive hours\n    - Stage 2: Urine output < 0.5 mL/kg/hr for 12 consecutive hours\n    - Stage 3: Urine output < 0.3 mL/kg/hr for 24 consecutive hours OR anuria for 12 consecutive hours\n\n    Urine output items included:
+2026-03-26 04:17:08  INFO      === Iteration 8/100  run=kdigo_stages  best_qa=0.0% ===
+2026-03-26 04:17:12  INFO      Exec block 1/1 …
+2026-03-26 04:17:12  INFO      Output: "Functions from 'kdigo_creatinine' loaded successfully."
+
+2026-03-26 04:17:12  INFO      === Iteration 9/100  run=kdigo_stages  best_qa=0.0% ===
+2026-03-26 04:17:16  INFO      Exec block 1/1 …
+2026-03-26 04:17:16  INFO      Output: "Functions from 'kdigo_uo' loaded successfully."
+
+2026-03-26 04:17:16  INFO      === Iteration 10/100  run=kdigo_stages  best_qa=0.0% ===
+2026-03-26 04:17:23  INFO      Exec block 1/1 …
+2026-03-26 04:17:23  INFO      Output:     table_schema          table_name
+0   mimiciv_hosp          admissions
+1   mimiciv_hosp             d_hcpcs
+2   mimiciv_hosp     d_icd_diagnoses
+3   mimiciv_hosp    d_icd_procedures
+4   mimiciv_hosp          d_labitems
+5   mimiciv_hosp       diagnoses_icd
+6   mimiciv_hosp            drgcodes
+7   mimiciv_hosp                emar
+8   mimiciv_hosp         emar_detail
+9   mimiciv_hosp         hcpcsevents
+10  mimiciv_hosp           labevents
+11  mimiciv_hosp  microbiologyevents
+12  mimiciv_hosp   
+2026-03-26 04:17:23  INFO      === Iteration 11/100  run=kdigo_stages  best_qa=0.0% ===
+2026-03-26 04:17:27  INFO      Exec block 1/1 …
+2026-03-26 04:17:27  INFO      Output:     stay_id  subject_id   hadm_id              intime             outtime
+0  39553978    10000032  29079034 2180-07-23 14:00:00 2180-07-23 23:50:47
+1  37081114    10000690  25860671 2150-11-02 19:37:00 2150-11-06 17:03:17
+2  39765666    10000980  26913865 2189-06-27 08:42:00 2189-06-27 20:38:27
+3  37067082    10001217  24597018 2157-11-20 19:18:02 2157-11-21 22:08:00
+4  34592300    10001217  27703517 2157-12-19 15:42:24 2157-12-20 14:27:41
+
+2026-03-26 04:17:27  INFO      === Iteration 12/100  run=kdigo_stages  best_qa=0.0% ===
+2026-03-26 04:17:31  INFO      Exec block 1/1 …
+2026-03-26 04:17:31  INFO      Output: {'stay_id': 39553978, 'subject_id': np.int32(10000032), 'hadm_id': np.int32(29079034), 'intime': '2180-07-23 14:00:00', 'outtime': '2180-07-23 23:50:47', 'baseline_creatinine': np.float64(0.3), 'baseline_source': 'prior_3_months', 'max_creatinine': np.float64(0.5), 'max_creatinine_ratio': np.float64(1.67), 'max_absolute_increase': np.float64(0.2), 'kdigo_stage': 1, 'has_aki': True, 'has_stage_3': False, 'creatinine_values':              charttime  valuenum  ratio_to_baseline  absolute_increase
+8
+2026-03-26 04:17:31  INFO      === Iteration 13/100  run=kdigo_stages  best_qa=0.0% ===
+2026-03-26 04:17:36  INFO      Exec block 1/1 …
+2026-03-26 04:17:36  INFO      Output: {'stay_id': 39553978, 'subject_id': np.int32(10000032), 'hadm_id': np.int32(29079034), 'intime': '2180-07-23 14:00:00', 'outtime': '2180-07-23 23:50:47', 'weight_kg': np.float32(39.4), 'max_kdigo_stage': 1, 'has_aki': True, 'has_stage_2_or_higher': False, 'has_stage_3': False, 'hourly_uo':            hour_start            hour_end  urine_output_ml  uo_per_kg_hr
+0 2180-07-23 14:00:00 2180-07-23 15:00:00              0.0      0.000000
+1 2180-07-23 15:00:00 2180-07-23 16:00:00            175.0     
+2026-03-26 04:17:36  INFO      === Iteration 14/100  run=kdigo_stages  best_qa=0.0% ===
+2026-03-26 04:17:45  INFO      Exec block 1/1 …
+2026-03-26 04:17:45  INFO      Output: Creatinine result: {'stay_id': 37081114, 'subject_id': np.int32(10000690), 'hadm_id': np.int32(25860671), 'intime': '2150-11-02 19:37:00', 'outtime': '2150-11-06 17:03:17', 'baseline_creatinine': np.float64(0.8), 'baseline_source': 'prior_3_months', 'max_creatinine': np.float64(0.9), 'max_creatinine_ratio': np.float64(1.12), 'max_absolute_increase': np.float64(0.1), 'kdigo_stage': 0, 'has_aki': False, 'has_stage_3': False, 'creatinine_values':               charttime  valuenum  ratio_to_baseline
+2026-03-26 04:17:45  INFO      === Iteration 15/100  run=kdigo_stages  best_qa=0.0% ===
+2026-03-26 04:17:57  INFO      Exec block 1/1 …
+2026-03-26 04:17:57  INFO      Output: Stay 39765666: Creatinine stage=0, UO stage=0
+Stay 37067082: Creatinine stage=0, UO stage=0
+Stay 34592300: Creatinine stage=0, UO stage=0
+
+2026-03-26 04:17:57  INFO      === Iteration 16/100  run=kdigo_stages  best_qa=0.0% ===
+2026-03-26 04:18:57  INFO      Exec block 1/1 …
+2026-03-26 04:18:57  INFO      Output: Testing kdigo_stages function:
+============================================================
+
+Stay ID: 39553978
+  Subject ID: 10000032
+  Baseline Creatinine: 0.3 mg/dL
+  Max Creatinine: 0.5 mg/dL
+  Creatinine Stage: 1
+  UO Stage: 1
+  Overall KDIGO Stage: 1
+  Has AKI: True
+  Has Stage 2 or Higher: False
+  Has Stage 3: False
+
+Stay ID: 37081114
+  Subject ID: 10000690
+  Baseline Creatinine: 0.8 mg/dL
+  Max Creatinine: 0.9 mg/dL
+  Creatinine Stage: 0
+  UO Stage: 1
+  Overall KDIGO Stage: 1
+  Has AKI: T
+2026-03-26 04:18:57  INFO      === Iteration 17/100  run=kdigo_stages  best_qa=0.0% ===
+2026-03-26 04:19:08  INFO      Exec block 1/1 …
+2026-03-26 04:19:08  INFO      Output:     stay_id  subject_id   hadm_id              intime             outtime
+0  35347399    10219029  25209911 2154-04-05 10:10:00 2154-04-05 20:53:50
+1  36779265    10369069  22094321 2112-09-20 23:13:00 2112-10-02 10:01:37
+2  39874061    10516511  28798038 2124-04-21 02:45:00 2124-05-22 21:53:54
+3  37158200    10667764  25982136 2144-05-08 13:44:00 2144-05-19 18:52:18
+4  36567846    10098215  20652197 2118-08-14 22:06:03 2118-08-16 21:57:17
+
+2026-03-26 04:19:08  INFO      === Iteration 18/100  run=kdigo_stages  best_qa=0.0% ===
+2026-03-26 04:19:24  INFO      Exec block 1/1 …
+2026-03-26 04:19:25  INFO      Output: 
+Stay ID: 35347399
+  Subject ID: 10219029
+  Baseline Creatinine: 2.5 mg/dL
+  Max Creatinine: 2.5 mg/dL
+  Max Creatinine Ratio: 1.0
+  Max Absolute Increase: 0.0
+  Creatinine Stage: 0
+  UO Stage: 1
+  Overall KDIGO Stage: 1
+  Has AKI: True
+  Has Stage 2 or Higher: False
+  Has Stage 3: False
+
+Stay ID: 36779265
+  Subject ID: 10369069
+  Baseline Creatinine: 5.1 mg/dL
+  Max Creatinine: 7.7 mg/dL
+  Max Creatinine Ratio: 1.51
+  Max Absolute Increase: 2.6
+  Creatinine Stage: 3
+  UO Stage: 3
+  Overall KDIG
+2026-03-26 04:19:25  INFO      === Iteration 19/100  run=kdigo_stages  best_qa=0.0% ===
+2026-03-26 04:23:23  INFO      Exec block 1/1 …
+2026-03-26 04:23:23  INFO      Output: Code executed successfully (no output).
+2026-03-26 04:23:23  INFO      Debug conversations will be saved to debug_logs
+2026-03-26 04:23:23  INFO      Using question from dataset column: Does this patient develop AKI (KDIGO stage 1 or higher) during their ICU stay?
+2026-03-26 04:23:23  INFO      Answer type for 'kdigo_stages': numerical (per_row=True)
+2026-03-26 04:23:23  INFO      ReACT iteration 1/5 — 20 active patients
+Rendering conversations:   0%|          | 0/20 [00:00<?, ?it/s]Rendering conversations: 100%|██████████| 20/20 [00:00<00:00, 466.90it/s]
+Processed prompts:   0%|          | 0/20 [00:00<?, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s]Processed prompts:   5%|▌         | 1/20 [00:20<06:21, 20.08s/it, est. speed input: 58.58 toks/s, output: 15.49 toks/s]Processed prompts:  10%|█         | 2/20 [00:23<03:05, 10.30s/it, est. speed input: 99.95 toks/s, output: 29.62 toks/s]Processed prompts:  15%|█▌        | 3/20 [00:23<01:38,  5.79s/it, est. speed input: 147.63 toks/s, output: 45.52 toks/s]Processed prompts:  25%|██▌       | 5/20 [00:24<00:39,  2.61s/it, est. speed input: 243.12 toks/s, output: 77.62 toks/s]Processed prompts:  40%|████      | 8/20 [00:25<00:16,  1.36s/it, est. speed input: 373.33 toks/s, output: 123.46 toks/s]Processed prompts:  45%|████▌     | 9/20 [00:25<00:13,  1.21s/it, est. speed input: 410.14 toks/s, output: 137.39 toks/s]Processed prompts:  50%|█████     | 10/20 [00:26<00:09,  1.02it/s, est. speed input: 452.16 toks/s, output: 153.34 toks/s]Processed prompts:  65%|██████▌   | 13/20 [00:26<00:03,  1.78it/s, est. speed input: 579.32 toks/s, output: 201.79 toks/s]Processed prompts:  75%|███████▌  | 15/20 [00:26<00:02,  2.28it/s, est. speed input: 659.88 toks/s, output: 233.27 toks/s]Processed prompts:  85%|████████▌ | 17/20 [00:27<00:01,  2.51it/s, est. speed input: 731.44 toks/s, output: 262.47 toks/s]Processed prompts:  90%|█████████ | 18/20 [00:27<00:00,  2.68it/s, est. speed input: 767.30 toks/s, output: 277.59 toks/s]Processed prompts: 100%|██████████| 20/20 [00:28<00:00,  2.20it/s, est. speed input: 816.81 toks/s, output: 300.71 toks/s]Processed prompts: 100%|██████████| 20/20 [00:28<00:00,  2.20it/s, est. speed input: 816.81 toks/s, output: 300.71 toks/s]Processed prompts: 100%|██████████| 20/20 [00:28<00:00,  1.45s/it, est. speed input: 816.81 toks/s, output: 300.71 toks/s]
+2026-03-26 04:23:52  INFO      ReACT iteration 2/5 — 20 active patients
+Rendering conversations:   0%|          | 0/20 [00:00<?, ?it/s]Rendering conversations: 100%|██████████| 20/20 [00:00<00:00, 309.58it/s]
+Processed prompts:   0%|          | 0/20 [00:00<?, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s]Processed prompts:   5%|▌         | 1/20 [00:21<06:42, 21.17s/it, est. speed input: 85.82 toks/s, output: 12.14 toks/s]Processed prompts:  10%|█         | 2/20 [00:23<03:02, 10.12s/it, est. speed input: 156.34 toks/s, output: 23.99 toks/s]Processed prompts:  15%|█▌        | 3/20 [02:24<17:10, 60.60s/it, est. speed input: 38.72 toks/s, output: 23.62 toks/s] Processed prompts:  20%|██        | 4/20 [06:57<38:30, 144.39s/it, est. speed input: 17.93 toks/s, output: 27.81 toks/s]Processed prompts:  50%|█████     | 10/20 [06:57<05:29, 32.96s/it, est. speed input: 45.00 toks/s, output: 145.61 toks/s]Processed prompts: 100%|██████████| 20/20 [06:57<00:00, 32.96s/it, est. speed input: 90.30 toks/s, output: 341.90 toks/s]Processed prompts: 100%|██████████| 20/20 [06:57<00:00, 20.86s/it, est. speed input: 90.30 toks/s, output: 341.90 toks/s]
+2026-03-26 04:30:49  INFO      ReACT iteration 3/5 — 20 active patients
+Rendering conversations:   0%|          | 0/20 [00:00<?, ?it/s]Rendering conversations:  50%|█████     | 10/20 [00:00<00:00, 97.30it/s]Rendering conversations: 100%|██████████| 20/20 [00:00<00:00, 85.79it/s]Rendering conversations: 100%|██████████| 20/20 [00:00<00:00, 87.28it/s]
+Processed prompts:   0%|          | 0/20 [00:00<?, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s]Processed prompts:   5%|▌         | 1/20 [01:03<19:58, 63.05s/it, est. speed input: 37.57 toks/s, output: 4.50 toks/s]Processed prompts:  10%|█         | 2/20 [01:05<08:15, 27.54s/it, est. speed input: 192.69 toks/s, output: 9.25 toks/s]Processed prompts:  15%|█▌        | 3/20 [01:10<04:49, 17.02s/it, est. speed input: 326.92 toks/s, output: 14.62 toks/s]Processed prompts:  20%|██        | 4/20 [01:10<02:45, 10.37s/it, est. speed input: 472.48 toks/s, output: 20.36 toks/s]Processed prompts:  25%|██▌       | 5/20 [01:10<01:42,  6.82s/it, est. speed input: 614.06 toks/s, output: 26.23 toks/s]Processed prompts:  30%|███       | 6/20 [01:11<01:05,  4.67s/it, est. speed input: 754.12 toks/s, output: 32.10 toks/s]Processed prompts:  35%|███▌      | 7/20 [01:11<00:42,  3.27s/it, est. speed input: 893.44 toks/s, output: 38.00 toks/s]Processed prompts:  45%|████▌     | 9/20 [01:12<00:20,  1.90s/it, est. speed input: 1166.34 toks/s, output: 49.67 toks/s]Processed prompts:  50%|█████     | 10/20 [01:15<00:22,  2.21s/it, est. speed input: 1184.10 toks/s, output: 54.62 toks/s]Processed prompts:  55%|█████▌    | 11/20 [01:18<00:21,  2.36s/it, est. speed input: 1273.69 toks/s, output: 60.11 toks/s]Processed prompts:  60%|██████    | 12/20 [01:22<00:21,  2.71s/it, est. speed input: 1343.14 toks/s, output: 65.67 toks/s]Processed prompts:  65%|██████▌   | 13/20 [01:23<00:15,  2.29s/it, est. speed input: 1447.15 toks/s, output: 73.10 toks/s]Processed prompts:  70%|███████   | 14/20 [06:53<09:39, 96.66s/it, est. speed input: 298.04 toks/s, output: 34.59 toks/s] Processed prompts:  80%|████████  | 16/20 [06:53<03:32, 53.03s/it, est. speed input: 347.76 toks/s, output: 74.23 toks/s]Processed prompts:  85%|████████▌ | 17/20 [06:53<02:00, 40.14s/it, est. speed input: 372.53 toks/s, output: 94.02 toks/s]Processed prompts:  90%|█████████ | 18/20 [06:53<00:59, 29.80s/it, est. speed input: 397.35 toks/s, output: 113.80 toks/s]Processed prompts:  95%|█████████▌| 19/20 [06:53<00:21, 21.84s/it, est. speed input: 421.93 toks/s, output: 133.53 toks/s]Processed prompts: 100%|██████████| 20/20 [06:53<00:00, 15.80s/it, est. speed input: 446.71 toks/s, output: 153.28 toks/s]Processed prompts: 100%|██████████| 20/20 [06:53<00:00, 15.80s/it, est. speed input: 446.71 toks/s, output: 153.28 toks/s]Processed prompts: 100%|██████████| 20/20 [06:53<00:00, 20.69s/it, est. speed input: 446.71 toks/s, output: 153.28 toks/s]
+2026-03-26 04:37:44  INFO      ReACT iteration 4/5 — 20 active patients
+Rendering conversations:   0%|          | 0/20 [00:00<?, ?it/s]Rendering conversations:  40%|████      | 8/20 [00:00<00:00, 65.86it/s]Rendering conversations:  75%|███████▌  | 15/20 [00:00<00:00, 65.61it/s]Rendering conversations: 100%|██████████| 20/20 [00:00<00:00, 63.83it/s]
+Processed prompts:   0%|          | 0/20 [00:00<?, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s]Processed prompts:   5%|▌         | 1/20 [05:29<1:44:17, 329.34s/it, est. speed input: 8.76 toks/s, output: 0.73 toks/s]Processed prompts:  10%|█         | 2/20 [05:35<41:46, 139.23s/it, est. speed input: 64.51 toks/s, output: 1.64 toks/s] Processed prompts:  15%|█▌        | 3/20 [05:42<22:23, 79.05s/it, est. speed input: 95.07 toks/s, output: 2.75 toks/s] Processed prompts:  20%|██        | 4/20 [05:43<12:47, 47.98s/it, est. speed input: 149.64 toks/s, output: 3.83 toks/s]Processed prompts:  25%|██▌       | 5/20 [05:43<07:41, 30.77s/it, est. speed input: 204.16 toks/s, output: 4.97 toks/s]Processed prompts:  30%|███       | 6/20 [05:43<04:44, 20.34s/it, est. speed input: 235.88 toks/s, output: 6.10 toks/s]Processed prompts:  35%|███▌      | 7/20 [05:44<03:01, 13.98s/it, est. speed input: 267.28 toks/s, output: 7.27 toks/s]Processed prompts:  40%|████      | 8/20 [05:45<01:58,  9.86s/it, est. speed input: 298.32 toks/s, output: 8.50 toks/s]Processed prompts:  55%|█████▌    | 11/20 [05:45<00:37,  4.20s/it, est. speed input: 393.98 toks/s, output: 12.17 toks/s]Processed prompts:  60%|██████    | 12/20 [05:45<00:26,  3.33s/it, est. speed input: 425.61 toks/s, output: 13.40 toks/s]Processed prompts:  65%|██████▌   | 13/20 [05:49<00:23,  3.40s/it, est. speed input: 474.91 toks/s, output: 14.22 toks/s]Processed prompts:  70%|███████   | 14/20 [05:54<00:22,  3.81s/it, est. speed input: 500.00 toks/s, output: 15.81 toks/s]Processed prompts:  75%|███████▌  | 15/20 [05:55<00:15,  3.12s/it, est. speed input: 529.99 toks/s, output: 17.61 toks/s]Processed prompts:  80%|████████  | 16/20 [06:08<00:22,  5.69s/it, est. speed input: 527.66 toks/s, output: 19.61 toks/s]Processed prompts:  85%|████████▌ | 17/20 [06:14<00:17,  5.97s/it, est. speed input: 547.59 toks/s, output: 21.42 toks/s]Processed prompts:  90%|█████████ | 18/20 [11:02<02:53, 86.78s/it, est. speed input: 326.20 toks/s, output: 24.48 toks/s]Processed prompts: 100%|██████████| 20/20 [11:03<00:00, 47.82s/it, est. speed input: 382.54 toks/s, output: 49.17 toks/s]Processed prompts: 100%|██████████| 20/20 [11:03<00:00, 47.82s/it, est. speed input: 382.54 toks/s, output: 49.17 toks/s]Processed prompts: 100%|██████████| 20/20 [11:03<00:00, 33.16s/it, est. speed input: 382.54 toks/s, output: 49.17 toks/s]
+2026-03-26 04:48:48  INFO      ReACT iteration 5/5 — 20 active patients
+2026-03-26 04:48:48  WARNING   [concept] Skipping item 2 — 34458 tokens exceeds context limit 31808
+Rendering conversations:   0%|          | 0/19 [00:00<?, ?it/s]Rendering conversations:  37%|███▋      | 7/19 [00:00<00:00, 61.45it/s]Rendering conversations:  74%|███████▎  | 14/19 [00:00<00:00, 59.01it/s]Rendering conversations: 100%|██████████| 19/19 [00:00<00:00, 55.17it/s]
+Processed prompts:   0%|          | 0/19 [00:00<?, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s]Processed prompts:   5%|▌         | 1/19 [05:20<1:36:04, 320.23s/it, est. speed input: 10.70 toks/s, output: 0.70 toks/s]Processed prompts:  11%|█         | 2/19 [06:29<48:51, 172.46s/it, est. speed input: 58.60 toks/s, output: 1.27 toks/s]  Processed prompts:  16%|█▌        | 3/19 [06:42<26:33, 99.60s/it, est. speed input: 105.10 toks/s, output: 2.07 toks/s]Processed prompts:  21%|██        | 4/19 [06:43<15:09, 60.66s/it, est. speed input: 153.12 toks/s, output: 2.91 toks/s]Processed prompts:  26%|██▋       | 5/19 [06:47<09:24, 40.30s/it, est. speed input: 180.65 toks/s, output: 3.93 toks/s]Processed prompts:  32%|███▏      | 6/19 [06:48<05:50, 26.99s/it, est. speed input: 208.99 toks/s, output: 5.00 toks/s]Processed prompts:  37%|███▋      | 7/19 [06:49<03:41, 18.47s/it, est. speed input: 238.07 toks/s, output: 5.50 toks/s]Processed prompts:  42%|████▏     | 8/19 [06:53<02:32, 13.88s/it, est. speed input: 264.12 toks/s, output: 6.80 toks/s]Processed prompts:  47%|████▋     | 9/19 [06:54<01:38,  9.84s/it, est. speed input: 310.37 toks/s, output: 7.52 toks/s]Processed prompts:  53%|█████▎    | 10/19 [06:57<01:09,  7.70s/it, est. speed input: 337.60 toks/s, output: 8.99 toks/s]Processed prompts:  58%|█████▊    | 11/19 [06:57<00:43,  5.43s/it, est. speed input: 366.75 toks/s, output: 10.51 toks/s]Processed prompts:  63%|██████▎   | 12/19 [07:06<00:45,  6.46s/it, est. speed input: 375.61 toks/s, output: 12.23 toks/s]Processed prompts:  68%|██████▊   | 13/19 [07:20<00:53,  8.86s/it, est. speed input: 389.78 toks/s, output: 14.42 toks/s]Processed prompts:  74%|███████▎  | 14/19 [12:44<08:39, 104.00s/it, est. speed input: 239.94 toks/s, output: 19.02 toks/s]Processed prompts:  84%|████████▍ | 16/19 [12:45<02:47, 55.98s/it, est. speed input: 300.56 toks/s, output: 40.42 toks/s] Processed prompts:  89%|████████▉ | 17/19 [12:45<01:24, 42.09s/it, est. speed input: 315.62 toks/s, output: 51.11 toks/s]Processed prompts:  95%|█████████▍| 18/19 [12:45<00:31, 31.09s/it, est. speed input: 330.85 toks/s, output: 61.81 toks/s]Processed prompts: 100%|██████████| 19/19 [12:45<00:00, 31.09s/it, est. speed input: 346.10 toks/s, output: 72.50 toks/s]Processed prompts: 100%|██████████| 19/19 [12:45<00:00, 40.29s/it, est. speed input: 346.10 toks/s, output: 72.50 toks/s]
+2026-03-26 05:01:34  ERROR     LLM call failed for patient {'subject_id': 12439733, 'hadm_id': 28398240, 'stay_id': 38150924}
+2026-03-26 05:01:34  INFO      QA accuracy: 0.0%  (correct=0/20, parse_errors=19)
+2026-03-26 05:01:34  INFO      === Iteration 20/100  run=kdigo_stages  best_qa=0.0% ===
+2026-03-26 05:01:45  INFO      Exec block 1/1 …
+2026-03-26 05:01:45  INFO      Output: Empty DataFrame
+Columns: [itemid, label]
+Index: []
+
+2026-03-26 05:01:45  INFO      === Iteration 21/100  run=kdigo_stages  best_qa=0.0% ===
+2026-03-26 05:01:53  INFO      Exec block 1/1 …
+2026-03-26 05:01:53  INFO      Output:    itemid                                                       label            category
+0  226512                                       Admission Weight (Kg)             General
+1  226740             APACHE II Diagnosistic weight factors - Medical  Scores - APACHE II
+2  224639                                                Daily Weight             General
+3  225124                          Unintentional weight loss >10 lbs.    Adm History/FHPA
+4  226531                                     Admi
+2026-03-26 05:01:53  INFO      === Iteration 22/100  run=kdigo_stages  best_qa=0.0% ===
+2026-03-26 05:02:07  INFO      Exec block 1/1 …
+2026-03-26 05:02:07  INFO      Output:     stay_id  subject_id   hadm_id              intime             outtime
+0  36712360    18732792  28717529 2136-08-23 13:23:00 2136-08-24 19:25:15
+
+2026-03-26 05:02:07  INFO      === Iteration 23/100  run=kdigo_stages  best_qa=0.0% ===
+2026-03-26 05:02:23  INFO      Exec block 1/1 …
+2026-03-26 05:02:23  INFO      Output: Error:
+Traceback (most recent call last):
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 643, in execute
+    _run_with_timeout(_do_execute, timeout)
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 174, in _run_with_timeout
+    raise error[0]
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 156, in target
+    result[0] = func(*args, **kwargs)
+                ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/v-tiossowsk
+2026-03-26 05:02:23  INFO      === Iteration 24/100  run=kdigo_stages  best_qa=0.0% ===
+2026-03-26 05:02:31  INFO      Exec block 1/1 …
+2026-03-26 05:02:31  INFO      Output:    itemid                       label  fluid   category
+0   50801  Alveolar-arterial Gradient  Blood  Blood Gas
+
+2026-03-26 05:02:31  INFO      === Iteration 25/100  run=kdigo_stages  best_qa=0.0% ===
+2026-03-26 05:02:40  INFO      Exec block 1/1 …
+2026-03-26 05:02:40  INFO      Output:     itemid                            label
+0    50841              Creatinine, Ascites
+1    50912                       Creatinine
+2    51021          Creatinine, Joint Fluid
+3    51032           Creatinine, Body Fluid
+4    51052              Creatinine, Pleural
+5    51067                 24 hr Creatinine
+6    51070        Albumin/Creatinine, Urine
+7    51073  Amylase/Creatinine Ratio, Urine
+8    51080             Creatinine Clearance
+9    51081                Creatinine, Serum
+10   51082      
+2026-03-26 05:02:40  INFO      === Iteration 26/100  run=kdigo_stages  best_qa=0.0% ===
+2026-03-26 05:02:50  INFO      Exec block 1/1 …
+2026-03-26 05:02:50  INFO      Output:    itemid              label
+0   50912         Creatinine
+1   51081  Creatinine, Serum
+2   51977  Creatinine, Blood
+3   52546         Creatinine
+
+2026-03-26 05:02:50  INFO      === Iteration 27/100  run=kdigo_stages  best_qa=0.0% ===
+2026-03-26 05:03:04  INFO      Exec block 1/1 …
+2026-03-26 05:03:04  INFO      Output:    itemid                    label category
+0  224639             Daily Weight  General
+1  226512    Admission Weight (Kg)  General
+2  226531  Admission Weight (lbs.)  General
+
+2026-03-26 05:03:04  INFO      === Iteration 28/100  run=kdigo_stages  best_qa=0.0% ===
+2026-03-26 05:03:17  INFO      Exec block 1/1 …
+2026-03-26 05:03:17  INFO      Output:    itemid    valuenum           charttime
+0  226512   79.599998 2136-08-23 11:28:00
+1  226531  175.100006 2136-08-23 13:44:00
+
+2026-03-26 05:03:17  INFO      === Iteration 29/100  run=kdigo_stages  best_qa=0.0% ===
+2026-03-26 05:06:07  INFO      Exec block 1/1 …
+2026-03-26 05:06:07  INFO      Output: Stay ID: 36712360
+Baseline Creatinine: nan
+Max Creatinine: 0.7
+Max Creatinine Ratio: nan
+Max Absolute Increase: nan
+Creatinine Stage: 0
+UO Stage: 1
+Overall KDIGO Stage: 1
+Has AKI: True
+Has Stage 2 or Higher: False
+Has Stage 3: False
+
+Creatinine values:
+            charttime  valuenum  ratio_to_baseline  absolute_increase
+0 2136-08-24 03:11:00       0.7                NaN                NaN
+
+2026-03-26 05:06:07  INFO      === Iteration 30/100  run=kdigo_stages  best_qa=0.0% ===
+2026-03-26 05:06:36  INFO      Exec block 1/1 …
+2026-03-26 05:06:36  INFO      Output: Prior creatinine values:
+Empty DataFrame
+Columns: [charttime, valuenum, hadm_id]
+Index: []
+
+ICU creatinine values:
+            charttime  valuenum
+0 2136-08-24 03:11:00       0.7
+
+2026-03-26 05:06:36  INFO      === Iteration 31/100  run=kdigo_stages  best_qa=0.0% ===
+2026-03-26 05:07:09  INFO      Exec block 1/1 …
+2026-03-26 05:07:09  INFO      Output: First ICU creatinine result:
+   valuenum
+0       0.7
+Empty: False
+Value: 0.7
+Float: 0.7
+
+2026-03-26 05:07:09  INFO      === Iteration 32/100  run=kdigo_stages  best_qa=0.0% ===
+2026-03-26 05:07:53  INFO      Exec block 1/1 …
+2026-03-26 05:07:53  INFO      Output: Baseline result:    baseline_creatinine
+0                  NaN
+Empty: False
+Baseline from prior: nan
+Final baseline_creatinine: nan
+Final baseline_source: prior_3_months
+
+2026-03-26 05:07:53  INFO      === Iteration 33/100  run=kdigo_stages  best_qa=0.0% ===
+2026-03-26 05:10:47  INFO      Exec block 1/1 …
+2026-03-26 05:10:47  INFO      Output: Stay ID: 36712360
+Baseline Creatinine: 0.7
+Baseline Source: first_icu_value
+Max Creatinine: 0.7
+Max Creatinine Ratio: 1.0
+Max Absolute Increase: 0.0
+Creatinine Stage: 0
+UO Stage: 1
+Overall KDIGO Stage: 1
+Has AKI: True
+Has Stage 2 or Higher: False
+Has Stage 3: False
+
+2026-03-26 05:10:47  INFO      === Iteration 34/100  run=kdigo_stages  best_qa=0.0% ===
+2026-03-26 05:10:47  INFO      Context approaching limit (22966 tokens, limit=25000) — forcing summarize + compress
+2026-03-26 05:13:50  INFO      Context compressed: 69 messages -> 2 messages
+2026-03-26 05:13:58  INFO      Exec block 1/1 …
+2026-03-26 05:13:58  INFO      Output: []
+
+2026-03-26 05:13:58  INFO      === Iteration 35/100  run=kdigo_stages  best_qa=0.0% ===
+2026-03-26 05:14:02  INFO      Exec block 1/1 …
+2026-03-26 05:14:02  INFO      Output: []
+
+2026-03-26 05:14:02  INFO      === Iteration 36/100  run=kdigo_stages  best_qa=0.0% ===
+2026-03-26 05:14:12  INFO      === Iteration 37/100  run=kdigo_stages  best_qa=0.0% ===
+2026-03-26 05:14:20  INFO      Exec block 1/1 …
+2026-03-26 05:14:20  INFO      Output: Stay ID: 39553978
+Baseline Cr: 0.3
+Max Cr: 0.5
+Max Cr Ratio: 1.6666666666666667
+Max Absolute Increase: 0.2
+Cr Stage: 1
+UO Stage: 1
+Overall Stage: 1
+Has AKI: True
+
+2026-03-26 05:14:20  INFO      === Iteration 38/100  run=kdigo_stages  best_qa=0.0% ===
+2026-03-26 05:14:29  INFO      Exec block 1/1 …
+2026-03-26 05:14:29  INFO      Output: Stay ID: 36779265
+Baseline Cr: 5.2
+Max Cr: 7.7
+Max Cr Ratio: 1.4807692307692308
+Max Absolute Increase: 2.5
+Cr Stage: 3
+UO Stage: 3
+Overall Stage: 3
+Weight: 72.93774122150657
+
+2026-03-26 05:14:29  INFO      === Iteration 39/100  run=kdigo_stages  best_qa=0.0% ===
+2026-03-26 05:14:41  INFO      Exec block 1/1 …
+2026-03-26 05:14:41  INFO      Output: Stay ID: 39874061
+Baseline Cr: 2.5
+Max Cr: 5.4
+Max Cr Ratio: 2.16
+Max Absolute Increase: 2.9000000000000004
+Cr Stage: 3
+UO Stage: 3
+Overall Stage: 3
+
+2026-03-26 05:14:41  INFO      === Iteration 40/100  run=kdigo_stages  best_qa=0.0% ===
+2026-03-26 05:14:55  INFO      Exec block 1/1 …
+2026-03-26 05:14:55  INFO      Output: Stay ID: 39765666
+Baseline Cr: None
+Max Cr: None
+Max Cr Ratio: None
+Max Absolute Increase: None
+Cr Stage: 0
+UO Stage: 0
+Overall Stage: 0
+Has AKI: False
+
+2026-03-26 05:14:55  INFO      === Iteration 41/100  run=kdigo_stages  best_qa=0.0% ===
+2026-03-26 05:15:18  INFO      Exec block 1/1 …
+2026-03-26 05:15:18  INFO      Output: Stay info:     stay_id  subject_id   hadm_id              intime             outtime
+0  39765666    10000980  26913865 2189-06-27 08:42:00 2189-06-27 20:38:27
+Creatinine values during ICU stay:
+Empty DataFrame
+Columns: [charttime, valuenum]
+Index: []
+Baseline creatinine values:
+            charttime  valuenum
+0 2189-06-27 06:48:00       2.3
+1 2189-04-27 17:00:00       3.1
+
+2026-03-26 05:15:18  INFO      === Iteration 42/100  run=kdigo_stages  best_qa=0.0% ===
+2026-03-26 05:15:43  INFO      Exec block 1/1 …
+2026-03-26 05:15:43  INFO      Output: 
+Stay ID: 37081114
+  Baseline Cr: 0.8
+  Max Cr: 0.9
+  Max Cr Ratio: 1.125
+  Cr Stage: 0
+  UO Stage: 1
+  Overall Stage: 1
+  Has AKI: True
+
+Stay ID: 35347399
+  Baseline Cr: 2.5
+  Max Cr: 2.5
+  Max Cr Ratio: 1.0
+  Cr Stage: 0
+  UO Stage: 1
+  Overall Stage: 1
+  Has AKI: True
+
+Stay ID: 36712360
+  Baseline Cr: 0.7
+  Max Cr: 0.7
+  Max Cr Ratio: 1.0
+  Cr Stage: 0
+  UO Stage: 1
+  Overall Stage: 1
+  Has AKI: True
+
+2026-03-26 05:15:43  INFO      === Iteration 43/100  run=kdigo_stages  best_qa=0.0% ===
+2026-03-26 05:16:11  INFO      Exec block 1/1 …
+2026-03-26 05:16:12  INFO      Output: UO Stage: 3
+Weight: 72.93774122150657
+
+Hourly UO summary:
+                hour_start             hour_end  urine_output_ml  uo_per_kg_hr
+count                  275                  275       275.000000    275.000000
+mean   2112-09-26 16:13:00  2112-09-26 17:13:00        21.669090      0.297090
+min    2112-09-20 23:13:00  2112-09-21 00:13:00         0.000000      0.000000
+25%    2112-09-23 19:43:00  2112-09-23 20:43:00         0.000000      0.000000
+50%    2112-09-26 16:13:00  2112-09-26 17:13:00
+2026-03-26 05:16:12  INFO      === Iteration 44/100  run=kdigo_stages  best_qa=0.0% ===
+2026-03-26 05:18:36  INFO      Exec block 1/1 …
+2026-03-26 05:18:36  INFO      Output: Code executed successfully (no output).
+2026-03-26 05:18:36  INFO      Debug conversations will be saved to debug_logs
+2026-03-26 05:18:36  INFO      Using question from dataset column: Does this patient develop AKI (KDIGO stage 1 or higher) during their ICU stay?
+2026-03-26 05:18:36  INFO      Answer type for 'kdigo_stages': numerical (per_row=True)
+2026-03-26 05:18:36  INFO      ReACT iteration 1/5 — 20 active patients
+Rendering conversations:   0%|          | 0/20 [00:00<?, ?it/s]Rendering conversations: 100%|██████████| 20/20 [00:00<00:00, 632.32it/s]
+Processed prompts:   0%|          | 0/20 [00:00<?, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s]Processed prompts:   5%|▌         | 1/20 [00:09<02:51,  9.04s/it, est. speed input: 88.50 toks/s, output: 12.39 toks/s]Processed prompts:  10%|█         | 2/20 [00:09<01:09,  3.86s/it, est. speed input: 172.65 toks/s, output: 24.71 toks/s]Processed prompts:  20%|██        | 4/20 [00:09<00:23,  1.48s/it, est. speed input: 341.06 toks/s, output: 49.35 toks/s]Processed prompts:  50%|█████     | 10/20 [00:09<00:04,  2.40it/s, est. speed input: 844.99 toks/s, output: 125.04 toks/s]Processed prompts:  85%|████████▌ | 17/20 [00:09<00:00,  5.05it/s, est. speed input: 1422.63 toks/s, output: 213.69 toks/s]Processed prompts: 100%|██████████| 20/20 [00:09<00:00,  5.05it/s, est. speed input: 1628.60 toks/s, output: 247.51 toks/s]Processed prompts: 100%|██████████| 20/20 [00:09<00:00,  2.02it/s, est. speed input: 1628.60 toks/s, output: 247.51 toks/s]
+2026-03-26 05:18:47  INFO      ReACT iteration 2/5 — 20 active patients
+Rendering conversations:   0%|          | 0/20 [00:00<?, ?it/s]Rendering conversations: 100%|██████████| 20/20 [00:00<00:00, 229.43it/s]
+Processed prompts:   0%|          | 0/20 [00:00<?, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s]Processed prompts:   5%|▌         | 1/20 [00:18<05:47, 18.30s/it, est. speed input: 244.64 toks/s, output: 4.15 toks/s]Processed prompts:  10%|█         | 2/20 [00:18<02:18,  7.70s/it, est. speed input: 345.98 toks/s, output: 8.77 toks/s]Processed prompts:  20%|██        | 4/20 [00:18<00:46,  2.92s/it, est. speed input: 712.25 toks/s, output: 18.10 toks/s]Processed prompts:  25%|██▌       | 5/20 [00:18<00:31,  2.08s/it, est. speed input: 835.32 toks/s, output: 22.80 toks/s]Processed prompts:  40%|████      | 8/20 [00:19<00:11,  1.09it/s, est. speed input: 1231.41 toks/s, output: 37.16 toks/s]Processed prompts:  50%|█████     | 10/20 [00:19<00:06,  1.59it/s, est. speed input: 1550.82 toks/s, output: 47.11 toks/s]Processed prompts:  60%|██████    | 12/20 [00:19<00:03,  2.11it/s, est. speed input: 1836.35 toks/s, output: 57.22 toks/s]Processed prompts:  70%|███████   | 14/20 [00:19<00:02,  2.73it/s, est. speed input: 2165.63 toks/s, output: 67.63 toks/s]Processed prompts:  80%|████████  | 16/20 [00:20<00:01,  3.54it/s, est. speed input: 2390.81 toks/s, output: 79.06 toks/s]Processed prompts:  85%|████████▌ | 17/20 [00:20<00:00,  3.10it/s, est. speed input: 2528.44 toks/s, output: 83.65 toks/s]Processed prompts:  90%|█████████ | 18/20 [00:23<00:01,  1.16it/s, est. speed input: 2312.25 toks/s, output: 82.26 toks/s]Processed prompts:  95%|█████████▌| 19/20 [00:24<00:00,  1.23it/s, est. speed input: 2333.94 toks/s, output: 89.41 toks/s]Processed prompts: 100%|██████████| 20/20 [00:24<00:00,  1.23it/s, est. speed input: 2352.83 toks/s, output: 96.55 toks/s]Processed prompts: 100%|██████████| 20/20 [00:24<00:00,  1.23it/s, est. speed input: 2352.83 toks/s, output: 96.55 toks/s]Processed prompts: 100%|██████████| 20/20 [00:24<00:00,  1.25s/it, est. speed input: 2352.83 toks/s, output: 96.55 toks/s]
+2026-03-26 05:19:13  INFO      QA accuracy: 65.0%  (correct=13/20, parse_errors=0)
+2026-03-26 05:19:13  INFO      === Iteration 45/100  run=kdigo_stages  best_qa=65.0% ===
+2026-03-26 05:19:36  INFO      Exec block 1/1 …
+2026-03-26 05:19:36  INFO      Output: Stay ID: 31404518
+Baseline Cr: 1.0
+Max Cr: 1.2
+Max Cr Ratio: 1.2
+Max Absolute Increase: 0.19999999999999996
+Cr Stage: 0
+UO Stage: 1
+Overall Stage: 1
+Has AKI: True
+
+
+2026-03-26 05:19:36  INFO      === Iteration 46/100  run=kdigo_stages  best_qa=65.0% ===
+2026-03-26 05:19:53  INFO      Exec block 1/1 …
+2026-03-26 05:19:53  INFO      Output: Stay ID: 38150924
+Baseline Cr: 1.1
+Max Cr: 1.5
+Max Cr Ratio: 1.3636363636363635
+Max Absolute Increase: 0.3999999999999999
+Cr Stage: 1
+UO Stage: 1
+Overall Stage: 1
+Has AKI: True
+
+Creatinine values:
+            charttime  valuenum  ratio_to_baseline  absolute_increase
+0 2113-06-17 04:34:00       1.5           1.363636                0.4
+
+2026-03-26 05:19:53  INFO      === Iteration 47/100  run=kdigo_stages  best_qa=65.0% ===
+2026-03-26 05:20:14  INFO      Exec block 1/1 …
+2026-03-26 05:20:14  INFO      Output: Stay ID: 31402227
+Baseline Cr: 0.7
+Max Cr: 0.7
+Max Cr Ratio: 1.0
+Max Absolute Increase: 0.0
+Cr Stage: 0
+UO Stage: 0
+Overall Stage: 0
+
+Creatinine values:
+            charttime  valuenum  ratio_to_baseline  absolute_increase
+0 2120-01-20 23:10:00       0.7           1.000000                0.0
+1 2120-01-21 04:30:00       0.6           0.857143               -0.1
+
+2026-03-26 05:20:14  INFO      === Iteration 48/100  run=kdigo_stages  best_qa=65.0% ===
+2026-03-26 05:20:39  INFO      Exec block 1/1 …
+2026-03-26 05:20:39  INFO      Output: Stay info:
+    stay_id  subject_id   hadm_id              intime             outtime
+0  31402227    19147314  28850468 2120-01-20 22:39:44 2120-01-21 17:29:55
+
+All creatinine values for this patient:
+            charttime  valuenum   hadm_id
+0 2120-01-20 13:15:00       0.8      <NA>
+1 2120-01-20 23:10:00       0.7  28850468
+2 2120-01-21 04:30:00       0.6  28850468
+3 2120-01-22 07:30:00       0.6  28850468
+4 2120-01-27 06:10:00       0.4  28850468
+5 2120-01-28 16:20:00       0.5  28850468
+6 2120
+2026-03-26 05:20:39  INFO      === Iteration 49/100  run=kdigo_stages  best_qa=65.0% ===
+2026-03-26 05:21:09  INFO      Exec block 1/1 …
+2026-03-26 05:21:09  INFO      Output: UO Stage: 0
+Weight: 70.0
+
+Hourly UO summary:
+                hour_start             hour_end  urine_output_ml  uo_per_kg_hr
+count                   19                   19        19.000000     19.000000
+mean   2120-01-21 07:39:44  2120-01-21 08:39:44        62.368420      0.890977
+min    2120-01-20 22:39:44  2120-01-20 23:39:44         0.000000      0.000000
+25%    2120-01-21 03:09:44  2120-01-21 04:09:44         7.500000      0.107143
+50%    2120-01-21 07:39:44  2120-01-21 08:39:44        35.00
+2026-03-26 05:21:09  INFO      === Iteration 50/100  run=kdigo_stages  best_qa=65.0% ===
+2026-03-26 05:21:40  INFO      Exec block 1/1 …
+2026-03-26 05:21:40  INFO      Output: Stay ID: 33489417
+Baseline Cr: 1.2
+Max Cr: 1.3
+Max Cr Ratio: 1.0833333333333335
+Max Absolute Increase: 0.10000000000000009
+Cr Stage: 0
+UO Stage: 3
+Overall Stage: 3
+
+Creatinine values:
+             charttime  valuenum  ratio_to_baseline  absolute_increase
+0  2128-07-31 03:17:00       1.2           1.000000                0.0
+1  2128-07-31 14:02:00       1.3           1.083333                0.1
+2  2128-08-01 00:00:00       1.3           1.083333                0.1
+3  2128-08-02 00:10:00       1.2
+2026-03-26 05:21:40  INFO      === Iteration 51/100  run=kdigo_stages  best_qa=65.0% ===
+2026-03-26 05:22:05  INFO      Exec block 1/1 …
+2026-03-26 05:22:05  INFO      Output: UO Stage: 3
+Weight: 88.81349305175397
+
+Hourly UO summary:
+                hour_start             hour_end  urine_output_ml  uo_per_kg_hr
+count                  363                  363       363.000000    363.000000
+mean   2128-08-07 13:25:00  2128-08-07 14:25:00         3.581267      0.040323
+min    2128-07-31 00:25:00  2128-07-31 01:25:00         0.000000      0.000000
+25%    2128-08-03 18:55:00  2128-08-03 19:55:00         0.000000      0.000000
+50%    2128-08-07 13:25:00  2128-08-07 14:25:00
+2026-03-26 05:22:05  INFO      === Iteration 52/100  run=kdigo_stages  best_qa=65.0% ===
+2026-03-26 05:22:32  INFO      Exec block 1/1 …
+2026-03-26 05:22:32  INFO      Output: Urine output events:
+            charttime  value  itemid
+0 2128-08-02 02:00:00  450.0  226567
+1 2128-08-02 09:21:00  250.0  226560
+2 2128-08-02 17:00:00  150.0  226560
+3 2128-08-02 20:00:00  150.0  226560
+4 2128-08-03 00:00:00  150.0  226560
+5 2128-08-03 06:00:00  150.0  226560
+
+Total urine output events: 6
+
+2026-03-26 05:22:32  INFO      === Iteration 53/100  run=kdigo_stages  best_qa=65.0% ===
+2026-03-26 05:22:52  INFO      Exec block 1/1 …
+2026-03-26 05:22:52  INFO      Output: Stay ID: 34575878
+Baseline Cr: 1.0
+Max Cr: 1.0
+Max Cr Ratio: 1.0
+Max Absolute Increase: 0.0
+Cr Stage: 0
+UO Stage: 1
+Overall Stage: 1
+Has AKI: True
+
+Creatinine values:
+            charttime  valuenum  ratio_to_baseline  absolute_increase
+0 2183-01-16 03:42:00       1.0                1.0                0.0
+
+2026-03-26 05:22:52  INFO      === Iteration 54/100  run=kdigo_stages  best_qa=65.0% ===
+2026-03-26 05:23:30  INFO      Exec block 1/1 …
+2026-03-26 05:23:30  INFO      Output: UO Stage: 1
+Weight: 70.66977667432838
+
+Hourly UO summary:
+                hour_start             hour_end  urine_output_ml  uo_per_kg_hr
+count                   19                   19        19.000000     19.000000
+mean   2183-01-16 06:57:17  2183-01-16 07:57:17       155.263153      2.197023
+min    2183-01-15 21:57:17  2183-01-15 22:57:17         0.000000      0.000000
+25%    2183-01-16 02:27:17  2183-01-16 03:27:17         0.000000      0.000000
+50%    2183-01-16 06:57:17  2183-01-16 07:57:17
+2026-03-26 05:23:30  INFO      === Iteration 55/100  run=kdigo_stages  best_qa=65.0% ===
+2026-03-26 05:27:06  INFO      Exec block 1/1 …
+2026-03-26 05:27:06  INFO      Output: Code executed successfully (no output).
+2026-03-26 05:27:06  INFO      Debug conversations will be saved to debug_logs
+2026-03-26 05:27:06  INFO      Using question from dataset column: Does this patient develop AKI (KDIGO stage 1 or higher) during their ICU stay?
+2026-03-26 05:27:06  INFO      Answer type for 'kdigo_stages': numerical (per_row=True)
+2026-03-26 05:27:06  INFO      ReACT iteration 1/5 — 20 active patients
+Rendering conversations:   0%|          | 0/20 [00:00<?, ?it/s]Rendering conversations: 100%|██████████| 20/20 [00:00<00:00, 763.11it/s]
+Processed prompts:   0%|          | 0/20 [00:00<?, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s]Processed prompts:   5%|▌         | 1/20 [00:07<02:28,  7.79s/it, est. speed input: 68.79 toks/s, output: 14.50 toks/s]Processed prompts:  10%|█         | 2/20 [00:08<01:01,  3.42s/it, est. speed input: 132.34 toks/s, output: 28.70 toks/s]Processed prompts:  30%|███       | 6/20 [00:08<00:11,  1.23it/s, est. speed input: 392.26 toks/s, output: 87.48 toks/s]Processed prompts:  50%|█████     | 10/20 [00:08<00:04,  2.36it/s, est. speed input: 632.86 toks/s, output: 143.50 toks/s]Processed prompts:  60%|██████    | 12/20 [00:08<00:02,  3.08it/s, est. speed input: 750.15 toks/s, output: 172.28 toks/s]Processed prompts:  80%|████████  | 16/20 [00:08<00:00,  4.79it/s, est. speed input: 975.92 toks/s, output: 228.57 toks/s]Processed prompts:  90%|█████████ | 18/20 [00:10<00:00,  3.06it/s, est. speed input: 946.98 toks/s, output: 231.26 toks/s]Processed prompts: 100%|██████████| 20/20 [00:10<00:00,  3.50it/s, est. speed input: 1017.85 toks/s, output: 258.04 toks/s]Processed prompts: 100%|██████████| 20/20 [00:10<00:00,  3.50it/s, est. speed input: 1017.85 toks/s, output: 258.04 toks/s]Processed prompts: 100%|██████████| 20/20 [00:10<00:00,  1.87it/s, est. speed input: 1017.85 toks/s, output: 258.04 toks/s]
+2026-03-26 05:27:19  INFO      ReACT iteration 2/5 — 20 active patients
+Rendering conversations:   0%|          | 0/20 [00:00<?, ?it/s]Rendering conversations: 100%|██████████| 20/20 [00:00<00:00, 260.43it/s]
+Processed prompts:   0%|          | 0/20 [00:00<?, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s]Processed prompts:   5%|▌         | 1/20 [00:16<05:17, 16.70s/it, est. speed input: 157.48 toks/s, output: 4.19 toks/s]Processed prompts:  10%|█         | 2/20 [00:17<02:14,  7.46s/it, est. speed input: 363.53 toks/s, output: 9.27 toks/s]Processed prompts:  25%|██▌       | 5/20 [00:17<00:32,  2.15s/it, est. speed input: 832.83 toks/s, output: 25.62 toks/s]Processed prompts:  40%|████      | 8/20 [00:17<00:13,  1.09s/it, est. speed input: 1276.85 toks/s, output: 41.57 toks/s]Processed prompts:  50%|█████     | 10/20 [00:18<00:08,  1.20it/s, est. speed input: 1451.81 toks/s, output: 52.30 toks/s]Processed prompts:  60%|██████    | 12/20 [00:18<00:04,  1.61it/s, est. speed input: 1683.91 toks/s, output: 64.17 toks/s]Processed prompts:  70%|███████   | 14/20 [00:19<00:02,  2.09it/s, est. speed input: 2011.19 toks/s, output: 76.14 toks/s]Processed prompts:  80%|████████  | 16/20 [00:19<00:01,  2.37it/s, est. speed input: 2150.30 toks/s, output: 87.58 toks/s]Processed prompts:  85%|████████▌ | 17/20 [00:20<00:01,  2.33it/s, est. speed input: 2204.53 toks/s, output: 93.42 toks/s]Processed prompts:  90%|█████████ | 18/20 [00:20<00:00,  2.26it/s, est. speed input: 2356.12 toks/s, output: 99.18 toks/s]Processed prompts:  95%|█████████▌| 19/20 [00:22<00:00,  1.57it/s, est. speed input: 2312.69 toks/s, output: 102.69 toks/s]Processed prompts: 100%|██████████| 20/20 [00:22<00:00,  1.89it/s, est. speed input: 2412.66 toks/s, output: 111.17 toks/s]Processed prompts: 100%|██████████| 20/20 [00:22<00:00,  1.89it/s, est. speed input: 2412.66 toks/s, output: 111.17 toks/s]Processed prompts: 100%|██████████| 20/20 [00:22<00:00,  1.11s/it, est. speed input: 2412.66 toks/s, output: 111.17 toks/s]
+2026-03-26 05:27:41  INFO      QA accuracy: 55.0%  (correct=11/20, parse_errors=0)
+2026-03-26 05:27:41  INFO      === Iteration 56/100  run=kdigo_stages  best_qa=65.0% ===
+2026-03-26 05:28:16  INFO      Exec block 1/1 …
+2026-03-26 05:28:16  INFO      Output: Stay ID: 31404518
+Baseline Cr: 1.0
+Max Cr: 1.2
+Max Cr Ratio: 1.2
+Max Absolute Increase: 0.19999999999999996
+Cr Stage: 0
+UO Stage: 1
+Overall Stage: 1
+Has AKI: True
+Hourly UO count: 131
+
+2026-03-26 05:28:16  INFO      === Iteration 57/100  run=kdigo_stages  best_qa=65.0% ===
+2026-03-26 05:28:32  INFO      Exec block 1/1 …
+2026-03-26 05:28:32  INFO      Output: Stay ID: 38150924
+Baseline Cr: 1.1
+Max Cr: 1.5
+Max Cr Ratio: 1.3636363636363635
+Max Absolute Increase: 0.3999999999999999
+Cr Stage: 1
+UO Stage: 1
+Overall Stage: 1
+Has AKI: True
+Hourly UO count: 19
+
+2026-03-26 05:28:32  INFO      === Iteration 58/100  run=kdigo_stages  best_qa=65.0% ===
+2026-03-26 05:28:53  INFO      Exec block 1/1 …
+2026-03-26 05:28:53  INFO      Output: Stay ID: 31402227
+Baseline Cr: 0.8
+Max Cr: 0.7
+Max Cr Ratio: 0.8749999999999999
+Max Absolute Increase: -0.10000000000000009
+Cr Stage: 0
+UO Stage: 0
+Overall Stage: 0
+Hourly UO count: 19
+Creatinine values:
+            charttime  valuenum  ratio_to_baseline  absolute_increase
+0 2120-01-20 23:10:00       0.7              0.875               -0.1
+1 2120-01-21 04:30:00       0.6              0.750               -0.2
+
+2026-03-26 05:28:53  INFO      === Iteration 59/100  run=kdigo_stages  best_qa=65.0% ===
+2026-03-26 05:29:07  INFO      Exec block 1/1 …
+2026-03-26 05:29:07  INFO      Output: UO Stage: 0
+Weight: 70.0
+Hourly UO count: 19
+
+Hourly UO values:
+            hour_start            hour_end  urine_output_ml  uo_per_kg_hr
+0  2120-01-20 22:39:44 2120-01-20 23:39:44            120.0      1.714286
+1  2120-01-20 23:39:44 2120-01-21 00:39:44             60.0      0.857143
+2  2120-01-21 00:39:44 2120-01-21 01:39:44              0.0      0.000000
+3  2120-01-21 01:39:44 2120-01-21 02:39:44            240.0      3.428571
+4  2120-01-21 02:39:44 2120-01-21 03:39:44              0.0      0
+2026-03-26 05:29:07  INFO      === Iteration 60/100  run=kdigo_stages  best_qa=65.0% ===
+2026-03-26 05:29:44  INFO      Exec block 1/1 …
+2026-03-26 05:29:44  INFO      Output: Stay info:
+    stay_id  subject_id   hadm_id              intime             outtime
+0  31402227    19147314  28850468 2120-01-20 22:39:44 2120-01-21 17:29:55
+Intime: 2120-01-20 22:39:44
+Outtime: 2120-01-21 17:29:55
+Duration: 18.836388888888887 hours
+
+2026-03-26 05:29:44  INFO      === Iteration 61/100  run=kdigo_stages  best_qa=65.0% ===
+2026-03-26 05:30:16  INFO      Exec block 1/1 …
+2026-03-26 05:30:17  INFO      Output: Stay ID: 33489417
+Baseline Cr: 1.4
+Max Cr: 1.3
+Max Cr Ratio: 0.9285714285714287
+Max Absolute Increase: -0.09999999999999987
+Cr Stage: 0
+UO Stage: 3
+Overall Stage: 3
+Hourly UO count: 363
+
+UO details:
+Weight: 88.81349305175397
+Hourly UO count: 363
+Hours with UO < 0.3: 357
+Hours with UO < 0.5: 357
+Hours with anuria: 357
+
+2026-03-26 05:30:17  INFO      === Iteration 62/100  run=kdigo_stages  best_qa=65.0% ===
+2026-03-26 05:30:17  INFO      Context approaching limit (20132 tokens, limit=25000) — forcing summarize + compress
+2026-03-26 05:33:36  INFO      Context compressed: 60 messages -> 2 messages
+2026-03-26 05:34:17  INFO      Exec block 1/1 …
+2026-03-26 05:34:17  INFO      Output: Stay 39553978:
+  Baseline Cr: 0.3 (source: prior_to_icu)
+  Max Cr: 0.5, Ratio: 1.67
+  Cr Stage: 1, UO Stage: 1
+  Overall Stage: 1, Has AKI: True
+  Weight: 39.32650386381426 kg
+
+Stay 37081114:
+  Baseline Cr: 0.8 (source: prior_to_icu)
+  Max Cr: 0.9, Ratio: 1.12
+  Cr Stage: 0, UO Stage: 1
+  Overall Stage: 1, Has AKI: True
+  Weight: 55.15689709524594 kg
+
+Stay 36779265:
+  Baseline Cr: 5.1 (source: prior_to_icu)
+  Max Cr: 7.7, Ratio: 1.51
+  Cr Stage: 3, UO Stage: 3
+  Overall Stage: 3, Has AKI: True
+ 
+2026-03-26 05:34:17  INFO      === Iteration 63/100  run=kdigo_stages  best_qa=65.0% ===
+2026-03-26 05:34:43  INFO      Exec block 1/1 …
+2026-03-26 05:34:43  INFO      Output: Stay 33489417 UO details:
+Weight: 88.81349305175397 kg
+Hourly UO count: 363
+Stage: 3
+
+UO per kg/hr stats:
+  Min: 0.0000
+  Max: 5.0668
+  Mean: 0.0403
+
+Hours below 0.3 mL/kg/hr: 357
+Hours below 0.5 mL/kg/hr: 357
+Hours with anuria (0): 357
+
+Sample hourly UO (first 10 hours):
+           hour_start  urine_output_ml  uo_per_kg_hr
+0 2128-07-31 00:25:00              0.0           0.0
+1 2128-07-31 01:25:00              0.0           0.0
+2 2128-07-31 02:25:00              0.0           0.0
+3 2128-07-31 03
+2026-03-26 05:34:43  INFO      === Iteration 64/100  run=kdigo_stages  best_qa=65.0% ===
+2026-03-26 05:35:00  INFO      Exec block 1/1 …
+2026-03-26 05:35:00  INFO      Output: Stay 36779265 Creatinine details:
+Baseline Cr: 5.1
+Max Cr: 7.7
+Max Ratio: 1.51
+Max Absolute Increase: 2.60
+Stage: 3
+Stage 3 due to Cr >= 4.0 with increase >= 0.5
+
+Creatinine values during stay:
+             charttime  valuenum  ratio_to_baseline  absolute_increase
+0  2112-09-21 00:14:00       5.2           1.019608                0.1
+1  2112-09-21 05:19:00       5.1           1.000000                0.0
+2  2112-09-21 09:00:00       5.1           1.000000                0.0
+3  2112-09-21 12:00:00
+2026-03-26 05:35:00  INFO      === Iteration 65/100  run=kdigo_stages  best_qa=65.0% ===
+2026-03-26 05:35:19  INFO      Exec block 1/1 …
+2026-03-26 05:35:19  INFO      Output: Stay 39765666 Creatinine details:
+Baseline Cr: 2.3 (source: prior_to_icu)
+Max Cr: None
+Stage: 0
+
+Stay 39874061 Creatinine details:
+Baseline Cr: 1.0 (source: prior_to_icu)
+Max Cr: 5.4
+Max Ratio: 5.40
+Max Absolute Increase: 4.40
+Stage: 3
+
+2026-03-26 05:35:19  INFO      === Iteration 66/100  run=kdigo_stages  best_qa=65.0% ===
+2026-03-26 05:35:42  INFO      Exec block 1/1 …
+2026-03-26 05:35:42  INFO      Output: Stay 39553978 UO details:
+Weight: 39.32650386381426 kg
+Hourly UO count: 10
+Stage: 1
+
+UO per kg/hr stats:
+  Min: 0.0000
+  Max: 4.4499
+
+Hours below 0.3 mL/kg/hr: 9
+Hours below 0.5 mL/kg/hr: 9
+Hours with anuria (0): 9
+
+
+Stay 31402227 (no AKI):
+Baseline Cr: 0.8
+Max Cr: 0.7
+Cr Stage: 0, UO Stage: 0
+Overall Stage: 0, Has AKI: False
+
+2026-03-26 05:35:42  INFO      === Iteration 67/100  run=kdigo_stages  best_qa=65.0% ===
+2026-03-26 05:36:06  INFO      Exec block 1/1 …
+2026-03-26 05:36:06  INFO      Output: Stay 39553978 UO values: [0.        4.4499254 0.        0.        0.        0.        0.
+ 0.        0.        0.       ]
+Longest consecutive below 0.3: 8
+Longest consecutive below 0.5: 8
+
+Stay 33489417 UO values (first 20): [0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.]
+Longest consecutive below 0.3: 285
+Longest consecutive below 0.5: 285
+
+2026-03-26 05:36:06  INFO      === Iteration 68/100  run=kdigo_stages  best_qa=65.0% ===
+2026-03-26 05:36:24  INFO      Exec block 1/1 …
+2026-03-26 05:36:25  INFO      Output: Stay 37158200:
+  Baseline Cr: 1.0 (source: prior_to_icu)
+  Max Cr: 3.6, Ratio: 3.6
+  Cr Stage: 3, UO Stage: 3
+  Overall Stage: 3, Has AKI: True
+
+Stay 36567846:
+  Baseline Cr: 0.5 (source: prior_to_icu)
+  Max Cr: 2.8, Ratio: 5.6
+  Cr Stage: 3, UO Stage: 1
+  Overall Stage: 3, Has AKI: True
+
+Stay 36712360:
+  Baseline Cr: 0.8 (source: prior_to_icu)
+  Max Cr: 0.7, Ratio: 0.8749999999999999
+  Cr Stage: 0, UO Stage: 1
+  Overall Stage: 1, Has AKI: True
+
+Stay 31404518:
+  Baseline Cr: 1.0 (source: prior_t
+2026-03-26 05:36:25  INFO      === Iteration 69/100  run=kdigo_stages  best_qa=65.0% ===
+2026-03-26 05:37:02  INFO      Exec block 1/1 …
+2026-03-26 05:37:02  INFO      Output: Stay 38150924:
+  Baseline: 1.1
+  Max: 1.5
+  Ratio: 1.36
+  Absolute increase: 0.40
+  Stage: 1
+
+2026-03-26 05:37:02  INFO      === Iteration 70/100  run=kdigo_stages  best_qa=65.0% ===
+2026-03-26 05:37:16  INFO      Exec block 1/1 …
+2026-03-26 05:37:16  INFO      Output: Stay 39553978: baseline_source = prior_to_icu, baseline = 0.3
+Stay 37081114: baseline_source = prior_to_icu, baseline = 0.8
+Stay 39765666: baseline_source = prior_to_icu, baseline = 2.3
+Stay 37067082: baseline_source = prior_to_icu, baseline = 0.6
+Stay 34592300: baseline_source = prior_to_icu, baseline = 0.4
+Stay 35347399: baseline_source = prior_to_icu, baseline = 2.5
+Stay 36779265: baseline_source = prior_to_icu, baseline = 5.1
+Stay 39874061: baseline_source = prior_to_icu, baseline = 1.0
+Stay
+2026-03-26 05:37:16  INFO      === Iteration 71/100  run=kdigo_stages  best_qa=65.0% ===
+2026-03-26 05:37:33  INFO      Exec block 1/1 …
+2026-03-26 05:37:34  INFO      Output: Testing additional stay IDs:
+Stay 39553978: Stage 1, Has AKI: True, Baseline: 0.3
+Stay 37081114: Stage 1, Has AKI: True, Baseline: 0.8
+Stay 39765666: Stage 0, Has AKI: False, Baseline: 2.3
+Stay 37067082: Stage 0, Has AKI: False, Baseline: 0.6
+Stay 34592300: Stage 0, Has AKI: False, Baseline: 0.4
+Stay 31205490: Stage 0, Has AKI: False, Baseline: 0.8
+Stay 39698942: Stage 2, Has AKI: True, Baseline: 1.3
+Stay 37510196: Stage 2, Has AKI: True, Baseline: 0.8
+Stay 39060235: Stage 0, Has AKI: False, Bas
+2026-03-26 05:37:34  INFO      === Iteration 72/100  run=kdigo_stages  best_qa=65.0% ===
+2026-03-26 05:37:54  INFO      Exec block 1/1 …
+2026-03-26 05:37:54  INFO      Output: Stay 39698942 (Stage 2):
+  Baseline Cr: 1.3
+  Max Cr: 1.7
+  Ratio: 1.31
+  Absolute increase: 0.40
+  Cr Stage: 1, UO Stage: 2
+  Overall Stage: 2
+
+UO details:
+  Weight: 76.65720169462311 kg
+  Hourly UO count: 20
+  Hours below 0.5 mL/kg/hr: 19
+
+2026-03-26 05:37:54  INFO      === Iteration 73/100  run=kdigo_stages  best_qa=65.0% ===
+2026-03-26 05:38:14  INFO      Exec block 1/1 …
+2026-03-26 05:38:14  INFO      Output: Stay 37510196 (Stage 2):
+  Baseline Cr: 0.8
+  Max Cr: 1.3
+  Ratio: 1.62
+  Absolute increase: 0.50
+  Cr Stage: 1, UO Stage: 2
+  Overall Stage: 2
+
+2026-03-26 05:38:14  INFO      === Iteration 74/100  run=kdigo_stages  best_qa=65.0% ===
+2026-03-26 05:40:35  INFO      Exec block 1/1 …
+2026-03-26 05:40:35  INFO      Output: Code executed successfully (no output).
+2026-03-26 05:40:35  INFO      Debug conversations will be saved to debug_logs
+2026-03-26 05:40:35  INFO      Using question from dataset column: Does this patient develop AKI (KDIGO stage 1 or higher) during their ICU stay?
+2026-03-26 05:40:35  INFO      Answer type for 'kdigo_stages': numerical (per_row=True)
+2026-03-26 05:40:35  INFO      ReACT iteration 1/5 — 20 active patients
+Rendering conversations:   0%|          | 0/20 [00:00<?, ?it/s]Rendering conversations: 100%|██████████| 20/20 [00:00<00:00, 793.67it/s]
+Processed prompts:   0%|          | 0/20 [00:00<?, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s]Processed prompts:   5%|▌         | 1/20 [00:07<02:27,  7.79s/it, est. speed input: 68.81 toks/s, output: 14.51 toks/s]Processed prompts:  10%|█         | 2/20 [00:07<00:59,  3.29s/it, est. speed input: 135.26 toks/s, output: 28.89 toks/s]Processed prompts:  25%|██▌       | 5/20 [00:08<00:14,  1.02it/s, est. speed input: 330.10 toks/s, output: 71.50 toks/s]Processed prompts:  50%|█████     | 10/20 [00:08<00:03,  2.63it/s, est. speed input: 653.52 toks/s, output: 144.45 toks/s]Processed prompts:  65%|██████▌   | 13/20 [00:08<00:01,  3.57it/s, est. speed input: 823.64 toks/s, output: 184.66 toks/s]Processed prompts:  75%|███████▌  | 15/20 [00:08<00:01,  4.45it/s, est. speed input: 938.18 toks/s, output: 213.01 toks/s]Processed prompts:  95%|█████████▌| 19/20 [00:08<00:00,  6.98it/s, est. speed input: 1175.69 toks/s, output: 271.87 toks/s]Processed prompts: 100%|██████████| 20/20 [00:10<00:00,  6.98it/s, est. speed input: 1047.55 toks/s, output: 247.64 toks/s]Processed prompts: 100%|██████████| 20/20 [00:10<00:00,  1.93it/s, est. speed input: 1047.55 toks/s, output: 247.64 toks/s]
+2026-03-26 05:40:47  INFO      ReACT iteration 2/5 — 20 active patients
+Rendering conversations:   0%|          | 0/20 [00:00<?, ?it/s]Rendering conversations: 100%|██████████| 20/20 [00:00<00:00, 240.05it/s]
+Processed prompts:   0%|          | 0/20 [00:00<?, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s]Processed prompts:   5%|▌         | 1/20 [00:16<05:16, 16.65s/it, est. speed input: 157.75 toks/s, output: 4.14 toks/s]Processed prompts:  10%|█         | 2/20 [00:17<02:09,  7.22s/it, est. speed input: 286.48 toks/s, output: 8.92 toks/s]Processed prompts:  15%|█▌        | 3/20 [00:17<01:11,  4.20s/it, est. speed input: 435.52 toks/s, output: 14.03 toks/s]Processed prompts:  25%|██▌       | 5/20 [00:18<00:28,  1.89s/it, est. speed input: 844.30 toks/s, output: 25.01 toks/s]Processed prompts:  35%|███▌      | 7/20 [00:18<00:13,  1.07s/it, est. speed input: 1045.62 toks/s, output: 36.56 toks/s]Processed prompts:  40%|████      | 8/20 [00:18<00:10,  1.18it/s, est. speed input: 1182.89 toks/s, output: 42.12 toks/s]Processed prompts:  50%|█████     | 10/20 [00:18<00:05,  1.84it/s, est. speed input: 1470.99 toks/s, output: 53.86 toks/s]Processed prompts:  55%|█████▌    | 11/20 [00:18<00:04,  2.18it/s, est. speed input: 1682.42 toks/s, output: 59.50 toks/s]Processed prompts:  65%|██████▌   | 13/20 [00:18<00:02,  3.22it/s, est. speed input: 1925.52 toks/s, output: 71.72 toks/s]Processed prompts:  70%|███████   | 14/20 [00:19<00:01,  3.10it/s, est. speed input: 1978.75 toks/s, output: 77.00 toks/s]Processed prompts:  80%|████████  | 16/20 [00:19<00:01,  3.45it/s, est. speed input: 2175.96 toks/s, output: 89.07 toks/s]Processed prompts:  85%|████████▌ | 17/20 [00:20<00:01,  2.91it/s, est. speed input: 2259.16 toks/s, output: 94.43 toks/s]Processed prompts:  90%|█████████ | 18/20 [00:20<00:00,  2.57it/s, est. speed input: 2404.94 toks/s, output: 100.03 toks/s]Processed prompts:  95%|█████████▌| 19/20 [00:21<00:00,  2.17it/s, est. speed input: 2399.82 toks/s, output: 105.51 toks/s]Processed prompts: 100%|██████████| 20/20 [00:22<00:00,  1.43it/s, est. speed input: 2348.71 toks/s, output: 109.15 toks/s]Processed prompts: 100%|██████████| 20/20 [00:22<00:00,  1.43it/s, est. speed input: 2348.71 toks/s, output: 109.15 toks/s]Processed prompts: 100%|██████████| 20/20 [00:22<00:00,  1.14s/it, est. speed input: 2348.71 toks/s, output: 109.15 toks/s]
+2026-03-26 05:41:10  INFO      QA accuracy: 55.0%  (correct=11/20, parse_errors=0)
+2026-03-26 05:41:10  INFO      === Iteration 75/100  run=kdigo_stages  best_qa=65.0% ===
+2026-03-26 05:41:47  INFO      Exec block 1/1 …
+2026-03-26 05:41:47  INFO      Output: 
+=== Stay 31404518 ===
+Baseline Cr: 1.0 (source: prior_to_icu)
+Max Cr: 1.2, Ratio: 1.2, Abs Inc: 0.19999999999999996
+Cr Stage: 0, UO Stage: 1
+Overall Stage: 1, Has AKI: True
+Weight: 64.86378604929648 kg
+Hourly UO count: 131
+Creatinine values: [{'charttime': Timestamp('2147-09-12 17:06:00'), 'valuenum': 1.0}, {'charttime': Timestamp('2147-09-13 05:05:00'), 'valuenum': 0.9}, {'charttime': Timestamp('2147-09-14 02:40:00'), 'valuenum': 1.0}, {'charttime': Timestamp('2147-09-14 10:21:00'), 'valuenum'
+2026-03-26 05:41:47  INFO      === Iteration 76/100  run=kdigo_stages  best_qa=65.0% ===
+2026-03-26 05:42:47  INFO      Exec block 1/1 …
+2026-03-26 05:42:47  INFO      Output: Stay 31402227 UO details:
+Weight: 70.0 kg
+Hourly UO count: 19
+Stage: 0
+
+All hourly UO values:
+            hour_start  urine_output_ml  uo_per_kg_hr
+0  2120-01-20 22:39:44            120.0      1.714286
+1  2120-01-20 23:39:44             60.0      0.857143
+2  2120-01-21 00:39:44              0.0      0.000000
+3  2120-01-21 01:39:44            240.0      3.428571
+4  2120-01-21 02:39:44              0.0      0.000000
+5  2120-01-21 03:39:44            200.0      2.857143
+6  2120-01-21 04:39:44      
+2026-03-26 05:42:47  INFO      === Iteration 77/100  run=kdigo_stages  best_qa=65.0% ===
+2026-03-26 05:43:47  INFO      Exec block 1/1 …
+2026-03-26 05:43:47  INFO      Output: Stay info: [{'stay_id': 31402227, 'subject_id': 19147314, 'hadm_id': 28850468, 'intime': Timestamp('2120-01-20 22:39:44'), 'outtime': Timestamp('2120-01-21 17:29:55')}]
+
+All creatinine values for patient 19147314:
+            charttime  valuenum   hadm_id
+0 2120-01-20 13:15:00       0.8      <NA>
+1 2120-01-20 23:10:00       0.7  28850468
+2 2120-01-21 04:30:00       0.6  28850468
+3 2120-01-22 07:30:00       0.6  28850468
+4 2120-01-27 06:10:00       0.4  28850468
+5 2120-01-28 16:20:00       0.5  2
+2026-03-26 05:43:47  INFO      === Iteration 78/100  run=kdigo_stages  best_qa=65.0% ===
+2026-03-26 05:44:30  INFO      Exec block 1/1 …
+2026-03-26 05:44:30  INFO      Output: Stay duration: [{'stay_id': 31402227, 'subject_id': 19147314, 'hadm_id': 28850468, 'intime': Timestamp('2120-01-20 22:39:44'), 'outtime': Timestamp('2120-01-21 17:29:55'), 'duration': Timedelta('0 days 18:50:11')}]
+
+Urine output events:
+             charttime  value  itemid
+0  2120-01-20 23:00:00  120.0  226559
+1  2120-01-21 00:00:00   60.0  226559
+2  2120-01-21 02:00:00  240.0  226559
+3  2120-01-21 04:00:00  200.0  226559
+4  2120-01-21 06:00:00  140.0  226559
+5  2120-01-21 07:00:00  100.0  2265
+2026-03-26 05:44:30  INFO      === Iteration 79/100  run=kdigo_stages  best_qa=65.0% ===
+2026-03-26 05:47:20  INFO      Exec block 1/1 …
+2026-03-26 05:47:20  INFO      Output: Stay 31402227: UO Stage = 0, Total hours = 19
+  Below 0.5: 9, Below 0.3: 8, Anuria: 4
+Stay 33489417: UO Stage = 3, Total hours = 363
+  Below 0.5: 357, Below 0.3: 357, Anuria: 357
+Stay 31404518: UO Stage = 1, Total hours = 131
+  Below 0.5: 70, Below 0.3: 54, Anuria: 53
+Stay 38150924: UO Stage = 1, Total hours = 19
+  Below 0.5: 14, Below 0.3: 14, Anuria: 14
+Stay 34575878: UO Stage = 1, Total hours = 19
+  Below 0.5: 15, Below 0.3: 15, Anuria: 15
+
+2026-03-26 05:47:20  INFO      === Iteration 80/100  run=kdigo_stages  best_qa=65.0% ===
+2026-03-26 05:48:09  INFO      Exec block 1/1 …
+2026-03-26 05:48:09  INFO      Output: Error:
+Traceback (most recent call last):
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 643, in execute
+    _run_with_timeout(_do_execute, timeout)
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 174, in _run_with_timeout
+    raise error[0]
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 156, in target
+    result[0] = func(*args, **kwargs)
+                ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/v-tiossowsk
+2026-03-26 05:48:09  INFO      === Iteration 81/100  run=kdigo_stages  best_qa=65.0% ===
+2026-03-26 05:48:35  INFO      Exec block 1/1 …
+2026-03-26 05:48:35  INFO      Output: Admission info: [{'subject_id': 19147314, 'hadm_id': 28850468, 'admittime': Timestamp('2120-01-20 20:53:00'), 'dischtime': Timestamp('2120-01-30 15:23:00')}]
+
+Creatinine values in first 7 days of admission:
+            charttime  valuenum
+0 2120-01-20 23:10:00       0.7
+1 2120-01-21 04:30:00       0.6
+2 2120-01-22 07:30:00       0.6
+3 2120-01-27 06:10:00       0.4
+
+Minimum creatinine in first 7 days: 0.4
+
+2026-03-26 05:48:35  INFO      === Iteration 82/100  run=kdigo_stages  best_qa=65.0% ===
+2026-03-26 05:49:37  INFO      Exec block 1/1 …
+2026-03-26 05:49:37  INFO      Output: All creatinine values:
+            charttime  valuenum   hadm_id
+0 2120-01-20 13:15:00       0.8      <NA>
+1 2120-01-20 23:10:00       0.7  28850468
+2 2120-01-21 04:30:00       0.6  28850468
+3 2120-01-22 07:30:00       0.6  28850468
+4 2120-01-27 06:10:00       0.4  28850468
+5 2120-01-28 16:20:00       0.5  28850468
+6 2120-01-29 06:40:00       0.4  28850468
+7 2120-01-30 06:50:00       0.5  28850468
+
+Creatinine during ICU stay:
+            charttime  valuenum   hadm_id
+1 2120-01-20 23:10:00       
+2026-03-26 05:49:37  INFO      === Iteration 83/100  run=kdigo_stages  best_qa=65.0% ===
+2026-03-26 05:49:37  INFO      Context approaching limit (20373 tokens, limit=25000) — forcing summarize + compress
+2026-03-26 05:53:21  INFO      Context compressed: 45 messages -> 2 messages
+2026-03-26 05:53:32  INFO      Exec block 1/1 …
+2026-03-26 05:53:32  INFO      Output: []
+
+2026-03-26 05:53:32  INFO      === Iteration 84/100  run=kdigo_stages  best_qa=65.0% ===
+2026-03-26 05:53:35  INFO      Exec block 1/1 …
+2026-03-26 05:53:35  INFO      Output: []
+
+2026-03-26 05:53:35  INFO      === Iteration 85/100  run=kdigo_stages  best_qa=65.0% ===
+2026-03-26 05:53:40  INFO      Exec block 1/1 …
+2026-03-26 05:53:40  INFO      Output: []
+[]
+
+2026-03-26 05:53:40  INFO      === Iteration 86/100  run=kdigo_stages  best_qa=65.0% ===
+2026-03-26 05:54:13  INFO      Exec block 1/1 …
+2026-03-26 05:54:13  INFO      Output: Error:
+Traceback (most recent call last):
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 643, in execute
+    _run_with_timeout(_do_execute, timeout)
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 174, in _run_with_timeout
+    raise error[0]
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 156, in target
+    result[0] = func(*args, **kwargs)
+                ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/v-tiossowsk
+2026-03-26 05:54:13  INFO      === Iteration 87/100  run=kdigo_stages  best_qa=65.0% ===
+2026-03-26 05:54:43  INFO      Exec block 1/1 …
+2026-03-26 05:54:43  INFO      Output: Stay info: [{'stay_id': 31402227, 'subject_id': 19147314, 'hadm_id': 28850468, 'intime': Timestamp('2120-01-20 22:39:44'), 'outtime': Timestamp('2120-01-21 17:29:55')}]
+
+Subject: 19147314, Hadm: 28850468
+Intime: 2120-01-20 22:39:44, Outtime: 2120-01-21 17:29:55
+
+Admission info: [{'admittime': Timestamp('2120-01-20 20:53:00'), 'dischtime': Timestamp('2120-01-30 15:23:00')}]
+
+Baseline creatinine values (before ICU):
+            charttime  valuenum
+0 2120-01-20 13:15:00       0.8
+
+ICU creatinine va
+2026-03-26 05:54:43  INFO      === Iteration 88/100  run=kdigo_stages  best_qa=65.0% ===
+2026-03-26 05:55:29  INFO      Exec block 1/1 …
+2026-03-26 05:55:29  INFO      Output: All creatinine values during admission:
+            charttime  valuenum
+0 2120-01-20 23:10:00       0.7
+1 2120-01-21 04:30:00       0.6
+2 2120-01-22 07:30:00       0.6
+3 2120-01-27 06:10:00       0.4
+4 2120-01-28 16:20:00       0.5
+5 2120-01-29 06:40:00       0.4
+6 2120-01-30 06:50:00       0.5
+
+Urine output during ICU stay:
+             charttime  value  itemid
+0  2120-01-20 23:00:00  120.0  226559
+1  2120-01-21 00:00:00   60.0  226559
+2  2120-01-21 02:00:00  240.0  226559
+3  2120-01-21 04:00:0
+2026-03-26 05:55:29  INFO      === Iteration 89/100  run=kdigo_stages  best_qa=65.0% ===
+2026-03-26 05:56:19  INFO      Exec block 1/1 …
+2026-03-26 05:56:19  INFO      Output: Stay info: [{'stay_id': 33489417, 'subject_id': 10469631, 'hadm_id': 24112097, 'intime': Timestamp('2128-07-31 00:25:00'), 'outtime': Timestamp('2128-08-15 02:30:46')}]
+
+Subject: 10469631, Hadm: 24112097
+Intime: 2128-07-31 00:25:00, Outtime: 2128-08-15 02:30:46
+
+Admission info: [{'admittime': Timestamp('2128-07-30 22:52:00'), 'dischtime': Timestamp('2128-08-26 21:35:00')}]
+
+Baseline creatinine values (before ICU):
+            charttime  valuenum
+0 2128-07-30 21:33:00       1.4
+
+ICU creatinine va
+2026-03-26 05:56:19  INFO      === Iteration 90/100  run=kdigo_stages  best_qa=65.0% ===
+2026-03-26 05:57:08  INFO      Exec block 1/1 …
+2026-03-26 05:57:08  INFO      Output: Stay info: [{'stay_id': 31404518, 'subject_id': 14498219, 'hadm_id': 22382612, 'intime': Timestamp('2147-09-12 06:11:00'), 'outtime': Timestamp('2147-09-17 16:49:06')}]
+
+Subject: 14498219, Hadm: 22382612
+Intime: 2147-09-12 06:11:00, Outtime: 2147-09-17 16:49:06
+
+Baseline creatinine values (before ICU):
+            charttime  valuenum
+0 2147-09-12 02:40:00       1.0
+
+ICU creatinine values:
+            charttime  valuenum
+0 2147-09-12 17:06:00       1.0
+1 2147-09-13 05:05:00       0.9
+2 2147-09-14
+2026-03-26 05:57:08  INFO      === Iteration 91/100  run=kdigo_stages  best_qa=65.0% ===
+2026-03-26 05:58:43  INFO      Exec block 1/1 …
+2026-03-26 05:58:43  INFO      Output: Baseline creatinine: 1.0
+
+ICU creatinine values:
+            charttime  valuenum
+0 2147-09-12 17:06:00       1.0
+1 2147-09-13 05:05:00       0.9
+2 2147-09-14 02:40:00       1.0
+3 2147-09-14 10:21:00       1.1
+4 2147-09-15 00:54:00       1.2
+5 2147-09-16 01:23:00       1.1
+6 2147-09-17 01:00:00       1.0
+
+With ratios and increases:
+            charttime  valuenum  ratio_to_baseline  absolute_increase
+0 2147-09-12 17:06:00       1.0                1.0                0.0
+1 2147-09-13 05:05:00      
+2026-03-26 05:58:43  INFO      === Iteration 92/100  run=kdigo_stages  best_qa=65.0% ===
+2026-03-26 06:00:11  INFO      Exec block 1/1 …
+2026-03-26 06:00:11  INFO      Output: Total urine output events: 78
+First 10 events:
+            charttime  value  itemid
+0 2147-09-12 08:35:00   30.0  226560
+1 2147-09-12 10:08:00  275.0  226559
+2 2147-09-12 11:00:00  150.0  226559
+3 2147-09-12 12:00:00   55.0  226559
+4 2147-09-12 13:00:00   30.0  226559
+5 2147-09-12 14:00:00   15.0  226559
+6 2147-09-12 15:00:00   30.0  226559
+7 2147-09-12 16:00:00   35.0  226559
+8 2147-09-12 17:00:00   30.0  226559
+9 2147-09-12 18:00:00   70.0  226559
+
+Last 10 events:
+             charttime  value
+2026-03-26 06:00:11  INFO      === Iteration 93/100  run=kdigo_stages  best_qa=65.0% ===
+2026-03-26 06:01:25  INFO      Exec block 1/1 …
+2026-03-26 06:01:25  INFO      Output: Sum of empty series: 0.0
+Is NaN: False
+
+Documented hours with urine output (FIXED): 78
+First 20 hourly UO values (mL/kg/hr): [np.float32(0.42857143), np.float32(3.9285715), np.float32(2.142857), np.float32(0.78571427), np.float32(0.42857143), np.float32(0.21428572), np.float32(0.42857143), np.float32(0.5), np.float32(0.42857143), np.float32(1.0), np.float32(0.35714287), np.float32(0.71428573), np.float32(1.4285715), np.float32(0.5), np.float32(0.64285713), np.float32(1.1428572), np.float32(0.714
+2026-03-26 06:01:25  INFO      === Iteration 94/100  run=kdigo_stages  best_qa=65.0% ===
+2026-03-26 06:02:13  INFO      Exec block 1/1 …
+2026-03-26 06:02:13  INFO      Output: Stay 33489417 - Documented hours with urine output (FIXED): 6
+Hourly UO values (mL/kg/hr): [np.float32(6.428571), np.float32(3.5714285), np.float32(2.142857), np.float32(2.142857), np.float32(2.142857), np.float32(2.142857)]
+Longest consecutive hours < 0.3 mL/kg/hr: 0
+Longest consecutive hours of anuria (exactly 0): 0
+Longest consecutive hours < 0.5 mL/kg/hr: 0
+UO KDIGO stage (FIXED): 0
+
+2026-03-26 06:02:13  INFO      === Iteration 95/100  run=kdigo_stages  best_qa=65.0% ===
+2026-03-26 06:02:59  INFO      Exec block 1/1 …
+2026-03-26 06:02:59  INFO      Output: Intime: 2120-01-20 22:39:44
+Admittime: 2120-01-20 20:53:00
+
+All creatinine values (3 months before ICU to present):
+            charttime  valuenum
+0 2120-01-20 13:15:00       0.8
+1 2120-01-20 23:10:00       0.7
+2 2120-01-21 04:30:00       0.6
+3 2120-01-22 07:30:00       0.6
+4 2120-01-27 06:10:00       0.4
+5 2120-01-28 16:20:00       0.5
+6 2120-01-29 06:40:00       0.4
+7 2120-01-30 06:50:00       0.5
+
+Minimum creatinine in first 7 days of admission:    min_cr
+0     0.4
+
+Urine output events: 15
+ 
+2026-03-26 06:02:59  INFO      === Iteration 96/100  run=kdigo_stages  best_qa=65.0% ===
+2026-03-26 06:08:20  INFO      Exec block 1/1 …
+2026-03-26 06:08:20  INFO      Output: Error:
+Traceback (most recent call last):
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 643, in execute
+    _run_with_timeout(_do_execute, timeout)
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 174, in _run_with_timeout
+    raise error[0]
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 156, in target
+    result[0] = func(*args, **kwargs)
+                ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/v-tiossowsk
+2026-03-26 06:08:20  INFO      === Iteration 97/100  run=kdigo_stages  best_qa=65.0% ===
+2026-03-26 06:11:02  INFO      Exec block 1/1 …
+2026-03-26 06:11:03  INFO      Output: Testing stay 31404518 (was false positive):
+  Overall Stage: 0, Cr Stage: 0, UO Stage: 0
+
+Testing stay 33489417 (was over-staged):
+  Overall Stage: 0, Cr Stage: 0, UO Stage: 0
+
+Testing stay 31402227 (was false negative):
+  Overall Stage: 0, Cr Stage: 0, UO Stage: 0
+
+Testing stay 38150924 (was false positive):
+  Overall Stage: 1, Cr Stage: 1, UO Stage: 0
+
+Testing stay 34575878 (was false positive):
+  Overall Stage: 0, Cr Stage: 0, UO Stage: 0
+
+Testing stay 39553978 (should be Stage 1):
+  Overall 
+2026-03-26 06:11:03  INFO      === Iteration 98/100  run=kdigo_stages  best_qa=65.0% ===
+2026-03-26 06:11:03  INFO      Context approaching limit (23021 tokens, limit=25000) — forcing summarize + compress
+2026-03-26 06:14:49  INFO      Context compressed: 32 messages -> 2 messages
+2026-03-26 06:15:02  INFO      Exec block 1/1 …
+2026-03-26 06:15:02  INFO      Output: []
+
+2026-03-26 06:15:02  INFO      === Iteration 99/100  run=kdigo_stages  best_qa=65.0% ===
+2026-03-26 06:15:05  INFO      Exec block 1/1 …
+2026-03-26 06:15:05  INFO      Output: []
+
+2026-03-26 06:15:05  INFO      === Iteration 100/100  run=kdigo_stages  best_qa=65.0% ===
+2026-03-26 06:17:34  INFO      Exec block 1/1 …
+2026-03-26 06:17:34  INFO      Output: Code executed successfully (no output).
+2026-03-26 06:17:34  INFO      Debug conversations will be saved to debug_logs
+2026-03-26 06:17:34  INFO      Using question from dataset column: Does this patient develop AKI (KDIGO stage 1 or higher) during their ICU stay?
+2026-03-26 06:17:34  INFO      Answer type for 'kdigo_stages': numerical (per_row=True)
+2026-03-26 06:17:34  INFO      ReACT iteration 1/5 — 20 active patients
+Rendering conversations:   0%|          | 0/20 [00:00<?, ?it/s]Rendering conversations: 100%|██████████| 20/20 [00:00<00:00, 760.78it/s]
+Processed prompts:   0%|          | 0/20 [00:00<?, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s]Processed prompts:   5%|▌         | 1/20 [00:07<02:30,  7.91s/it, est. speed input: 67.74 toks/s, output: 14.66 toks/s]Processed prompts:  15%|█▌        | 3/20 [00:08<00:36,  2.12s/it, est. speed input: 198.68 toks/s, output: 43.49 toks/s]Processed prompts:  40%|████      | 8/20 [00:08<00:07,  1.67it/s, est. speed input: 525.61 toks/s, output: 116.60 toks/s]Processed prompts:  55%|█████▌    | 11/20 [00:08<00:03,  2.49it/s, est. speed input: 702.60 toks/s, output: 157.47 toks/s]Processed prompts:  70%|███████   | 14/20 [00:08<00:01,  3.65it/s, est. speed input: 884.27 toks/s, output: 200.96 toks/s]Processed prompts:  85%|████████▌ | 17/20 [00:08<00:00,  4.81it/s, est. speed input: 1047.56 toks/s, output: 241.78 toks/s]Processed prompts:  95%|█████████▌| 19/20 [00:10<00:00,  3.00it/s, est. speed input: 1005.55 toks/s, output: 238.27 toks/s]Processed prompts: 100%|██████████| 20/20 [00:10<00:00,  3.00it/s, est. speed input: 1024.57 toks/s, output: 248.34 toks/s]Processed prompts: 100%|██████████| 20/20 [00:10<00:00,  1.89it/s, est. speed input: 1024.57 toks/s, output: 248.34 toks/s]
+2026-03-26 06:17:45  INFO      ReACT iteration 2/5 — 20 active patients
+Rendering conversations:   0%|          | 0/20 [00:00<?, ?it/s]Rendering conversations: 100%|██████████| 20/20 [00:00<00:00, 411.40it/s]
+Processed prompts:   0%|          | 0/20 [00:00<?, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s]Processed prompts:   5%|▌         | 1/20 [00:15<04:45, 15.02s/it, est. speed input: 72.50 toks/s, output: 14.11 toks/s]Processed prompts:  10%|█         | 2/20 [00:31<04:44, 15.81s/it, est. speed input: 69.29 toks/s, output: 24.85 toks/s]Processed prompts:  15%|█▌        | 3/20 [00:31<02:28,  8.72s/it, est. speed input: 102.99 toks/s, output: 42.73 toks/s]Processed prompts:  20%|██        | 4/20 [00:32<01:30,  5.66s/it, est. speed input: 133.25 toks/s, output: 59.68 toks/s]Processed prompts:  25%|██▌       | 5/20 [06:18<32:07, 128.49s/it, est. speed input: 14.35 toks/s, output: 26.76 toks/s]Processed prompts:  85%|████████▌ | 17/20 [06:19<00:53, 17.90s/it, est. speed input: 48.83 toks/s, output: 286.10 toks/s]Processed prompts: 100%|██████████| 20/20 [06:19<00:00, 17.90s/it, est. speed input: 57.45 toks/s, output: 350.94 toks/s]Processed prompts: 100%|██████████| 20/20 [06:19<00:00, 18.95s/it, est. speed input: 57.45 toks/s, output: 350.94 toks/s]
+2026-03-26 06:24:04  INFO      ReACT iteration 3/5 — 20 active patients
+Rendering conversations:   0%|          | 0/20 [00:00<?, ?it/s]Rendering conversations:  55%|█████▌    | 11/20 [00:00<00:00, 107.04it/s]Rendering conversations: 100%|██████████| 20/20 [00:00<00:00, 103.13it/s]
+Processed prompts:   0%|          | 0/20 [00:00<?, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s]Processed prompts:   5%|▌         | 1/20 [00:54<17:07, 54.06s/it, est. speed input: 176.44 toks/s, output: 4.44 toks/s]Processed prompts:  10%|█         | 2/20 [01:00<07:48, 26.04s/it, est. speed input: 315.29 toks/s, output: 10.05 toks/s]Processed prompts:  15%|█▌        | 3/20 [01:04<04:29, 15.86s/it, est. speed input: 442.74 toks/s, output: 16.21 toks/s]Processed prompts:  20%|██        | 4/20 [01:04<02:36,  9.78s/it, est. speed input: 587.00 toks/s, output: 22.91 toks/s]Processed prompts:  30%|███       | 6/20 [01:06<01:12,  5.15s/it, est. speed input: 853.40 toks/s, output: 36.27 toks/s]Processed prompts:  45%|████▌     | 9/20 [01:06<00:26,  2.44s/it, est. speed input: 1052.35 toks/s, output: 58.14 toks/s]Processed prompts:  50%|█████     | 10/20 [01:08<00:22,  2.23s/it, est. speed input: 1170.25 toks/s, output: 64.50 toks/s]Processed prompts:  55%|█████▌    | 11/20 [01:08<00:16,  1.78s/it, est. speed input: 1194.58 toks/s, output: 72.03 toks/s]Processed prompts:  65%|██████▌   | 13/20 [01:09<00:08,  1.24s/it, est. speed input: 1453.12 toks/s, output: 86.83 toks/s]Processed prompts:  70%|███████   | 14/20 [06:43<07:23, 73.84s/it, est. speed input: 273.07 toks/s, output: 35.22 toks/s] Processed prompts:  75%|███████▌  | 15/20 [06:43<04:41, 56.34s/it, est. speed input: 276.85 toks/s, output: 55.50 toks/s]Processed prompts:  80%|████████  | 16/20 [06:44<02:48, 42.12s/it, est. speed input: 300.30 toks/s, output: 75.74 toks/s]Processed prompts:  85%|████████▌ | 17/20 [06:44<01:32, 30.97s/it, est. speed input: 323.76 toks/s, output: 95.98 toks/s]Processed prompts:  90%|█████████ | 18/20 [06:44<00:44, 22.50s/it, est. speed input: 347.18 toks/s, output: 116.20 toks/s]Processed prompts: 100%|██████████| 20/20 [06:44<00:00, 22.50s/it, est. speed input: 394.24 toks/s, output: 156.69 toks/s]Processed prompts: 100%|██████████| 20/20 [06:44<00:00, 20.22s/it, est. speed input: 394.24 toks/s, output: 156.69 toks/s]
+2026-03-26 06:30:49  INFO      ReACT iteration 4/5 — 20 active patients
+Rendering conversations:   0%|          | 0/20 [00:00<?, ?it/s]Rendering conversations:  50%|█████     | 10/20 [00:00<00:00, 90.47it/s]Rendering conversations: 100%|██████████| 20/20 [00:00<00:00, 71.20it/s]Rendering conversations: 100%|██████████| 20/20 [00:00<00:00, 73.51it/s]
+Processed prompts:   0%|          | 0/20 [00:00<?, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s]Processed prompts:   5%|▌         | 1/20 [01:07<21:20, 67.39s/it, est. speed input: 266.90 toks/s, output: 1.80 toks/s]Processed prompts:  10%|█         | 2/20 [01:10<08:47, 29.30s/it, est. speed input: 513.97 toks/s, output: 4.01 toks/s]Processed prompts:  20%|██        | 4/20 [01:11<03:00, 11.27s/it, est. speed input: 898.71 toks/s, output: 9.32 toks/s]Processed prompts:  25%|██▌       | 5/20 [01:11<01:58,  7.88s/it, est. speed input: 1035.76 toks/s, output: 11.97 toks/s]Processed prompts:  30%|███       | 6/20 [01:12<01:21,  5.80s/it, est. speed input: 1265.95 toks/s, output: 14.69 toks/s]Processed prompts:  35%|███▌      | 7/20 [01:13<00:56,  4.34s/it, est. speed input: 1493.81 toks/s, output: 17.56 toks/s]Processed prompts:  40%|████      | 8/20 [01:13<00:37,  3.10s/it, est. speed input: 1732.94 toks/s, output: 20.82 toks/s]Processed prompts:  45%|████▌     | 9/20 [01:16<00:34,  3.13s/it, est. speed input: 1793.29 toks/s, output: 24.11 toks/s]Processed prompts:  50%|█████     | 10/20 [01:17<00:23,  2.31s/it, est. speed input: 1915.62 toks/s, output: 28.28 toks/s]Processed prompts:  55%|█████▌    | 11/20 [01:18<00:16,  1.82s/it, est. speed input: 2029.76 toks/s, output: 32.43 toks/s]Processed prompts:  60%|██████    | 12/20 [01:20<00:15,  1.94s/it, est. speed input: 2099.78 toks/s, output: 36.50 toks/s]Processed prompts:  65%|██████▌   | 13/20 [01:20<00:10,  1.43s/it, est. speed input: 2220.44 toks/s, output: 41.20 toks/s]Processed prompts:  70%|███████   | 14/20 [01:20<00:06,  1.08s/it, est. speed input: 2340.93 toks/s, output: 46.07 toks/s]Processed prompts:  75%|███████▌  | 15/20 [01:21<00:04,  1.09it/s, est. speed input: 2450.16 toks/s, output: 50.85 toks/s]Processed prompts:  80%|████████  | 16/20 [01:21<00:02,  1.36it/s, est. speed input: 2566.38 toks/s, output: 55.79 toks/s]Processed prompts:  85%|████████▌ | 17/20 [01:23<00:03,  1.17s/it, est. speed input: 2532.51 toks/s, output: 60.13 toks/s]Processed prompts:  90%|█████████ | 18/20 [01:24<00:01,  1.14it/s, est. speed input: 2559.57 toks/s, output: 65.67 toks/s]Processed prompts:  95%|█████████▌| 19/20 [01:24<00:00,  1.31it/s, est. speed input: 2666.35 toks/s, output: 71.29 toks/s]Processed prompts: 100%|██████████| 20/20 [01:27<00:00,  1.39s/it, est. speed input: 2610.54 toks/s, output: 75.57 toks/s]Processed prompts: 100%|██████████| 20/20 [01:27<00:00,  1.39s/it, est. speed input: 2610.54 toks/s, output: 75.57 toks/s]Processed prompts: 100%|██████████| 20/20 [01:27<00:00,  4.37s/it, est. speed input: 2610.54 toks/s, output: 75.57 toks/s]
+2026-03-26 06:32:17  INFO      ReACT iteration 5/5 — 20 active patients
+Rendering conversations:   0%|          | 0/20 [00:00<?, ?it/s]Rendering conversations:  40%|████      | 8/20 [00:00<00:00, 74.54it/s]Rendering conversations:  80%|████████  | 16/20 [00:00<00:00, 74.39it/s]Rendering conversations: 100%|██████████| 20/20 [00:00<00:00, 66.50it/s]
+Processed prompts:   0%|          | 0/20 [00:00<?, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s]Processed prompts:   5%|▌         | 1/20 [01:10<22:28, 70.99s/it, est. speed input: 260.22 toks/s, output: 1.56 toks/s]Processed prompts:  10%|█         | 2/20 [01:12<09:00, 30.05s/it, est. speed input: 400.46 toks/s, output: 3.68 toks/s]Processed prompts:  15%|█▌        | 3/20 [01:14<04:57, 17.51s/it, est. speed input: 631.78 toks/s, output: 5.99 toks/s]Processed prompts:  20%|██        | 4/20 [01:15<02:50, 10.66s/it, est. speed input: 875.70 toks/s, output: 8.75 toks/s]Processed prompts:  25%|██▌       | 5/20 [01:15<01:44,  6.98s/it, est. speed input: 1115.68 toks/s, output: 11.40 toks/s]Processed prompts:  30%|███       | 6/20 [01:20<01:28,  6.34s/it, est. speed input: 1179.44 toks/s, output: 14.52 toks/s]Processed prompts:  35%|███▌      | 7/20 [01:21<00:57,  4.43s/it, est. speed input: 1305.93 toks/s, output: 18.39 toks/s]Processed prompts:  40%|████      | 8/20 [01:21<00:37,  3.13s/it, est. speed input: 1528.25 toks/s, output: 22.09 toks/s]Processed prompts:  45%|████▌     | 9/20 [01:24<00:33,  3.05s/it, est. speed input: 1695.62 toks/s, output: 25.82 toks/s]Processed prompts:  50%|█████     | 10/20 [01:24<00:21,  2.20s/it, est. speed input: 1818.52 toks/s, output: 30.46 toks/s]Processed prompts:  60%|██████    | 12/20 [01:25<00:10,  1.30s/it, est. speed input: 2064.72 toks/s, output: 39.56 toks/s]Processed prompts:  65%|██████▌   | 13/20 [01:25<00:07,  1.02s/it, est. speed input: 2187.75 toks/s, output: 44.23 toks/s]Processed prompts:  70%|███████   | 14/20 [01:27<00:08,  1.40s/it, est. speed input: 2166.44 toks/s, output: 48.31 toks/s]Processed prompts:  75%|███████▌  | 15/20 [01:28<00:05,  1.11s/it, est. speed input: 2198.58 toks/s, output: 53.41 toks/s]Processed prompts:  80%|████████  | 16/20 [01:29<00:05,  1.27s/it, est. speed input: 2277.87 toks/s, output: 58.21 toks/s]Processed prompts:  85%|████████▌ | 17/20 [01:44<00:15,  5.03s/it, est. speed input: 2068.59 toks/s, output: 58.69 toks/s]Processed prompts:  90%|█████████ | 18/20 [01:47<00:08,  4.38s/it, est. speed input: 2118.25 toks/s, output: 65.93 toks/s]Processed prompts:  95%|█████████▌| 19/20 [01:53<00:04,  4.90s/it, est. speed input: 2034.01 toks/s, output: 72.22 toks/s]Processed prompts: 100%|██████████| 20/20 [06:20<00:00, 82.29s/it, est. speed input: 633.60 toks/s, output: 43.05 toks/s] Processed prompts: 100%|██████████| 20/20 [06:20<00:00, 82.29s/it, est. speed input: 633.60 toks/s, output: 43.05 toks/s]Processed prompts: 100%|██████████| 20/20 [06:20<00:00, 19.01s/it, est. speed input: 633.60 toks/s, output: 43.05 toks/s]
+2026-03-26 06:38:38  INFO      QA accuracy: 0.0%  (correct=0/20, parse_errors=17)
+2026-03-26 06:38:38  INFO      Function code saved to autoformalized_library/functions/kdigo_stages.py
+2026-03-26 06:38:38  INFO      Summary saved to autoformalized_library/summary.json
+
+======================================================================
+AUTOFORMALIZATION COMPLETE
+======================================================================
+  Output dir      : autoformalized_library
+  Model           : Qwen/Qwen3.5-27B
+  Dataset         : /home/v-tiossowski/HealthcareAgent/mimic-code/data/MIMICIV_kdigo_stages_dataset/kdigo_stages.csv
+  Run name        : kdigo_stages
+  Status          : FAILED (below threshold)
+  QA accuracy     : 65.0%
+  Iterations      : 100
+  Total tokens    : 79,715  (prompt 74,852 / completion 4,863)
+  LLM calls       : 144
+  SQL queries     : 967
+  Function saved  : autoformalized_library/functions/kdigo_stages.py
+======================================================================
+[rank0]:[W326 06:38:38.189438212 ProcessGroupNCCL.cpp:1553] Warning: WARNING: destroy_process_group() was not called before program exit, which can leak resources. For more info, please see https://pytorch.org/docs/stable/distributed.html#shutdown (function operator())
+ERROR 03-26 06:38:39 [core_client.py:691] Engine core proc EngineCore_DP0 died unexpectedly, shutting down client.

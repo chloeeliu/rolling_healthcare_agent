@@ -5,17 +5,106 @@ from datetime import datetime
 from typing import Any
 
 
-ACTIONS = (
+SEPSIS_ACTIONS = (
     "keep_monitoring",
     "infection_suspect",
     "trigger_sepsis_alert",
 )
 
+AKI_ACTIONS = (
+    "keep_monitoring",
+    "suspect_aki",
+    "trigger_aki_alert",
+)
+
+AKI_NON_MONOTONIC_ACTIONS = (
+    "no_aki",
+    "aki_stage_1",
+    "aki_stage_2",
+    "aki_stage_3",
+)
+
+RESP_SUPPORT_ACTIONS = (
+    "room_air_or_low_support",
+    "high_flow_or_noninvasive_support",
+    "invasive_vent_required",
+)
+
+ACTIONS = tuple(
+    dict.fromkeys(SEPSIS_ACTIONS + AKI_ACTIONS + AKI_NON_MONOTONIC_ACTIONS + RESP_SUPPORT_ACTIONS)
+)
+
+TASK_NAMES = (
+    "sepsis",
+    "aki",
+    "respiratory_support",
+)
+
+TASK_MODES = (
+    "auto",
+    "single",
+    "multitask",
+)
+
+TOOL_BACKENDS = (
+    "official",
+    "autoformalized",
+)
+
+DEFAULT_TOOL_NAMES = [
+    "query_suspicion_of_infection",
+    "query_sofa",
+]
+
+MULTITASK_TOOL_NAMES = [
+    "query_suspicion_of_infection",
+    "query_sofa",
+    "query_kdigo_stage",
+    "query_ventilation_status",
+]
+
+TASK_LABEL_SPACES: dict[str, list[str]] = {
+    "sepsis": list(SEPSIS_ACTIONS),
+    "aki": list(AKI_ACTIONS),
+    "respiratory_support": list(RESP_SUPPORT_ACTIONS),
+}
+
+TASK_TOOL_NAMES: dict[str, list[str]] = {
+    "sepsis": ["query_suspicion_of_infection", "query_sofa"],
+    "aki": ["query_kdigo_stage"],
+    "respiratory_support": ["query_ventilation_status"],
+}
+
+TASK_TRANSITION_FIELDS: dict[str, dict[str, str]] = {
+    "sepsis": {
+        "infection_suspect": "infection_start_hour",
+        "trigger_sepsis_alert": "sepsis_start_hour",
+    },
+    "aki": {
+        "suspect_aki": "aki_stage1_start_hour",
+        "trigger_aki_alert": "aki_stage23_start_hour",
+    },
+    "respiratory_support": {
+        "high_flow_or_noninvasive_support": "medium_support_start_hour",
+        "invasive_vent_required": "invasive_support_start_hour",
+    },
+}
+
+TASK_BASELINE_ACTION: dict[str, str] = {
+    "sepsis": SEPSIS_ACTIONS[0],
+    "aki": AKI_ACTIONS[0],
+    "respiratory_support": RESP_SUPPORT_ACTIONS[0],
+}
+
 
 @dataclass(slots=True)
 class Checkpoint:
     t_hour: int
-    state_label: str
+    state_label: str | None = None
+    task_labels: dict[str, str] | None = None
+    checkpoint_time: str | None = None
+    terminal: bool | None = None
+    terminal_by_task: dict[str, bool] | None = None
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
@@ -30,17 +119,45 @@ class Trajectory:
     anchor: str
     step_hours: int
     horizon_hours: int
-    transitions: dict[str, int | None]
+    transitions: dict[str, Any]
     checkpoints: list[Checkpoint]
     icu_intime: str | None = None
     icu_outtime: str | None = None
     icu_los_hours: float | None = None
     is_sepsis: bool | None = None
+    task_name: str | None = None
+    task_variant: str | None = None
+    task_names: list[str] | None = None
+    tool_names: list[str] | None = None
+    label_spaces: dict[str, list[str]] | None = None
 
     def to_dict(self) -> dict[str, Any]:
         payload = asdict(self)
         payload["checkpoints"] = [checkpoint.to_dict() for checkpoint in self.checkpoints]
         return payload
+
+    def is_multitask(self) -> bool:
+        return bool(self.task_names and len(self.task_names) > 1)
+
+    def is_single_task(self) -> bool:
+        return not self.is_multitask()
+
+    def resolved_task_names(self) -> list[str]:
+        if self.task_names:
+            return self.task_names
+        if self.task_name:
+            return [self.task_name]
+        return ["sepsis"]
+
+    def primary_task_name(self) -> str:
+        return self.resolved_task_names()[0]
+
+    def resolved_tool_names(self) -> list[str]:
+        if self.tool_names:
+            return self.tool_names
+        if self.is_multitask():
+            return list(MULTITASK_TOOL_NAMES)
+        return list(TASK_TOOL_NAMES.get(self.primary_task_name(), DEFAULT_TOOL_NAMES))
 
 
 @dataclass(slots=True)
@@ -99,6 +216,11 @@ class AgentStepInput:
     t_hour: int
     available_tools: list[str]
     instruction: str
+    task_names: list[str] | None = None
+    task_variant: str | None = None
+    label_spaces: dict[str, list[str]] | None = None
+    task_mode: str | None = None
+    tool_backend: str | None = None
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
@@ -112,15 +234,18 @@ class ToolCall:
 
 @dataclass(slots=True)
 class ActionDecision:
-    action: str
+    action: str | None = None
+    task_actions: dict[str, str] | None = None
 
 
 @dataclass(slots=True)
 class StepRecord:
     step_index: int
     t_hour: int
-    gt_action: str
-    predicted_action: str
+    gt_action: str | None = None
+    predicted_action: str | None = None
+    gt_task_actions: dict[str, str] | None = None
+    predicted_task_actions: dict[str, str] | None = None
     tool_calls: list[dict[str, Any]] = field(default_factory=list)
     tool_outputs: list[dict[str, Any]] = field(default_factory=list)
 
@@ -133,8 +258,9 @@ class TrajectoryRollout:
     trajectory_id: str
     stay_id: int
     steps: list[StepRecord]
-    first_predicted_infection_hour: int | None
-    first_predicted_alert_hour: int | None
+    first_predicted_infection_hour: int | None = None
+    first_predicted_alert_hour: int | None = None
+    first_predicted_task_hours: dict[str, dict[str, int | None]] | None = None
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)

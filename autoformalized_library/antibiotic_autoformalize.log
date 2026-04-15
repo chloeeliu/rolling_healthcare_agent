@@ -1,0 +1,1144 @@
+2026-03-25 05:24:03  INFO      Using database: /home/v-tiossowski/MIMIC-IV/mimic4.db
+2026-03-25 05:24:03  INFO      No --model_url provided; loading vLLM in-process …
+INFO 03-25 05:24:08 [utils.py:238] non-default args: {'trust_remote_code': True, 'max_model_len': 40000, 'disable_log_stats': True, 'model': 'Qwen/Qwen3.5-27B'}
+The argument `trust_remote_code` is to be used with Auto classes. It has no effect here and is ignored.
+The argument `trust_remote_code` is to be used with Auto classes. It has no effect here and is ignored.
+The argument `trust_remote_code` is to be used with Auto classes. It has no effect here and is ignored.
+INFO 03-25 05:24:09 [model.py:531] Resolved architecture: Qwen3_5ForConditionalGeneration
+INFO 03-25 05:24:09 [model.py:1554] Using max model len 40000
+INFO 03-25 05:24:09 [scheduler.py:231] Chunked prefill is enabled with max_num_batched_tokens=8192.
+INFO 03-25 05:24:10 [config.py:544] Setting attention block size to 784 tokens to ensure that attention page size is >= mamba page size.
+INFO 03-25 05:24:10 [config.py:575] Padding mamba page size by 0.13% to ensure that mamba page size and attention page size are exactly equal.
+INFO 03-25 05:24:10 [vllm.py:747] Asynchronous scheduling is enabled.
+WARNING 03-25 05:24:18 [system_utils.py:152] We must use the `spawn` multiprocessing start method. Overriding VLLM_WORKER_MULTIPROC_METHOD to 'spawn'. See https://docs.vllm.ai/en/latest/usage/troubleshooting.html#python-multiprocessing for more information. Reasons: CUDA is initialized
+(EngineCore_DP0 pid=3937981) INFO 03-25 05:24:22 [core.py:101] Initializing a V1 LLM engine (v0.17.1) with config: model='Qwen/Qwen3.5-27B', speculative_config=None, tokenizer='Qwen/Qwen3.5-27B', skip_tokenizer_init=False, tokenizer_mode=auto, revision=None, tokenizer_revision=None, trust_remote_code=True, dtype=torch.bfloat16, max_seq_len=40000, download_dir=None, load_format=auto, tensor_parallel_size=1, pipeline_parallel_size=1, data_parallel_size=1, disable_custom_all_reduce=False, quantization=None, enforce_eager=False, enable_return_routed_experts=False, kv_cache_dtype=auto, device_config=cuda, structured_outputs_config=StructuredOutputsConfig(backend='auto', disable_fallback=False, disable_any_whitespace=False, disable_additional_properties=False, reasoning_parser='', reasoning_parser_plugin='', enable_in_reasoning=False), observability_config=ObservabilityConfig(show_hidden_metrics_for_version=None, otlp_traces_endpoint=None, collect_detailed_traces=None, kv_cache_metrics=False, kv_cache_metrics_sample=0.01, cudagraph_metrics=False, enable_layerwise_nvtx_tracing=False, enable_mfu_metrics=False, enable_mm_processor_stats=False, enable_logging_iteration_details=False), seed=0, served_model_name=Qwen/Qwen3.5-27B, enable_prefix_caching=False, enable_chunked_prefill=True, pooler_config=None, compilation_config={'level': None, 'mode': <CompilationMode.VLLM_COMPILE: 3>, 'debug_dump_path': None, 'cache_dir': '', 'compile_cache_save_format': 'binary', 'backend': 'inductor', 'custom_ops': ['none'], 'splitting_ops': ['vllm::unified_attention', 'vllm::unified_attention_with_output', 'vllm::unified_mla_attention', 'vllm::unified_mla_attention_with_output', 'vllm::mamba_mixer2', 'vllm::mamba_mixer', 'vllm::short_conv', 'vllm::linear_attention', 'vllm::plamo2_mamba_mixer', 'vllm::gdn_attention_core', 'vllm::kda_attention', 'vllm::sparse_attn_indexer', 'vllm::rocm_aiter_sparse_attn_indexer', 'vllm::unified_kv_cache_update', 'vllm::unified_mla_kv_cache_update'], 'compile_mm_encoder': False, 'compile_sizes': [], 'compile_ranges_split_points': [8192], 'inductor_compile_config': {'enable_auto_functionalized_v2': False, 'combo_kernels': True, 'benchmark_combo_kernel': True}, 'inductor_passes': {}, 'cudagraph_mode': <CUDAGraphMode.FULL_AND_PIECEWISE: (2, 1)>, 'cudagraph_num_of_warmups': 1, 'cudagraph_capture_sizes': [1, 2, 4, 8, 16, 24, 32, 40, 48, 56, 64, 72, 80, 88, 96, 104, 112, 120, 128, 136, 144, 152, 160, 168, 176, 184, 192, 200, 208, 216, 224, 232, 240, 248, 256, 272, 288, 304, 320, 336, 352, 368, 384, 400, 416, 432, 448, 464, 480, 496, 512], 'cudagraph_copy_inputs': False, 'cudagraph_specialize_lora': True, 'use_inductor_graph_partition': False, 'pass_config': {'fuse_norm_quant': False, 'fuse_act_quant': False, 'fuse_attn_quant': False, 'enable_sp': False, 'fuse_gemm_comms': False, 'fuse_allreduce_rms': False}, 'max_cudagraph_capture_size': 512, 'dynamic_shapes_config': {'type': <DynamicShapesType.BACKED: 'backed'>, 'evaluate_guards': False, 'assume_32_bit_indexing': False}, 'local_cache_dir': None, 'fast_moe_cold_start': True, 'static_all_moe_layers': []}
+(EngineCore_DP0 pid=3937981) INFO 03-25 05:24:25 [parallel_state.py:1393] world_size=1 rank=0 local_rank=0 distributed_init_method=tcp://10.8.144.167:60209 backend=nccl
+(EngineCore_DP0 pid=3937981) INFO 03-25 05:24:25 [parallel_state.py:1715] rank 0 in world size 1 is assigned as DP rank 0, PP rank 0, PCP rank 0, TP rank 0, EP rank N/A, EPLB rank N/A
+(EngineCore_DP0 pid=3937981) INFO 03-25 05:24:31 [base.py:106] Offloader set to NoopOffloader
+(EngineCore_DP0 pid=3937981) INFO 03-25 05:24:31 [gpu_model_runner.py:4281] Starting to load model Qwen/Qwen3.5-27B...
+(EngineCore_DP0 pid=3937981) INFO 03-25 05:24:32 [cuda.py:453] Using backend AttentionBackendEnum.FLASH_ATTN for vit attention
+(EngineCore_DP0 pid=3937981) INFO 03-25 05:24:32 [mm_encoder_attention.py:215] Using AttentionBackendEnum.FLASH_ATTN for MMEncoderAttention.
+(EngineCore_DP0 pid=3937981) INFO 03-25 05:24:32 [cuda.py:405] Using FLASH_ATTN attention backend out of potential backends: ['FLASH_ATTN', 'FLASHINFER', 'TRITON_ATTN', 'FLEX_ATTENTION'].
+(EngineCore_DP0 pid=3937981) INFO 03-25 05:24:32 [flash_attn.py:587] Using FlashAttention version 2
+(EngineCore_DP0 pid=3937981) <frozen importlib._bootstrap_external>:1301: FutureWarning: The cuda.cudart module is deprecated and will be removed in a future release, please switch to use the cuda.bindings.runtime module instead.
+(EngineCore_DP0 pid=3937981) <frozen importlib._bootstrap_external>:1301: FutureWarning: The cuda.nvrtc module is deprecated and will be removed in a future release, please switch to use the cuda.bindings.nvrtc module instead.
+(EngineCore_DP0 pid=3937981) Loading safetensors checkpoint shards:   0% Completed | 0/11 [00:00<?, ?it/s]
+(EngineCore_DP0 pid=3937981) Loading safetensors checkpoint shards:   9% Completed | 1/11 [00:00<00:05,  1.84it/s]
+(EngineCore_DP0 pid=3937981) Loading safetensors checkpoint shards:  18% Completed | 2/11 [00:01<00:05,  1.66it/s]
+(EngineCore_DP0 pid=3937981) Loading safetensors checkpoint shards:  27% Completed | 3/11 [00:01<00:05,  1.55it/s]
+(EngineCore_DP0 pid=3937981) Loading safetensors checkpoint shards:  36% Completed | 4/11 [00:02<00:04,  1.50it/s]
+(EngineCore_DP0 pid=3937981) Loading safetensors checkpoint shards:  45% Completed | 5/11 [00:03<00:04,  1.46it/s]
+(EngineCore_DP0 pid=3937981) Loading safetensors checkpoint shards:  55% Completed | 6/11 [00:04<00:03,  1.44it/s]
+(EngineCore_DP0 pid=3937981) Loading safetensors checkpoint shards:  64% Completed | 7/11 [00:04<00:02,  1.43it/s]
+(EngineCore_DP0 pid=3937981) Loading safetensors checkpoint shards:  73% Completed | 8/11 [00:05<00:02,  1.44it/s]
+(EngineCore_DP0 pid=3937981) Loading safetensors checkpoint shards:  82% Completed | 9/11 [00:06<00:01,  1.42it/s]
+(EngineCore_DP0 pid=3937981) Loading safetensors checkpoint shards:  91% Completed | 10/11 [00:06<00:00,  1.42it/s]
+(EngineCore_DP0 pid=3937981) Loading safetensors checkpoint shards: 100% Completed | 11/11 [00:07<00:00,  1.59it/s]
+(EngineCore_DP0 pid=3937981) Loading safetensors checkpoint shards: 100% Completed | 11/11 [00:07<00:00,  1.51it/s]
+(EngineCore_DP0 pid=3937981) 
+(EngineCore_DP0 pid=3937981) INFO 03-25 05:24:40 [default_loader.py:293] Loading weights took 7.37 seconds
+(EngineCore_DP0 pid=3937981) INFO 03-25 05:24:40 [gpu_model_runner.py:4364] Model loading took 51.1 GiB memory and 8.427142 seconds
+(EngineCore_DP0 pid=3937981) INFO 03-25 05:24:41 [gpu_model_runner.py:5280] Encoder cache will be initialized with a budget of 16384 tokens, and profiled with 1 image items of the maximum feature size.
+(EngineCore_DP0 pid=3937981) INFO 03-25 05:24:49 [decorators.py:465] Directly load AOT compilation from path /home/v-tiossowski/.cache/vllm/torch_compile_cache/torch_aot_compile/0232891e22bd4d7db98ac2f43c441f0f81d0a431216053ca49fadeaff23e2af3/rank_0_0/model
+(EngineCore_DP0 pid=3937981) INFO 03-25 05:24:49 [backends.py:916] Using cache directory: /home/v-tiossowski/.cache/vllm/torch_compile_cache/feaf61af16/rank_0_0/backbone for vLLM's torch.compile
+(EngineCore_DP0 pid=3937981) INFO 03-25 05:24:49 [backends.py:976] Dynamo bytecode transform time: 3.54 s
+(EngineCore_DP0 pid=3937981) INFO 03-25 05:24:59 [backends.py:266] Directly load the compiled graph(s) for compile range (1, 8192) from the cache, took 9.518 s
+(EngineCore_DP0 pid=3937981) INFO 03-25 05:24:59 [monitor.py:35] torch.compile takes 13.94 s in total
+(EngineCore_DP0 pid=3937981) INFO 03-25 05:25:00 [gpu_worker.py:424] Available KV cache memory: 18.3 GiB
+(EngineCore_DP0 pid=3937981) INFO 03-25 05:25:00 [kv_cache_utils.py:1314] GPU KV cache size: 74,480 tokens
+(EngineCore_DP0 pid=3937981) INFO 03-25 05:25:00 [kv_cache_utils.py:1319] Maximum concurrency for 40,000 tokens per request: 6.95x
+(EngineCore_DP0 pid=3937981) Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):   0%|          | 0/51 [00:00<?, ?it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):   2%|▏         | 1/51 [00:00<00:08,  5.81it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):   4%|▍         | 2/51 [00:00<00:08,  6.02it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):   6%|▌         | 3/51 [00:00<00:07,  6.09it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):   8%|▊         | 4/51 [00:00<00:07,  6.05it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  10%|▉         | 5/51 [00:00<00:07,  6.05it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  12%|█▏        | 6/51 [00:00<00:07,  6.05it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  14%|█▎        | 7/51 [00:01<00:07,  6.05it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  16%|█▌        | 8/51 [00:01<00:07,  6.04it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  18%|█▊        | 9/51 [00:01<00:06,  6.34it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  20%|█▉        | 10/51 [00:01<00:06,  6.66it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  22%|██▏       | 11/51 [00:01<00:05,  6.73it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  24%|██▎       | 12/51 [00:01<00:05,  6.90it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  25%|██▌       | 13/51 [00:02<00:05,  7.00it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  27%|██▋       | 14/51 [00:02<00:05,  7.06it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  29%|██▉       | 15/51 [00:02<00:05,  7.11it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  31%|███▏      | 16/51 [00:02<00:04,  7.14it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  33%|███▎      | 17/51 [00:02<00:04,  7.44it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  35%|███▌      | 18/51 [00:02<00:04,  7.73it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  37%|███▋      | 19/51 [00:02<00:04,  7.97it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  39%|███▉      | 20/51 [00:02<00:03,  8.14it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  41%|████      | 21/51 [00:03<00:03,  8.30it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  43%|████▎     | 22/51 [00:03<00:03,  8.43it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  45%|████▌     | 23/51 [00:03<00:03,  8.48it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  47%|████▋     | 24/51 [00:03<00:03,  8.52it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  49%|████▉     | 25/51 [00:03<00:03,  8.50it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  51%|█████     | 26/51 [00:03<00:02,  8.44it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  53%|█████▎    | 27/51 [00:03<00:02,  8.41it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  55%|█████▍    | 28/51 [00:03<00:02,  8.52it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  57%|█████▋    | 29/51 [00:03<00:02,  8.54it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  59%|█████▉    | 30/51 [00:04<00:02,  8.50it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  61%|██████    | 31/51 [00:04<00:02,  8.51it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  63%|██████▎   | 32/51 [00:04<00:02,  8.56it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  65%|██████▍   | 33/51 [00:04<00:02,  8.90it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  67%|██████▋   | 34/51 [00:04<00:01,  9.15it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  69%|██████▊   | 35/51 [00:04<00:01,  9.28it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  73%|███████▎  | 37/51 [00:04<00:01,  9.64it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  76%|███████▋  | 39/51 [00:05<00:01,  9.80it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  78%|███████▊  | 40/51 [00:05<00:01,  9.79it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  80%|████████  | 41/51 [00:05<00:01,  9.79it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  82%|████████▏ | 42/51 [00:05<00:00,  9.83it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  86%|████████▋ | 44/51 [00:05<00:00, 10.05it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  90%|█████████ | 46/51 [00:05<00:00, 10.19it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  94%|█████████▍| 48/51 [00:05<00:00, 10.50it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  98%|█████████▊| 50/51 [00:06<00:00, 10.64it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE): 100%|██████████| 51/51 [00:06<00:00,  8.27it/s]
+(EngineCore_DP0 pid=3937981) Capturing CUDA graphs (decode, FULL):   0%|          | 0/35 [00:00<?, ?it/s]Capturing CUDA graphs (decode, FULL):   3%|▎         | 1/35 [00:00<00:05,  5.74it/s]Capturing CUDA graphs (decode, FULL):   6%|▌         | 2/35 [00:00<00:05,  6.14it/s]Capturing CUDA graphs (decode, FULL):   9%|▊         | 3/35 [00:00<00:05,  6.40it/s]Capturing CUDA graphs (decode, FULL):  11%|█▏        | 4/35 [00:00<00:04,  6.54it/s]Capturing CUDA graphs (decode, FULL):  14%|█▍        | 5/35 [00:00<00:04,  6.61it/s]Capturing CUDA graphs (decode, FULL):  17%|█▋        | 6/35 [00:00<00:04,  6.70it/s]Capturing CUDA graphs (decode, FULL):  20%|██        | 7/35 [00:01<00:04,  6.75it/s]Capturing CUDA graphs (decode, FULL):  23%|██▎       | 8/35 [00:01<00:03,  6.81it/s]Capturing CUDA graphs (decode, FULL):  26%|██▌       | 9/35 [00:01<00:03,  6.85it/s]Capturing CUDA graphs (decode, FULL):  29%|██▊       | 10/35 [00:01<00:03,  6.92it/s]Capturing CUDA graphs (decode, FULL):  31%|███▏      | 11/35 [00:01<00:03,  6.95it/s]Capturing CUDA graphs (decode, FULL):  34%|███▍      | 12/35 [00:01<00:03,  6.97it/s]Capturing CUDA graphs (decode, FULL):  37%|███▋      | 13/35 [00:01<00:03,  6.95it/s]Capturing CUDA graphs (decode, FULL):  40%|████      | 14/35 [00:02<00:02,  7.03it/s]Capturing CUDA graphs (decode, FULL):  43%|████▎     | 15/35 [00:02<00:02,  7.11it/s]Capturing CUDA graphs (decode, FULL):  46%|████▌     | 16/35 [00:02<00:02,  7.19it/s]Capturing CUDA graphs (decode, FULL):  49%|████▊     | 17/35 [00:02<00:02,  7.47it/s]Capturing CUDA graphs (decode, FULL):  51%|█████▏    | 18/35 [00:02<00:02,  7.74it/s]Capturing CUDA graphs (decode, FULL):  54%|█████▍    | 19/35 [00:02<00:02,  7.97it/s]Capturing CUDA graphs (decode, FULL):  57%|█████▋    | 20/35 [00:02<00:01,  8.15it/s]Capturing CUDA graphs (decode, FULL):  60%|██████    | 21/35 [00:02<00:01,  8.28it/s]Capturing CUDA graphs (decode, FULL):  63%|██████▎   | 22/35 [00:03<00:01,  8.35it/s]Capturing CUDA graphs (decode, FULL):  66%|██████▌   | 23/35 [00:03<00:01,  8.34it/s]Capturing CUDA graphs (decode, FULL):  69%|██████▊   | 24/35 [00:03<00:01,  8.43it/s]Capturing CUDA graphs (decode, FULL):  71%|███████▏  | 25/35 [00:03<00:01,  8.52it/s]Capturing CUDA graphs (decode, FULL):  74%|███████▍  | 26/35 [00:03<00:01,  8.55it/s]Capturing CUDA graphs (decode, FULL):  77%|███████▋  | 27/35 [00:03<00:00,  8.71it/s]Capturing CUDA graphs (decode, FULL):  80%|████████  | 28/35 [00:03<00:00,  8.75it/s]Capturing CUDA graphs (decode, FULL):  83%|████████▎ | 29/35 [00:03<00:00,  8.69it/s]Capturing CUDA graphs (decode, FULL):  86%|████████▌ | 30/35 [00:03<00:00,  8.64it/s]Capturing CUDA graphs (decode, FULL):  89%|████████▊ | 31/35 [00:04<00:00,  8.64it/s]Capturing CUDA graphs (decode, FULL):  91%|█████████▏| 32/35 [00:04<00:00,  8.85it/s]Capturing CUDA graphs (decode, FULL):  94%|█████████▍| 33/35 [00:04<00:00,  9.00it/s]Capturing CUDA graphs (decode, FULL):  97%|█████████▋| 34/35 [00:04<00:00,  9.05it/s]Capturing CUDA graphs (decode, FULL): 100%|██████████| 35/35 [00:04<00:00,  9.04it/s]Capturing CUDA graphs (decode, FULL): 100%|██████████| 35/35 [00:04<00:00,  7.75it/s]
+(EngineCore_DP0 pid=3937981) INFO 03-25 05:25:12 [gpu_model_runner.py:5386] Graph capturing finished in 11 secs, took 1.13 GiB
+(EngineCore_DP0 pid=3937981) INFO 03-25 05:25:12 [core.py:282] init engine (profile, create kv cache, warmup model) took 31.43 seconds
+(EngineCore_DP0 pid=3937981) INFO 03-25 05:25:12 [vllm.py:747] Asynchronous scheduling is enabled.
+INFO 03-25 05:25:12 [llm.py:388] Supported tasks: ['generate']
+2026-03-25 05:25:12  INFO      Loading QA dataset from /home/v-tiossowski/HealthcareAgent/mimic-code/data/MIMICIV_antibiotic_dataset/antibiotic.csv
+2026-03-25 05:25:12  INFO      Dataset: 1000 rows, columns: ['subject_id', 'hadm_id', 'stay_id', 'intime', 'outtime', 'first_careunit', 'last_careunit', 'gt_label', 'question', 'gt_answer_type', 'split', 'received_antibiotic', 'antibiotic_count', 'antibiotic_early']
+2026-03-25 05:25:12  INFO      Filtered to train split: 100 rows
+2026-03-25 05:25:12  INFO      Auto-discovered ground-truth SQL: /home/v-tiossowski/HealthcareAgent/mimic-code/mimic-iv/concepts_duckdb/medication/antibiotic.sql
+2026-03-25 05:25:12  INFO      === Iteration 1/100  run=antibiotic  best_qa=0.0% ===
+INFO 03-25 05:25:15 [hf.py:318] Detected the chat template content format to be 'string'. You can set `--chat-template-content-format` to override this.
+2026-03-25 05:25:29  INFO      Exec block 1/1 …
+2026-03-25 05:25:29  INFO      Output: []
+
+2026-03-25 05:25:29  INFO      === Iteration 2/100  run=antibiotic  best_qa=0.0% ===
+2026-03-25 05:25:31  INFO      Exec block 1/1 …
+2026-03-25 05:25:31  INFO      Output: ['escherichia_coli_infection_guideline', 'mrsa_infection_guideline', 'urinary_tract_infection,_site_not_specified_guideline']
+
+2026-03-25 05:25:31  INFO      === Iteration 3/100  run=antibiotic  best_qa=0.0% ===
+2026-03-25 05:25:34  INFO      Exec block 1/1 …
+2026-03-25 05:25:34  INFO      Output: '# escherichia coli infection — Clinical Guideline\n# Generated by generate_guidelines.py\n# Source articles: 10 (PMID39379599, PMID26110291, PMID33436783, PMID24674346, PMID31161033...)\n############################################################\n\n# Clinical Guideline: Escherichia coli Infection\n\n---\n\n## 1. Definition\n\n**Escherichia coli (E. coli) infection** refers to any clinically significant infection caused by the Gram-negative bacterium *Escherichia coli*, confirmed by microbiolo
+2026-03-25 05:25:34  INFO      === Iteration 4/100  run=antibiotic  best_qa=0.0% ===
+2026-03-25 05:25:37  INFO      Exec block 1/1 …
+2026-03-25 05:25:37  INFO      Output: '# MRSA infection — Clinical Guideline\n# Generated by generate_guidelines.py\n# Source articles: 10 (PMID27885969, PMID39886092, PMID37927697, PMID22160823, PMID23295562...)\n############################################################\n\n# Clinical Guideline: Methicillin-Resistant Staphylococcus aureus (MRSA) Infection\n\n---\n\n## 1. Definition\n\n**Methicillin-resistant Staphylococcus aureus (MRSA)** is a strain of *Staphylococcus aureus* that has acquired the *mecA* gene (carried on the sta
+2026-03-25 05:25:37  INFO      === Iteration 5/100  run=antibiotic  best_qa=0.0% ===
+2026-03-25 05:25:40  INFO      Exec block 1/1 …
+2026-03-25 05:25:40  INFO      Output: ['acei', 'age', 'bg', 'blood_differential', 'cardiac_marker', 'chemistry', 'coagulation', 'complete_blood_count', 'enzyme', 'gcs', 'height', 'icp', 'icustay_detail', 'inflammation', 'rhythm', 'urine_output', 'vitalsign', 'weight_durations']
+
+2026-03-25 05:25:40  INFO      === Iteration 6/100  run=antibiotic  best_qa=0.0% ===
+2026-03-25 05:25:44  INFO      Exec block 1/1 …
+2026-03-25 05:25:44  INFO      Output: []
+
+2026-03-25 05:25:44  INFO      === Iteration 7/100  run=antibiotic  best_qa=0.0% ===
+2026-03-25 05:25:50  INFO      Exec block 1/1 …
+2026-03-25 05:25:50  INFO      Output:             table_name
+0           admissions
+1              d_hcpcs
+2      d_icd_diagnoses
+3     d_icd_procedures
+4           d_labitems
+5        diagnoses_icd
+6             drgcodes
+7                 emar
+8          emar_detail
+9          hcpcsevents
+10           labevents
+11  microbiologyevents
+12                 omr
+13            patients
+14            pharmacy
+15                 poe
+16          poe_detail
+17       prescriptions
+18      procedures_icd
+19            provider
+20            ser
+2026-03-25 05:25:50  INFO      === Iteration 8/100  run=antibiotic  best_qa=0.0% ===
+2026-03-25 05:25:56  INFO      Exec block 1/1 …
+2026-03-25 05:25:56  INFO      Output:           column_name  data_type
+0          subject_id    INTEGER
+1             hadm_id    INTEGER
+2         pharmacy_id    INTEGER
+3              poe_id    VARCHAR
+4           starttime  TIMESTAMP
+5            stoptime  TIMESTAMP
+6          medication    VARCHAR
+7           proc_type    VARCHAR
+8              status    VARCHAR
+9           entertime  TIMESTAMP
+10       verifiedtime  TIMESTAMP
+11              route    VARCHAR
+12          frequency    VARCHAR
+13         disp_sched    VARCHAR
+14   
+2026-03-25 05:25:56  INFO      === Iteration 9/100  run=antibiotic  best_qa=0.0% ===
+2026-03-25 05:26:01  INFO      Exec block 1/1 …
+2026-03-25 05:26:01  INFO      Output:                                           medication
+0                                 (Uptravi)selexipag
+1       *NF* Fiasp (aspart) FlexTouch U-100 Insulin 
+2                                Adcirca (tadalafil)
+3                      Autologus Serum Eye Drops 20%
+4                                      CoQ10 (300mg)
+5    Endocet *NF* (oxyCODONE-acetaminophen) 1/2 TAB 
+6                              Enzalutamide (Xtandi)
+7                                          Erlotinib
+8                     J
+2026-03-25 05:26:01  INFO      === Iteration 10/100  run=antibiotic  best_qa=0.0% ===
+2026-03-25 05:26:07  INFO      Exec block 1/1 …
+2026-03-25 05:26:07  INFO      Output:           column_name  data_type
+0          subject_id    INTEGER
+1             hadm_id    INTEGER
+2         pharmacy_id    INTEGER
+3              poe_id    VARCHAR
+4             poe_seq    INTEGER
+5   order_provider_id    VARCHAR
+6           starttime  TIMESTAMP
+7            stoptime  TIMESTAMP
+8           drug_type    VARCHAR
+9                drug    VARCHAR
+10  formulary_drug_cd    VARCHAR
+11                gsn    VARCHAR
+12                ndc    VARCHAR
+13      prod_strength    VARCHAR
+14   
+2026-03-25 05:26:07  INFO      === Iteration 11/100  run=antibiotic  best_qa=0.0% ===
+2026-03-25 05:26:12  INFO      Exec block 1/1 …
+2026-03-25 05:26:12  INFO      Output:                                                 drug
+0                                 (Uptravi)selexipag
+1       *NF* Fiasp (aspart) FlexTouch U-100 Insulin 
+2                                Adcirca (tadalafil)
+3                      Autologus Serum Eye Drops 20%
+4                                          Cefoxitin
+5                                      CoQ10 (300mg)
+6    Endocet *NF* (oxyCODONE-acetaminophen) 1/2 TAB 
+7                              Enzalutamide (Xtandi)
+8                      
+2026-03-25 05:26:12  INFO      === Iteration 12/100  run=antibiotic  best_qa=0.0% ===
+2026-03-25 05:26:33  INFO      Exec block 1/1 …
+2026-03-25 05:26:33  INFO      Output:                                                        drug
+0                                                 Cefoxitin
+1                                     *NF* Cefoxitin Sodium
+2                                          *NF* Ceftaroline
+3                                           *NF* Cefuroxime
+4                                     *NF* Ertapenem Sodium
+5                                         *NF* Moxifloxacin
+6                                               AMOXicillin
+7                   
+2026-03-25 05:26:33  INFO      === Iteration 13/100  run=antibiotic  best_qa=0.0% ===
+2026-03-25 05:26:55  INFO      Exec block 1/1 …
+2026-03-25 05:26:55  INFO      Output:     itemid                            label     category
+0   225840                         Amikacin  Antibiotics
+1   225842                       Ampicillin  Antibiotics
+2   225843    Ampicillin/Sulbactam (Unasyn)  Antibiotics
+3   225845                     Azithromycin  Antibiotics
+4   225847                        Aztreonam  Antibiotics
+5   225850                        Cefazolin  Antibiotics
+6   225851                         Cefepime  Antibiotics
+7   229587                      Ceftaroline 
+2026-03-25 05:26:55  INFO      === Iteration 14/100  run=antibiotic  best_qa=0.0% ===
+2026-03-25 05:27:03  INFO      Exec block 1/1 …
+2026-03-25 05:27:03  INFO      Output:     itemid                                 label     category
+0   225837                             Acyclovir  Antibiotics
+1   225838                              Ambisome  Antibiotics
+2   225840                              Amikacin  Antibiotics
+3   225842                            Ampicillin  Antibiotics
+4   225843         Ampicillin/Sulbactam (Unasyn)  Antibiotics
+5   225844                            Atovaquone  Antibiotics
+6   225845                          Azithromycin  Antibiotics
+7   
+2026-03-25 05:27:03  INFO      === Iteration 15/100  run=antibiotic  best_qa=0.0% ===
+2026-03-25 05:27:16  INFO      Exec block 1/1 …
+2026-03-25 05:27:16  INFO      Output:      column_name  data_type
+0     subject_id    INTEGER
+1        hadm_id    INTEGER
+2        stay_id    INTEGER
+3   caregiver_id    INTEGER
+4      charttime  TIMESTAMP
+5      storetime  TIMESTAMP
+6         itemid    INTEGER
+7          value    VARCHAR
+8       valuenum      FLOAT
+9       valueuom    VARCHAR
+10       warning   SMALLINT
+
+2026-03-25 05:27:16  INFO      === Iteration 16/100  run=antibiotic  best_qa=0.0% ===
+2026-03-25 05:27:23  INFO      Exec block 1/1 …
+2026-03-25 05:27:23  INFO      Output:                       column_name  data_type
+0                      subject_id    INTEGER
+1                         hadm_id    INTEGER
+2                         stay_id    INTEGER
+3                    caregiver_id    INTEGER
+4                       starttime  TIMESTAMP
+5                         endtime  TIMESTAMP
+6                       storetime  TIMESTAMP
+7                          itemid    INTEGER
+8                          amount      FLOAT
+9                       amountuom    VARCHAR
+10   
+2026-03-25 05:27:23  INFO      === Iteration 17/100  run=antibiotic  best_qa=0.0% ===
+2026-03-25 05:27:31  INFO      Exec block 1/1 …
+2026-03-25 05:27:31  INFO      Output:       column_name  data_type
+0      subject_id    INTEGER
+1         hadm_id    INTEGER
+2         stay_id    INTEGER
+3  first_careunit    VARCHAR
+4   last_careunit    VARCHAR
+5          intime  TIMESTAMP
+6         outtime  TIMESTAMP
+7             los      FLOAT
+
+2026-03-25 05:27:31  INFO      === Iteration 18/100  run=antibiotic  best_qa=0.0% ===
+2026-03-25 05:27:39  INFO      Exec block 1/1 …
+2026-03-25 05:27:39  INFO      Output:     itemid                label     category
+0   225877            Isoniazid  Antibiotics
+1   225886         Moxifloxacin  Antibiotics
+2   225896              Quinine  Antibiotics
+3   225860          Clindamycin  Antibiotics
+4   229587          Ceftaroline  Antibiotics
+5   225902           Tobramycin  Antibiotics
+6   225885           Micafungin  Antibiotics
+7   225855          Ceftriaxone  Antibiotics
+8   228003              Tamiflu  Antibiotics
+9   225850            Cefazolin  Antibiotics
+10  2
+2026-03-25 05:27:39  INFO      === Iteration 19/100  run=antibiotic  best_qa=0.0% ===
+2026-03-25 05:27:47  INFO      Exec block 1/1 …
+2026-03-25 05:27:47  INFO      Output:              column_name  data_type
+0             subject_id    INTEGER
+1                hadm_id    INTEGER
+2              admittime  TIMESTAMP
+3              dischtime  TIMESTAMP
+4              deathtime  TIMESTAMP
+5         admission_type    VARCHAR
+6      admit_provider_id    VARCHAR
+7     admission_location    VARCHAR
+8     discharge_location    VARCHAR
+9              insurance    VARCHAR
+10              language    VARCHAR
+11        marital_status    VARCHAR
+12                  race    VARC
+2026-03-25 05:27:47  INFO      === Iteration 20/100  run=antibiotic  best_qa=0.0% ===
+2026-03-25 05:28:08  INFO      Exec block 1/1 …
+2026-03-25 05:28:08  INFO      Output: Empty DataFrame
+Columns: [itemid, label, starttime, amount]
+Index: []
+
+2026-03-25 05:28:08  INFO      === Iteration 21/100  run=antibiotic  best_qa=0.0% ===
+2026-03-25 05:28:15  INFO      Exec block 1/1 …
+2026-03-25 05:28:15  INFO      Output:     stay_id  subject_id   hadm_id              intime             outtime
+0  39553978    10000032  29079034 2180-07-23 14:00:00 2180-07-23 23:50:47
+1  37081114    10000690  25860671 2150-11-02 19:37:00 2150-11-06 17:03:17
+2  39765666    10000980  26913865 2189-06-27 08:42:00 2189-06-27 20:38:27
+3  37067082    10001217  24597018 2157-11-20 19:18:02 2157-11-21 22:08:00
+4  34592300    10001217  27703517 2157-12-19 15:42:24 2157-12-20 14:27:41
+
+2026-03-25 05:28:15  INFO      === Iteration 22/100  run=antibiotic  best_qa=0.0% ===
+2026-03-25 05:28:24  INFO      Exec block 1/1 …
+2026-03-25 05:28:24  INFO      Output: Empty DataFrame
+Columns: [itemid, label, starttime, amount]
+Index: []
+
+2026-03-25 05:28:24  INFO      === Iteration 23/100  run=antibiotic  best_qa=0.0% ===
+2026-03-25 05:28:34  INFO      Exec block 1/1 …
+2026-03-25 05:28:34  INFO      Output:    itemid       label           starttime  amount
+0  225798  Vancomycin 2150-11-03 12:33:00     1.0
+1  225851    Cefepime 2150-11-03 19:00:00     1.0
+2  225798  Vancomycin 2150-11-04 13:15:00     1.0
+3  225851    Cefepime 2150-11-04 18:00:00     1.0
+4  225798  Vancomycin 2150-11-05 12:00:00     1.0
+5  225883   Meropenem 2150-11-05 19:30:00     1.0
+6  225883   Meropenem 2150-11-06 00:51:00     1.0
+7  225883   Meropenem 2150-11-06 05:00:00     1.0
+8  225883   Meropenem 2150-11-06 12:00:00     1.0
+
+2026-03-25 05:28:34  INFO      === Iteration 24/100  run=antibiotic  best_qa=0.0% ===
+2026-03-25 05:28:43  INFO      Exec block 1/1 …
+2026-03-25 05:28:43  INFO      Output: Empty DataFrame
+Columns: [itemid, label, charttime]
+Index: []
+
+2026-03-25 05:28:43  INFO      === Iteration 25/100  run=antibiotic  best_qa=0.0% ===
+2026-03-25 05:29:06  INFO      Exec block 1/1 …
+2026-03-25 05:29:06  INFO      Output:    pharmacy_id  medication           starttime            stoptime
+0     69885619    CefePIME 2150-11-03 01:00:00 2150-11-04 00:00:00
+1     27925307  Vancomycin 2150-11-03 08:00:00 2150-11-08 10:00:00
+2     64320618    CefePIME 2150-11-04 01:00:00 2150-11-05 16:00:00
+3     79028899   Meropenem 2150-11-05 18:00:00 2150-11-12 18:00:00
+4     35844679  Vancomycin 2150-11-06 08:00:00 2150-11-08 10:00:00
+5      2635007  Vancomycin 2150-11-09 08:00:00 2150-11-08 10:00:00
+6      9349642  Vancomycin 2150
+2026-03-25 05:29:06  INFO      === Iteration 26/100  run=antibiotic  best_qa=0.0% ===
+2026-03-25 05:29:29  INFO      Exec block 1/1 …
+2026-03-25 05:29:29  INFO      Output:    pharmacy_id        drug           starttime            stoptime
+0     69885619    CefePIME 2150-11-03 01:00:00 2150-11-04 00:00:00
+1     27925307  Vancomycin 2150-11-03 08:00:00 2150-11-08 10:00:00
+2     64320618    CefePIME 2150-11-04 01:00:00 2150-11-05 16:00:00
+3     79028899   Meropenem 2150-11-05 18:00:00 2150-11-12 18:00:00
+4     35844679  Vancomycin 2150-11-06 08:00:00 2150-11-08 10:00:00
+5      2635007  Vancomycin 2150-11-09 08:00:00 2150-11-08 10:00:00
+6      9349642  Vancomycin 2150
+2026-03-25 05:29:29  INFO      === Iteration 27/100  run=antibiotic  best_qa=0.0% ===
+2026-03-25 05:29:49  INFO      Exec block 1/1 …
+2026-03-25 05:29:49  INFO      Output:     itemid                                 label
+0   225837                             Acyclovir
+1   225838                              Ambisome
+2   225840                              Amikacin
+3   225842                            Ampicillin
+4   225843         Ampicillin/Sulbactam (Unasyn)
+5   225844                            Atovaquone
+6   225845                          Azithromycin
+7   225847                             Aztreonam
+8   225899                     Bactrim (SMX/TMP)
+9   225848
+2026-03-25 05:29:49  INFO      === Iteration 28/100  run=antibiotic  best_qa=0.0% ===
+2026-03-25 05:30:44  INFO      Exec block 1/1 …
+2026-03-25 05:30:44  INFO      Output:       source   stay_id   hadm_id  subject_id antibiotic_name          admin_time
+0   Hospital      <NA>  25860671    10000690        CefePIME 2150-11-03 01:00:00
+1   Hospital      <NA>  25860671    10000690      Vancomycin 2150-11-03 08:00:00
+2        ICU  37081114  25860671    10000690      Vancomycin 2150-11-03 12:33:00
+3        ICU  37081114  25860671    10000690        Cefepime 2150-11-03 19:00:00
+4   Hospital      <NA>  25860671    10000690        CefePIME 2150-11-04 01:00:00
+5        ICU  
+2026-03-25 05:30:44  INFO      === Iteration 29/100  run=antibiotic  best_qa=0.0% ===
+2026-03-25 05:30:57  INFO      Exec block 1/1 …
+2026-03-25 05:30:57  INFO      Output:     stay_id  subject_id   hadm_id              intime
+0  37067082    10001217  24597018 2157-11-20 19:18:02
+
+2026-03-25 05:30:57  INFO      === Iteration 30/100  run=antibiotic  best_qa=0.0% ===
+2026-03-25 05:31:15  INFO      Exec block 1/1 …
+2026-03-25 05:31:15  INFO      Output:     stay_id   hadm_id  subject_id antibiotic_name          admin_time
+0  37067082  24597018    10001217      Vancomycin 2157-11-20 20:19:00
+1  37067082  24597018    10001217       Meropenem 2157-11-21 00:21:00
+2  37067082  24597018    10001217      Vancomycin 2157-11-21 08:03:00
+3  37067082  24597018    10001217       Meropenem 2157-11-21 09:12:00
+4  37067082  24597018    10001217       Meropenem 2157-11-21 15:58:00
+5  37067082  24597018    10001217      Vancomycin 2157-11-21 17:29:00
+
+2026-03-25 05:31:15  INFO      === Iteration 31/100  run=antibiotic  best_qa=0.0% ===
+2026-03-25 05:34:05  INFO      Exec block 1/1 …
+2026-03-25 05:34:06  INFO      Output: Test with stay_id=37081114:
+Received antibiotics: True
+Distinct antibiotics: ['Cefazolin', 'Vancomycin', 'Bactrim (SMX/TMP)', 'Ampicillin/Sulbactam', 'Piperacillin/Tazobactam', 'Metronidazole', 'Ciprofloxacin', 'Erythromycin', 'Nafcillin', 'Cefepime', 'Gentamicin', 'Azithromycin', 'Ceftriaxone', 'Levofloxacin', 'Meropenem', 'Doxycycline', 'Acyclovir', 'Clindamycin', 'Atovaquone', 'Micafungin', 'Fluconazole', 'Voriconazole', 'Linezolid', 'Caspofungin', 'Daptomycin', 'Ribavirin', 'Ceftazidime', 'T
+2026-03-25 05:34:06  INFO      === Iteration 32/100  run=antibiotic  best_qa=0.0% ===
+2026-03-25 05:34:06  INFO      Context approaching limit (23484 tokens, limit=25000) — forcing summarize + compress
+2026-03-25 05:38:24  INFO      Context compressed: 64 messages -> 2 messages
+2026-03-25 05:38:52  INFO      Exec block 1/1 …
+2026-03-25 05:38:53  INFO      Output: Error:
+Traceback (most recent call last):
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 643, in execute
+    _run_with_timeout(_do_execute, timeout)
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 174, in _run_with_timeout
+    raise error[0]
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 156, in target
+    result[0] = func(*args, **kwargs)
+                ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/v-tiossowsk
+2026-03-25 05:38:53  INFO      === Iteration 33/100  run=antibiotic  best_qa=0.0% ===
+2026-03-25 05:41:35  INFO      Exec block 1/1 …
+2026-03-25 05:41:36  INFO      Output: Test 1 - stay_id=37081114:
+  Received antibiotics: True
+  Distinct antibiotic count: 56
+  Distinct antibiotics: ['Cefazolin', 'Vancomycin', 'Bactrim (SMX/TMP)', 'Ampicillin/Sulbactam', 'Piperacillin/Tazobactam', 'Metronidazole', 'Ciprofloxacin', 'Erythromycin', 'Nafcillin', 'Cefepime']...
+  Within 48hrs ICU: True
+  Antibiotics within 48hrs: ['Cefepime', 'Vancomycin']
+
+First 10 administrations:
+     source  stay_id  ...            antibiotic_name          admin_time
+0  Hospital     <NA>  ...     
+2026-03-25 05:41:36  INFO      === Iteration 34/100  run=antibiotic  best_qa=0.0% ===
+2026-03-25 05:42:02  INFO      Exec block 1/1 …
+2026-03-25 05:42:03  INFO      Output: Test 2 - hadm_id=228646:
+  Received antibiotics: False
+  Distinct antibiotic count: 0
+  Distinct antibiotics: []...
+
+Test 3 - subject_id=220578:
+  Received antibiotics: False
+  Distinct antibiotic count: 0
+
+Test 4 - stay_id=37081114, hadm_id=228646:
+  Received antibiotics: False
+  Distinct antibiotic count: 0
+
+Test 5 - stay_id=37067082:
+  Received antibiotics: True
+  Distinct antibiotic count: 56
+  Distinct antibiotics: ['Cefazolin', 'Vancomycin', 'Bactrim (SMX/TMP)', 'Ampicillin/Sulbactam', 'Pi
+2026-03-25 05:42:03  INFO      === Iteration 35/100  run=antibiotic  best_qa=0.0% ===
+2026-03-25 05:42:29  INFO      Exec block 1/1 …
+2026-03-25 05:42:29  INFO      Output: Stay info for 37081114:
+    stay_id   hadm_id  subject_id
+0  37081114  25860671    10000690
+
+ICU antibiotics for stay 37081114:
+    stay_id   hadm_id  subject_id       label           starttime
+0  37081114  25860671    10000690   Meropenem 2150-11-06 12:00:00
+1  37081114  25860671    10000690  Vancomycin 2150-11-06 13:00:00
+2  37081114  25860671    10000690  Vancomycin 2150-11-03 12:33:00
+3  37081114  25860671    10000690    Cefepime 2150-11-03 19:00:00
+4  37081114  25860671    10000690  Vancomy
+2026-03-25 05:42:29  INFO      === Iteration 36/100  run=antibiotic  best_qa=0.0% ===
+2026-03-25 05:42:54  INFO      Exec block 1/1 …
+2026-03-25 05:42:54  INFO      Output: Test 2 - hadm_id=25860671:
+  Received antibiotics: True
+  Distinct antibiotic count: 3
+  Distinct antibiotics: ['Cefepime', 'Vancomycin', 'Meropenem']...
+
+Test 3 - subject_id=10000690:
+  Received antibiotics: True
+  Distinct antibiotic count: 7
+
+Test 4 - stay_id=37081114, hadm_id=25860671:
+  Received antibiotics: True
+  Distinct antibiotic count: 3
+  Within 48hrs ICU: True
+  Antibiotics within 48hrs: ['Cefepime', 'Vancomycin']
+
+First 10 administrations for test 4:
+     source   stay_id   hadm_id
+2026-03-25 05:42:54  INFO      === Iteration 37/100  run=antibiotic  best_qa=0.0% ===
+2026-03-25 05:43:14  INFO      Exec block 1/1 …
+2026-03-25 05:43:32  INFO      Output: Testing various stays for antibiotic presence:
+  stay_id=39553978: received=True, count=56
+  stay_id=37081114: received=True, count=56
+  stay_id=39765666: received=True, count=56
+  stay_id=37067082: received=True, count=56
+  stay_id=34592300: received=True, count=56
+  stay_id=31205490: received=True, count=56
+  stay_id=39698942: received=True, count=56
+  stay_id=37510196: received=True, count=56
+  stay_id=39060235: received=True, count=56
+  stay_id=34672098: received=True, count=56
+  stay_id=323
+2026-03-25 05:43:32  INFO      === Iteration 38/100  run=antibiotic  best_qa=0.0% ===
+2026-03-25 05:43:59  INFO      Exec block 1/1 …
+2026-03-25 05:43:59  INFO      Output: Testing hospital prescriptions query with stay_id only...
+     source  stay_id   hadm_id  subject_id antibiotic_name          admin_time
+0  Hospital     <NA>  27988844    10000117       CeFAZolin 2183-09-19 12:00:00
+1  Hospital     <NA>  23280645    10000690      Vancomycin 2150-09-21 08:00:00
+2  Hospital     <NA>  23280645    10000690     CeftriaXONE 2150-09-21 11:00:00
+3  Hospital     <NA>  23280645    10000690        CefePIME 2150-09-21 14:00:00
+4  Hospital     <NA>  23280645    10000690     
+2026-03-25 05:43:59  INFO      === Iteration 39/100  run=antibiotic  best_qa=0.0% ===
+2026-03-25 05:47:07  INFO      Exec block 1/1 …
+2026-03-25 05:47:07  INFO      Output: Test 1 - stay_id=37081114 (only stay_id):
+  Received antibiotics: True
+  Distinct antibiotic count: 3
+  Distinct antibiotics: ['Cefepime', 'Vancomycin', 'Meropenem']
+  Within 48hrs ICU: True
+  Antibiotics within 48hrs: ['Cefepime', 'Vancomycin']
+
+Test 2 - hadm_id=25860671:
+  Received antibiotics: True
+  Distinct antibiotic count: 3
+  Distinct antibiotics: ['Cefepime', 'Vancomycin', 'Meropenem']
+
+Test 3 - subject_id=10000690:
+  Received antibiotics: True
+  Distinct antibiotic count: 7
+
+Test 4 - s
+2026-03-25 05:47:07  INFO      === Iteration 40/100  run=antibiotic  best_qa=0.0% ===
+2026-03-25 05:47:36  INFO      Exec block 1/1 …
+2026-03-25 05:47:36  INFO      Output: Test 5 - stay_id=37067082:
+  Received antibiotics: True
+  Distinct antibiotic count: 4
+  Distinct antibiotics: ['Meropenem', 'Vancomycin', 'Metronidazole', 'Ceftriaxone']
+  Within 48hrs ICU: True
+  Antibiotics within 48hrs: ['Vancomycin', 'Meropenem']
+
+Stays without ICU antibiotics:
+    stay_id
+0  39553978
+1  31205490
+2  39698942
+3  34672098
+4  37049133
+
+Test 6 - stay_id=39553978 (no ICU antibiotics):
+  Received antibiotics: False
+  Distinct antibiotic count: 0
+  Distinct antibiotics: []
+
+Test 7
+2026-03-25 05:47:36  INFO      === Iteration 41/100  run=antibiotic  best_qa=0.0% ===
+2026-03-25 05:47:59  INFO      Exec block 1/1 …
+2026-03-25 05:48:00  INFO      Output: Checking stay_id=37081114, subject_id=10000690:
+Stay info:     stay_id   hadm_id  subject_id
+0  37081114  25860671    10000690
+Distinct antibiotics: ['Metronidazole', 'Levofloxacin', 'Vancomycin', 'Ceftriaxone', 'Cefepime', 'Meropenem', 'Ciprofloxacin']
+Admin count: 28
+
+Hospital prescriptions in result:
+     hadm_id         antibiotic_name          admin_time
+0   23280645  MetRONIDAZOLE (FLagyl) 2150-09-20 13:00:00
+1   23280645            Levofloxacin 2150-09-20 13:00:00
+2   23280645            
+2026-03-25 05:48:00  INFO      === Iteration 42/100  run=antibiotic  best_qa=0.0% ===
+2026-03-25 05:51:08  INFO      Exec block 1/1 …
+2026-03-25 05:51:08  INFO      Output: Test 1 - stay_id=37081114 (only stay_id):
+  Received antibiotics: True
+  Distinct antibiotic count: 3
+  Distinct antibiotics: ['Cefepime', 'Vancomycin', 'Meropenem']
+  Within 48hrs ICU: True
+  Antibiotics within 48hrs: ['Cefepime', 'Vancomycin']
+
+Test 2 - stay_id=37081114, subject_id=10000690:
+  Received antibiotics: True
+  Distinct antibiotic count: 3
+  Distinct antibiotics: ['Cefepime', 'Vancomycin', 'Meropenem']
+
+Hospital prescriptions in result:
+     hadm_id antibiotic_name          admin_ti
+2026-03-25 05:51:08  INFO      === Iteration 43/100  run=antibiotic  best_qa=0.0% ===
+2026-03-25 05:51:08  INFO      Context approaching limit (23181 tokens, limit=25000) — forcing summarize + compress
+2026-03-25 05:55:33  INFO      Context compressed: 24 messages -> 2 messages
+2026-03-25 05:55:52  INFO      Exec block 1/1 …
+2026-03-25 05:55:52  INFO      Output: Test stay_id=37081114:
+  Received antibiotics: True
+  Distinct count: 3
+  Antibiotics: ['Cefepime', 'Vancomycin', 'Meropenem']
+  Within 48hrs ICU: True
+  Within 48hrs list: ['Cefepime', 'Vancomycin']
+
+2026-03-25 05:55:52  INFO      === Iteration 44/100  run=antibiotic  best_qa=0.0% ===
+2026-03-25 05:56:16  INFO      Exec block 1/1 …
+2026-03-25 05:56:16  INFO      Output: 
+Test 2: hadm_id=25860671
+  Received antibiotics: True
+  Distinct count: 3
+  Antibiotics: ['Cefepime', 'Vancomycin', 'Meropenem']
+
+Test 3: subject_id=10000690
+  Received antibiotics: True
+  Distinct count: 7
+  Antibiotics: ['Metronidazole', 'Levofloxacin', 'Vancomycin', 'Ceftriaxone', 'Cefepime', 'Meropenem', 'Ciprofloxacin']
+
+Test 4: stay_id=37067082
+  Received antibiotics: True
+  Distinct count: 4
+  Antibiotics: ['Meropenem', 'Vancomycin', 'Metronidazole', 'Ceftriaxone']
+  Within 48hrs ICU: Tr
+2026-03-25 05:56:16  INFO      === Iteration 45/100  run=antibiotic  best_qa=0.0% ===
+2026-03-25 05:58:59  INFO      Exec block 1/1 …
+2026-03-25 05:58:59  INFO      Output: Code executed successfully (no output).
+2026-03-25 05:58:59  INFO      Debug conversations will be saved to debug_logs
+2026-03-25 05:58:59  INFO      Using question from dataset column: Did this patient receive antibiotics during their hospital admission?
+2026-03-25 05:58:59  INFO      Answer type for 'antibiotic': numerical (per_row=True)
+2026-03-25 05:59:00  INFO      ReACT iteration 1/5 — 20 active patients
+Rendering conversations:   0%|          | 0/20 [00:00<?, ?it/s]Rendering conversations: 100%|██████████| 20/20 [00:00<00:00, 468.48it/s]
+Processed prompts:   0%|          | 0/20 [00:00<?, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s]Processed prompts:   5%|▌         | 1/20 [00:13<04:10, 13.20s/it, est. speed input: 66.13 toks/s, output: 14.85 toks/s]Processed prompts:  10%|█         | 2/20 [00:13<01:43,  5.73s/it, est. speed input: 127.42 toks/s, output: 29.41 toks/s]Processed prompts:  15%|█▌        | 3/20 [00:15<01:05,  3.88s/it, est. speed input: 170.29 toks/s, output: 42.13 toks/s]Processed prompts:  25%|██▌       | 5/20 [00:15<00:26,  1.78s/it, est. speed input: 277.58 toks/s, output: 72.75 toks/s]Processed prompts:  30%|███       | 6/20 [00:16<00:19,  1.37s/it, est. speed input: 326.07 toks/s, output: 87.46 toks/s]Processed prompts:  35%|███▌      | 7/20 [00:16<00:13,  1.03s/it, est. speed input: 375.49 toks/s, output: 102.67 toks/s]Processed prompts:  40%|████      | 8/20 [00:16<00:09,  1.27it/s, est. speed input: 423.60 toks/s, output: 117.80 toks/s]Processed prompts:  45%|████▌     | 9/20 [00:16<00:06,  1.69it/s, est. speed input: 472.90 toks/s, output: 133.35 toks/s]Processed prompts:  50%|█████     | 10/20 [00:17<00:05,  1.73it/s, est. speed input: 508.89 toks/s, output: 145.90 toks/s]Processed prompts:  55%|█████▌    | 11/20 [00:17<00:03,  2.26it/s, est. speed input: 555.79 toks/s, output: 161.58 toks/s]Processed prompts:  60%|██████    | 12/20 [00:17<00:02,  2.79it/s, est. speed input: 600.60 toks/s, output: 176.93 toks/s]Processed prompts:  70%|███████   | 14/20 [00:18<00:02,  2.59it/s, est. speed input: 668.93 toks/s, output: 202.16 toks/s]Processed prompts:  75%|███████▌  | 15/20 [00:18<00:01,  2.95it/s, est. speed input: 709.38 toks/s, output: 217.28 toks/s]Processed prompts:  90%|█████████ | 18/20 [00:18<00:00,  4.23it/s, est. speed input: 833.23 toks/s, output: 264.01 toks/s]Processed prompts: 100%|██████████| 20/20 [00:19<00:00,  4.68it/s, est. speed input: 910.26 toks/s, output: 294.40 toks/s]Processed prompts: 100%|██████████| 20/20 [00:19<00:00,  4.68it/s, est. speed input: 910.26 toks/s, output: 294.40 toks/s]Processed prompts: 100%|██████████| 20/20 [00:19<00:00,  1.04it/s, est. speed input: 910.26 toks/s, output: 294.40 toks/s]
+2026-03-25 05:59:19  INFO      ReACT iteration 2/5 — 20 active patients
+Rendering conversations:   0%|          | 0/20 [00:00<?, ?it/s]Rendering conversations: 100%|██████████| 20/20 [00:00<00:00, 331.71it/s]
+Processed prompts:   0%|          | 0/20 [00:00<?, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s]Processed prompts:   5%|▌         | 1/20 [00:09<03:06,  9.84s/it, est. speed input: 160.51 toks/s, output: 5.79 toks/s]Processed prompts:  15%|█▌        | 3/20 [00:10<00:45,  2.69s/it, est. speed input: 373.62 toks/s, output: 17.64 toks/s]Processed prompts:  25%|██▌       | 5/20 [00:10<00:21,  1.41s/it, est. speed input: 630.51 toks/s, output: 30.20 toks/s]Processed prompts:  30%|███       | 6/20 [00:10<00:15,  1.07s/it, est. speed input: 765.12 toks/s, output: 37.06 toks/s]Processed prompts:  35%|███▌      | 7/20 [00:11<00:11,  1.10it/s, est. speed input: 880.55 toks/s, output: 43.44 toks/s]Processed prompts:  40%|████      | 8/20 [00:11<00:09,  1.32it/s, est. speed input: 944.04 toks/s, output: 50.29 toks/s]Processed prompts:  45%|████▌     | 9/20 [00:11<00:06,  1.67it/s, est. speed input: 1021.36 toks/s, output: 58.02 toks/s]Processed prompts:  50%|█████     | 10/20 [00:12<00:06,  1.50it/s, est. speed input: 1182.49 toks/s, output: 63.91 toks/s]Processed prompts:  55%|█████▌    | 11/20 [00:13<00:05,  1.65it/s, est. speed input: 1260.47 toks/s, output: 71.75 toks/s]Processed prompts:  65%|██████▌   | 13/20 [00:13<00:03,  1.98it/s, est. speed input: 1391.16 toks/s, output: 88.61 toks/s]Processed prompts:  75%|███████▌  | 15/20 [00:14<00:01,  2.56it/s, est. speed input: 1558.59 toks/s, output: 108.19 toks/s]Processed prompts:  80%|████████  | 16/20 [00:14<00:01,  2.67it/s, est. speed input: 1627.63 toks/s, output: 117.56 toks/s]Processed prompts:  85%|████████▌ | 17/20 [00:17<00:03,  1.03s/it, est. speed input: 1462.59 toks/s, output: 111.13 toks/s]Processed prompts:  90%|█████████ | 18/20 [00:18<00:01,  1.10it/s, est. speed input: 1511.81 toks/s, output: 122.51 toks/s]Processed prompts:  95%|█████████▌| 19/20 [00:34<00:05,  5.08s/it, est. speed input: 823.92 toks/s, output: 84.69 toks/s]  Processed prompts: 100%|██████████| 20/20 [05:12<00:00, 80.34s/it, est. speed input: 95.29 toks/s, output: 35.64 toks/s] Processed prompts: 100%|██████████| 20/20 [05:12<00:00, 80.34s/it, est. speed input: 95.29 toks/s, output: 35.64 toks/s]Processed prompts: 100%|██████████| 20/20 [05:12<00:00, 15.64s/it, est. speed input: 95.29 toks/s, output: 35.64 toks/s]
+2026-03-25 06:04:32  INFO      ReACT iteration 3/5 — 2 active patients
+Rendering conversations:   0%|          | 0/2 [00:00<?, ?it/s]Rendering conversations: 100%|██████████| 2/2 [00:00<00:00, 120.90it/s]
+Processed prompts:   0%|          | 0/2 [00:00<?, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s]Processed prompts:  50%|█████     | 1/2 [00:06<00:06,  6.96s/it, est. speed input: 1372.42 toks/s, output: 15.22 toks/s]Processed prompts: 100%|██████████| 2/2 [00:08<00:00,  4.02s/it, est. speed input: 1305.89 toks/s, output: 29.70 toks/s]Processed prompts: 100%|██████████| 2/2 [00:08<00:00,  4.02s/it, est. speed input: 1305.89 toks/s, output: 29.70 toks/s]Processed prompts: 100%|██████████| 2/2 [00:08<00:00,  4.46s/it, est. speed input: 1305.89 toks/s, output: 29.70 toks/s]
+2026-03-25 06:04:41  INFO      QA accuracy: 85.0%  (correct=17/20, parse_errors=0)
+2026-03-25 06:04:41  INFO      === Iteration 46/100  run=antibiotic  best_qa=85.0% ===
+2026-03-25 06:05:41  INFO      Exec block 1/1 …
+2026-03-25 06:05:41  INFO      Output: Case 1: stay_id=33597827
+  Distinct antibiotics: ['Ceftazidime', 'Vancomycin', 'Ceftriaxone', 'Cefazolin']
+  Count: 4
+  Admins:
+      source   stay_id  ...         antibiotic_name          admin_time
+0   Hospital      <NA>  ...             CefTAZidime 2128-10-30 08:00:00
+1   Hospital      <NA>  ...              Vancomycin 2128-10-30 12:00:00
+2        ICU  33597827  ...              Vancomycin 2128-10-30 12:29:00
+3        ICU  33597827  ...             Ceftazidime 2128-10-30 13:02:00
+4   Hospital
+2026-03-25 06:05:41  INFO      === Iteration 47/100  run=antibiotic  best_qa=85.0% ===
+2026-03-25 06:06:38  INFO      Exec block 1/1 …
+2026-03-25 06:06:38  INFO      Output: Case 2: stay_id=36711152
+  Distinct antibiotics: ['Fluconazole', 'Vancomycin', 'Piperacillin/Tazobactam']
+  Count: 3
+  Admins:
+      source   stay_id  ...                  antibiotic_name          admin_time
+0   Hospital      <NA>  ...                      Fluconazole 2129-06-01 23:00:00
+1   Hospital      <NA>  ...                       Vancomycin 2129-06-01 23:00:00
+2   Hospital      <NA>  ...          Piperacillin-Tazobactam 2129-06-01 23:00:00
+3   Hospital      <NA>  ...                      
+2026-03-25 06:06:38  INFO      === Iteration 48/100  run=antibiotic  best_qa=85.0% ===
+2026-03-25 06:07:09  INFO      Exec block 1/1 …
+2026-03-25 06:07:09  INFO      Output: Antibiotics category items:
+    itemid                                 label     category
+0   225837                             Acyclovir  Antibiotics
+1   225838                              Ambisome  Antibiotics
+2   225840                              Amikacin  Antibiotics
+3   225842                            Ampicillin  Antibiotics
+4   225843         Ampicillin/Sulbactam (Unasyn)  Antibiotics
+5   225844                            Atovaquone  Antibiotics
+6   225845                          Az
+2026-03-25 06:07:09  INFO      === Iteration 49/100  run=antibiotic  best_qa=85.0% ===
+2026-03-25 06:08:23  INFO      Exec block 1/1 …
+2026-03-25 06:08:23  INFO      Output: Case 3: stay_id=33622343
+  Received antibiotics: True
+  Distinct antibiotics: ['Atovaquone']
+  Count: 1
+  Admins:
+     source  stay_id  ...        antibiotic_name          admin_time
+0  Hospital     <NA>  ...  Atovaquone Suspension 2170-04-11 02:00:00
+
+[1 rows x 6 columns]
+
+ICU antibiotics count: 0
+Distinct ICU antibiotics: []
+
+Hadm_id: 23102231
+Hospital prescriptions count: 1
+Distinct hospital drugs: ['Atovaquone Suspension']
+
+2026-03-25 06:08:23  INFO      === Iteration 50/100  run=antibiotic  best_qa=85.0% ===
+2026-03-25 06:09:54  INFO      Exec block 1/1 …
+2026-03-25 06:09:54  INFO      Output: Checking ICU items for normalization issues:
+
+Case 1 - ICU items:
+['Ceftazidime', 'Vancomycin']
+
+Case 1 - Hospital items:
+['Vancomycin', 'CefTAZidime', 'CeFAZolin', 'Vancomycin Oral Liquid', 'CefTRIAXone']
+
+2026-03-25 06:09:54  INFO      === Iteration 51/100  run=antibiotic  best_qa=85.0% ===
+2026-03-25 06:10:48  INFO      Exec block 1/1 …
+2026-03-25 06:10:48  INFO      Output: TRUE antibacterial count: 36
+Excluded count: 19
+
+TRUE antibacterials: ['Ampicillin', 'Ampicillin/Sulbactam (Unasyn)', 'Nafcillin', 'Oxacillin', 'Penicillin G potassium', 'Piperacillin', 'Piperacillin/Tazobactam (Zosyn)', 'Cefazolin', 'Cefepime', 'Ceftaroline', 'Ceftazidime', 'Ceftriaxone', 'Keflex', 'Ertapenem sodium (Invanz)', 'Imipenem/Cilastatin', 'Meropenem', 'Tigecycline', 'Aztreonam', 'Ciprofloxacin', 'Levofloxacin', 'Moxifloxacin', 'Amikacin', 'Gentamicin', 'Tobramycin', 'Clindamycin', 'C
+2026-03-25 06:10:48  INFO      === Iteration 52/100  run=antibiotic  best_qa=85.0% ===
+2026-03-25 06:11:32  INFO      Exec block 1/1 …
+2026-03-25 06:11:32  INFO      Output: Case 1 detailed analysis:
+ICU items: Ceftazidime, Vancomycin
+Hospital items: CefTAZidime, CeFAZolin, CefTRIAXone, Vancomycin, Vancomycin Oral Liquid
+
+Checking all ICU inputevents for stay_id=33597827:
+   itemid           starttime        label     category
+0  225798 2128-10-30 12:29:00   Vancomycin  Antibiotics
+1  225853 2128-10-30 13:02:00  Ceftazidime  Antibiotics
+2  225853 2128-10-31 08:11:00  Ceftazidime  Antibiotics
+3  225798 2128-10-31 09:09:00   Vancomycin  Antibiotics
+
+Checking for Piper
+2026-03-25 06:11:32  INFO      === Iteration 53/100  run=antibiotic  best_qa=85.0% ===
+2026-03-25 06:12:25  INFO      Exec block 1/1 …
+2026-03-25 06:12:25  INFO      Output: Checking pharmacy table for stay_id=33597827:
+                                                         medication           starttime
+0                                       Sodium Chloride 0.9%  Flush 2128-10-31 18:00:00
+1                                               Polyethylene Glycol 2128-11-05 19:00:00
+2                                                    NORepinephrine 2128-10-30 10:00:00
+3                                                 Ferrous GLUCONATE 2128-10-30 12:00:00
+4             
+2026-03-25 06:12:25  INFO      === Iteration 54/100  run=antibiotic  best_qa=85.0% ===
+2026-03-25 06:12:25  INFO      Context approaching limit (20753 tokens, limit=25000) — forcing summarize + compress
+2026-03-25 06:17:21  INFO      Context compressed: 25 messages -> 2 messages
+2026-03-25 06:18:16  INFO      Exec block 1/1 …
+2026-03-25 06:18:16  INFO      Output: Stay info:
+    hadm_id  subject_id              intime
+0  20776742    17993079 2128-10-30 08:40:00
+
+ICU antibiotics:
+    stay_id   hadm_id  subject_id antibiotic_name          admin_time
+0  33597827  20776742    17993079      Vancomycin 2128-10-30 12:29:00
+1  33597827  20776742    17993079     Ceftazidime 2128-10-30 13:02:00
+2  33597827  20776742    17993079     Ceftazidime 2128-10-31 08:11:00
+3  33597827  20776742    17993079      Vancomycin 2128-10-31 09:09:00
+
+Hospital prescriptions:
+    hadm
+2026-03-25 06:18:16  INFO      === Iteration 55/100  run=antibiotic  best_qa=85.0% ===
+2026-03-25 06:19:02  INFO      Exec block 1/1 …
+2026-03-25 06:19:02  INFO      Output: Pharmacy antibiotics:
+    hadm_id  subject_id         antibiotic_name          admin_time
+0  20776742    17993079  Vancomycin Oral Liquid 2128-10-30 20:00:00
+1  20776742    17993079             CefTAZidime 2128-10-31 20:00:00
+2  20776742    17993079  Vancomycin Oral Liquid 2128-10-30 14:00:00
+3  20776742    17993079             CefTRIAXone 2128-11-06 08:00:00
+4  20776742    17993079               CeFAZolin 2128-11-02 18:00:00
+5  20776742    17993079             CefTAZidime 2128-10-30 08:00:00
+6 
+2026-03-25 06:19:02  INFO      === Iteration 56/100  run=antibiotic  best_qa=85.0% ===
+2026-03-25 06:19:24  INFO      Exec block 1/1 …
+2026-03-25 06:19:24  INFO      Output: All distinct medications in pharmacy:
+                                           medication
+0                                       Acetaminophen
+1                              Ascorbic Acid/Thiamine
+2                                             Aspirin
+3                                        Atorvastatin
+4                                           Bisacodyl
+5   Calcium Gluconate sliding scale (Critical Care...
+6                                           CeFAZolin
+7                             
+2026-03-25 06:19:24  INFO      === Iteration 57/100  run=antibiotic  best_qa=85.0% ===
+2026-03-25 06:19:47  INFO      Exec block 1/1 …
+2026-03-25 06:19:47  INFO      Output: All distinct inputevents for this stay:
+   itemid                         label                 category
+0  225853                   Ceftazidime              Antibiotics
+1  225798                    Vancomycin              Antibiotics
+2  225168        Packed Red Blood Cells  Blood Products/Colloids
+3  220949                   Dextrose 5%            Fluids/Intake
+4  225158                     NaCl 0.9%            Fluids/Intake
+5  226452                     PO Intake            Fluids/Intake
+6  22
+2026-03-25 06:19:47  INFO      === Iteration 58/100  run=antibiotic  best_qa=85.0% ===
+2026-03-25 06:20:52  INFO      Exec block 1/1 …
+2026-03-25 06:20:52  INFO      Output: Pharmacy records with antibiotics:
+    hadm_id  subject_id  ...  route frequency
+0  20776742    17993079  ...     IV      Q12H
+1  20776742    17993079  ...     IV     Q 24H
+2  20776742    17993079  ...  PO/NG       QID
+3  20776742    17993079  ...  PO/NG       BID
+4  20776742    17993079  ...     IV      Q12H
+5  20776742    17993079  ...     IV     Q 24H
+6  20776742    17993079  ...     IV       Q8H
+7  20776742    17993079  ...     IV     Q 24H
+
+[8 rows x 6 columns]
+
+Inputevents with antibiotic 
+2026-03-25 06:20:52  INFO      === Iteration 59/100  run=antibiotic  best_qa=85.0% ===
+2026-03-25 06:21:28  INFO      Exec block 1/1 …
+2026-03-25 06:21:28  INFO      Output: All distinct medications in pharmacy for this admission:
+  Acetaminophen
+  Ascorbic Acid/Thiamine
+  Aspirin
+  Atorvastatin
+  Bisacodyl
+  Calcium Gluconate sliding scale (Critical Care-Ionized calcium)
+  CeFAZolin
+  CefTAZidime
+  CefTRIAXone
+  Dextrose 50%
+  Docusate Sodium
+  Ferrous GLUCONATE
+  Glucagon
+  Glucose Gel
+  Heparin Flush (10 units/ml)
+  Hydrocortisone
+  Influenza Vaccine Quadrivalent
+  Insulin
+  LevETIRAcetam
+  Lidocaine 1% (For PICC/Midline Insertions)
+  Magnesium Sulfate Replacemen
+2026-03-25 06:21:28  INFO      === Iteration 60/100  run=antibiotic  best_qa=85.0% ===
+2026-03-25 06:22:14  INFO      Exec block 1/1 …
+2026-03-25 06:22:15  INFO      Output: Medications category with antibiotic-like names:
+Empty DataFrame
+Columns: [itemid, label, category]
+Index: []
+
+Medications category inputevents for this stay:
+   itemid                      label     category
+0  222011          Magnesium Sulfate  Medications
+1  221906             Norepinephrine  Medications
+2  227523  Magnesium Sulfate (Bolus)  Medications
+
+2026-03-25 06:22:15  INFO      === Iteration 61/100  run=antibiotic  best_qa=85.0% ===
+2026-03-25 06:22:48  INFO      Exec block 1/1 …
+2026-03-25 06:22:48  INFO      Output: All pharmacy records for this admission:
+  CefTAZidime - 2128-10-30 08:00:00
+  NORepinephrine - 2128-10-30 10:00:00
+  Glucose Gel - 2128-10-30 10:00:00
+  Glucagon - 2128-10-30 10:00:00
+  Dextrose 50% - 2128-10-30 10:00:00
+  Sodium Chloride 0.9%  Flush - 2128-10-30 10:00:00
+  Influenza Vaccine Quadrivalent - 2128-10-30 10:00:00
+  Insulin - 2128-10-30 10:00:00
+  Potassium Chloride Replacement (Critical Care and Oncology)  - 2128-10-30 11:00:00
+  Calcium Gluconate sliding scale (Critical Care-Ioniz
+2026-03-25 06:22:48  INFO      === Iteration 62/100  run=antibiotic  best_qa=85.0% ===
+2026-03-25 06:23:45  INFO      Exec block 1/1 …
+2026-03-25 06:23:45  INFO      Output: All distinct inputevents for this stay:
+   itemid                         label                 category
+0  225853                   Ceftazidime              Antibiotics
+1  225798                    Vancomycin              Antibiotics
+2  225168        Packed Red Blood Cells  Blood Products/Colloids
+3  220949                   Dextrose 5%            Fluids/Intake
+4  225158                     NaCl 0.9%            Fluids/Intake
+5  226452                     PO Intake            Fluids/Intake
+6  22
+2026-03-25 06:23:45  INFO      === Iteration 63/100  run=antibiotic  best_qa=85.0% ===
+2026-03-25 06:24:26  INFO      Exec block 1/1 …
+2026-03-25 06:24:26  INFO      Output: Case 2 - Stay info: [[23458206 11855273]]
+Case 2 - ICU antibiotics: <StringArray>
+['Piperacillin/Tazobactam (Zosyn)', 'Vancomycin', 'Fluconazole',
+ 'Piperacillin']
+Length: 4, dtype: str
+
+Case 3 - Stay info: [[23102231 17222785]]
+Case 3 - ICU antibiotics: []
+
+2026-03-25 06:24:26  INFO      === Iteration 64/100  run=antibiotic  best_qa=85.0% ===
+2026-03-25 06:25:48  INFO      Exec block 1/1 …
+2026-03-25 06:25:48  INFO      Output: Case 3 - Hospital prescriptions: <StringArray>
+['Atovaquone Suspension']
+Length: 1, dtype: str
+Case 3 - Pharmacy: <StringArray>
+['Atovaquone Suspension']
+Length: 1, dtype: str
+
+2026-03-25 06:25:48  INFO      === Iteration 65/100  run=antibiotic  best_qa=85.0% ===
+2026-03-25 06:27:32  INFO      Exec block 1/1 …
+2026-03-25 06:27:32  INFO      Output: Case 2 - ICU antibiotics:
+     stay_id   hadm_id  ...                  antibiotic_name          admin_time
+0   36711152  23458206  ...  Piperacillin/Tazobactam (Zosyn) 2129-06-03 22:30:00
+1   36711152  23458206  ...                       Vancomycin 2129-06-03 22:47:00
+2   36711152  23458206  ...                       Vancomycin 2129-06-02 08:20:00
+3   36711152  23458206  ...  Piperacillin/Tazobactam (Zosyn) 2129-06-02 11:45:00
+4   36711152  23458206  ...                       Vancomycin 2129-06-
+2026-03-25 06:27:32  INFO      === Iteration 66/100  run=antibiotic  best_qa=85.0% ===
+2026-03-25 06:27:32  INFO      Context approaching limit (20562 tokens, limit=25000) — forcing summarize + compress
+2026-03-25 06:32:40  INFO      Context compressed: 26 messages -> 2 messages
+2026-03-25 06:33:19  INFO      Exec block 1/1 …
+2026-03-25 06:33:19  INFO      Output: Case 1 (stay_id=33597827):
+  Distinct antibiotics: ['Ceftazidime', 'Vancomycin', 'Ceftriaxone', 'Cefazolin']
+  Count: 4
+  Expected: 5
+
+Case 2 (stay_id=36711152):
+  Distinct antibiotics: ['Fluconazole', 'Vancomycin', 'Piperacillin/Tazobactam']
+  Count: 3
+  Expected: 2
+
+Case 3 (stay_id=33622343):
+  Distinct antibiotics: ['Atovaquone']
+  Count: 1
+  Expected: 0
+
+=== Detailed ICU data for Case 1 ===
+   itemid        label           starttime
+0  225798   Vancomycin 2128-10-30 12:29:00
+1  225853  Cefta
+2026-03-25 06:33:19  INFO      === Iteration 67/100  run=antibiotic  best_qa=85.0% ===
+2026-03-25 06:34:21  INFO      Exec block 1/1 …
+2026-03-25 06:34:21  INFO      Output: === Hospital prescriptions for Case 1 (stay_id=33597827) ===
+hadm_id: 20776742, subject_id: 17993079
+                     drug           starttime
+0  Vancomycin Oral Liquid 2128-10-30 20:00:00
+1             CefTAZidime 2128-10-31 20:00:00
+2  Vancomycin Oral Liquid 2128-10-30 14:00:00
+3             CefTRIAXone 2128-11-06 08:00:00
+4               CeFAZolin 2128-11-02 18:00:00
+5             CefTAZidime 2128-10-30 08:00:00
+6             CefTRIAXone 2128-11-02 08:00:00
+7              Vancomycin 2128-
+2026-03-25 06:34:21  INFO      === Iteration 68/100  run=antibiotic  best_qa=85.0% ===
+2026-03-25 06:35:19  INFO      Exec block 1/1 …
+2026-03-25 06:35:19  INFO      Output: Error:
+Traceback (most recent call last):
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 643, in execute
+    _run_with_timeout(_do_execute, timeout)
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 174, in _run_with_timeout
+    raise error[0]
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 156, in target
+    result[0] = func(*args, **kwargs)
+                ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/v-tiossowsk
+2026-03-25 06:35:19  INFO      === Iteration 69/100  run=antibiotic  best_qa=85.0% ===
+2026-03-25 06:35:50  INFO      Exec block 1/1 …
+2026-03-25 06:35:50  INFO      Output: ICU antibacterial items for Case 2: <StringArray>
+['Vancomycin', 'Piperacillin', 'Piperacillin/Tazobactam (Zosyn)']
+Length: 3, dtype: str
+Count: 3
+
+225869 (Fluconazole) in antibacterial_itemids: False
+225840 (Amikacin) in antibacterial_itemids: True
+
+Current function result for Case 2:
+  Distinct antibiotics: ['Fluconazole', 'Vancomycin', 'Piperacillin/Tazobactam']
+  Count: 3
+
+Antibiotic administrations for Case 2:
+      source                  antibiotic_name
+0   Hospital                      F
+2026-03-25 06:35:50  INFO      === Iteration 70/100  run=antibiotic  best_qa=85.0% ===
+2026-03-25 06:36:42  INFO      Exec block 1/1 …
+2026-03-25 06:36:42  INFO      Output: Testing ICU query with stay_id=36711152 and antibacterial filter...
+225869 (Fluconazole) in list: False
+
+ICU results with antibacterial filter:
+<StringArray>
+['Vancomycin', 'Piperacillin', 'Piperacillin/Tazobactam (Zosyn)']
+Length: 3, dtype: str
+
+=== Checking hospital prescriptions for Fluconazole ===
+          drug           starttime
+0  Fluconazole 2129-06-02 06:00:00
+1  Fluconazole 2129-06-03 08:00:00
+2  Fluconazole 2129-06-01 23:00:00
+
+=== Checking if 'fluconazole' matches any pattern ===
+
+2026-03-25 06:36:42  INFO      === Iteration 71/100  run=antibiotic  best_qa=85.0% ===
+(EngineCore_DP0 pid=3937981) /home/v-tiossowski/anaconda3/envs/autoformalization/lib/python3.12/site-packages/vllm/model_executor/layers/fla/ops/utils.py:113: UserWarning: Input tensor shape suggests potential format mismatch: seq_len (35) < num_heads (48). This may indicate the inputs were passed in head-first format [B, H, T, ...] when head_first=False was specified. Please verify your input tensor format matches the expected shape [B, T, H, ...].
+(EngineCore_DP0 pid=3937981)   return fn(*contiguous_args, **contiguous_kwargs)
+2026-03-25 06:40:19  INFO      Exec block 1/1 …
+2026-03-25 06:40:19  INFO      Output: === Testing fixed function ===
+
+Case 1 (stay_id=33597827):
+  Distinct antibiotics: ['Ceftazidime', 'Vancomycin', 'Vancomycin Oral Liquid', 'Ceftriaxone', 'Cefazolin']
+  Count: 5
+  Expected: 5
+
+Case 2 (stay_id=36711152):
+  Distinct antibiotics: ['Piperacillin/Tazobactam', 'Vancomycin']
+  Count: 2
+  Expected: 2
+
+Case 3 (stay_id=33622343):
+  Distinct antibiotics: []
+  Count: 0
+  Expected: 0
+
+2026-03-25 06:40:19  INFO      === Iteration 72/100  run=antibiotic  best_qa=85.0% ===
+2026-03-25 06:41:15  INFO      Exec block 1/1 …
+2026-03-25 06:41:15  INFO      Output: === Comprehensive Testing ===
+
+Test 1 (stay_id=37081114):
+  Received antibiotics: True
+  Distinct antibiotics: ['Cefepime', 'Vancomycin', 'Meropenem']
+  Count: 3
+  Within 48hrs ICU: True
+  Antibiotics within 48hrs: ['Cefepime', 'Vancomycin']
+
+Test 2 (stay_id=37081114, subject_id=10000690):
+  Received antibiotics: True
+  Distinct antibiotics: ['Cefepime', 'Vancomycin', 'Meropenem']
+  Count: 3
+
+Test 3 (hadm_id=25860671):
+  Received antibiotics: True
+  Distinct antibiotics: ['Cefepime', 'Vancomycin
+2026-03-25 06:41:15  INFO      === Iteration 73/100  run=antibiotic  best_qa=85.0% ===
+2026-03-25 06:41:47  INFO      Exec block 1/1 …
+2026-03-25 06:41:48  INFO      Output: === Additional Edge Case Tests ===
+
+Test: hadm_id=25860671, subject_id=10000690
+  Received antibiotics: True
+  Distinct antibiotics: ['Cefepime', 'Vancomycin', 'Meropenem']
+  Count: 3
+
+Test: stay_id=99999999 (invalid)
+  Received antibiotics: True
+  Distinct antibiotics: ['Cefazolin', 'Vancomycin', 'Bactrim (SMX/TMP)', 'Ampicillin/Sulbactam', 'Piperacillin/Tazobactam', 'Metronidazole', 'Ciprofloxacin', 'Erythromycin', 'Nafcillin', 'Cefepime', 'Gentamicin', 'Azithromycin', 'Ceftriaxone', 'Levoflox
+2026-03-25 06:41:48  INFO      === Iteration 74/100  run=antibiotic  best_qa=85.0% ===
+2026-03-25 06:45:43  INFO      Exec block 1/1 …
+2026-03-25 06:45:44  INFO      Output: === Testing with invalid stay_id ===
+Invalid stay_id=99999999:
+  Received antibiotics: False
+  Distinct antibiotics: []
+  Count: 0
+
+=== Re-running all tests ===
+
+Case 1 (stay_id=33597827, expected=5):
+  Distinct antibiotics: ['Ceftazidime', 'Vancomycin', 'Vancomycin Oral Liquid', 'Ceftriaxone', 'Cefazolin']
+  Count: 5
+
+Case 2 (stay_id=36711152, expected=2):
+  Distinct antibiotics: ['Piperacillin/Tazobactam', 'Vancomycin']
+  Count: 2
+
+Case 3 (stay_id=33622343, expected=0):
+  Distinct antibiotics:
+2026-03-25 06:45:44  INFO      === Iteration 75/100  run=antibiotic  best_qa=85.0% ===
+2026-03-25 06:45:44  INFO      Context approaching limit (23346 tokens, limit=25000) — forcing summarize + compress
+2026-03-25 06:51:06  INFO      Context compressed: 20 messages -> 2 messages
+2026-03-25 06:51:30  INFO      Exec block 1/1 …
+2026-03-25 06:51:30  INFO      Output: stay_id=33597827: received=True, count=5
+Distinct antibiotics: ['Ceftazidime', 'Vancomycin', 'Vancomycin Oral Liquid', 'Ceftriaxone', 'Cefazolin']
+
+stay_id=36711152: received=True, count=2
+Distinct antibiotics: ['Piperacillin/Tazobactam', 'Vancomycin']
+
+stay_id=33622343: received=False, count=0
+Distinct antibiotics: []
+
+stay_id=37081114: received=True, count=3
+Distinct antibiotics: ['Cefepime', 'Vancomycin', 'Meropenem']
+Admins:
+      source   stay_id  ...  antibiotic_name          admin_time
+0 
+2026-03-25 06:51:30  INFO      === Iteration 76/100  run=antibiotic  best_qa=85.0% ===
+2026-03-25 06:51:44  INFO      Exec block 1/1 …
+2026-03-25 06:51:44  INFO      Output: Piperacillin prescriptions:
+   subject_id   hadm_id                     drug
+0    11125170  26830137  Piperacillin-Tazobactam
+1    11130614  25593886  Piperacillin-Tazobactam
+2    11137816  29365016  Piperacillin-Tazobactam
+3    11143810  28027018  Piperacillin-Tazobactam
+4    11155881  25667158  Piperacillin-Tazobactam
+5    11159050  25390111  Piperacillin-Tazobactam
+6    11162681  25294453  Piperacillin-Tazobactam
+7    11163038  24256406  Piperacillin-Tazobactam
+8    11164899  26495581  Pipera
+2026-03-25 06:51:44  INFO      === Iteration 77/100  run=antibiotic  best_qa=85.0% ===
+2026-03-25 06:52:49  INFO      Exec block 1/1 …
+2026-03-25 06:52:49  INFO      Output: 'Piperacillin' -> 'Piperacillin/Tazobactam'
+'Piperacillin/Tazobactam (Zosyn)' -> 'Piperacillin/Tazobactam'
+'Piperacillin-Tazobactam' -> 'Piperacillin/Tazobactam'
+'zosyn' -> 'Piperacillin/Tazobactam'
+
+2026-03-25 06:52:49  INFO      === Iteration 78/100  run=antibiotic  best_qa=85.0% ===
+2026-03-25 06:53:56  INFO      Exec block 1/1 …
+2026-03-25 06:53:56  INFO      Output: 'Piperacillin' -> 'Piperacillin'
+'Piperacillin/Tazobactam (Zosyn)' -> 'Piperacillin/Tazobactam'
+'Piperacillin-Tazobactam' -> 'Piperacillin/Tazobactam'
+'zosyn' -> 'Piperacillin/Tazobactam'
+'tazobactam' -> 'Piperacillin/Tazobactam'
+
+2026-03-25 06:53:56  INFO      === Iteration 79/100  run=antibiotic  best_qa=85.0% ===
+2026-03-25 06:54:07  INFO      Exec block 1/1 …
+2026-03-25 06:54:07  INFO      Output: stay_id=34499678: received=True, count=3
+Distinct antibiotics: ['Vancomycin', 'Piperacillin/Tazobactam', 'Ampicillin/Sulbactam']
+Admins:
+      source   stay_id  ...                  antibiotic_name          admin_time
+0   Hospital      <NA>  ...                       Vancomycin 2137-01-01 20:00:00
+1   Hospital      <NA>  ...          Piperacillin-Tazobactam 2137-01-01 22:00:00
+2   Hospital      <NA>  ...          Piperacillin-Tazobactam 2137-01-02 12:00:00
+3   Hospital      <NA>  ...            
+2026-03-25 06:54:07  INFO      === Iteration 80/100  run=antibiotic  best_qa=85.0% ===
+2026-03-25 06:57:41  INFO      Exec block 1/1 …
+2026-03-25 06:57:42  INFO      Output: stay_id=34499678: received=True, count=4
+Distinct antibiotics: ['Vancomycin', 'Piperacillin/Tazobactam', 'Ampicillin/Sulbactam', 'Piperacillin']
+
+2026-03-25 06:57:42  INFO      === Iteration 81/100  run=antibiotic  best_qa=85.0% ===
+2026-03-25 06:58:12  INFO      Exec block 1/1 …
+2026-03-25 06:58:12  INFO      Output: === Running all test cases ===
+
+Test 1: {'stay_id': 37081114, 'expected_count': 3} -> Expected: 3, Actual: 3 ✓
+Test 2: {'stay_id': 37081114, 'subject_id': 10000690, 'expected_count': 3} -> Expected: 3, Actual: 3 ✓
+Test 3: {'hadm_id': 25860671, 'expected_count': 3} -> Expected: 3, Actual: 3 ✓
+Test 4: {'subject_id': 10000690, 'expected_count': 7} -> Expected: 7, Actual: 7 ✓
+Test 5: {'stay_id': 37067082, 'expected_count': 4} -> Expected: 4, Actual: 4 ✓
+Test 6: {'stay_id': 39553978, 'expected_count'
+2026-03-25 06:58:12  INFO      === Iteration 82/100  run=antibiotic  best_qa=85.0% ===
+2026-03-25 06:58:27  INFO      Exec block 1/1 …
+2026-03-25 06:58:27  INFO      Output: stay_id=36711152: received=True, count=3
+Distinct antibiotics: ['Piperacillin/Tazobactam', 'Vancomycin', 'Piperacillin']
+
+Admins:
+      source   stay_id  ...                  antibiotic_name          admin_time
+0   Hospital      <NA>  ...          Piperacillin-Tazobactam 2129-06-01 23:00:00
+1   Hospital      <NA>  ...                       Vancomycin 2129-06-01 23:00:00
+2        ICU  36711152  ...                       Vancomycin 2129-06-01 23:00:00
+3        ICU  36711152  ...  Piperacillin/Tazo
+2026-03-25 06:58:27  INFO      === Iteration 83/100  run=antibiotic  best_qa=85.0% ===
+2026-03-25 06:58:59  INFO      Exec block 1/1 …
+2026-03-25 06:58:59  INFO      Output: Piperacillin items:
+   itemid                            label
+0  225892                     Piperacillin
+1  225893  Piperacillin/Tazobactam (Zosyn)
+
+Checking if there's a guideline about antibiotic counting...
+[]
+
+2026-03-25 06:58:59  INFO      === Iteration 84/100  run=antibiotic  best_qa=85.0% ===
+2026-03-25 06:59:36  INFO      Exec block 1/1 …
+2026-03-25 06:59:37  INFO      Output: === Final verification of all test cases ===
+
+Test 1: ICU stay with Cefepime, Vancomycin, Meropenem
+  Expected: 3, Actual: 3 ✓
+
+Test 2: Same ICU stay with subject_id
+  Expected: 3, Actual: 3 ✓
+
+Test 3: Hospital admission
+  Expected: 3, Actual: 3 ✓
+
+Test 4: Subject across all admissions
+  Expected: 7, Actual: 7 ✓
+
+Test 5: ICU stay with 4 antibiotics
+  Expected: 4, Actual: 4 ✓
+
+Test 6: No antibiotics
+  Expected: 0, Actual: 0 ✓
+
+Test 7: ICU stay with Vancomycin + Vancomycin Oral Liquid
+  Expected: 
+2026-03-25 06:59:37  INFO      === Iteration 85/100  run=antibiotic  best_qa=85.0% ===
+2026-03-25 07:03:17  INFO      Exec block 1/1 …
+2026-03-25 07:03:17  INFO      Output: Code executed successfully (no output).
+2026-03-25 07:03:17  INFO      Debug conversations will be saved to debug_logs
+2026-03-25 07:03:17  INFO      Using question from dataset column: Did this patient receive antibiotics during their hospital admission?
+2026-03-25 07:03:17  INFO      Answer type for 'antibiotic': numerical (per_row=True)
+2026-03-25 07:03:17  INFO      ReACT iteration 1/5 — 20 active patients
+Rendering conversations:   0%|          | 0/20 [00:00<?, ?it/s]Rendering conversations: 100%|██████████| 20/20 [00:00<00:00, 491.20it/s]
+Processed prompts:   0%|          | 0/20 [00:00<?, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s]Processed prompts:   5%|▌         | 1/20 [00:13<04:23, 13.86s/it, est. speed input: 65.06 toks/s, output: 15.00 toks/s]Processed prompts:  15%|█▌        | 3/20 [00:14<01:03,  3.73s/it, est. speed input: 189.79 toks/s, output: 44.57 toks/s]Processed prompts:  20%|██        | 4/20 [00:14<00:42,  2.63s/it, est. speed input: 243.52 toks/s, output: 58.44 toks/s]Processed prompts:  25%|██▌       | 5/20 [00:15<00:31,  2.12s/it, est. speed input: 282.89 toks/s, output: 70.42 toks/s]Processed prompts:  30%|███       | 6/20 [00:16<00:21,  1.54s/it, est. speed input: 333.10 toks/s, output: 85.27 toks/s]Processed prompts:  35%|███▌      | 7/20 [00:16<00:15,  1.17s/it, est. speed input: 379.53 toks/s, output: 99.69 toks/s]Processed prompts:  45%|████▌     | 9/20 [00:16<00:07,  1.52it/s, est. speed input: 482.86 toks/s, output: 131.23 toks/s]Processed prompts:  50%|█████     | 10/20 [00:17<00:05,  1.74it/s, est. speed input: 526.02 toks/s, output: 145.27 toks/s]Processed prompts:  60%|██████    | 12/20 [00:17<00:02,  2.78it/s, est. speed input: 626.51 toks/s, output: 177.36 toks/s]Processed prompts:  65%|██████▌   | 13/20 [00:17<00:02,  2.85it/s, est. speed input: 666.22 toks/s, output: 190.92 toks/s]Processed prompts:  70%|███████   | 14/20 [00:18<00:03,  1.85it/s, est. speed input: 674.83 toks/s, output: 196.80 toks/s]Processed prompts:  80%|████████  | 16/20 [00:18<00:01,  2.52it/s, est. speed input: 755.90 toks/s, output: 227.12 toks/s]Processed prompts:  85%|████████▌ | 17/20 [00:19<00:01,  2.93it/s, est. speed input: 796.66 toks/s, output: 242.75 toks/s]Processed prompts:  90%|█████████ | 18/20 [00:19<00:00,  3.39it/s, est. speed input: 837.14 toks/s, output: 258.51 toks/s]Processed prompts: 100%|██████████| 20/20 [00:19<00:00,  4.14it/s, est. speed input: 914.51 toks/s, output: 289.27 toks/s]Processed prompts: 100%|██████████| 20/20 [00:19<00:00,  4.14it/s, est. speed input: 914.51 toks/s, output: 289.27 toks/s]Processed prompts: 100%|██████████| 20/20 [00:19<00:00,  1.02it/s, est. speed input: 914.51 toks/s, output: 289.27 toks/s]
+2026-03-25 07:03:37  INFO      ReACT iteration 2/5 — 20 active patients
+Rendering conversations:   0%|          | 0/20 [00:00<?, ?it/s]Rendering conversations: 100%|██████████| 20/20 [00:00<00:00, 352.39it/s]
+Processed prompts:   0%|          | 0/20 [00:00<?, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s]Processed prompts:   5%|▌         | 1/20 [00:09<03:05,  9.78s/it, est. speed input: 116.81 toks/s, output: 5.62 toks/s]Processed prompts:  15%|█▌        | 3/20 [00:09<00:44,  2.60s/it, est. speed input: 399.48 toks/s, output: 17.36 toks/s]Processed prompts:  20%|██        | 4/20 [00:10<00:28,  1.80s/it, est. speed input: 518.06 toks/s, output: 23.44 toks/s]Processed prompts:  35%|███▌      | 7/20 [00:10<00:10,  1.29it/s, est. speed input: 965.28 toks/s, output: 42.20 toks/s]Processed prompts:  40%|████      | 8/20 [00:10<00:07,  1.56it/s, est. speed input: 1099.76 toks/s, output: 48.56 toks/s]Processed prompts:  50%|█████     | 10/20 [00:11<00:05,  1.80it/s, est. speed input: 1271.95 toks/s, output: 60.34 toks/s]Processed prompts:  60%|██████    | 12/20 [00:12<00:04,  1.63it/s, est. speed input: 1342.37 toks/s, output: 71.18 toks/s]Processed prompts:  75%|███████▌  | 15/20 [00:13<00:02,  2.40it/s, est. speed input: 1643.11 toks/s, output: 98.55 toks/s]Processed prompts:  80%|████████  | 16/20 [00:13<00:01,  2.43it/s, est. speed input: 1703.64 toks/s, output: 106.98 toks/s]Processed prompts:  85%|████████▌ | 17/20 [00:14<00:01,  2.15it/s, est. speed input: 1727.88 toks/s, output: 113.64 toks/s]Processed prompts:  95%|█████████▌| 19/20 [00:18<00:01,  1.02s/it, est. speed input: 1550.61 toks/s, output: 113.26 toks/s]Processed prompts: 100%|██████████| 20/20 [00:31<00:00,  3.39s/it, est. speed input: 956.42 toks/s, output: 87.29 toks/s]  Processed prompts: 100%|██████████| 20/20 [00:31<00:00,  3.39s/it, est. speed input: 956.42 toks/s, output: 87.29 toks/s]Processed prompts: 100%|██████████| 20/20 [00:31<00:00,  1.56s/it, est. speed input: 956.42 toks/s, output: 87.29 toks/s]
+2026-03-25 07:04:08  INFO      ReACT iteration 3/5 — 1 active patients
+Rendering conversations:   0%|          | 0/1 [00:00<?, ?it/s]Rendering conversations: 100%|██████████| 1/1 [00:00<00:00, 239.83it/s]
+Processed prompts:   0%|          | 0/1 [00:00<?, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s]Processed prompts: 100%|██████████| 1/1 [00:05<00:00,  5.94s/it, est. speed input: 341.37 toks/s, output: 24.77 toks/s]Processed prompts: 100%|██████████| 1/1 [00:05<00:00,  5.94s/it, est. speed input: 341.37 toks/s, output: 24.77 toks/s]Processed prompts: 100%|██████████| 1/1 [00:05<00:00,  5.94s/it, est. speed input: 341.37 toks/s, output: 24.77 toks/s]
+2026-03-25 07:04:14  INFO      QA accuracy: 95.0%  (correct=19/20, parse_errors=0)
+2026-03-25 07:04:14  INFO      SUCCESS: 95.0% QA accuracy for 'antibiotic' at iteration 85
+2026-03-25 07:04:14  INFO      Function code saved to autoformalized_library/functions/antibiotic.py
+2026-03-25 07:04:14  INFO      Summary saved to autoformalized_library/summary.json
+[rank0]:[W325 07:04:14.217120480 ProcessGroupNCCL.cpp:1553] Warning: WARNING: destroy_process_group() was not called before program exit, which can leak resources. For more info, please see https://pytorch.org/docs/stable/distributed.html#shutdown (function operator())
+
+======================================================================
+AUTOFORMALIZATION COMPLETE
+======================================================================
+  Output dir      : autoformalized_library
+  Model           : Qwen/Qwen3.5-27B
+  Dataset         : /home/v-tiossowski/HealthcareAgent/mimic-code/data/MIMICIV_antibiotic_dataset/antibiotic.csv
+  Run name        : antibiotic
+  Status          : SUCCESS
+  QA accuracy     : 95.0%
+  Iterations      : 85
+  Total tokens    : 58,321  (prompt 49,775 / completion 8,546)
+  LLM calls       : 131
+  SQL queries     : 486
+  Function saved  : autoformalized_library/functions/antibiotic.py
+======================================================================

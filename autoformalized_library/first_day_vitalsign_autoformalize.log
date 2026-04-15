@@ -1,0 +1,381 @@
+2026-03-26 00:08:12  INFO      Using database: /home/v-tiossowski/MIMIC-IV/mimic4.db
+2026-03-26 00:08:12  INFO      No --model_url provided; loading vLLM in-process …
+INFO 03-26 00:08:17 [utils.py:238] non-default args: {'trust_remote_code': True, 'max_model_len': 40000, 'disable_log_stats': True, 'model': 'Qwen/Qwen3.5-27B'}
+The argument `trust_remote_code` is to be used with Auto classes. It has no effect here and is ignored.
+The argument `trust_remote_code` is to be used with Auto classes. It has no effect here and is ignored.
+The argument `trust_remote_code` is to be used with Auto classes. It has no effect here and is ignored.
+INFO 03-26 00:08:18 [model.py:531] Resolved architecture: Qwen3_5ForConditionalGeneration
+INFO 03-26 00:08:18 [model.py:1554] Using max model len 40000
+INFO 03-26 00:08:18 [scheduler.py:231] Chunked prefill is enabled with max_num_batched_tokens=8192.
+INFO 03-26 00:08:19 [config.py:544] Setting attention block size to 784 tokens to ensure that attention page size is >= mamba page size.
+INFO 03-26 00:08:19 [config.py:575] Padding mamba page size by 0.13% to ensure that mamba page size and attention page size are exactly equal.
+INFO 03-26 00:08:19 [vllm.py:747] Asynchronous scheduling is enabled.
+WARNING 03-26 00:08:28 [system_utils.py:152] We must use the `spawn` multiprocessing start method. Overriding VLLM_WORKER_MULTIPROC_METHOD to 'spawn'. See https://docs.vllm.ai/en/latest/usage/troubleshooting.html#python-multiprocessing for more information. Reasons: CUDA is initialized
+(EngineCore_DP0 pid=213098) INFO 03-26 00:08:33 [core.py:101] Initializing a V1 LLM engine (v0.17.1) with config: model='Qwen/Qwen3.5-27B', speculative_config=None, tokenizer='Qwen/Qwen3.5-27B', skip_tokenizer_init=False, tokenizer_mode=auto, revision=None, tokenizer_revision=None, trust_remote_code=True, dtype=torch.bfloat16, max_seq_len=40000, download_dir=None, load_format=auto, tensor_parallel_size=1, pipeline_parallel_size=1, data_parallel_size=1, disable_custom_all_reduce=False, quantization=None, enforce_eager=False, enable_return_routed_experts=False, kv_cache_dtype=auto, device_config=cuda, structured_outputs_config=StructuredOutputsConfig(backend='auto', disable_fallback=False, disable_any_whitespace=False, disable_additional_properties=False, reasoning_parser='', reasoning_parser_plugin='', enable_in_reasoning=False), observability_config=ObservabilityConfig(show_hidden_metrics_for_version=None, otlp_traces_endpoint=None, collect_detailed_traces=None, kv_cache_metrics=False, kv_cache_metrics_sample=0.01, cudagraph_metrics=False, enable_layerwise_nvtx_tracing=False, enable_mfu_metrics=False, enable_mm_processor_stats=False, enable_logging_iteration_details=False), seed=0, served_model_name=Qwen/Qwen3.5-27B, enable_prefix_caching=False, enable_chunked_prefill=True, pooler_config=None, compilation_config={'level': None, 'mode': <CompilationMode.VLLM_COMPILE: 3>, 'debug_dump_path': None, 'cache_dir': '', 'compile_cache_save_format': 'binary', 'backend': 'inductor', 'custom_ops': ['none'], 'splitting_ops': ['vllm::unified_attention', 'vllm::unified_attention_with_output', 'vllm::unified_mla_attention', 'vllm::unified_mla_attention_with_output', 'vllm::mamba_mixer2', 'vllm::mamba_mixer', 'vllm::short_conv', 'vllm::linear_attention', 'vllm::plamo2_mamba_mixer', 'vllm::gdn_attention_core', 'vllm::kda_attention', 'vllm::sparse_attn_indexer', 'vllm::rocm_aiter_sparse_attn_indexer', 'vllm::unified_kv_cache_update', 'vllm::unified_mla_kv_cache_update'], 'compile_mm_encoder': False, 'compile_sizes': [], 'compile_ranges_split_points': [8192], 'inductor_compile_config': {'enable_auto_functionalized_v2': False, 'combo_kernels': True, 'benchmark_combo_kernel': True}, 'inductor_passes': {}, 'cudagraph_mode': <CUDAGraphMode.FULL_AND_PIECEWISE: (2, 1)>, 'cudagraph_num_of_warmups': 1, 'cudagraph_capture_sizes': [1, 2, 4, 8, 16, 24, 32, 40, 48, 56, 64, 72, 80, 88, 96, 104, 112, 120, 128, 136, 144, 152, 160, 168, 176, 184, 192, 200, 208, 216, 224, 232, 240, 248, 256, 272, 288, 304, 320, 336, 352, 368, 384, 400, 416, 432, 448, 464, 480, 496, 512], 'cudagraph_copy_inputs': False, 'cudagraph_specialize_lora': True, 'use_inductor_graph_partition': False, 'pass_config': {'fuse_norm_quant': False, 'fuse_act_quant': False, 'fuse_attn_quant': False, 'enable_sp': False, 'fuse_gemm_comms': False, 'fuse_allreduce_rms': False}, 'max_cudagraph_capture_size': 512, 'dynamic_shapes_config': {'type': <DynamicShapesType.BACKED: 'backed'>, 'evaluate_guards': False, 'assume_32_bit_indexing': False}, 'local_cache_dir': None, 'fast_moe_cold_start': True, 'static_all_moe_layers': []}
+(EngineCore_DP0 pid=213098) INFO 03-26 00:08:36 [parallel_state.py:1393] world_size=1 rank=0 local_rank=0 distributed_init_method=tcp://10.8.144.167:44913 backend=nccl
+(EngineCore_DP0 pid=213098) INFO 03-26 00:08:36 [parallel_state.py:1715] rank 0 in world size 1 is assigned as DP rank 0, PP rank 0, PCP rank 0, TP rank 0, EP rank N/A, EPLB rank N/A
+(EngineCore_DP0 pid=213098) INFO 03-26 00:08:43 [base.py:106] Offloader set to NoopOffloader
+(EngineCore_DP0 pid=213098) INFO 03-26 00:08:43 [gpu_model_runner.py:4281] Starting to load model Qwen/Qwen3.5-27B...
+(EngineCore_DP0 pid=213098) INFO 03-26 00:08:44 [cuda.py:453] Using backend AttentionBackendEnum.FLASH_ATTN for vit attention
+(EngineCore_DP0 pid=213098) INFO 03-26 00:08:44 [mm_encoder_attention.py:215] Using AttentionBackendEnum.FLASH_ATTN for MMEncoderAttention.
+(EngineCore_DP0 pid=213098) INFO 03-26 00:08:44 [cuda.py:405] Using FLASH_ATTN attention backend out of potential backends: ['FLASH_ATTN', 'FLASHINFER', 'TRITON_ATTN', 'FLEX_ATTENTION'].
+(EngineCore_DP0 pid=213098) INFO 03-26 00:08:44 [flash_attn.py:587] Using FlashAttention version 2
+(EngineCore_DP0 pid=213098) <frozen importlib._bootstrap_external>:1301: FutureWarning: The cuda.cudart module is deprecated and will be removed in a future release, please switch to use the cuda.bindings.runtime module instead.
+(EngineCore_DP0 pid=213098) <frozen importlib._bootstrap_external>:1301: FutureWarning: The cuda.nvrtc module is deprecated and will be removed in a future release, please switch to use the cuda.bindings.nvrtc module instead.
+(EngineCore_DP0 pid=213098) Loading safetensors checkpoint shards:   0% Completed | 0/11 [00:00<?, ?it/s]
+(EngineCore_DP0 pid=213098) Loading safetensors checkpoint shards:   9% Completed | 1/11 [00:00<00:05,  1.89it/s]
+(EngineCore_DP0 pid=213098) Loading safetensors checkpoint shards:  18% Completed | 2/11 [00:01<00:05,  1.69it/s]
+(EngineCore_DP0 pid=213098) Loading safetensors checkpoint shards:  27% Completed | 3/11 [00:01<00:05,  1.58it/s]
+(EngineCore_DP0 pid=213098) Loading safetensors checkpoint shards:  36% Completed | 4/11 [00:02<00:04,  1.52it/s]
+(EngineCore_DP0 pid=213098) Loading safetensors checkpoint shards:  45% Completed | 5/11 [00:03<00:04,  1.49it/s]
+(EngineCore_DP0 pid=213098) Loading safetensors checkpoint shards:  55% Completed | 6/11 [00:03<00:03,  1.47it/s]
+(EngineCore_DP0 pid=213098) Loading safetensors checkpoint shards:  64% Completed | 7/11 [00:04<00:02,  1.46it/s]
+(EngineCore_DP0 pid=213098) Loading safetensors checkpoint shards:  73% Completed | 8/11 [00:05<00:02,  1.46it/s]
+(EngineCore_DP0 pid=213098) Loading safetensors checkpoint shards:  82% Completed | 9/11 [00:06<00:01,  1.45it/s]
+(EngineCore_DP0 pid=213098) Loading safetensors checkpoint shards:  91% Completed | 10/11 [00:06<00:00,  1.44it/s]
+(EngineCore_DP0 pid=213098) Loading safetensors checkpoint shards: 100% Completed | 11/11 [00:07<00:00,  1.61it/s]
+(EngineCore_DP0 pid=213098) Loading safetensors checkpoint shards: 100% Completed | 11/11 [00:07<00:00,  1.53it/s]
+(EngineCore_DP0 pid=213098) 
+(EngineCore_DP0 pid=213098) INFO 03-26 00:08:52 [default_loader.py:293] Loading weights took 7.24 seconds
+(EngineCore_DP0 pid=213098) INFO 03-26 00:08:53 [gpu_model_runner.py:4364] Model loading took 51.1 GiB memory and 8.462556 seconds
+(EngineCore_DP0 pid=213098) INFO 03-26 00:08:53 [gpu_model_runner.py:5280] Encoder cache will be initialized with a budget of 16384 tokens, and profiled with 1 image items of the maximum feature size.
+(EngineCore_DP0 pid=213098) INFO 03-26 00:09:01 [decorators.py:465] Directly load AOT compilation from path /home/v-tiossowski/.cache/vllm/torch_compile_cache/torch_aot_compile/0232891e22bd4d7db98ac2f43c441f0f81d0a431216053ca49fadeaff23e2af3/rank_0_0/model
+(EngineCore_DP0 pid=213098) INFO 03-26 00:09:01 [backends.py:916] Using cache directory: /home/v-tiossowski/.cache/vllm/torch_compile_cache/feaf61af16/rank_0_0/backbone for vLLM's torch.compile
+(EngineCore_DP0 pid=213098) INFO 03-26 00:09:01 [backends.py:976] Dynamo bytecode transform time: 3.56 s
+(EngineCore_DP0 pid=213098) INFO 03-26 00:09:11 [backends.py:266] Directly load the compiled graph(s) for compile range (1, 8192) from the cache, took 9.462 s
+(EngineCore_DP0 pid=213098) INFO 03-26 00:09:11 [monitor.py:35] torch.compile takes 13.90 s in total
+(EngineCore_DP0 pid=213098) INFO 03-26 00:09:13 [gpu_worker.py:424] Available KV cache memory: 18.3 GiB
+(EngineCore_DP0 pid=213098) INFO 03-26 00:09:13 [kv_cache_utils.py:1314] GPU KV cache size: 74,480 tokens
+(EngineCore_DP0 pid=213098) INFO 03-26 00:09:13 [kv_cache_utils.py:1319] Maximum concurrency for 40,000 tokens per request: 6.95x
+(EngineCore_DP0 pid=213098) Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):   0%|          | 0/51 [00:00<?, ?it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):   2%|▏         | 1/51 [00:00<00:08,  5.78it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):   4%|▍         | 2/51 [00:00<00:08,  5.96it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):   6%|▌         | 3/51 [00:00<00:07,  6.07it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):   8%|▊         | 4/51 [00:00<00:07,  6.11it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  10%|▉         | 5/51 [00:00<00:07,  6.15it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  12%|█▏        | 6/51 [00:00<00:07,  6.16it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  14%|█▎        | 7/51 [00:01<00:07,  6.18it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  16%|█▌        | 8/51 [00:01<00:06,  6.19it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  18%|█▊        | 9/51 [00:01<00:06,  6.52it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  20%|█▉        | 10/51 [00:01<00:06,  6.79it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  22%|██▏       | 11/51 [00:01<00:05,  6.77it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  24%|██▎       | 12/51 [00:01<00:05,  6.95it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  25%|██▌       | 13/51 [00:01<00:05,  7.08it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  27%|██▋       | 14/51 [00:02<00:05,  7.15it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  29%|██▉       | 15/51 [00:02<00:04,  7.27it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  31%|███▏      | 16/51 [00:02<00:04,  7.35it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  33%|███▎      | 17/51 [00:02<00:04,  7.66it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  35%|███▌      | 18/51 [00:02<00:04,  7.91it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  37%|███▋      | 19/51 [00:02<00:03,  8.11it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  39%|███▉      | 20/51 [00:02<00:03,  8.25it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  41%|████      | 21/51 [00:02<00:03,  8.39it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  43%|████▎     | 22/51 [00:03<00:03,  8.48it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  45%|████▌     | 23/51 [00:03<00:03,  8.52it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  47%|████▋     | 24/51 [00:03<00:03,  8.55it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  49%|████▉     | 25/51 [00:03<00:03,  8.47it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  51%|█████     | 26/51 [00:03<00:02,  8.48it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  53%|█████▎    | 27/51 [00:03<00:02,  8.45it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  55%|█████▍    | 28/51 [00:03<00:02,  8.54it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  57%|█████▋    | 29/51 [00:03<00:02,  8.58it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  59%|█████▉    | 30/51 [00:04<00:02,  8.62it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  61%|██████    | 31/51 [00:04<00:02,  8.66it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  63%|██████▎   | 32/51 [00:04<00:02,  8.68it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  65%|██████▍   | 33/51 [00:04<00:01,  9.00it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  67%|██████▋   | 34/51 [00:04<00:01,  9.27it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  71%|███████   | 36/51 [00:04<00:01,  9.62it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  75%|███████▍  | 38/51 [00:04<00:01,  9.77it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  76%|███████▋  | 39/51 [00:04<00:01,  9.81it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  78%|███████▊  | 40/51 [00:05<00:01,  9.85it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  82%|████████▏ | 42/51 [00:05<00:00, 10.06it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  86%|████████▋ | 44/51 [00:05<00:00, 10.15it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  90%|█████████ | 46/51 [00:05<00:00, 10.22it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  94%|█████████▍| 48/51 [00:05<00:00, 10.42it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  98%|█████████▊| 50/51 [00:05<00:00, 10.70it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE): 100%|██████████| 51/51 [00:06<00:00,  8.37it/s]
+(EngineCore_DP0 pid=213098) Capturing CUDA graphs (decode, FULL):   0%|          | 0/35 [00:00<?, ?it/s]Capturing CUDA graphs (decode, FULL):   3%|▎         | 1/35 [00:00<00:06,  5.66it/s]Capturing CUDA graphs (decode, FULL):   6%|▌         | 2/35 [00:00<00:05,  6.08it/s]Capturing CUDA graphs (decode, FULL):   9%|▊         | 3/35 [00:00<00:05,  6.23it/s]Capturing CUDA graphs (decode, FULL):  11%|█▏        | 4/35 [00:00<00:04,  6.33it/s]Capturing CUDA graphs (decode, FULL):  14%|█▍        | 5/35 [00:00<00:04,  6.44it/s]Capturing CUDA graphs (decode, FULL):  17%|█▋        | 6/35 [00:00<00:04,  6.53it/s]Capturing CUDA graphs (decode, FULL):  20%|██        | 7/35 [00:01<00:04,  6.55it/s]Capturing CUDA graphs (decode, FULL):  23%|██▎       | 8/35 [00:01<00:04,  6.60it/s]Capturing CUDA graphs (decode, FULL):  26%|██▌       | 9/35 [00:01<00:03,  6.60it/s]Capturing CUDA graphs (decode, FULL):  29%|██▊       | 10/35 [00:01<00:03,  6.61it/s]Capturing CUDA graphs (decode, FULL):  31%|███▏      | 11/35 [00:01<00:03,  6.62it/s]Capturing CUDA graphs (decode, FULL):  34%|███▍      | 12/35 [00:01<00:03,  6.67it/s]Capturing CUDA graphs (decode, FULL):  37%|███▋      | 13/35 [00:01<00:03,  6.74it/s]Capturing CUDA graphs (decode, FULL):  40%|████      | 14/35 [00:02<00:03,  6.83it/s]Capturing CUDA graphs (decode, FULL):  43%|████▎     | 15/35 [00:02<00:02,  6.88it/s]Capturing CUDA graphs (decode, FULL):  46%|████▌     | 16/35 [00:02<00:02,  6.97it/s]Capturing CUDA graphs (decode, FULL):  49%|████▊     | 17/35 [00:02<00:02,  7.27it/s]Capturing CUDA graphs (decode, FULL):  51%|█████▏    | 18/35 [00:02<00:02,  7.47it/s]Capturing CUDA graphs (decode, FULL):  54%|█████▍    | 19/35 [00:02<00:02,  7.68it/s]Capturing CUDA graphs (decode, FULL):  57%|█████▋    | 20/35 [00:02<00:01,  7.84it/s]Capturing CUDA graphs (decode, FULL):  60%|██████    | 21/35 [00:03<00:01,  7.95it/s]Capturing CUDA graphs (decode, FULL):  63%|██████▎   | 22/35 [00:03<00:01,  8.01it/s]Capturing CUDA graphs (decode, FULL):  66%|██████▌   | 23/35 [00:03<00:01,  8.11it/s]Capturing CUDA graphs (decode, FULL):  69%|██████▊   | 24/35 [00:03<00:01,  8.17it/s]Capturing CUDA graphs (decode, FULL):  71%|███████▏  | 25/35 [00:03<00:01,  8.18it/s]Capturing CUDA graphs (decode, FULL):  74%|███████▍  | 26/35 [00:03<00:01,  8.29it/s]Capturing CUDA graphs (decode, FULL):  77%|███████▋  | 27/35 [00:03<00:00,  8.28it/s]Capturing CUDA graphs (decode, FULL):  80%|████████  | 28/35 [00:03<00:00,  8.28it/s]Capturing CUDA graphs (decode, FULL):  83%|████████▎ | 29/35 [00:03<00:00,  8.27it/s]Capturing CUDA graphs (decode, FULL):  86%|████████▌ | 30/35 [00:04<00:00,  8.26it/s]Capturing CUDA graphs (decode, FULL):  89%|████████▊ | 31/35 [00:04<00:00,  8.26it/s]Capturing CUDA graphs (decode, FULL):  91%|█████████▏| 32/35 [00:04<00:00,  8.24it/s]Capturing CUDA graphs (decode, FULL):  94%|█████████▍| 33/35 [00:04<00:00,  8.31it/s]Capturing CUDA graphs (decode, FULL):  97%|█████████▋| 34/35 [00:04<00:00,  8.27it/s]Capturing CUDA graphs (decode, FULL): 100%|██████████| 35/35 [00:04<00:00,  8.36it/s]Capturing CUDA graphs (decode, FULL): 100%|██████████| 35/35 [00:04<00:00,  7.43it/s]
+(EngineCore_DP0 pid=213098) INFO 03-26 00:09:24 [gpu_model_runner.py:5386] Graph capturing finished in 12 secs, took 1.13 GiB
+(EngineCore_DP0 pid=213098) INFO 03-26 00:09:24 [core.py:282] init engine (profile, create kv cache, warmup model) took 31.55 seconds
+(EngineCore_DP0 pid=213098) INFO 03-26 00:09:25 [vllm.py:747] Asynchronous scheduling is enabled.
+INFO 03-26 00:09:25 [llm.py:388] Supported tasks: ['generate']
+2026-03-26 00:09:25  INFO      Loading QA dataset from /home/v-tiossowski/HealthcareAgent/mimic-code/data/MIMICIV_first_day_vitalsign_dataset/first_day_vitalsign.csv
+2026-03-26 00:09:25  INFO      Dataset: 1000 rows, columns: ['subject_id', 'hadm_id', 'stay_id', 'intime', 'outtime', 'first_careunit', 'last_careunit', 'gt_label', 'question', 'gt_answer_type', 'split', 'heart_rate_min', 'heart_rate_max', 'mbp_min', 'mbp_max', 'resp_rate_min', 'resp_rate_max', 'temperature_min', 'temperature_max', 'spo2_min']
+2026-03-26 00:09:25  INFO      Filtered to train split: 100 rows
+2026-03-26 00:09:25  INFO      Auto-discovered ground-truth SQL: /home/v-tiossowski/HealthcareAgent/mimic-code/mimic-iv/concepts_duckdb/firstday/first_day_vitalsign.sql
+2026-03-26 00:09:25  INFO      === Iteration 1/100  run=first_day_vitalsign  best_qa=0.0% ===
+INFO 03-26 00:09:28 [hf.py:318] Detected the chat template content format to be 'string'. You can set `--chat-template-content-format` to override this.
+2026-03-26 00:09:42  INFO      Exec block 1/1 …
+2026-03-26 00:09:42  INFO      Output: []
+
+2026-03-26 00:09:42  INFO      === Iteration 2/100  run=first_day_vitalsign  best_qa=0.0% ===
+2026-03-26 00:09:45  INFO      Exec block 1/1 …
+2026-03-26 00:09:45  INFO      Output: []
+
+2026-03-26 00:09:45  INFO      === Iteration 3/100  run=first_day_vitalsign  best_qa=0.0% ===
+2026-03-26 00:09:48  INFO      Exec block 1/1 …
+2026-03-26 00:09:48  INFO      Output: []
+
+2026-03-26 00:09:48  INFO      === Iteration 4/100  run=first_day_vitalsign  best_qa=0.0% ===
+2026-03-26 00:09:50  INFO      Exec block 1/1 …
+2026-03-26 00:09:50  INFO      Output: ['qsofa_guideline', 'sofa_guideline']
+
+2026-03-26 00:09:50  INFO      === Iteration 5/100  run=first_day_vitalsign  best_qa=0.0% ===
+2026-03-26 00:09:53  INFO      Exec block 1/1 …
+2026-03-26 00:09:53  INFO      Output: '# qSOFA — Clinical Guideline\n# Generated by generate_guidelines.py\n# Source articles: 10 (PMID26903338, PMID26903335, PMID30685836, PMID29100549, PMID27649072...)\n############################################################\n\n# Clinical Guideline: Quick Sequential [Sepsis-related] Organ Failure Assessment (qSOFA)\n\n---\n\n## 1. Definition\n\nThe **quick Sequential [Sepsis-related] Organ Failure Assessment (qSOFA)** is a bedside clinical screening score introduced in 2016 by the Third Inter
+2026-03-26 00:09:53  INFO      === Iteration 6/100  run=first_day_vitalsign  best_qa=0.0% ===
+2026-03-26 00:09:56  INFO      Exec block 1/1 …
+2026-03-26 00:09:56  INFO      Output: ['acidosis_guideline', 'acute_decompensated_heart_failure_guideline', 'acute_hepatic_failure_guideline', 'adverse_effect_of_anticoagulants_guideline', 'alcohol_withdrawal_syndrome_guideline', 'anemia_icu_critically_ill_hemoglobin_transfusion_guideline', 'apache_iii_guideline', 'atrial_fibrillation_guideline', 'bradycardia_guideline', 'cerebral_infarction_guideline', 'coma_altered_consciousness_icu_guideline', 'copd_exacerbation_guideline', 'coronary_artery_disease_guideline', 'deep_vein_thrombos
+2026-03-26 00:09:56  INFO      === Iteration 7/100  run=first_day_vitalsign  best_qa=0.0% ===
+2026-03-26 00:10:00  INFO      Exec block 1/1 …
+2026-03-26 00:10:00  INFO      Output: ['bradycardia_guideline']
+
+2026-03-26 00:10:00  INFO      === Iteration 8/100  run=first_day_vitalsign  best_qa=0.0% ===
+2026-03-26 00:10:03  INFO      Exec block 1/1 …
+2026-03-26 00:10:03  INFO      Output: '# bradycardia — Clinical Guideline\n# Generated by generate_guidelines.py\n# Source articles: 10 (PMID30412776, PMID30412708, PMID30586773, PMID10796212, PMID32644480...)\n############################################################\n\n# Clinical Guideline: Bradycardia\n\n---\n\n## 1. Definition\n\n**Bradycardia** is defined as a heart rate (HR) below **60 beats per minute (bpm)** in adults [training knowledge]. It represents a deviation from the normal resting sinus rate range of 60–100 bpm. I
+2026-03-26 00:10:03  INFO      === Iteration 9/100  run=first_day_vitalsign  best_qa=0.0% ===
+2026-03-26 00:10:06  INFO      Exec block 1/1 …
+2026-03-26 00:10:06  INFO      Output: ['acei', 'age', 'antibiotic', 'arb', 'bg', 'blood_differential', 'cardiac_marker', 'charlson', 'chemistry', 'coagulation', 'code_status', 'complete_blood_count', 'creatinine_baseline', 'crrt', 'dobutamine', 'dopamine', 'enzyme', 'epinephrine', 'first_day_bg', 'first_day_bg_art', '... (27 more; pass a keyword to filter)']
+
+2026-03-26 00:10:06  INFO      === Iteration 10/100  run=first_day_vitalsign  best_qa=0.0% ===
+2026-03-26 00:10:10  INFO      Exec block 1/1 …
+2026-03-26 00:10:10  INFO      Output: ['first_day_bg', 'first_day_bg_art', 'first_day_gcs', 'first_day_height', 'first_day_lab', 'first_day_rrt', 'first_day_urine_output']
+
+2026-03-26 00:10:10  INFO      === Iteration 11/100  run=first_day_vitalsign  best_qa=0.0% ===
+2026-03-26 00:10:15  INFO      Exec block 1/1 …
+2026-03-26 00:10:15  INFO      Output: 'def first_day_bg(stay_id, subject_id, hadm_id):\n    """\n    Extract blood gas information for the first day of an ICU stay.\n\n    This function retrieves blood gas measurements (lactate, pH) from both \n    chartevents (ICU) and labevents (hospital) tables for the period from \n    hospital admission to 24 hours after ICU admission.\n\n    Parameters\n    ----------\n    stay_id : int, optional\n        The ICU stay ID. If provided, returns data for that specific stay.\n    subject_id : int,
+2026-03-26 00:10:15  INFO      === Iteration 12/100  run=first_day_vitalsign  best_qa=0.0% ===
+2026-03-26 00:10:19  INFO      Exec block 1/1 …
+2026-03-26 00:10:19  INFO      Output: 'def first_day_gcs(stay_id):\n    """\n    Extract Glasgow Coma Scale (GCS) information for the first day of an ICU stay.\n\n    Parameters\n    ----------\n    stay_id : int\n        The ICU stay identifier.\n\n    Returns\n    -------\n    dict\n        Dictionary with GCS information including:\n        - \'stay_id\', \'subject_id\', \'hadm_id\', \'intime\', \'first_day_end\'\n        - \'first_day_gcs_records\': DataFrame with all GCS recordings\n        - \'min_gcs_first_day\': Min GCS from
+2026-03-26 00:10:19  INFO      === Iteration 13/100  run=first_day_vitalsign  best_qa=0.0% ===
+2026-03-26 00:10:24  INFO      Exec block 1/1 …
+2026-03-26 00:10:24  INFO      Output: "Functions from 'first_day_bg' loaded successfully."
+
+2026-03-26 00:10:24  INFO      === Iteration 14/100  run=first_day_vitalsign  best_qa=0.0% ===
+2026-03-26 00:10:29  INFO      Exec block 1/1 …
+2026-03-26 00:10:29  INFO      Output:      column_name  data_type
+0     subject_id    INTEGER
+1        hadm_id    INTEGER
+2        stay_id    INTEGER
+3   caregiver_id    INTEGER
+4      charttime  TIMESTAMP
+5      storetime  TIMESTAMP
+6         itemid    INTEGER
+7          value    VARCHAR
+8       valuenum      FLOAT
+9       valueuom    VARCHAR
+10       warning   SMALLINT
+
+2026-03-26 00:10:29  INFO      === Iteration 15/100  run=first_day_vitalsign  best_qa=0.0% ===
+(EngineCore_DP0 pid=213098) /home/v-tiossowski/anaconda3/envs/autoformalization/lib/python3.12/site-packages/torch/_dynamo/eval_frame.py:1181: UserWarning: Input tensor shape suggests potential format mismatch: seq_len (6) < num_heads (16). This may indicate the inputs were passed in head-first format [B, H, T, ...] Please verify your input tensor format matches the expected shape [B, T, H, ...].
+(EngineCore_DP0 pid=213098)   return fn(*args, **kwargs)
+(EngineCore_DP0 pid=213098) /home/v-tiossowski/anaconda3/envs/autoformalization/lib/python3.12/site-packages/vllm/model_executor/layers/fla/ops/utils.py:113: UserWarning: Input tensor shape suggests potential format mismatch: seq_len (6) < num_heads (48). This may indicate the inputs were passed in head-first format [B, H, T, ...] when head_first=False was specified. Please verify your input tensor format matches the expected shape [B, T, H, ...].
+(EngineCore_DP0 pid=213098)   return fn(*contiguous_args, **contiguous_kwargs)
+2026-03-26 00:10:40  INFO      Exec block 1/1 …
+2026-03-26 00:10:40  INFO      Output:     itemid                                  label                category unitname
+0   220051      Arterial Blood Pressure diastolic     Routine Vital Signs     mmHg
+1   220050       Arterial Blood Pressure systolic     Routine Vital Signs     mmHg
+2   227023                           MAP_ApacheIV  Scores - APACHE IV (2)     mmHg
+3   220180  Non Invasive Blood Pressure diastolic     Routine Vital Signs     mmHg
+4   220179   Non Invasive Blood Pressure systolic     Routine Vital Signs     mmHg
+5 
+2026-03-26 00:10:40  INFO      === Iteration 16/100  run=first_day_vitalsign  best_qa=0.0% ===
+2026-03-26 00:10:47  INFO      Exec block 1/1 …
+2026-03-26 00:10:47  INFO      Output:     itemid                                    label                category  unitname
+0   227923  Activity HR - Aerobic Activity Response                OT Notes      None
+1   227864           Activity HR - Aerobic Capacity                OT Notes      None
+2   227925  Activity RR - Aerobic Activity Response                OT Notes      None
+3   227866           Activity RR - Aerobic Capacity                OT Notes      None
+4   230152                                   CFS-HR            Neurolo
+2026-03-26 00:10:47  INFO      === Iteration 17/100  run=first_day_vitalsign  best_qa=0.0% ===
+2026-03-26 00:10:53  INFO      Exec block 1/1 …
+2026-03-26 00:10:53  INFO      Output:     itemid                                  label             category unitname
+0   225310                       ART BP Diastolic  Routine Vital Signs     mmHg
+1   225312                            ART BP Mean  Routine Vital Signs     mmHg
+2   225309                        ART BP Systolic  Routine Vital Signs     mmHg
+3   227630            Arctic Sun Temp #1 Location  Routine Vital Signs      NaN
+4   227631            Arctic Sun Temp #2 Location  Routine Vital Signs      NaN
+5   227632          
+2026-03-26 00:10:53  INFO      === Iteration 18/100  run=first_day_vitalsign  best_qa=0.0% ===
+2026-03-26 00:11:04  INFO      Exec block 1/1 …
+2026-03-26 00:11:04  INFO      Output:    itemid                           label     category  unitname
+0  220210                Respiratory Rate  Respiratory  insp/min
+1  224688          Respiratory Rate (Set)  Respiratory  insp/min
+2  224690        Respiratory Rate (Total)  Respiratory  insp/min
+3  224689  Respiratory Rate (spontaneous)  Respiratory  insp/min
+
+2026-03-26 00:11:04  INFO      === Iteration 19/100  run=first_day_vitalsign  best_qa=0.0% ===
+2026-03-26 00:11:11  INFO      Exec block 1/1 …
+2026-03-26 00:11:11  INFO      Output: Empty DataFrame
+Columns: [column_name, data_type]
+Index: []
+
+2026-03-26 00:11:11  INFO      === Iteration 20/100  run=first_day_vitalsign  best_qa=0.0% ===
+2026-03-26 00:11:16  INFO      Exec block 1/1 …
+2026-03-26 00:11:16  INFO      Output:       column_name  data_type
+0      subject_id    INTEGER
+1         hadm_id    INTEGER
+2         stay_id    INTEGER
+3  first_careunit    VARCHAR
+4   last_careunit    VARCHAR
+5          intime  TIMESTAMP
+6         outtime  TIMESTAMP
+7             los      FLOAT
+
+2026-03-26 00:11:16  INFO      === Iteration 21/100  run=first_day_vitalsign  best_qa=0.0% ===
+2026-03-26 00:11:22  INFO      Exec block 1/1 …
+2026-03-26 00:11:22  INFO      Output: Error:
+Traceback (most recent call last):
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 643, in execute
+    _run_with_timeout(_do_execute, timeout)
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 174, in _run_with_timeout
+    raise error[0]
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 156, in target
+    result[0] = func(*args, **kwargs)
+                ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/v-tiossowsk
+2026-03-26 00:11:22  INFO      === Iteration 22/100  run=first_day_vitalsign  best_qa=0.0% ===
+2026-03-26 00:11:35  INFO      Exec block 1/1 …
+2026-03-26 00:11:35  INFO      Output: Empty DataFrame
+Columns: [subject_id, hadm_id, stay_id, charttime, itemid, valuenum, valueuom]
+Index: []
+
+2026-03-26 00:11:35  INFO      === Iteration 23/100  run=first_day_vitalsign  best_qa=0.0% ===
+2026-03-26 00:11:42  INFO      Exec block 1/1 …
+2026-03-26 00:11:42  INFO      Output: Empty DataFrame
+Columns: [subject_id, hadm_id, stay_id, intime, outtime]
+Index: []
+
+2026-03-26 00:11:42  INFO      === Iteration 24/100  run=first_day_vitalsign  best_qa=0.0% ===
+2026-03-26 00:11:48  INFO      Exec block 1/1 …
+2026-03-26 00:11:48  INFO      Output:    subject_id   hadm_id   stay_id              intime             outtime
+0    10000032  29079034  39553978 2180-07-23 14:00:00 2180-07-23 23:50:47
+1    10000690  25860671  37081114 2150-11-02 19:37:00 2150-11-06 17:03:17
+2    10000980  26913865  39765666 2189-06-27 08:42:00 2189-06-27 20:38:27
+3    10001217  24597018  37067082 2157-11-20 19:18:02 2157-11-21 22:08:00
+4    10001217  27703517  34592300 2157-12-19 15:42:24 2157-12-20 14:27:41
+5    10001725  25563031  31205490 2110-04-11 15:52:22 21
+2026-03-26 00:11:48  INFO      === Iteration 25/100  run=first_day_vitalsign  best_qa=0.0% ===
+2026-03-26 00:11:58  INFO      Exec block 1/1 …
+2026-03-26 00:11:58  INFO      Output:     subject_id   hadm_id   stay_id           charttime  itemid  valuenum  valueuom
+0     10000032  29079034  39553978 2180-07-23 14:11:00  220181      56.0      mmHg
+1     10000032  29079034  39553978 2180-07-23 14:12:00  220045      91.0       bpm
+2     10000032  29079034  39553978 2180-07-23 14:12:00  220210      24.0  insp/min
+3     10000032  29079034  39553978 2180-07-23 14:30:00  220045      93.0       bpm
+4     10000032  29079034  39553978 2180-07-23 14:30:00  220181      67.0      mmHg
+5 
+2026-03-26 00:11:58  INFO      === Iteration 26/100  run=first_day_vitalsign  best_qa=0.0% ===
+2026-03-26 00:12:11  INFO      Exec block 1/1 …
+2026-03-26 00:12:11  INFO      Output: Empty DataFrame
+Columns: [subject_id, hadm_id, stay_id, charttime, itemid, valuenum, valueuom]
+Index: []
+
+2026-03-26 00:12:11  INFO      === Iteration 27/100  run=first_day_vitalsign  best_qa=0.0% ===
+2026-03-26 00:12:21  INFO      Exec block 1/1 …
+2026-03-26 00:12:21  INFO      Output:    subject_id   hadm_id   stay_id              intime             outtime
+0    10000032  29079034  39553978 2180-07-23 14:00:00 2180-07-23 23:50:47
+
+2026-03-26 00:12:21  INFO      === Iteration 28/100  run=first_day_vitalsign  best_qa=0.0% ===
+2026-03-26 00:12:34  INFO      Exec block 1/1 …
+2026-03-26 00:12:34  INFO      Output:    itemid                         label                category unitname
+0  227023                  MAP_ApacheIV  Scores - APACHE IV (2)     mmHg
+1  226857    PA mean pressure (PA Line)       PA Line Insertion     mmHg
+2  226849  RA (mean) pressure (PA Line)       PA Line Insertion     mmHg
+
+2026-03-26 00:12:34  INFO      === Iteration 29/100  run=first_day_vitalsign  best_qa=0.0% ===
+2026-03-26 00:12:44  INFO      Exec block 1/1 …
+2026-03-26 00:12:44  INFO      Output:    itemid                             label             category unitname
+0  220052      Arterial Blood Pressure mean  Routine Vital Signs     mmHg
+1  220181  Non Invasive Blood Pressure mean  Routine Vital Signs     mmHg
+2  225312                       ART BP Mean  Routine Vital Signs     mmHg
+
+2026-03-26 00:12:44  INFO      === Iteration 30/100  run=first_day_vitalsign  best_qa=0.0% ===
+2026-03-26 00:13:11  INFO      Exec block 1/1 …
+2026-03-26 00:13:11  INFO      Output:          vital_type  min_value  max_value  avg_value  n_measurements
+0               map       56.0       67.0       62.3              10
+1        heart_rate       91.0      105.0       96.5              10
+2  respiratory_rate       16.0       24.0       20.7              10
+
+2026-03-26 00:13:11  INFO      === Iteration 31/100  run=first_day_vitalsign  best_qa=0.0% ===
+2026-03-26 00:13:38  INFO      Exec block 1/1 …
+2026-03-26 00:13:38  INFO      Output:          vital_type  min_value  max_value  avg_value  n_measurements
+0        heart_rate       62.0      102.0  79.800000              25
+1               map       49.0       82.0  65.166667              24
+2  respiratory_rate       15.0       35.0  21.840000              25
+
+2026-03-26 00:13:38  INFO      === Iteration 32/100  run=first_day_vitalsign  best_qa=0.0% ===
+2026-03-26 00:15:15  INFO      Exec block 1/1 …
+2026-03-26 00:15:15  INFO      Output: Error:
+Traceback (most recent call last):
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 643, in execute
+    _run_with_timeout(_do_execute, timeout)
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 174, in _run_with_timeout
+    raise error[0]
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 156, in target
+    result[0] = func(*args, **kwargs)
+                ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/v-tiossowsk
+2026-03-26 00:15:15  INFO      === Iteration 33/100  run=first_day_vitalsign  best_qa=0.0% ===
+2026-03-26 00:16:51  INFO      Exec block 1/1 …
+2026-03-26 00:16:51  INFO      Output: Testing with stay_id 39553978:
+{'stay_id': 39553978, 'subject_id': 10000032, 'hadm_id': 29079034, 'intime': '2180-07-23 14:00:00', 'first_day_end': '2180-07-24 14:00:00', 'heart_rate': {'min': None, 'max': None, 'avg': None, 'count': 0}, 'map': {'min': None, 'max': None, 'avg': None, 'count': 0}, 'respiratory_rate': {'min': None, 'max': None, 'avg': None, 'count': 0}, 'has_hypotension': None, 'has_tachycardia': None, 'has_tachypnea': None, 'has_bradytachycardia': None}
+
+Testing with stay_id 3708
+2026-03-26 00:16:51  INFO      === Iteration 34/100  run=first_day_vitalsign  best_qa=0.0% ===
+2026-03-26 00:17:15  INFO      Exec block 1/1 …
+2026-03-26 00:17:15  INFO      Output:      stay_id           charttime  itemid  valuenum        vital_type
+0   39553978 2180-07-23 14:11:00  220181      56.0               map
+1   39553978 2180-07-23 14:12:00  220045      91.0        heart_rate
+2   39553978 2180-07-23 14:12:00  220210      24.0  respiratory_rate
+3   39553978 2180-07-23 14:30:00  220045      93.0        heart_rate
+4   39553978 2180-07-23 14:30:00  220181      67.0               map
+5   39553978 2180-07-23 14:30:00  220210      21.0  respiratory_rate
+6   39553978 2180
+2026-03-26 00:17:15  INFO      === Iteration 35/100  run=first_day_vitalsign  best_qa=0.0% ===
+2026-03-26 00:17:44  INFO      Exec block 1/1 …
+2026-03-26 00:17:44  INFO      Output:     stay_id  subject_id   hadm_id              intime       first_day_end        vital_type  min_value  max_value  avg_value  n_measurements
+0  39553978    10000032  29079034 2180-07-23 14:00:00 2180-07-24 14:00:00               map       56.0       67.0       62.3              10
+1  39553978    10000032  29079034 2180-07-23 14:00:00 2180-07-24 14:00:00  respiratory_rate       16.0       24.0       20.7              10
+2  39553978    10000032  29079034 2180-07-23 14:00:00 2180-07-24 14:00:00    
+2026-03-26 00:17:44  INFO      === Iteration 36/100  run=first_day_vitalsign  best_qa=0.0% ===
+2026-03-26 00:19:07  INFO      Exec block 1/1 …
+2026-03-26 00:19:07  INFO      Output: Testing with stay_id 39553978:
+{'stay_id': 39553978, 'subject_id': 10000032, 'hadm_id': 29079034, 'intime': '2180-07-23 14:00:00', 'first_day_end': '2180-07-24 14:00:00', 'heart_rate': {'min': 91.0, 'max': 105.0, 'avg': 96.5, 'count': 10}, 'map': {'min': 56.0, 'max': 67.0, 'avg': 62.3, 'count': 10}, 'respiratory_rate': {'min': 16.0, 'max': 24.0, 'avg': 20.7, 'count': 10}, 'has_hypotension': True, 'has_tachycardia': True, 'has_tachypnea': True, 'has_bradytachycardia': True}
+
+Testing with stay_id 
+2026-03-26 00:19:07  INFO      === Iteration 37/100  run=first_day_vitalsign  best_qa=0.0% ===
+2026-03-26 00:19:07  INFO      Context approaching limit (20153 tokens, limit=25000) — forcing summarize + compress
+2026-03-26 00:21:17  INFO      Context compressed: 74 messages -> 2 messages
+2026-03-26 00:21:41  INFO      Exec block 1/1 …
+2026-03-26 00:21:41  INFO      Output: stay_id 39553978:
+  HR: min=91.0, max=105.0, count=10
+  MAP: min=56.0, max=67.0, count=10
+  RR: min=16.0, max=24.0, count=10
+  Flags: hypotension=True, tachycardia=True, tachypnea=True
+
+stay_id 37081114:
+  HR: min=62.0, max=102.0, count=25
+  MAP: min=49.0, max=82.0, count=24
+  RR: min=15.0, max=35.0, count=25
+  Flags: hypotension=True, tachycardia=True, tachypnea=True
+
+stay_id 22774457: ERROR - stay_id 22774457 not found in icustays table
+
+stay_id 23035589: ERROR - stay_id 23035589 not found in 
+2026-03-26 00:21:41  INFO      === Iteration 38/100  run=first_day_vitalsign  best_qa=0.0% ===
+2026-03-26 00:21:46  INFO      Exec block 1/1 …
+2026-03-26 00:21:46  INFO      Output:     stay_id  subject_id   hadm_id              intime
+0  39553978    10000032  29079034 2180-07-23 14:00:00
+1  37081114    10000690  25860671 2150-11-02 19:37:00
+2  39765666    10000980  26913865 2189-06-27 08:42:00
+3  37067082    10001217  24597018 2157-11-20 19:18:02
+4  34592300    10001217  27703517 2157-12-19 15:42:24
+5  31205490    10001725  25563031 2110-04-11 15:52:22
+6  39698942    10001843  26133978 2134-12-05 18:50:03
+7  37510196    10001884  26184834 2131-01-11 04:20:05
+8  39060235   
+2026-03-26 00:21:46  INFO      === Iteration 39/100  run=first_day_vitalsign  best_qa=0.0% ===
+2026-03-26 00:21:59  INFO      Exec block 1/1 …
+2026-03-26 00:22:00  INFO      Output: stay_id 39765666:
+  HR: min=68.0, max=80.0, count=11
+  MAP: min=83.0, max=135.0, count=11
+  RR: min=14.0, max=27.0, count=13
+  Flags: hypotension=False, tachycardia=False, tachypnea=True
+
+stay_id 37067082:
+  HR: min=78.0, max=106.0, count=25
+  MAP: min=80.0, max=130.0, count=24
+  RR: min=13.0, max=27.0, count=25
+  Flags: hypotension=False, tachycardia=True, tachypnea=True
+
+stay_id 34592300:
+  HR: min=66.0, max=96.0, count=25
+  MAP: min=66.0, max=114.0, count=23
+  RR: min=11.0, max=22.0, count=25
+2026-03-26 00:22:00  INFO      === Iteration 40/100  run=first_day_vitalsign  best_qa=0.0% ===
+2026-03-26 00:23:32  INFO      Exec block 1/1 …
+2026-03-26 00:23:32  INFO      Output: Code executed successfully (no output).
+2026-03-26 00:23:32  INFO      Debug conversations will be saved to debug_logs
+2026-03-26 00:23:32  INFO      Using question from dataset column: Does this patient have hypotension (minimum MAP < 65 mmHg) on their first ICU day?
+2026-03-26 00:23:32  INFO      Answer type for 'first_day_vitalsign': numerical (per_row=True)
+2026-03-26 00:23:33  INFO      ReACT iteration 1/5 — 20 active patients
+Rendering conversations:   0%|          | 0/20 [00:00<?, ?it/s]Rendering conversations: 100%|██████████| 20/20 [00:00<00:00, 525.92it/s]
+Processed prompts:   0%|          | 0/20 [00:00<?, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s]Processed prompts:   5%|▌         | 1/20 [00:10<03:21, 10.59s/it, est. speed input: 77.22 toks/s, output: 12.65 toks/s]Processed prompts:  10%|█         | 2/20 [00:13<01:46,  5.89s/it, est. speed input: 124.65 toks/s, output: 24.55 toks/s]Processed prompts:  15%|█▌        | 3/20 [00:14<01:00,  3.58s/it, est. speed input: 175.74 toks/s, output: 38.03 toks/s]Processed prompts:  30%|███       | 6/20 [00:14<00:17,  1.24s/it, est. speed input: 347.62 toks/s, output: 82.22 toks/s]Processed prompts:  40%|████      | 8/20 [00:15<00:11,  1.07it/s, est. speed input: 436.01 toks/s, output: 106.70 toks/s]Processed prompts:  45%|████▌     | 9/20 [00:15<00:08,  1.31it/s, est. speed input: 486.82 toks/s, output: 121.41 toks/s]Processed prompts:  50%|█████     | 10/20 [00:15<00:06,  1.58it/s, est. speed input: 533.95 toks/s, output: 135.55 toks/s]Processed prompts:  90%|█████████ | 18/20 [00:15<00:00,  4.71it/s, est. speed input: 935.63 toks/s, output: 254.32 toks/s]Processed prompts: 100%|██████████| 20/20 [00:16<00:00,  5.22it/s, est. speed input: 1025.49 toks/s, output: 282.81 toks/s]Processed prompts: 100%|██████████| 20/20 [00:16<00:00,  5.22it/s, est. speed input: 1025.49 toks/s, output: 282.81 toks/s]Processed prompts: 100%|██████████| 20/20 [00:16<00:00,  1.24it/s, est. speed input: 1025.49 toks/s, output: 282.81 toks/s]
+2026-03-26 00:23:49  INFO      ReACT iteration 2/5 — 20 active patients
+Rendering conversations:   0%|          | 0/20 [00:00<?, ?it/s]Rendering conversations: 100%|██████████| 20/20 [00:00<00:00, 368.69it/s]
+Processed prompts:   0%|          | 0/20 [00:00<?, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s]Processed prompts:   5%|▌         | 1/20 [00:08<02:37,  8.31s/it, est. speed input: 148.45 toks/s, output: 5.41 toks/s]Processed prompts:  20%|██        | 4/20 [00:08<00:25,  1.61s/it, est. speed input: 585.06 toks/s, output: 22.01 toks/s]Processed prompts:  30%|███       | 6/20 [00:12<00:24,  1.75s/it, est. speed input: 594.83 toks/s, output: 36.02 toks/s]Processed prompts:  35%|███▌      | 7/20 [00:12<00:17,  1.36s/it, est. speed input: 683.11 toks/s, output: 46.83 toks/s]Processed prompts:  45%|████▌     | 9/20 [00:12<00:09,  1.13it/s, est. speed input: 850.13 toks/s, output: 68.10 toks/s]Processed prompts:  55%|█████▌    | 11/20 [00:12<00:05,  1.68it/s, est. speed input: 1024.41 toks/s, output: 90.51 toks/s]Processed prompts:  65%|██████▌   | 13/20 [00:14<00:04,  1.68it/s, est. speed input: 1104.43 toks/s, output: 106.65 toks/s]Processed prompts:  70%|███████   | 14/20 [00:14<00:03,  1.99it/s, est. speed input: 1178.13 toks/s, output: 118.76 toks/s]Processed prompts:  80%|████████  | 16/20 [00:14<00:01,  2.85it/s, est. speed input: 1328.41 toks/s, output: 143.54 toks/s]Processed prompts:  85%|████████▌ | 17/20 [00:14<00:01,  2.93it/s, est. speed input: 1382.81 toks/s, output: 153.98 toks/s]Processed prompts: 100%|██████████| 20/20 [00:15<00:00,  4.28it/s, est. speed input: 1589.17 toks/s, output: 190.39 toks/s]Processed prompts: 100%|██████████| 20/20 [00:15<00:00,  4.28it/s, est. speed input: 1589.17 toks/s, output: 190.39 toks/s]Processed prompts: 100%|██████████| 20/20 [00:15<00:00,  1.32it/s, est. speed input: 1589.17 toks/s, output: 190.39 toks/s]
+2026-03-26 00:24:04  INFO      QA accuracy: 90.0%  (correct=18/20, parse_errors=0)
+2026-03-26 00:24:04  INFO      SUCCESS: 90.0% QA accuracy for 'first_day_vitalsign' at iteration 40
+2026-03-26 00:24:04  INFO      Function code saved to autoformalized_library/functions/first_day_vitalsign.py
+2026-03-26 00:24:04  INFO      Summary saved to autoformalized_library/summary.json
+[rank0]:[W326 00:24:04.143685972 ProcessGroupNCCL.cpp:1553] Warning: WARNING: destroy_process_group() was not called before program exit, which can leak resources. For more info, please see https://pytorch.org/docs/stable/distributed.html#shutdown (function operator())
+
+======================================================================
+AUTOFORMALIZATION COMPLETE
+======================================================================
+  Output dir      : autoformalized_library
+  Model           : Qwen/Qwen3.5-27B
+  Dataset         : /home/v-tiossowski/HealthcareAgent/mimic-code/data/MIMICIV_first_day_vitalsign_dataset/first_day_vitalsign.csv
+  Run name        : first_day_vitalsign
+  Status          : SUCCESS
+  QA accuracy     : 90.0%
+  Iterations      : 40
+  Total tokens    : 47,907  (prompt 40,484 / completion 7,423)
+  LLM calls       : 81
+  SQL queries     : 56
+  Function saved  : autoformalized_library/functions/first_day_vitalsign.py
+======================================================================

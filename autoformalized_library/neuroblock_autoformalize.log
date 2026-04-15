@@ -1,0 +1,405 @@
+2026-03-25 07:40:36  INFO      Using database: /home/v-tiossowski/MIMIC-IV/mimic4.db
+2026-03-25 07:40:36  INFO      No --model_url provided; loading vLLM in-process …
+INFO 03-25 07:40:41 [utils.py:238] non-default args: {'trust_remote_code': True, 'max_model_len': 40000, 'disable_log_stats': True, 'model': 'Qwen/Qwen3.5-27B'}
+The argument `trust_remote_code` is to be used with Auto classes. It has no effect here and is ignored.
+The argument `trust_remote_code` is to be used with Auto classes. It has no effect here and is ignored.
+The argument `trust_remote_code` is to be used with Auto classes. It has no effect here and is ignored.
+INFO 03-25 07:40:41 [model.py:531] Resolved architecture: Qwen3_5ForConditionalGeneration
+INFO 03-25 07:40:41 [model.py:1554] Using max model len 40000
+INFO 03-25 07:40:42 [scheduler.py:231] Chunked prefill is enabled with max_num_batched_tokens=8192.
+INFO 03-25 07:40:43 [config.py:544] Setting attention block size to 784 tokens to ensure that attention page size is >= mamba page size.
+INFO 03-25 07:40:43 [config.py:575] Padding mamba page size by 0.13% to ensure that mamba page size and attention page size are exactly equal.
+INFO 03-25 07:40:43 [vllm.py:747] Asynchronous scheduling is enabled.
+WARNING 03-25 07:40:50 [system_utils.py:152] We must use the `spawn` multiprocessing start method. Overriding VLLM_WORKER_MULTIPROC_METHOD to 'spawn'. See https://docs.vllm.ai/en/latest/usage/troubleshooting.html#python-multiprocessing for more information. Reasons: CUDA is initialized
+(EngineCore_DP0 pid=4008888) INFO 03-25 07:40:55 [core.py:101] Initializing a V1 LLM engine (v0.17.1) with config: model='Qwen/Qwen3.5-27B', speculative_config=None, tokenizer='Qwen/Qwen3.5-27B', skip_tokenizer_init=False, tokenizer_mode=auto, revision=None, tokenizer_revision=None, trust_remote_code=True, dtype=torch.bfloat16, max_seq_len=40000, download_dir=None, load_format=auto, tensor_parallel_size=1, pipeline_parallel_size=1, data_parallel_size=1, disable_custom_all_reduce=False, quantization=None, enforce_eager=False, enable_return_routed_experts=False, kv_cache_dtype=auto, device_config=cuda, structured_outputs_config=StructuredOutputsConfig(backend='auto', disable_fallback=False, disable_any_whitespace=False, disable_additional_properties=False, reasoning_parser='', reasoning_parser_plugin='', enable_in_reasoning=False), observability_config=ObservabilityConfig(show_hidden_metrics_for_version=None, otlp_traces_endpoint=None, collect_detailed_traces=None, kv_cache_metrics=False, kv_cache_metrics_sample=0.01, cudagraph_metrics=False, enable_layerwise_nvtx_tracing=False, enable_mfu_metrics=False, enable_mm_processor_stats=False, enable_logging_iteration_details=False), seed=0, served_model_name=Qwen/Qwen3.5-27B, enable_prefix_caching=False, enable_chunked_prefill=True, pooler_config=None, compilation_config={'level': None, 'mode': <CompilationMode.VLLM_COMPILE: 3>, 'debug_dump_path': None, 'cache_dir': '', 'compile_cache_save_format': 'binary', 'backend': 'inductor', 'custom_ops': ['none'], 'splitting_ops': ['vllm::unified_attention', 'vllm::unified_attention_with_output', 'vllm::unified_mla_attention', 'vllm::unified_mla_attention_with_output', 'vllm::mamba_mixer2', 'vllm::mamba_mixer', 'vllm::short_conv', 'vllm::linear_attention', 'vllm::plamo2_mamba_mixer', 'vllm::gdn_attention_core', 'vllm::kda_attention', 'vllm::sparse_attn_indexer', 'vllm::rocm_aiter_sparse_attn_indexer', 'vllm::unified_kv_cache_update', 'vllm::unified_mla_kv_cache_update'], 'compile_mm_encoder': False, 'compile_sizes': [], 'compile_ranges_split_points': [8192], 'inductor_compile_config': {'enable_auto_functionalized_v2': False, 'combo_kernels': True, 'benchmark_combo_kernel': True}, 'inductor_passes': {}, 'cudagraph_mode': <CUDAGraphMode.FULL_AND_PIECEWISE: (2, 1)>, 'cudagraph_num_of_warmups': 1, 'cudagraph_capture_sizes': [1, 2, 4, 8, 16, 24, 32, 40, 48, 56, 64, 72, 80, 88, 96, 104, 112, 120, 128, 136, 144, 152, 160, 168, 176, 184, 192, 200, 208, 216, 224, 232, 240, 248, 256, 272, 288, 304, 320, 336, 352, 368, 384, 400, 416, 432, 448, 464, 480, 496, 512], 'cudagraph_copy_inputs': False, 'cudagraph_specialize_lora': True, 'use_inductor_graph_partition': False, 'pass_config': {'fuse_norm_quant': False, 'fuse_act_quant': False, 'fuse_attn_quant': False, 'enable_sp': False, 'fuse_gemm_comms': False, 'fuse_allreduce_rms': False}, 'max_cudagraph_capture_size': 512, 'dynamic_shapes_config': {'type': <DynamicShapesType.BACKED: 'backed'>, 'evaluate_guards': False, 'assume_32_bit_indexing': False}, 'local_cache_dir': None, 'fast_moe_cold_start': True, 'static_all_moe_layers': []}
+(EngineCore_DP0 pid=4008888) INFO 03-25 07:40:57 [parallel_state.py:1393] world_size=1 rank=0 local_rank=0 distributed_init_method=tcp://10.8.144.167:56879 backend=nccl
+(EngineCore_DP0 pid=4008888) INFO 03-25 07:40:57 [parallel_state.py:1715] rank 0 in world size 1 is assigned as DP rank 0, PP rank 0, PCP rank 0, TP rank 0, EP rank N/A, EPLB rank N/A
+(EngineCore_DP0 pid=4008888) INFO 03-25 07:41:03 [base.py:106] Offloader set to NoopOffloader
+(EngineCore_DP0 pid=4008888) INFO 03-25 07:41:04 [gpu_model_runner.py:4281] Starting to load model Qwen/Qwen3.5-27B...
+(EngineCore_DP0 pid=4008888) INFO 03-25 07:41:04 [cuda.py:453] Using backend AttentionBackendEnum.FLASH_ATTN for vit attention
+(EngineCore_DP0 pid=4008888) INFO 03-25 07:41:04 [mm_encoder_attention.py:215] Using AttentionBackendEnum.FLASH_ATTN for MMEncoderAttention.
+(EngineCore_DP0 pid=4008888) INFO 03-25 07:41:04 [cuda.py:405] Using FLASH_ATTN attention backend out of potential backends: ['FLASH_ATTN', 'FLASHINFER', 'TRITON_ATTN', 'FLEX_ATTENTION'].
+(EngineCore_DP0 pid=4008888) INFO 03-25 07:41:04 [flash_attn.py:587] Using FlashAttention version 2
+(EngineCore_DP0 pid=4008888) <frozen importlib._bootstrap_external>:1301: FutureWarning: The cuda.cudart module is deprecated and will be removed in a future release, please switch to use the cuda.bindings.runtime module instead.
+(EngineCore_DP0 pid=4008888) <frozen importlib._bootstrap_external>:1301: FutureWarning: The cuda.nvrtc module is deprecated and will be removed in a future release, please switch to use the cuda.bindings.nvrtc module instead.
+(EngineCore_DP0 pid=4008888) Loading safetensors checkpoint shards:   0% Completed | 0/11 [00:00<?, ?it/s]
+(EngineCore_DP0 pid=4008888) Loading safetensors checkpoint shards:   9% Completed | 1/11 [00:00<00:05,  1.89it/s]
+(EngineCore_DP0 pid=4008888) Loading safetensors checkpoint shards:  18% Completed | 2/11 [00:01<00:05,  1.68it/s]
+(EngineCore_DP0 pid=4008888) Loading safetensors checkpoint shards:  27% Completed | 3/11 [00:01<00:05,  1.57it/s]
+(EngineCore_DP0 pid=4008888) Loading safetensors checkpoint shards:  36% Completed | 4/11 [00:02<00:04,  1.50it/s]
+(EngineCore_DP0 pid=4008888) Loading safetensors checkpoint shards:  45% Completed | 5/11 [00:03<00:04,  1.47it/s]
+(EngineCore_DP0 pid=4008888) Loading safetensors checkpoint shards:  55% Completed | 6/11 [00:03<00:03,  1.47it/s]
+(EngineCore_DP0 pid=4008888) Loading safetensors checkpoint shards:  64% Completed | 7/11 [00:04<00:02,  1.45it/s]
+(EngineCore_DP0 pid=4008888) Loading safetensors checkpoint shards:  73% Completed | 8/11 [00:05<00:02,  1.45it/s]
+(EngineCore_DP0 pid=4008888) Loading safetensors checkpoint shards:  82% Completed | 9/11 [00:06<00:01,  1.45it/s]
+(EngineCore_DP0 pid=4008888) Loading safetensors checkpoint shards:  91% Completed | 10/11 [00:06<00:00,  1.45it/s]
+(EngineCore_DP0 pid=4008888) Loading safetensors checkpoint shards: 100% Completed | 11/11 [00:07<00:00,  1.61it/s]
+(EngineCore_DP0 pid=4008888) Loading safetensors checkpoint shards: 100% Completed | 11/11 [00:07<00:00,  1.53it/s]
+(EngineCore_DP0 pid=4008888) 
+(EngineCore_DP0 pid=4008888) INFO 03-25 07:41:12 [default_loader.py:293] Loading weights took 7.25 seconds
+(EngineCore_DP0 pid=4008888) INFO 03-25 07:41:13 [gpu_model_runner.py:4364] Model loading took 51.1 GiB memory and 8.303785 seconds
+(EngineCore_DP0 pid=4008888) INFO 03-25 07:41:13 [gpu_model_runner.py:5280] Encoder cache will be initialized with a budget of 16384 tokens, and profiled with 1 image items of the maximum feature size.
+(EngineCore_DP0 pid=4008888) INFO 03-25 07:41:21 [decorators.py:465] Directly load AOT compilation from path /home/v-tiossowski/.cache/vllm/torch_compile_cache/torch_aot_compile/0232891e22bd4d7db98ac2f43c441f0f81d0a431216053ca49fadeaff23e2af3/rank_0_0/model
+(EngineCore_DP0 pid=4008888) INFO 03-25 07:41:21 [backends.py:916] Using cache directory: /home/v-tiossowski/.cache/vllm/torch_compile_cache/feaf61af16/rank_0_0/backbone for vLLM's torch.compile
+(EngineCore_DP0 pid=4008888) INFO 03-25 07:41:21 [backends.py:976] Dynamo bytecode transform time: 3.53 s
+(EngineCore_DP0 pid=4008888) INFO 03-25 07:41:31 [backends.py:266] Directly load the compiled graph(s) for compile range (1, 8192) from the cache, took 9.377 s
+(EngineCore_DP0 pid=4008888) INFO 03-25 07:41:31 [monitor.py:35] torch.compile takes 13.81 s in total
+(EngineCore_DP0 pid=4008888) INFO 03-25 07:41:32 [gpu_worker.py:424] Available KV cache memory: 18.3 GiB
+(EngineCore_DP0 pid=4008888) INFO 03-25 07:41:32 [kv_cache_utils.py:1314] GPU KV cache size: 74,480 tokens
+(EngineCore_DP0 pid=4008888) INFO 03-25 07:41:32 [kv_cache_utils.py:1319] Maximum concurrency for 40,000 tokens per request: 6.95x
+(EngineCore_DP0 pid=4008888) Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):   0%|          | 0/51 [00:00<?, ?it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):   2%|▏         | 1/51 [00:00<00:08,  5.82it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):   4%|▍         | 2/51 [00:00<00:08,  6.07it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):   6%|▌         | 3/51 [00:00<00:07,  6.14it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):   8%|▊         | 4/51 [00:00<00:07,  6.13it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  10%|▉         | 5/51 [00:00<00:07,  6.19it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  12%|█▏        | 6/51 [00:00<00:07,  6.24it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  14%|█▎        | 7/51 [00:01<00:07,  6.22it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  16%|█▌        | 8/51 [00:01<00:06,  6.21it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  18%|█▊        | 9/51 [00:01<00:06,  6.56it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  20%|█▉        | 10/51 [00:01<00:06,  6.83it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  22%|██▏       | 11/51 [00:01<00:05,  6.84it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  24%|██▎       | 12/51 [00:01<00:05,  7.03it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  25%|██▌       | 13/51 [00:01<00:05,  7.11it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  27%|██▋       | 14/51 [00:02<00:05,  7.20it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  29%|██▉       | 15/51 [00:02<00:04,  7.29it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  31%|███▏      | 16/51 [00:02<00:04,  7.35it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  33%|███▎      | 17/51 [00:02<00:04,  7.68it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  35%|███▌      | 18/51 [00:02<00:04,  7.97it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  37%|███▋      | 19/51 [00:02<00:03,  8.19it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  39%|███▉      | 20/51 [00:02<00:03,  8.35it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  41%|████      | 21/51 [00:02<00:03,  8.48it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  43%|████▎     | 22/51 [00:03<00:03,  8.51it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  45%|████▌     | 23/51 [00:03<00:03,  8.57it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  47%|████▋     | 24/51 [00:03<00:03,  8.60it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  49%|████▉     | 25/51 [00:03<00:03,  8.55it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  51%|█████     | 26/51 [00:03<00:02,  8.63it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  53%|█████▎    | 27/51 [00:03<00:02,  8.68it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  55%|█████▍    | 28/51 [00:03<00:02,  8.72it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  57%|█████▋    | 29/51 [00:03<00:02,  8.74it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  59%|█████▉    | 30/51 [00:03<00:02,  8.72it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  61%|██████    | 31/51 [00:04<00:02,  8.72it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  63%|██████▎   | 32/51 [00:04<00:02,  8.72it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  65%|██████▍   | 33/51 [00:04<00:02,  8.95it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  67%|██████▋   | 34/51 [00:04<00:01,  9.12it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  69%|██████▊   | 35/51 [00:04<00:01,  9.31it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  71%|███████   | 36/51 [00:04<00:01,  9.41it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  75%|███████▍  | 38/51 [00:04<00:01,  9.70it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  78%|███████▊  | 40/51 [00:05<00:01,  9.86it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  82%|████████▏ | 42/51 [00:05<00:00, 10.07it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  86%|████████▋ | 44/51 [00:05<00:00, 10.23it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  90%|█████████ | 46/51 [00:05<00:00, 10.40it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  94%|█████████▍| 48/51 [00:05<00:00, 10.48it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  98%|█████████▊| 50/51 [00:05<00:00, 10.75it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE): 100%|██████████| 51/51 [00:06<00:00,  8.42it/s]
+(EngineCore_DP0 pid=4008888) Capturing CUDA graphs (decode, FULL):   0%|          | 0/35 [00:00<?, ?it/s]Capturing CUDA graphs (decode, FULL):   3%|▎         | 1/35 [00:00<00:05,  5.70it/s]Capturing CUDA graphs (decode, FULL):   6%|▌         | 2/35 [00:00<00:05,  6.17it/s]Capturing CUDA graphs (decode, FULL):   9%|▊         | 3/35 [00:00<00:05,  6.40it/s]Capturing CUDA graphs (decode, FULL):  11%|█▏        | 4/35 [00:00<00:04,  6.54it/s]Capturing CUDA graphs (decode, FULL):  14%|█▍        | 5/35 [00:00<00:04,  6.59it/s]Capturing CUDA graphs (decode, FULL):  17%|█▋        | 6/35 [00:00<00:04,  6.68it/s]Capturing CUDA graphs (decode, FULL):  20%|██        | 7/35 [00:01<00:04,  6.74it/s]Capturing CUDA graphs (decode, FULL):  23%|██▎       | 8/35 [00:01<00:03,  6.79it/s]Capturing CUDA graphs (decode, FULL):  26%|██▌       | 9/35 [00:01<00:03,  6.85it/s]Capturing CUDA graphs (decode, FULL):  29%|██▊       | 10/35 [00:01<00:03,  6.84it/s]Capturing CUDA graphs (decode, FULL):  31%|███▏      | 11/35 [00:01<00:03,  6.88it/s]Capturing CUDA graphs (decode, FULL):  34%|███▍      | 12/35 [00:01<00:03,  6.97it/s]Capturing CUDA graphs (decode, FULL):  37%|███▋      | 13/35 [00:01<00:03,  7.05it/s]Capturing CUDA graphs (decode, FULL):  40%|████      | 14/35 [00:02<00:02,  7.12it/s]Capturing CUDA graphs (decode, FULL):  43%|████▎     | 15/35 [00:02<00:02,  7.20it/s]Capturing CUDA graphs (decode, FULL):  46%|████▌     | 16/35 [00:02<00:02,  7.26it/s]Capturing CUDA graphs (decode, FULL):  49%|████▊     | 17/35 [00:02<00:02,  7.54it/s]Capturing CUDA graphs (decode, FULL):  51%|█████▏    | 18/35 [00:02<00:02,  7.71it/s]Capturing CUDA graphs (decode, FULL):  54%|█████▍    | 19/35 [00:02<00:02,  7.95it/s]Capturing CUDA graphs (decode, FULL):  57%|█████▋    | 20/35 [00:02<00:01,  8.10it/s]Capturing CUDA graphs (decode, FULL):  60%|██████    | 21/35 [00:02<00:01,  8.24it/s]Capturing CUDA graphs (decode, FULL):  63%|██████▎   | 22/35 [00:03<00:01,  8.32it/s]Capturing CUDA graphs (decode, FULL):  66%|██████▌   | 23/35 [00:03<00:01,  8.44it/s]Capturing CUDA graphs (decode, FULL):  69%|██████▊   | 24/35 [00:03<00:01,  8.52it/s]Capturing CUDA graphs (decode, FULL):  71%|███████▏  | 25/35 [00:03<00:01,  8.72it/s]Capturing CUDA graphs (decode, FULL):  74%|███████▍  | 26/35 [00:03<00:01,  8.80it/s]Capturing CUDA graphs (decode, FULL):  77%|███████▋  | 27/35 [00:03<00:00,  8.74it/s]Capturing CUDA graphs (decode, FULL):  80%|████████  | 28/35 [00:03<00:00,  8.81it/s]Capturing CUDA graphs (decode, FULL):  83%|████████▎ | 29/35 [00:03<00:00,  8.74it/s]Capturing CUDA graphs (decode, FULL):  86%|████████▌ | 30/35 [00:03<00:00,  8.87it/s]Capturing CUDA graphs (decode, FULL):  89%|████████▊ | 31/35 [00:04<00:00,  9.01it/s]Capturing CUDA graphs (decode, FULL):  91%|█████████▏| 32/35 [00:04<00:00,  9.04it/s]Capturing CUDA graphs (decode, FULL):  94%|█████████▍| 33/35 [00:04<00:00,  9.09it/s]Capturing CUDA graphs (decode, FULL):  97%|█████████▋| 34/35 [00:04<00:00,  9.17it/s]Capturing CUDA graphs (decode, FULL): 100%|██████████| 35/35 [00:04<00:00,  9.32it/s]Capturing CUDA graphs (decode, FULL): 100%|██████████| 35/35 [00:04<00:00,  7.81it/s]
+(EngineCore_DP0 pid=4008888) INFO 03-25 07:41:44 [gpu_model_runner.py:5386] Graph capturing finished in 11 secs, took 1.13 GiB
+(EngineCore_DP0 pid=4008888) INFO 03-25 07:41:44 [core.py:282] init engine (profile, create kv cache, warmup model) took 31.10 seconds
+(EngineCore_DP0 pid=4008888) INFO 03-25 07:41:44 [vllm.py:747] Asynchronous scheduling is enabled.
+INFO 03-25 07:41:44 [llm.py:388] Supported tasks: ['generate']
+2026-03-25 07:41:44  INFO      Loading QA dataset from /home/v-tiossowski/HealthcareAgent/mimic-code/data/MIMICIV_neuroblock_dataset/neuroblock.csv
+2026-03-25 07:41:44  INFO      Dataset: 1000 rows, columns: ['subject_id', 'hadm_id', 'stay_id', 'intime', 'outtime', 'first_careunit', 'last_careunit', 'gt_label', 'question', 'gt_answer_type', 'split', 'received_neuroblock']
+2026-03-25 07:41:44  INFO      Filtered to train split: 100 rows
+2026-03-25 07:41:44  INFO      Auto-discovered ground-truth SQL: /home/v-tiossowski/HealthcareAgent/mimic-code/mimic-iv/concepts_duckdb/medication/neuroblock.sql
+2026-03-25 07:41:44  INFO      === Iteration 1/100  run=neuroblock  best_qa=0.0% ===
+INFO 03-25 07:41:46 [hf.py:318] Detected the chat template content format to be 'string'. You can set `--chat-template-content-format` to override this.
+2026-03-25 07:42:01  INFO      Exec block 1/1 …
+2026-03-25 07:42:01  INFO      Output: []
+
+2026-03-25 07:42:01  INFO      === Iteration 2/100  run=neuroblock  best_qa=0.0% ===
+2026-03-25 07:42:04  INFO      Exec block 1/1 …
+2026-03-25 07:42:04  INFO      Output: []
+
+2026-03-25 07:42:04  INFO      === Iteration 3/100  run=neuroblock  best_qa=0.0% ===
+2026-03-25 07:42:07  INFO      Exec block 1/1 …
+2026-03-25 07:42:07  INFO      Output: ['acidosis_guideline', 'acute_decompensated_heart_failure_guideline', 'acute_hepatic_failure_guideline', 'adverse_effect_of_anticoagulants_guideline', 'alcohol_withdrawal_syndrome_guideline', 'anemia_icu_critically_ill_hemoglobin_transfusion_guideline', 'apache_iii_guideline', 'atrial_fibrillation_guideline', 'bradycardia_guideline', 'cerebral_infarction_guideline', 'coma_altered_consciousness_icu_guideline', 'copd_exacerbation_guideline', 'coronary_artery_disease_guideline', 'deep_vein_thrombos
+2026-03-25 07:42:07  INFO      === Iteration 4/100  run=neuroblock  best_qa=0.0% ===
+2026-03-25 07:42:10  INFO      Exec block 1/1 …
+2026-03-25 07:42:10  INFO      Output: []
+
+2026-03-25 07:42:10  INFO      === Iteration 5/100  run=neuroblock  best_qa=0.0% ===
+2026-03-25 07:42:12  INFO      Exec block 1/1 …
+2026-03-25 07:42:12  INFO      Output: ['acei', 'age', 'antibiotic', 'arb', 'bg', 'blood_differential', 'cardiac_marker', 'chemistry', 'coagulation', 'complete_blood_count', 'dobutamine', 'dopamine', 'enzyme', 'epinephrine', 'gcs', 'height', 'icp', 'icustay_detail', 'inflammation', 'milrinone', '... (4 more; pass a keyword to filter)']
+
+2026-03-25 07:42:12  INFO      === Iteration 6/100  run=neuroblock  best_qa=0.0% ===
+2026-03-25 07:42:15  INFO      Exec block 1/1 …
+2026-03-25 07:42:15  INFO      Output: []
+
+2026-03-25 07:42:15  INFO      === Iteration 7/100  run=neuroblock  best_qa=0.0% ===
+2026-03-25 07:42:19  INFO      Exec block 1/1 …
+2026-03-25 07:42:19  INFO      Output:             table_name
+0           admissions
+1              d_hcpcs
+2      d_icd_diagnoses
+3     d_icd_procedures
+4           d_labitems
+5        diagnoses_icd
+6             drgcodes
+7                 emar
+8          emar_detail
+9          hcpcsevents
+10           labevents
+11  microbiologyevents
+12                 omr
+13            patients
+14            pharmacy
+15                 poe
+16          poe_detail
+17       prescriptions
+18      procedures_icd
+19            provider
+20            ser
+2026-03-25 07:42:19  INFO      === Iteration 8/100  run=neuroblock  best_qa=0.0% ===
+2026-03-25 07:42:24  INFO      Exec block 1/1 …
+2026-03-25 07:42:24  INFO      Output:          table_name
+0         caregiver
+1       chartevents
+2           d_items
+3    datetimeevents
+4          icustays
+5  ingredientevents
+6       inputevents
+7      outputevents
+8   procedureevents
+
+2026-03-25 07:42:24  INFO      === Iteration 9/100  run=neuroblock  best_qa=0.0% ===
+2026-03-25 07:42:28  INFO      Exec block 1/1 …
+2026-03-25 07:42:28  INFO      Output:    itemid                    label        abbreviation         linksto             category unitname     param_type  lownormalvalue  highnormalvalue
+0  220001             Problem List        Problem List     chartevents              General      NaN           Text             NaN              NaN
+1  220003       ICU Admission date  ICU Admission date  datetimeevents                  ADT      NaN  Date and time             NaN              NaN
+2  220045               Heart Rate                  H
+2026-03-25 07:42:28  INFO      === Iteration 10/100  run=neuroblock  best_qa=0.0% ===
+2026-03-25 07:42:37  INFO      Exec block 1/1 …
+2026-03-25 07:42:37  INFO      Output:     itemid                                                label               abbreviation              category          linksto
+0   230150                               Blocker Balloon Status     Blocker Balloon Status           Respiratory      chartevents
+1   230148                            Blocker External Location  Blocker External Location           Respiratory      chartevents
+2   230147                                         Blocker Mark               Blocker Mark           Respirato
+2026-03-25 07:42:37  INFO      === Iteration 11/100  run=neuroblock  best_qa=0.0% ===
+2026-03-25 07:42:43  INFO      Exec block 1/1 …
+2026-03-25 07:42:43  INFO      Output:     itemid                        label                 abbreviation     category      linksto
+0   230150       Blocker Balloon Status       Blocker Balloon Status  Respiratory  chartevents
+1   230148    Blocker External Location    Blocker External Location  Respiratory  chartevents
+2   230147                 Blocker Mark                 Blocker Mark  Respiratory  chartevents
+3   230149              Blocker Secured              Blocker Secured  Respiratory  chartevents
+4   230146               
+2026-03-25 07:42:43  INFO      === Iteration 12/100  run=neuroblock  best_qa=0.0% ===
+2026-03-25 07:42:55  INFO      Exec block 1/1 …
+2026-03-25 07:42:55  INFO      Output:    itemid                 label abbreviation                            category           linksto
+0  220974  Gelatin succinylated      Gelatin  Ingredients - general (Not In Use)  ingredientevents
+
+2026-03-25 07:42:55  INFO      === Iteration 13/100  run=neuroblock  best_qa=0.0% ===
+2026-03-25 07:43:06  INFO      Exec block 1/1 …
+2026-03-25 07:43:06  INFO      Output:    subject_id   hadm_id   stay_id  caregiver_id           starttime             endtime           storetime  itemid  amount amountuom   rate  rateuom  orderid  linkorderid       ordercategoryname secondaryordercategoryname ordercomponenttypedescription ordercategorydescription  patientweight  totalamount totalamountuom  isopenbag  continueinnextdept statusdescription  originalamount  originalrate
+0    10000032  29079034  39553978         18704 2180-07-23 17:00:00 2180-07-23 17:01:00 2180-07-23 1
+2026-03-25 07:43:06  INFO      === Iteration 14/100  run=neuroblock  best_qa=0.0% ===
+2026-03-25 07:43:12  INFO      Exec block 1/1 …
+2026-03-25 07:43:12  INFO      Output:      itemid                                label                         abbreviation     category      linksto
+0    227529               ACD-A Citrate (1000ml)               ACD-A Citrate (1000ml)  Medications  inputevents
+1    227528                ACD-A Citrate (500ml)                ACD-A Citrate (500ml)  Medications  inputevents
+2    221261                   Abciximab (Reopro)                   Abciximab (Reopro)  Medications  inputevents
+3    228315                     Acetaminophen-IV    
+2026-03-25 07:43:12  INFO      === Iteration 15/100  run=neuroblock  best_qa=0.0% ===
+2026-03-25 07:43:20  INFO      Exec block 1/1 …
+2026-03-25 07:43:20  INFO      Output:    itemid                        label                 abbreviation     category      linksto
+0  227214  Cis-atracurium (Intubation)  Cis-atracurium (Intubation)   Intubation  chartevents
+1  221555                Cisatracurium                Cisatracurium  Medications  inputevents
+2  229233                   Rocuronium                   Rocuronium  Medications  inputevents
+3  229788      Rocuronium (Intubation)      Rocuronium (Intubation)   Intubation  chartevents
+4  222062                   Ve
+2026-03-25 07:43:20  INFO      === Iteration 16/100  run=neuroblock  best_qa=0.0% ===
+2026-03-25 07:43:32  INFO      Exec block 1/1 …
+2026-03-25 07:43:32  INFO      Output:    subject_id   hadm_id  pharmacy_id       poe_id           starttime            stoptime                   medication  proc_type                              status           entertime        verifiedtime  route frequency    disp_sched infusion_type sliding_scale lockout_interval  basal_rate one_hr_max  doses_per_24_hrs  duration duration_interval  expiration_value expiration_unit expirationdate      dispensation fill_quantity
+0    10000032  22595853     12775705  10000032-55 2180-05-08 08:00:0
+2026-03-25 07:43:32  INFO      === Iteration 17/100  run=neuroblock  best_qa=0.0% ===
+2026-03-25 07:43:39  INFO      Exec block 1/1 …
+2026-03-25 07:43:39  INFO      Output:                 medication
+0            Cisatracurium
+1   Cisatracurium Besylate
+2      Pancuronium Bromide
+3      ROSE- Cisatracurium
+4               Rocuronium
+5          Succinylcholine
+6       Vecuronium Bromide
+7            cisatracurium
+8               rocuronium
+9              rocuronium 
+10         succinylcholine
+
+2026-03-25 07:43:39  INFO      === Iteration 18/100  run=neuroblock  best_qa=0.0% ===
+2026-03-25 07:43:47  INFO      Exec block 1/1 …
+2026-03-25 07:43:47  INFO      Output:   drug_type                    drug
+0      MAIN           Cisatracurium
+1      MAIN  Cisatracurium Besylate
+2      MAIN     Pancuronium Bromide
+3      MAIN     ROSE- Cisatracurium
+4      MAIN              Rocuronium
+5      MAIN         Succinylcholine
+6      MAIN      Vecuronium Bromide
+7      MAIN           cisatracurium
+8      MAIN              rocuronium
+9      MAIN         succinylcholine
+
+2026-03-25 07:43:47  INFO      === Iteration 19/100  run=neuroblock  best_qa=0.0% ===
+2026-03-25 07:44:05  INFO      Exec block 1/1 …
+2026-03-25 07:44:06  INFO      Output: Empty DataFrame
+Columns: [subject_id, hadm_id, stay_id, caregiver_id, charttime, storetime, itemid, value, valuenum, valueuom, warning]
+Index: []
+
+2026-03-25 07:44:06  INFO      === Iteration 20/100  run=neuroblock  best_qa=0.0% ===
+2026-03-25 07:44:12  INFO      Exec block 1/1 …
+2026-03-25 07:44:12  INFO      Output:    subject_id   hadm_id   stay_id  caregiver_id           starttime             endtime           storetime  itemid      amount amountuom      rate     rateuom  orderid  linkorderid ordercategoryname secondaryordercategoryname ordercomponenttypedescription ordercategorydescription  patientweight  totalamount totalamountuom  isopenbag  continueinnextdept statusdescription  originalamount  originalrate
+0    10003637  28317408  32824762         40437 2150-05-21 19:00:00 2150-05-22 06:19:00 2150-05-
+2026-03-25 07:44:12  INFO      === Iteration 21/100  run=neuroblock  best_qa=0.0% ===
+2026-03-25 07:44:34  INFO      Exec block 1/1 …
+2026-03-25 07:44:34  INFO      Output:    itemid                        label     category      linksto
+0  227214  Cis-atracurium (Intubation)   Intubation  chartevents
+1  221555                Cisatracurium  Medications  inputevents
+2  229233                   Rocuronium  Medications  inputevents
+3  229788      Rocuronium (Intubation)   Intubation  chartevents
+4  222062                   Vecuronium  Medications  inputevents
+5  227213      Vecuronium (Intubation)   Intubation  chartevents
+
+2026-03-25 07:44:34  INFO      === Iteration 22/100  run=neuroblock  best_qa=0.0% ===
+2026-03-25 07:44:50  INFO      Exec block 1/1 …
+2026-03-25 07:44:50  INFO      Output:                                   medication
+0                           Ammonium Lactate
+1                              Cisatracurium
+2                     Cisatracurium Besylate
+3                    Isavuconazonium Sulfate
+4   Lokelma (sodium zirconium cyclosilicate)
+5                        Pancuronium Bromide
+6                        ROSE- Cisatracurium
+7                                 Rocuronium
+8             Sodium Zirconium Cyclosilicate
+9                  Travoprost (Benzalkonium)
+10   
+2026-03-25 07:44:50  INFO      === Iteration 23/100  run=neuroblock  best_qa=0.0% ===
+2026-03-25 07:45:07  INFO      Exec block 1/1 …
+2026-03-25 07:45:07  INFO      Output:    subject_id   hadm_id   stay_id                       first_careunit                        last_careunit              intime             outtime       los
+0    10000032  29079034  39553978   Medical Intensive Care Unit (MICU)   Medical Intensive Care Unit (MICU) 2180-07-23 14:00:00 2180-07-23 23:50:47  0.410266
+1    10000690  25860671  37081114   Medical Intensive Care Unit (MICU)   Medical Intensive Care Unit (MICU) 2150-11-02 19:37:00 2150-11-06 17:03:17  3.893252
+2    10000980  26913865  3
+2026-03-25 07:45:07  INFO      === Iteration 24/100  run=neuroblock  best_qa=0.0% ===
+2026-03-25 07:45:23  INFO      Exec block 1/1 …
+2026-03-25 07:45:23  INFO      Output:    subject_id   hadm_id              medication           starttime            stoptime
+0    10003637  28317408  Cisatracurium Besylate 2150-05-22 04:00:00 2150-05-22 23:00:00
+1    10003637  28317408  Cisatracurium Besylate 2150-05-21 02:00:00 2150-05-21 02:00:00
+2    10003637  28317408  Cisatracurium Besylate 2150-05-21 14:00:00 2150-05-21 19:00:00
+3    10003637  28317408  Cisatracurium Besylate 2150-05-21 20:00:00 2150-05-22 03:00:00
+4    10004235  24181354              Rocuronium 2196-02-25 1
+2026-03-25 07:45:23  INFO      === Iteration 25/100  run=neuroblock  best_qa=0.0% ===
+2026-03-25 07:45:43  INFO      Exec block 1/1 …
+2026-03-25 07:45:43  INFO      Output: Error:
+Traceback (most recent call last):
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 643, in execute
+    _run_with_timeout(_do_execute, timeout)
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 174, in _run_with_timeout
+    raise error[0]
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 156, in target
+    result[0] = func(*args, **kwargs)
+                ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/v-tiossowsk
+2026-03-25 07:45:43  INFO      === Iteration 26/100  run=neuroblock  best_qa=0.0% ===
+2026-03-25 07:45:49  INFO      Exec block 1/1 …
+2026-03-25 07:45:49  INFO      Output:    subject_id   hadm_id  pharmacy_id       poe_id  poe_seq order_provider_id           starttime            stoptime drug_type                         drug formulary_drug_cd     gsn          ndc    prod_strength form_rx dose_val_rx dose_unit_rx form_val_disp form_unit_disp  doses_per_24_hrs  route
+0    10000032  22595853     12775705  10000032-55       55            P85UQ1 2180-05-08 08:00:00 2180-05-07 22:00:00      MAIN                   Furosemide            FURO40  008209  51079007320      4
+2026-03-25 07:45:49  INFO      === Iteration 27/100  run=neuroblock  best_qa=0.0% ===
+2026-03-25 07:46:15  INFO      Exec block 1/1 …
+2026-03-25 07:46:15  INFO      Output:    subject_id   hadm_id                    drug           starttime            stoptime
+0    10003637  28317408  Cisatracurium Besylate 2150-05-22 04:00:00 2150-05-22 23:00:00
+1    10003637  28317408  Cisatracurium Besylate 2150-05-21 02:00:00 2150-05-21 02:00:00
+2    10003637  28317408  Cisatracurium Besylate 2150-05-21 14:00:00 2150-05-21 19:00:00
+3    10003637  28317408  Cisatracurium Besylate 2150-05-21 20:00:00 2150-05-22 03:00:00
+4    10004235  24181354              Rocuronium 2196-02-25 1
+2026-03-25 07:46:15  INFO      === Iteration 28/100  run=neuroblock  best_qa=0.0% ===
+2026-03-25 07:46:32  INFO      Exec block 1/1 …
+2026-03-25 07:46:32  INFO      Output:    subject_id   hadm_id           admittime           dischtime deathtime  admission_type admit_provider_id      admission_location discharge_location insurance language marital_status   race           edregtime           edouttime  hospital_expire_flag
+0    10000032  22595853 2180-05-06 22:23:00 2180-05-07 17:15:00       NaT          URGENT            P49AFC  TRANSFER FROM HOSPITAL               HOME  Medicaid  English        WIDOWED  WHITE 2180-05-06 19:17:00 2180-05-06 23:30:00               
+2026-03-25 07:46:32  INFO      === Iteration 29/100  run=neuroblock  best_qa=0.0% ===
+2026-03-25 07:46:56  INFO      Exec block 1/1 …
+2026-03-25 07:46:56  INFO      Output:    subject_id   hadm_id   stay_id
+0    12329981  24913532  34475151
+1    12357823  29199588  38797751
+2    13558665  27971490  30637692
+3    13573101  24707874  30519550
+4    13665169  27667739  39239750
+
+2026-03-25 07:46:56  INFO      === Iteration 30/100  run=neuroblock  best_qa=0.0% ===
+2026-03-25 07:48:11  INFO      Exec block 1/1 …
+2026-03-25 07:48:11  INFO      Output: Error:
+Traceback (most recent call last):
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 643, in execute
+    _run_with_timeout(_do_execute, timeout)
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 174, in _run_with_timeout
+    raise error[0]
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 156, in target
+    result[0] = func(*args, **kwargs)
+                ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/v-tiossowsk
+2026-03-25 07:48:11  INFO      === Iteration 31/100  run=neuroblock  best_qa=0.0% ===
+2026-03-25 07:49:32  INFO      Exec block 1/1 …
+2026-03-25 07:49:32  INFO      Output: Received NMBAs: True
+NMBAs administered: ['Cisatracurium']
+Total doses: 23
+First administration: 2168-09-07 21:00:00
+Last administration: 2168-09-10 01:05:00
+Duration (hours): 52.083333333333336
+
+ICU Events:
+    subject_id   hadm_id  ...  statusdescription medication_name
+0     12329981  24913532  ...    ChangeDose/Rate   Cisatracurium
+1     12329981  24913532  ...    ChangeDose/Rate   Cisatracurium
+2     12329981  24913532  ...    ChangeDose/Rate   Cisatracurium
+3     12329981  24913532  ...   
+2026-03-25 07:49:32  INFO      === Iteration 32/100  run=neuroblock  best_qa=0.0% ===
+2026-03-25 07:49:44  INFO      Exec block 1/1 …
+2026-03-25 07:49:44  INFO      Output: Patient 2 - Received NMBAs: True
+Patient 2 - NMBAs administered: ['Rocuronium']
+Patient 2 - Total doses: 1
+Patient 2 - Duration (hours): 0.0
+
+2026-03-25 07:49:44  INFO      === Iteration 33/100  run=neuroblock  best_qa=0.0% ===
+2026-03-25 07:49:54  INFO      Exec block 1/1 …
+2026-03-25 07:49:54  INFO      Output:     stay_id
+0  39553978
+1  37081114
+2  39765666
+3  37067082
+4  34592300
+
+2026-03-25 07:49:54  INFO      === Iteration 34/100  run=neuroblock  best_qa=0.0% ===
+2026-03-25 07:50:05  INFO      Exec block 1/1 …
+2026-03-25 07:50:05  INFO      Output: Patient 3 - Received NMBAs: False
+Patient 3 - NMBAs administered: []
+Patient 3 - Total doses: 0
+
+2026-03-25 07:50:05  INFO      === Iteration 35/100  run=neuroblock  best_qa=0.0% ===
+2026-03-25 07:50:16  INFO      Exec block 1/1 …
+2026-03-25 07:50:16  INFO      Output: Patient 4 (hadm_id) - Received NMBAs: True
+Patient 4 - NMBAs administered: ['Cisatracurium']
+Patient 4 - Total doses: 23
+
+2026-03-25 07:50:16  INFO      === Iteration 36/100  run=neuroblock  best_qa=0.0% ===
+2026-03-25 07:50:28  INFO      Exec block 1/1 …
+2026-03-25 07:50:28  INFO      Output: Patient 5 (subject_id) - Received NMBAs: True
+Patient 5 - NMBAs administered: ['Cisatracurium']
+Patient 5 - Total doses: 27
+
+2026-03-25 07:50:28  INFO      === Iteration 37/100  run=neuroblock  best_qa=0.0% ===
+2026-03-25 07:50:39  INFO      Exec block 1/1 …
+2026-03-25 07:50:39  INFO      Output:                                     medication
+0  Insulin (Regular) for Beta Blocker Overdose
+
+2026-03-25 07:50:39  INFO      === Iteration 38/100  run=neuroblock  best_qa=0.0% ===
+2026-03-25 07:50:49  INFO      Exec block 1/1 …
+2026-03-25 07:50:49  INFO      Output:                medication
+0           Cisatracurium
+1  Cisatracurium Besylate
+2     ROSE- Cisatracurium
+3           cisatracurium
+
+2026-03-25 07:50:49  INFO      === Iteration 39/100  run=neuroblock  best_qa=0.0% ===
+2026-03-25 07:51:02  INFO      Exec block 1/1 …
+2026-03-25 07:51:02  INFO      Output:                medication
+0           Cisatracurium
+1  Cisatracurium Besylate
+2     ROSE- Cisatracurium
+3           cisatracurium
+
+2026-03-25 07:51:02  INFO      === Iteration 40/100  run=neuroblock  best_qa=0.0% ===
+2026-03-25 07:51:13  INFO      Exec block 1/1 …
+2026-03-25 07:51:13  INFO      Output:                medication
+0           Cisatracurium
+1  Cisatracurium Besylate
+2     ROSE- Cisatracurium
+3           cisatracurium
+
+2026-03-25 07:51:13  INFO      === Iteration 41/100  run=neuroblock  best_qa=0.0% ===
+2026-03-25 07:52:36  INFO      Exec block 1/1 …
+2026-03-25 07:52:36  INFO      Output: Code executed successfully (no output).
+2026-03-25 07:52:36  INFO      Debug conversations will be saved to debug_logs
+2026-03-25 07:52:36  INFO      Using question from dataset column: Did this patient receive neuromuscular blocking agents (NMBAs) during their hospital admission?
+2026-03-25 07:52:36  INFO      Answer type for 'neuroblock': binary (per_row=True)
+2026-03-25 07:52:36  INFO      ReACT iteration 1/5 — 20 active patients
+Rendering conversations:   0%|          | 0/20 [00:00<?, ?it/s]Rendering conversations: 100%|██████████| 20/20 [00:00<00:00, 468.55it/s]
+Processed prompts:   0%|          | 0/20 [00:00<?, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s]Processed prompts:   5%|▌         | 1/20 [00:10<03:13, 10.21s/it, est. speed input: 96.29 toks/s, output: 11.75 toks/s]Processed prompts:  20%|██        | 4/20 [00:12<00:40,  2.51s/it, est. speed input: 318.76 toks/s, output: 42.73 toks/s]Processed prompts:  25%|██▌       | 5/20 [00:12<00:27,  1.86s/it, est. speed input: 392.87 toks/s, output: 55.82 toks/s]Processed prompts:  30%|███       | 6/20 [00:12<00:19,  1.38s/it, est. speed input: 465.09 toks/s, output: 68.72 toks/s]Processed prompts:  45%|████▌     | 9/20 [00:12<00:07,  1.54it/s, est. speed input: 688.58 toks/s, output: 109.01 toks/s]Processed prompts:  55%|█████▌    | 11/20 [00:13<00:04,  2.20it/s, est. speed input: 830.79 toks/s, output: 135.61 toks/s]Processed prompts:  65%|██████▌   | 13/20 [00:13<00:02,  2.78it/s, est. speed input: 957.68 toks/s, output: 160.70 toks/s]Processed prompts:  70%|███████   | 14/20 [00:13<00:02,  2.67it/s, est. speed input: 998.41 toks/s, output: 170.19 toks/s]Processed prompts:  85%|████████▌ | 17/20 [00:13<00:00,  4.47it/s, est. speed input: 1201.61 toks/s, output: 212.88 toks/s]Processed prompts: 100%|██████████| 20/20 [00:13<00:00,  4.47it/s, est. speed input: 1405.59 toks/s, output: 255.90 toks/s]Processed prompts: 100%|██████████| 20/20 [00:13<00:00,  1.43it/s, est. speed input: 1405.59 toks/s, output: 255.90 toks/s]
+2026-03-25 07:52:50  INFO      ReACT iteration 2/5 — 20 active patients
+Rendering conversations:   0%|          | 0/20 [00:00<?, ?it/s]Rendering conversations: 100%|██████████| 20/20 [00:00<00:00, 298.39it/s]
+Processed prompts:   0%|          | 0/20 [00:00<?, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s]Processed prompts:   5%|▌         | 1/20 [00:11<03:39, 11.57s/it, est. speed input: 195.54 toks/s, output: 6.14 toks/s]Processed prompts:  15%|█▌        | 3/20 [00:11<00:53,  3.14s/it, est. speed input: 520.83 toks/s, output: 18.51 toks/s]Processed prompts:  20%|██        | 4/20 [00:12<00:34,  2.15s/it, est. speed input: 607.08 toks/s, output: 24.98 toks/s]Processed prompts:  25%|██▌       | 5/20 [00:12<00:22,  1.52s/it, est. speed input: 729.51 toks/s, output: 31.59 toks/s]Processed prompts:  40%|████      | 8/20 [00:12<00:07,  1.53it/s, est. speed input: 1083.76 toks/s, output: 53.49 toks/s]Processed prompts:  50%|█████     | 10/20 [00:12<00:04,  2.26it/s, est. speed input: 1260.85 toks/s, output: 67.96 toks/s]Processed prompts:  60%|██████    | 12/20 [00:12<00:02,  3.05it/s, est. speed input: 1458.67 toks/s, output: 82.33 toks/s]Processed prompts:  70%|███████   | 14/20 [00:13<00:01,  3.57it/s, est. speed input: 1652.32 toks/s, output: 96.47 toks/s]Processed prompts:  80%|████████  | 16/20 [00:13<00:00,  4.25it/s, est. speed input: 1921.76 toks/s, output: 111.45 toks/s]Processed prompts:  85%|████████▌ | 17/20 [00:13<00:00,  4.40it/s, est. speed input: 2042.14 toks/s, output: 118.91 toks/s]Processed prompts:  90%|█████████ | 18/20 [00:14<00:00,  4.25it/s, est. speed input: 2113.10 toks/s, output: 125.85 toks/s]Processed prompts:  95%|█████████▌| 19/20 [00:15<00:00,  2.12it/s, est. speed input: 2087.68 toks/s, output: 126.21 toks/s]Processed prompts: 100%|██████████| 20/20 [00:15<00:00,  2.43it/s, est. speed input: 2200.92 toks/s, output: 135.35 toks/s]Processed prompts: 100%|██████████| 20/20 [00:15<00:00,  2.43it/s, est. speed input: 2200.92 toks/s, output: 135.35 toks/s]Processed prompts: 100%|██████████| 20/20 [00:15<00:00,  1.29it/s, est. speed input: 2200.92 toks/s, output: 135.35 toks/s]
+2026-03-25 07:53:06  INFO      QA accuracy: 100.0%  (correct=20/20, parse_errors=0)
+2026-03-25 07:53:06  INFO      SUCCESS: 100.0% QA accuracy for 'neuroblock' at iteration 41
+2026-03-25 07:53:06  INFO      Function code saved to autoformalized_library/functions/neuroblock.py
+2026-03-25 07:53:06  INFO      Summary saved to autoformalized_library/summary.json
+[rank0]:[W325 07:53:06.924899248 ProcessGroupNCCL.cpp:1553] Warning: WARNING: destroy_process_group() was not called before program exit, which can leak resources. For more info, please see https://pytorch.org/docs/stable/distributed.html#shutdown (function operator())
+
+======================================================================
+AUTOFORMALIZATION COMPLETE
+======================================================================
+  Output dir      : autoformalized_library
+  Model           : Qwen/Qwen3.5-27B
+  Dataset         : /home/v-tiossowski/HealthcareAgent/mimic-code/data/MIMICIV_neuroblock_dataset/neuroblock.csv
+  Run name        : neuroblock
+  Status          : SUCCESS
+  QA accuracy     : 100.0%
+  Iterations      : 41
+  Total tokens    : 59,470  (prompt 53,795 / completion 5,675)
+  LLM calls       : 81
+  SQL queries     : 126
+  Function saved  : autoformalized_library/functions/neuroblock.py
+======================================================================

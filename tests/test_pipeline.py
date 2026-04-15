@@ -1,3 +1,4 @@
+import argparse
 import json
 import sys
 import tempfile
@@ -7,9 +8,18 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
-from sepsis_mvp.agent import HeuristicAgent
-from sepsis_mvp.dataset import build_dataset, load_concept_tables, load_rolling_csv_dataset, save_trajectories
+from sepsis_mvp.agent import QwenChatAgent, _build_messages, _coerce_agent_output, HeuristicAgent
+from sepsis_mvp.cli import run_command
+from sepsis_mvp.dataset import (
+    build_dataset,
+    load_concept_tables,
+    load_multitask_csv_dataset,
+    load_rolling_csv_dataset,
+    load_single_task_csv_dataset,
+    save_trajectories,
+)
 from sepsis_mvp.environment import BenchmarkEnvironment, evaluate_rollouts
+from sepsis_mvp.schemas import Checkpoint, Trajectory
 from sepsis_mvp.tools import ConceptToolRuntime
 
 
@@ -17,6 +27,221 @@ SAMPLE = ROOT / "data" / "sample_concepts.json"
 
 
 class PipelineTest(unittest.TestCase):
+    def _multitask_step_input(self):
+        return {
+            "trajectory_id": "mimiciv_stay_1",
+            "stay_id": 30,
+            "step_index": 0,
+            "t_hour": 4,
+            "available_tools": [
+                "query_suspicion_of_infection",
+                "query_sofa",
+                "query_kdigo_stage",
+                "query_ventilation_status",
+            ],
+            "instruction": "Use tools if needed. Then output one decision for each monitored task.",
+            "task_names": ["sepsis", "aki", "respiratory_support"],
+            "label_spaces": {
+                "sepsis": ["keep_monitoring", "infection_suspect", "trigger_sepsis_alert"],
+                "aki": ["keep_monitoring", "suspect_aki", "trigger_aki_alert"],
+                "respiratory_support": [
+                    "room_air_or_low_support",
+                    "high_flow_or_noninvasive_support",
+                    "invasive_vent_required",
+                ],
+            },
+        }
+
+    def test_multitask_task_action_alias_is_normalized(self):
+        response = _coerce_agent_output(
+            {
+                "task_actions": {
+                    "sepsis": "keep_monitoring",
+                    "aki": "keep_monitoring",
+                    "resp_support": "room_air_or_low_support",
+                }
+            }
+        )
+        self.assertEqual(
+            response.task_actions,
+            {
+                "sepsis": "keep_monitoring",
+                "aki": "keep_monitoring",
+                "respiratory_support": "room_air_or_low_support",
+            },
+        )
+
+    def test_prompt_includes_basic_clinical_guidance(self):
+        messages = _build_messages(
+            self._multitask_step_input(),
+            history=[],
+            available_tools=[
+                "query_suspicion_of_infection",
+                "query_sofa",
+                "query_kdigo_stage",
+                "query_ventilation_status",
+            ],
+        )
+        system_prompt = messages[0]["content"]
+        self.assertIn("SOFA is 2 or higher", system_prompt)
+        self.assertIn("KDIGO stage is 2 or 3", system_prompt)
+        self.assertIn("Map HFNC and non-invasive ventilation", system_prompt)
+
+    def test_non_monotonic_aki_prompt_includes_deescalation_guidance(self):
+        step_input = {
+            "trajectory_id": "mimiciv_stay_1",
+            "stay_id": 30,
+            "step_index": 0,
+            "t_hour": 8,
+            "available_tools": ["query_kdigo_stage"],
+            "instruction": "Use tools if needed. Then output exactly one action.",
+            "task_names": ["aki"],
+            "task_variant": "non_monotonic_current_state",
+            "label_spaces": {
+                "aki": ["no_aki", "aki_stage_1", "aki_stage_2", "aki_stage_3"],
+            },
+        }
+        messages = _build_messages(step_input, history=[], available_tools=["query_kdigo_stage"])
+        system_prompt = messages[0]["content"]
+        self.assertIn("do not assume AKI states are permanent".lower(), system_prompt.lower())
+        self.assertIn("aki_stage_1", system_prompt)
+
+    def test_qwen_agent_forces_next_required_tool_when_model_skips_tool_use(self):
+        class FakeClient:
+            def __init__(self):
+                self.max_new_tokens = 250
+
+            def generate(self, messages):
+                return '{"task_actions":{"sepsis":"keep_monitoring","aki":"keep_monitoring","respiratory_support":"room_air_or_low_support"}}'
+
+        trace_events = []
+        agent = object.__new__(QwenChatAgent)
+        agent.model = "fake"
+        agent.temperature = 0.0
+        agent.top_p = 0.95
+        agent.max_new_tokens = 250
+        agent.repair_max_new_tokens = 120
+        agent.trace_callback = trace_events.append
+        agent.client = FakeClient()
+
+        response = agent.next_response(
+            self._multitask_step_input(),
+            history=[],
+            available_tools=[
+                "query_suspicion_of_infection",
+                "query_sofa",
+                "query_kdigo_stage",
+                "query_ventilation_status",
+            ],
+        )
+        self.assertEqual(response.tool_name, "query_suspicion_of_infection")
+        self.assertEqual(response.arguments, {"stay_id": 30, "t_hour": 4})
+        self.assertTrue(any(event["event_type"] == "model_output_forced_tool" for event in trace_events))
+
+    def test_qwen_agent_forces_next_required_tool_when_model_repeats_prior_tool(self):
+        class FakeClient:
+            def __init__(self):
+                self.max_new_tokens = 250
+
+            def generate(self, messages):
+                return '{"tool_name":"query_suspicion_of_infection","arguments":{"stay_id":30,"t_hour":4}}'
+
+        agent = object.__new__(QwenChatAgent)
+        agent.model = "fake"
+        agent.temperature = 0.0
+        agent.top_p = 0.95
+        agent.max_new_tokens = 250
+        agent.repair_max_new_tokens = 120
+        agent.trace_callback = None
+        agent.client = FakeClient()
+
+        history = [
+            {
+                "type": "tool_call",
+                "tool_name": "query_suspicion_of_infection",
+                "payload": {"tool_name": "query_suspicion_of_infection", "arguments": {"stay_id": 30, "t_hour": 4}},
+            },
+            {
+                "type": "tool_output",
+                "tool_name": "query_suspicion_of_infection",
+                "payload": {"stay_id": 30, "t_hour": 4, "has_suspected_infection": True},
+            },
+        ]
+
+        response = agent.next_response(
+            self._multitask_step_input(),
+            history=history,
+            available_tools=[
+                "query_suspicion_of_infection",
+                "query_sofa",
+                "query_kdigo_stage",
+                "query_ventilation_status",
+            ],
+        )
+        self.assertEqual(response.tool_name, "query_sofa")
+        self.assertEqual(response.arguments, {"stay_id": 30, "t_hour": 4})
+
+    def test_qwen_agent_repairs_to_final_decision_after_all_tools_are_done(self):
+        class FakeClient:
+            def __init__(self):
+                self.max_new_tokens = 250
+                self.outputs = [
+                    '{"tool_name":"query_ventilation_status","arguments":{"stay_id":30,"t_hour":4}}',
+                    '{"task_actions":{"sepsis":"infection_suspect","aki":"suspect_aki","respiratory_support":"high_flow_or_noninvasive_support"}}',
+                ]
+
+            def generate(self, messages):
+                return self.outputs.pop(0)
+
+        agent = object.__new__(QwenChatAgent)
+        agent.model = "fake"
+        agent.temperature = 0.0
+        agent.top_p = 0.95
+        agent.max_new_tokens = 250
+        agent.repair_max_new_tokens = 120
+        agent.trace_callback = None
+        agent.client = FakeClient()
+
+        history = []
+        for tool_name, payload in [
+            (
+                "query_suspicion_of_infection",
+                {"stay_id": 30, "t_hour": 4, "has_suspected_infection": True},
+            ),
+            ("query_sofa", {"stay_id": 30, "t_hour": 4, "latest_sofa_24hours": 1}),
+            ("query_kdigo_stage", {"stay_id": 30, "t_hour": 4, "latest_aki_stage_smoothed": 1}),
+            (
+                "query_ventilation_status",
+                {
+                    "stay_id": 30,
+                    "t_hour": 4,
+                    "current_support_level": "high_flow_or_noninvasive_support",
+                    "highest_support_level_so_far": "high_flow_or_noninvasive_support",
+                },
+            ),
+        ]:
+            history.append({"type": "tool_call", "tool_name": tool_name, "payload": {"tool_name": tool_name}})
+            history.append({"type": "tool_output", "tool_name": tool_name, "payload": payload})
+
+        response = agent.next_response(
+            self._multitask_step_input(),
+            history=history,
+            available_tools=[
+                "query_suspicion_of_infection",
+                "query_sofa",
+                "query_kdigo_stage",
+                "query_ventilation_status",
+            ],
+        )
+        self.assertEqual(
+            response.task_actions,
+            {
+                "sepsis": "infection_suspect",
+                "aki": "suspect_aki",
+                "respiratory_support": "high_flow_or_noninvasive_support",
+            },
+        )
+
     def test_dataset_builder_snaps_transitions_to_checkpoints(self):
         concepts = load_concept_tables(SAMPLE)
         trajectories = build_dataset(concepts)
@@ -81,6 +306,103 @@ class PipelineTest(unittest.TestCase):
             payload = json.loads(output.read_text())
             self.assertEqual(len(payload), 2)
 
+    def test_run_command_writes_evaluation_summary(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            evaluation_output = Path(tmpdir) / "evaluation.json"
+            args = argparse.Namespace(
+                concepts=str(SAMPLE),
+                db_path=None,
+                dataset=str(ROOT / "data" / "sample_trajectories.json"),
+                task_mode="single",
+                tool_backend="official",
+                autoformalized_library=str(ROOT / "autoformalized_library"),
+                include_out_of_scope=False,
+                agent="heuristic",
+                model="Qwen/Qwen3.5-9B",
+                temperature=0.0,
+                top_p=0.95,
+                max_new_tokens=250,
+                sample_size=1,
+                resume=False,
+                sofa_alert_threshold=2,
+                rollouts_output=None,
+                evaluation_output=str(evaluation_output),
+                events_output=None,
+                trajectory_output=None,
+            )
+            exit_code = run_command(args)
+            self.assertEqual(exit_code, 0)
+            payload = json.loads(evaluation_output.read_text())
+            self.assertEqual(payload["task_mode"], "single")
+            self.assertEqual(payload["tool_backend"], "official")
+            self.assertEqual(payload["agent"], "heuristic")
+            self.assertIn("metrics", payload)
+            self.assertIn("infection_predictions_grounded_rate", payload["metrics"]["tool_grounding"])
+            self.assertIn("alert_predictions_grounded_rate", payload["metrics"]["tool_grounding"])
+
+    def test_run_command_can_resume_from_existing_trajectory_output(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            tmpdir = Path(tmpdir)
+            concepts = load_concept_tables(SAMPLE)
+            trajectories = build_dataset(concepts)
+            dataset_path = tmpdir / "dataset.json"
+            save_trajectories(trajectories, dataset_path)
+
+            runtime = ConceptToolRuntime(concepts)
+            environment = BenchmarkEnvironment(trajectories[:1], runtime)
+            existing_rollout = environment.run_all(HeuristicAgent())[0]
+
+            trajectory_output = tmpdir / "trajectories.jsonl"
+            with trajectory_output.open("w") as handle:
+                handle.write(json.dumps(existing_rollout.to_dict()) + "\n")
+
+            evaluation_output = tmpdir / "evaluation.json"
+            rollouts_output = tmpdir / "rollouts.json"
+            args = argparse.Namespace(
+                concepts=str(SAMPLE),
+                db_path=None,
+                dataset=str(dataset_path),
+                task_mode="single",
+                tool_backend="official",
+                autoformalized_library=str(ROOT / "autoformalized_library"),
+                include_out_of_scope=False,
+                agent="heuristic",
+                model="Qwen/Qwen3.5-9B",
+                temperature=0.0,
+                top_p=0.95,
+                max_new_tokens=250,
+                sample_size=None,
+                resume=True,
+                sofa_alert_threshold=2,
+                rollouts_output=str(rollouts_output),
+                evaluation_output=str(evaluation_output),
+                events_output=None,
+                trajectory_output=str(trajectory_output),
+            )
+
+            exit_code = run_command(args)
+            self.assertEqual(exit_code, 0)
+
+            trajectory_lines = [
+                json.loads(line)
+                for line in trajectory_output.read_text().splitlines()
+                if line.strip()
+            ]
+            self.assertEqual(len(trajectory_lines), len(trajectories))
+            self.assertEqual(
+                {item["trajectory_id"] for item in trajectory_lines},
+                {trajectory.trajectory_id for trajectory in trajectories},
+            )
+
+            payload = json.loads(evaluation_output.read_text())
+            self.assertTrue(payload["resume"])
+            self.assertEqual(payload["existing_completed_trajectories"], 1)
+            self.assertEqual(payload["newly_processed_trajectories"], len(trajectories) - 1)
+            self.assertEqual(payload["num_trajectories"], len(trajectories))
+
+            saved_rollouts = json.loads(rollouts_output.read_text())
+            self.assertEqual(len(saved_rollouts), len(trajectories))
+
     def test_csv_loader_filters_out_of_scope_trajectory_in_strict_mode(self):
         csv_text = """trajectory_id,subject_id,hadm_id,stay_id,icu_intime,icu_outtime,icu_los_hours,is_sepsis,infection_start_time,organ_dysfunction_start_time,sepsis_start_time,infection_start_hour,organ_dysfunction_start_hour,sepsis_start_hour,t_hour,checkpoint_time,state_label,terminal
 mimiciv_stay_1,10,20,30,2150-01-01T00:00:00,2150-01-02T00:00:00,24,1,2150-01-01T02:00:00,2150-01-01T08:00:00,2150-01-01T12:00:00,4,8,12,0,2150-01-01T00:00:00,keep_monitoring,false
@@ -95,6 +417,250 @@ mimiciv_stay_2,11,21,31,2150-01-01T00:00:00,2150-01-02T00:00:00,24,1,2150-01-03T
             self.assertEqual(result.included_trajectories, 1)
             self.assertEqual(result.skipped_trajectories, 1)
             self.assertEqual(result.skipped_reasons["unsupported_labels"], 1)
+
+    def test_multitask_csv_loader_parses_task_labels(self):
+        csv_text = """trajectory_id,subject_id,hadm_id,stay_id,icu_intime,icu_outtime,icu_los_hours,sepsis_positive,aki_positive,respiratory_support_positive,infection_start_time,sepsis_start_time,aki_stage1_start_time,aki_stage23_start_time,medium_support_start_time,invasive_support_start_time,infection_start_hour,sepsis_start_hour,aki_stage1_start_hour,aki_stage23_start_hour,medium_support_start_hour,invasive_support_start_hour,t_hour,checkpoint_time,sepsis_label,aki_label,respiratory_support_label,sepsis_terminal,aki_terminal,respiratory_support_terminal,terminal_any
+mimiciv_stay_1,10,20,30,2150-01-01T00:00:00,2150-01-02T00:00:00,24,1,1,1,2150-01-01T01:00:00,2150-01-01T08:00:00,2150-01-01T02:00:00,2150-01-01T12:00:00,2150-01-01T04:00:00,2150-01-01T16:00:00,4,8,4,12,4,16,0,2150-01-01T00:00:00,keep_monitoring,keep_monitoring,room_air_or_low_support,false,false,false,false
+mimiciv_stay_1,10,20,30,2150-01-01T00:00:00,2150-01-02T00:00:00,24,1,1,1,2150-01-01T01:00:00,2150-01-01T08:00:00,2150-01-01T02:00:00,2150-01-01T12:00:00,2150-01-01T04:00:00,2150-01-01T16:00:00,4,8,4,12,4,16,4,2150-01-01T04:00:00,infection_suspect,suspect_aki,high_flow_or_noninvasive_support,false,false,false,false
+"""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            path = Path(tmpdir) / "multitask.csv"
+            path.write_text(csv_text)
+            result = load_multitask_csv_dataset(path)
+            self.assertEqual(result.included_trajectories, 1)
+            trajectory = result.trajectories[0]
+            self.assertEqual(trajectory.task_names, ["sepsis", "aki", "respiratory_support"])
+            self.assertEqual(
+                trajectory.checkpoints[1].task_labels,
+                {
+                    "sepsis": "infection_suspect",
+                    "aki": "suspect_aki",
+                    "respiratory_support": "high_flow_or_noninvasive_support",
+                },
+            )
+
+    def test_single_task_csv_loader_parses_aki_dataset(self):
+        csv_text = """trajectory_id,subject_id,hadm_id,stay_id,icu_intime,icu_outtime,icu_los_hours,aki_bucket,aki_stage1_start_time,aki_stage23_start_time,aki_stage1_start_hour,aki_stage23_start_hour,t_hour,checkpoint_time,state_label,terminal
+mimiciv_stay_1,10,20,30,2150-01-01T00:00:00,2150-01-02T00:00:00,24,stage23,2150-01-01T04:00:00,2150-01-01T08:00:00,4,8,0,2150-01-01T00:00:00,keep_monitoring,false
+mimiciv_stay_1,10,20,30,2150-01-01T00:00:00,2150-01-02T00:00:00,24,stage23,2150-01-01T04:00:00,2150-01-01T08:00:00,4,8,4,2150-01-01T04:00:00,suspect_aki,false
+"""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            path = Path(tmpdir) / "aki.csv"
+            path.write_text(csv_text)
+            result = load_single_task_csv_dataset(path, task_name="aki")
+            trajectory = result.trajectories[0]
+            self.assertEqual(trajectory.task_names, ["aki"])
+            self.assertEqual(trajectory.tool_names, ["query_kdigo_stage"])
+            self.assertEqual(trajectory.transitions["aki_stage23_start_hour"], 8)
+
+    def test_single_task_csv_loader_parses_respiratory_dataset(self):
+        csv_text = """trajectory_id,subject_id,hadm_id,stay_id,icu_intime,icu_outtime,icu_los_hours,resp_bucket,medium_support_start_time,invasive_start_time,medium_support_start_hour,invasive_support_start_hour,t_hour,checkpoint_time,state_label,terminal
+mimiciv_stay_1,10,20,30,2150-01-01T00:00:00,2150-01-02T00:00:00,24,high,2150-01-01T04:00:00,2150-01-01T08:00:00,4,8,0,2150-01-01T00:00:00,room_air_or_low_support,false
+mimiciv_stay_1,10,20,30,2150-01-01T00:00:00,2150-01-02T00:00:00,24,high,2150-01-01T04:00:00,2150-01-01T08:00:00,4,8,4,2150-01-01T04:00:00,high_flow_or_noninvasive_support,false
+"""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            path = Path(tmpdir) / "resp.csv"
+            path.write_text(csv_text)
+            result = load_single_task_csv_dataset(path, task_name="respiratory_support")
+            trajectory = result.trajectories[0]
+            self.assertEqual(trajectory.task_names, ["respiratory_support"])
+            self.assertEqual(trajectory.tool_names, ["query_ventilation_status"])
+            self.assertEqual(trajectory.transitions["invasive_support_start_hour"], 8)
+
+    def test_multitask_heuristic_run(self):
+        class StubRuntime:
+            def execute(self, tool_name, arguments):
+                t = arguments["t_hour"]
+                if tool_name == "query_suspicion_of_infection":
+                    return {"stay_id": 30, "t_hour": t, "has_suspected_infection": t >= 4}
+                if tool_name == "query_sofa":
+                    return {"stay_id": 30, "t_hour": t, "latest_sofa_24hours": 2 if t >= 8 else 1}
+                if tool_name == "query_kdigo_stage":
+                    return {
+                        "stay_id": 30,
+                        "t_hour": t,
+                        "latest_aki_stage_smoothed": 2 if t >= 8 else (1 if t >= 4 else 0),
+                    }
+                if tool_name == "query_ventilation_status":
+                    return {
+                        "stay_id": 30,
+                        "t_hour": t,
+                        "current_support_level": "room_air_or_low_support",
+                        "highest_support_level_so_far": (
+                            "invasive_vent_required"
+                            if t >= 8
+                            else ("high_flow_or_noninvasive_support" if t >= 4 else "room_air_or_low_support")
+                        ),
+                    }
+                raise ValueError(tool_name)
+
+        trajectory = Trajectory(
+            trajectory_id="mimiciv_stay_1",
+            stay_id=30,
+            subject_id=10,
+            hadm_id=20,
+            anchor="icu_intime",
+            step_hours=4,
+            horizon_hours=8,
+            transitions={},
+            checkpoints=[
+                Checkpoint(
+                    t_hour=0,
+                    task_labels={
+                        "sepsis": "keep_monitoring",
+                        "aki": "keep_monitoring",
+                        "respiratory_support": "room_air_or_low_support",
+                    },
+                ),
+                Checkpoint(
+                    t_hour=4,
+                    task_labels={
+                        "sepsis": "infection_suspect",
+                        "aki": "suspect_aki",
+                        "respiratory_support": "high_flow_or_noninvasive_support",
+                    },
+                ),
+                Checkpoint(
+                    t_hour=8,
+                    task_labels={
+                        "sepsis": "trigger_sepsis_alert",
+                        "aki": "trigger_aki_alert",
+                        "respiratory_support": "invasive_vent_required",
+                    },
+                ),
+            ],
+            task_name="multitask",
+            task_names=["sepsis", "aki", "respiratory_support"],
+            tool_names=[
+                "query_suspicion_of_infection",
+                "query_sofa",
+                "query_kdigo_stage",
+                "query_ventilation_status",
+            ],
+            label_spaces={
+                "sepsis": ["keep_monitoring", "infection_suspect", "trigger_sepsis_alert"],
+                "aki": ["keep_monitoring", "suspect_aki", "trigger_aki_alert"],
+                "respiratory_support": [
+                    "room_air_or_low_support",
+                    "high_flow_or_noninvasive_support",
+                    "invasive_vent_required",
+                ],
+            },
+        )
+        environment = BenchmarkEnvironment([trajectory], StubRuntime())
+        rollouts = environment.run_all(HeuristicAgent())
+        metrics = evaluate_rollouts([trajectory], rollouts)
+        self.assertIn("joint_step_accuracy", metrics)
+        self.assertEqual(metrics["joint_step_accuracy"], 1.0)
+
+    def test_single_task_aki_heuristic_run(self):
+        class StubRuntime:
+            def execute(self, tool_name, arguments):
+                t = arguments["t_hour"]
+                if tool_name == "query_kdigo_stage":
+                    return {
+                        "stay_id": 30,
+                        "t_hour": t,
+                        "latest_aki_stage_smoothed": 2 if t >= 8 else (1 if t >= 4 else 0),
+                    }
+                raise ValueError(tool_name)
+
+        trajectory = Trajectory(
+            trajectory_id="mimiciv_stay_1",
+            stay_id=30,
+            subject_id=10,
+            hadm_id=20,
+            anchor="icu_intime",
+            step_hours=4,
+            horizon_hours=8,
+            transitions={"aki_stage1_start_hour": 4, "aki_stage23_start_hour": 8},
+            checkpoints=[
+                Checkpoint(t_hour=0, state_label="keep_monitoring"),
+                Checkpoint(t_hour=4, state_label="suspect_aki"),
+                Checkpoint(t_hour=8, state_label="trigger_aki_alert"),
+            ],
+            task_name="aki",
+            task_names=["aki"],
+            tool_names=["query_kdigo_stage"],
+            label_spaces={"aki": ["keep_monitoring", "suspect_aki", "trigger_aki_alert"]},
+        )
+        environment = BenchmarkEnvironment([trajectory], StubRuntime(), task_mode="single")
+        rollout = environment.run_all(HeuristicAgent())[0]
+        self.assertEqual(
+            [step.predicted_action for step in rollout.steps],
+            ["keep_monitoring", "suspect_aki", "trigger_aki_alert"],
+        )
+        metrics = evaluate_rollouts([trajectory], [rollout])
+        self.assertEqual(metrics["task_name"], "aki")
+        self.assertIn("aki_suspect", metrics["transition_timing"])
+        self.assertIn("alert_predictions_grounded_rate", metrics["tool_grounding"])
+
+    def test_single_task_non_monotonic_aki_heuristic_run(self):
+        class StubRuntime:
+            def execute(self, tool_name, arguments):
+                t = arguments["t_hour"]
+                mapping = {0: 0, 4: 1, 8: 2, 12: 1}
+                if tool_name == "query_kdigo_stage":
+                    return {
+                        "stay_id": 30,
+                        "t_hour": t,
+                        "latest_aki_stage_smoothed": mapping[t],
+                    }
+                raise ValueError(tool_name)
+
+        trajectory = Trajectory(
+            trajectory_id="mimiciv_stay_1",
+            stay_id=30,
+            subject_id=10,
+            hadm_id=20,
+            anchor="icu_intime",
+            step_hours=4,
+            horizon_hours=12,
+            transitions={"path_family": "stage2_recovery_or_fluctuating", "path_0_24": "0>1>2>1"},
+            checkpoints=[
+                Checkpoint(t_hour=0, state_label="no_aki"),
+                Checkpoint(t_hour=4, state_label="aki_stage_1"),
+                Checkpoint(t_hour=8, state_label="aki_stage_2"),
+                Checkpoint(t_hour=12, state_label="aki_stage_1"),
+            ],
+            task_name="aki",
+            task_variant="non_monotonic_current_state",
+            task_names=["aki"],
+            tool_names=["query_kdigo_stage"],
+            label_spaces={"aki": ["no_aki", "aki_stage_1", "aki_stage_2", "aki_stage_3"]},
+        )
+        environment = BenchmarkEnvironment([trajectory], StubRuntime(), task_mode="single")
+        rollout = environment.run_all(HeuristicAgent())[0]
+        self.assertEqual(
+            [step.predicted_action for step in rollout.steps],
+            ["no_aki", "aki_stage_1", "aki_stage_2", "aki_stage_1"],
+        )
+        metrics = evaluate_rollouts([trajectory], [rollout])
+        self.assertEqual(metrics["task_variant"], "non_monotonic_current_state")
+        self.assertIn("state_change", metrics)
+        self.assertIn("stage2_predictions_grounded_rate", metrics["tool_grounding"])
+
+    def test_load_single_task_non_monotonic_aki_csv(self):
+        csv_text = """trajectory_id,subject_id,hadm_id,stay_id,icu_intime,icu_outtime,icu_los_hours,path_family,path_0_24,max_stage_24h,has_up_24h,has_down_24h,num_changes_24h,t_hour,checkpoint_time,current_aki_stage_smoothed,state_label,terminal
+mimiciv_stay_1,10,20,30,2150-01-01T00:00:00,2150-01-02T00:00:00,24,stage2_recovery_or_fluctuating,0>1>2>1,2,true,true,3,0,2150-01-01T00:00:00,0,no_aki,false
+mimiciv_stay_1,10,20,30,2150-01-01T00:00:00,2150-01-02T00:00:00,24,stage2_recovery_or_fluctuating,0>1>2>1,2,true,true,3,4,2150-01-01T04:00:00,1,aki_stage_1,false
+"""
+        with tempfile.TemporaryDirectory() as temp_dir:
+            path = Path(temp_dir) / "rolling_aki_non_monotonic.csv"
+            path.write_text(csv_text)
+            result = load_single_task_csv_dataset(path, task_name="aki")
+        self.assertEqual(result.included_trajectories, 1)
+        trajectory = result.trajectories[0]
+        self.assertEqual(trajectory.task_variant, "non_monotonic_current_state")
+        self.assertEqual(trajectory.label_spaces["aki"], ["no_aki", "aki_stage_1", "aki_stage_2", "aki_stage_3"])
+
+    def test_environment_rejects_task_mode_mismatch(self):
+        concepts = load_concept_tables(SAMPLE)
+        trajectory = build_dataset(concepts)[0]
+        runtime = ConceptToolRuntime(concepts)
+        environment = BenchmarkEnvironment([trajectory], runtime, task_mode="multitask")
+        with self.assertRaises(ValueError):
+            environment.run_all(HeuristicAgent())
 
 
 if __name__ == "__main__":

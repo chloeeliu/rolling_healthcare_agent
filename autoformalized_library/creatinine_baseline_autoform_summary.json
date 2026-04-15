@@ -1,0 +1,47 @@
+{
+  "timestamp": "2026-03-25T14:29:00.445588",
+  "model": "Qwen/Qwen3.5-27B",
+  "db_path": "/home/v-tiossowski/MIMIC-IV/mimic4.db",
+  "qa_dataset": "/home/v-tiossowski/HealthcareAgent/mimic-code/data/MIMICIV_creatinine_baseline_dataset/creatinine_baseline.csv",
+  "match_threshold": 0.9,
+  "run_name": "creatinine_baseline",
+  "success": true,
+  "iterations": 51,
+  "qa_accuracy": 1.0,
+  "stats": {
+    "react": {
+      "prompt_tokens": 0,
+      "completion_tokens": 0,
+      "total_tokens": 0,
+      "llm_calls": 53,
+      "query_count": 258,
+      "query_time_sec": 1.604,
+      "wall_time_sec": 2904.149
+    },
+    "qa": {
+      "prompt_tokens": 38484,
+      "completion_tokens": 5671,
+      "total_tokens": 44155,
+      "llm_calls": 40,
+      "query_count": 120,
+      "query_time_sec": 0.779,
+      "eval_wall_time_sec": 29.241,
+      "per_question": {
+        "avg_prompt_tokens": 1924.2,
+        "avg_completion_tokens": 283.6,
+        "avg_llm_calls": 2.0,
+        "avg_query_count": 6.0,
+        "avg_query_time_sec": 0.039,
+        "avg_wall_time_sec": 1.462
+      }
+    },
+    "total": {
+      "prompt_tokens": 38484,
+      "completion_tokens": 5671,
+      "total_tokens": 44155,
+      "llm_calls": 93,
+      "query_count": 378,
+      "query_time_sec": 2.383
+    }
+  }
+}

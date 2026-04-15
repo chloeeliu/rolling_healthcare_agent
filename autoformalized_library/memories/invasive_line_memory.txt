@@ -1,0 +1,46 @@
+=== Step 1 ===
+# Clinical Coding Agent Memory
+
+## Schema Facts
+
+### Tables
+- **mimiciv_icu.d_items**: itemid (INTEGER), label (VARCHAR), abbreviation (VARCHAR), linksto (VARCHAR), category (VARCHAR), unitname (VARCHAR), param_type (VARCHAR), lownormalvalue (FLOAT), highnormalvalue (FLOAT)
+- **mimiciv_icu.chartevents**: subject_id (INTEGER), hadm_id (INTEGER), stay_id (INTEGER), caregiver_id (INTEGER), charttime (TIMESTAMP), storetime (TIMESTAMP), itemid (INTEGER), value (VARCHAR), valuenum (FLOAT), valueuom (VARCHAR), warning (SMALLINT)
+- **mimiciv_icu.icustays**: subject_id (INTEGER), hadm_id (INTEGER), stay_id (INTEGER), first_careunit (VARCHAR), last_careunit (VARCHAR), intime (TIMESTAMP), outtime (TIMESTAMP), los (FLOAT)
+
+### Invasive Line ItemIDs (Access Lines - Invasive category)
+
+| Line Type | Base ItemID | Outside Facility | Site Appear | Placement Confirmed | Waveform Appear |
+|-----------|-------------|------------------|-------------|---------------------|-----------------|
+| Arterial Line | 225752 (no events) | 226107 | 224289 | - | 224291 |
+| Multi Lumen (CVL) | 224263 (no events) | 226113 | 224281 | 227756 | 224283 |
+| CCO PAC | 224269 (no events) | 226108 | 225225 | 227751 | 225227 |
+| PA Catheter | - | 226114 | 225355 | 227757 | 225357 |
+| PICC Line | 224264 | 226115 | 224188 | 227759 | - |
+| Dialysis Catheter | 224270 | 226118 | 225323 | 227753 | - |
+| IABP line | 224272 | 226110 | - | 227754 | - |
+| ICP Catheter | 226124 | 226129 | - | - | - |
+| Cordis/Introducer | 224267 | 226109 | 224297 | 227752 | - |
+| Triple Introducer | 225199 | 226120 | 225395 | 227763 | 225397 |
+
+### Value Patterns
+- **placed in outside facility**: valuenum 0 (not placed outside) or 1 (placed outside)
+- **Site Appear**: value 'WNL', 'Oozing', 'Bleeding', 'Ecchymotic', 'Redness', 'Drainage', 'Hematoma', 'Swelling', 'Pain', 'Erythematous', 'Old blood', 'Purulent drainage', 'Infiltrated', 'Not assessed'
+- **Placement Confirmed by X-ray**: value 'Post line placement', 'On admission', 'Not applicable'
+- **Waveform Appear**: value 'Sharp', 'Dampened', 'Positional', 'Fling', 'Overshoot', 'Not assessed', 'Unable to Wedge'
+
+### Error Fixes
+- **Step 7**: Initial query failed with `_duckdb.BinderException: Binder Error: Referenced column "component" not found` - Fixed by removing non-existent `component` column from SELECT clause
+
+### Available Guidelines
+- acidosis_guideline, acute_decompensated_heart_failure_guideline, acute_hepatic_failure_guideline, adverse_effect_of_anticoagulants_guideline, alcohol_withdrawal_syndrome_guideline, anemia_icu_critically_ill_hemoglobin_transfusion_guideline, apache_iii_guideline, atrial_fibrillation_guideline, bradycardia_guideline, cerebral_infarction_guideline, coma_altered_consciousness_icu_guideline, copd_exacerbation_guideline, coronary_artery_disease_guideline, deep_vein_thrombosis_guideline, elevated_white_blood_cell_count_guideline, epilepsy_guideline, escherichia_coli_infection_guideline, gastrointestinal_bleeding_guideline, hypothyroidism_guideline, hypovolemia_guideline (+24 more)
+
+### Available Functions
+- acei, age, antibiotic, arb, bg, blood_differential, cardiac_marker, chemistry, coagulation, code_status, complete_blood_count, crrt, dobutamine, dopamine, enzyme, epinephrine, gcs, height, icp, icustay_detail (+12 more)
+
+### Key Finding
+Base line items (e.g., Arterial Line 225752, Multi Lumen 224263, CCO PAC 224269) have **zero chartevents**. Line presence must be inferred from related items (Site Appear, Placement Confirmed, placed in outside facility, etc.).
+
+## Function Source Code
+*No functions defined yet - exploration phase only*
+

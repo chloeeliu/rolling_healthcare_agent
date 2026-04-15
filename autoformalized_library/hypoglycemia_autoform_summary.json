@@ -1,0 +1,47 @@
+{
+  "timestamp": "2026-03-26T02:16:16.995360",
+  "model": "Qwen/Qwen3.5-27B",
+  "db_path": "/home/v-tiossowski/MIMIC-IV/mimic4.db",
+  "qa_dataset": "/home/v-tiossowski/HealthcareAgent/mimic-code/data/MIMICIV_hypoglycemia_dataset/hypoglycemia.csv",
+  "match_threshold": 0.9,
+  "run_name": "hypoglycemia",
+  "success": true,
+  "iterations": 30,
+  "qa_accuracy": 0.9,
+  "stats": {
+    "react": {
+      "prompt_tokens": 0,
+      "completion_tokens": 0,
+      "total_tokens": 0,
+      "llm_calls": 30,
+      "query_count": 30,
+      "query_time_sec": 1.685,
+      "wall_time_sec": 630.455
+    },
+    "qa": {
+      "prompt_tokens": 57821,
+      "completion_tokens": 7140,
+      "total_tokens": 64961,
+      "llm_calls": 40,
+      "query_count": 60,
+      "query_time_sec": 0.941,
+      "eval_wall_time_sec": 44.267,
+      "per_question": {
+        "avg_prompt_tokens": 2891.1,
+        "avg_completion_tokens": 357.0,
+        "avg_llm_calls": 2.0,
+        "avg_query_count": 3.0,
+        "avg_query_time_sec": 0.047,
+        "avg_wall_time_sec": 2.213
+      }
+    },
+    "total": {
+      "prompt_tokens": 57821,
+      "completion_tokens": 7140,
+      "total_tokens": 64961,
+      "llm_calls": 70,
+      "query_count": 90,
+      "query_time_sec": 2.626
+    }
+  }
+}

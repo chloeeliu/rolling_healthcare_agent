@@ -1,0 +1,646 @@
+=== Step 1 ===
+# Clinical Coding Agent Memory
+
+## Schema Facts
+
+### Tables
+- **mimiciv_icu.inputevents**: stay_id, itemid, starttime, amount, amountuom, rate, rateuom, patientweight
+- **mimiciv_icu.d_items**: itemid, label, category, linksto
+
+### Vasopressor ItemIDs
+| Drug | ItemID | Units |
+|------|--------|-------|
+| Norepinephrine | 221906 | mcg/kg/min |
+| Epinephrine | 221289 | mcg/kg/min |
+| Dopamine | 221662 | mcg/kg/min |
+| Vasopressin | 222315 | units/hour |
+| Phenylephrine | 221749 | mcg/kg/min |
+| Dobutamine | 221653 | mcg/kg/min |
+
+### Conversion Factors (Clinical Knowledge)
+- Vasopressin: 0.04 units/hour ≈ 1 mcg/kg/min norepinephrine equivalent
+- Catecholamines (norepinephrine, epinephrine, dopamine, phenylephrine): 1:1 mcg/kg/min
+
+## Available Functions
+
+### get_norepinephrine_info(stay_id)
+```python
+def get_norepinephrine_info(stay_id):
+    """
+    Extract norepinephrine infusion information for a patient's ICU stay.
+
+    This function queries the MIMIC-IV database to retrieve norepinephrine medication
+    administration data for a specific ICU stay. Norepinephrine is a vasopressor
+    used to treat hypotension and shock.
+
+    Parameters:
+    -----------
+    stay_id : int
+        The ICU stay identifier for the patient.
+
+    Returns:
+    --------
+    dict
+        A dictionary containing the following keys:
+        - 'received_norepinephrine': bool - Whether the patient received norepinephrine during this stay
+        - 'max_rate': float - Maximum norepinephrine infusion rate (mcg/kg/min), rounded to 2 decimals
+                         Returns 0.0 if no norepinephrine was received
+        - 'min_rate': float - Minimum norepinephrine infusion rate (mcg/kg/min), rounded to 2 decimals
+                         Returns 0.0 if no norepinephrine was received
+        - 'avg_rate': float - Average norepinephrine infusion rate (mcg/kg/min), rounded to 2 decimals
+                         Returns 0.0 if no norepinephrine was received
+        - 'received_high_dose': bool - Whether patient received high-dose norepinephrine (>0.25 mcg/kg/min)
+        - 'num_records': int - Number of norepinephrine infusion records
+        - 'first_time': datetime or None - First norepinephrine administration time
+        - 'last_time': datetime or None - Last norepinephrine administration time
+        - 'subject_id': int or None - Patient subject ID
+        - 'hadm_id': int or None - Hospital admission ID
+
+    Example:
+    --------
+    >>> info = get_norepinephrine_info(39602181)
+    >>> info['received_norepinephrine']
+    True
+    >>> info['max_rate']
+    0.66
+    >>> info['received_high_dose']
+    True
+    """
+```
+
+### get_vasopressin_info(stay_id)
+```python
+def get_vasopressin_info(stay_id):
+    """
+    Extract vasopressin infusion information for a patient's ICU stay.
+
+    This function queries the MIMIC-IV database to retrieve vasopressin medication
+    administration data for a specific ICU stay. Vasopressin is a vasopressor
+    used to treat hypotension and shock, often as an adjunct to other vasopressors.
+
+    Parameters:
+    -----------
+    stay_id : int
+        The ICU stay identifier for the patient.
+
+    Returns:
+    --------
+    dict
+        A dictionary containing the following keys:
+        - 'received_vasopressin': bool - Whether the patient received vasopressin during this stay
+        - 'max_rate': float - Maximum vasopressin infusion rate (units/hour), rounded to 2 decimals
+                         Returns 0.0 if no vasopressin was received
+        - 'min_rate': float - Minimum vasopressin infusion rate (units/hour), rounded to 2 decimals
+                         Returns 0.0 if no vasopressin was received
+        - 'avg_rate': float - Average vasopressin infusion rate (units/hour), rounded to 2 decimals
+                         Returns 0.0 if no vasopressin was received
+        - 'used_as_adjunct': bool - Whether vasopressin was used alongside other vasopressors
+                                   (norepinephrine, epinephrine, dopamine, or phenylephrine)
+        - 'num_records': int - Number of vasopressin infusion records
+        - 'first_time': datetime or None - First vasopressin administration time
+        - 'last_time': datetime or None - Last vasopressin administration time
+        - 'subject_id': int or None - Patient subject ID
+        - 'hadm_id': int or None - Hospital admission ID
+
+    Example:
+    --------
+    >>> info = get_vasopressin_info(32969947)
+    >>> info['received_vasopressin']
+    True
+    >>> info['max_rate']
+    2.41
+    >>> info['used_as_adjunct']
+    True
+    """
+```
+
+### get_epinephrine_info(stay_id)
+```python
+def get_epinephrine_info(stay_id):
+    """
+    Extract epinephrine infusion information for a patient's ICU stay.
+
+    This function queries the MIMIC-IV database to retrieve epinephrine medication
+    administration data for a specific ICU stay. Epinephrine is a vasopressor and
+    inotropic agent used to treat hypotension, cardiac arrest, and shock.
+
+    Parameters:
+    -----------
+    stay_id : int
+        The ICU stay identifier for the patient.
+
+    Returns:
+    --------
+    dict
+        A dictionary containing the following keys:
+        - 'received_epinephrine': bool - Whether the patient received epinephrine during this stay
+        - 'max_rate': float - Maximum epinephrine infusion rate (mcg/kg/min), rounded to 2 decimals
+                         Returns 0.0 if no epinephrine was received
+        - 'min_rate': float - Minimum epinephrine infusion rate (mcg/kg/min), rounded to 2 decimals
+                         Returns 0.0 if no epinephrine was received
+        - 'avg_rate': float - Average epinephrine infusion rate (mcg/kg/min), rounded to 2 decimals
+                         Returns 0.0 if no epinephrine was received
+        - 'received_high_dose': bool - Whether patient received high-dose epinephrine (>0.1 mcg/kg/min)
+        - 'num_records': int - Number of epinephrine infusion records
+        - 'first_time': datetime or None - First epinephrine administration time
+        - 'last_time': datetime or None - Last epinephrine administration time
+        - 'subject_id': int or None - Patient subject ID
+        - 'hadm_id': int or None - Hospital admission ID
+
+    Example:
+    --------
+    >>> info = get_epinephrine_info(31831386)
+    >>> info['received_epinephrine']
+    True
+    >>> info['max_rate']
+    0.02
+    >>> info['received_high_dose']
+    False
+    """
+```
+
+### get_dopamine_info(stay_id)
+```python
+def get_dopamine_info(stay_id):
+    """
+    Extract dopamine infusion information for a patient's ICU stay.
+
+    This function queries the MIMIC-IV database to retrieve dopamine medication
+    administration data for a specific ICU stay. Dopamine is a vasopressor and
+    inotropic agent used to treat hypotension and shock.
+
+    Parameters:
+    -----------
+    stay_id : int
+        The ICU stay identifier for the patient.
+
+    Returns:
+    --------
+    dict
+        A dictionary containing the following keys:
+        - 'received_dopamine': bool - Whether the patient received dopamine during this stay
+        - 'max_rate': float - Maximum dopamine infusion rate (mcg/kg/min), rounded to 2 decimals
+                         Returns 0.0 if no dopamine was received
+        - 'min_rate': float - Minimum dopamine infusion rate (mcg/kg/min), rounded to 2 decimals
+                         Returns 0.0 if no dopamine was received
+        - 'avg_rate': float - Average dopamine infusion rate (mcg/kg/min), rounded to 2 decimals
+                         Returns 0.0 if no dopamine was received
+        - 'received_high_dose': bool - Whether patient received high-dose dopamine (>10 mcg/kg/min)
+        - 'num_records': int - Number of dopamine infusion records
+        - 'first_time': datetime or None - First dopamine administration time
+        - 'last_time': datetime or None - Last dopamine administration time
+        - 'subject_id': int or None - Patient subject ID
+        - 'hadm_id': int or None - Hospital admission ID
+
+    Example:
+    --------
+    >>> info = get_dopamine_info(37510196)
+    >>> info['received_dopamine']
+    True
+    >>> info['max_rate']
+    10.01
+    >>> info['received_high_dose']
+    True
+    """
+```
+
+### get_vasoactive_agent_info(stay_id)
+```python
+def get_vasoactive_agent_info(stay_id):
+    """
+    Extract vasoactive agent infusion information for a patient's ICU stay.
+
+    This function queries the MIMIC-IV database to retrieve vasoactive medication
+    administration data for a specific ICU stay. Vasoactive agents include:
+    - Vasopressors: Norepinephrine, Epinephrine, Dopamine, Phenylephrine, Vasopressin
+    - Inotropes: Dobutamine, Milrinone
+
+    Parameters:
+    -----------
+    stay_id : int
+        The ICU stay identifier for the patient.
+
+    Returns:
+    --------
+    dict
+        A dictionary containing the following keys:
+        - 'received_vasoactive': bool - Whether the patient received any vasoactive agent
+        - 'agents_received': list - List of vasoactive agent names received
+        - 'agent_details': dict - Detailed info for each agent (min/max/avg rate, timing)
+        - 'max_combined_rate': float - Maximum rate across all agents (for comparison)
+        - 'num_total_records': int - Total number of vasoactive infusion records
+        - 'first_time': datetime or None - First vasoactive administration time
+        - 'last_time': datetime or None - Last vasoactive administration time
+        - 'subject_id': int or None - Patient subject ID
+        - 'hadm_id': int or None - Hospital admission ID
+    """
+```
+
+## Test Results
+
+### Sample Stay 39602181
+- **Norepinephrine**: received=True, max_rate=0.66 mcg/kg/min, min_rate=0.03, avg_rate=0.13, high_dose=True, 25 records
+- **Vasopressin**: received=True, max_rate=2.46 units/hour, min_rate=1.2, avg_rate=2.26, used_as_adjunct=True, 8 records
+- **Phenylephrine**: received=True, max_rate=23.87 mcg/kg/min, min_rate=1.0, avg_rate=3.6, 156 records
+- **Vasoactive Agent Summary**: agents=['Norepinephrine', 'Vasopressin', 'Phenylephrine'], max_combined_rate=23.87
+
+## Guideline Information
+
+### shock_guideline Key Points
+- **Septic Shock Criteria (Sepsis-3)**: Sepsis + vasopressor to maintain MAP ≥ 65 mm Hg + lactate > 2 mmol/L post-resuscitation
+- **Vasopressor Equivalency**: Vasopressin equivalents should be documented but do not directly increment SOFA score
+- **SOFA Cardiovascular Subscore**: Only catecholamines (dopamine, dobutamine, epinephrine, norepinephrine) are scored
+- **Non-catecholamine vasopressors** (vasopressin, phenylephrine, angiotensin II) create a scoring gap
+
+## Notes
+- Source code for functions could not be retrieved via inspect.getsource() - only docstrings available
+- Standard conversion factor: 0.04 units/hour vasopressin ≈ 1 mcg/kg/min norepinephrine equivalent
+- Patient weight available in inputevents table for dose calculations
+
+=== Step 2 ===
+# Clinical Coding Agent Memory
+
+## Schema Facts
+
+### Tables
+- **mimiciv_icu.inputevents**: stay_id, itemid, starttime, amount, amountuom, rate, rateuom, patientweight
+- **mimiciv_icu.d_items**: itemid, label, category, linksto
+- **mimiciv_icu.icustays**: stay_id, subject_id, hadm_id
+
+### Vasopressor ItemIDs
+| Drug | ItemID | Units | Conversion Factor |
+|------|--------|-------|-------------------|
+| Norepinephrine | 221906 | mcg/kg/min | 1.0 |
+| Epinephrine | 221289 | mcg/kg/min | 1.0 |
+| Dopamine | 221662 | mcg/kg/min | 1.0 |
+| Vasopressin | 222315 | units/hour | 25.0 |
+| Phenylephrine | 221749 | mcg/kg/min | 0.1 |
+| Dobutamine | 221653 | mcg/kg/min | 1.0 |
+
+### Conversion Factors (Clinical Knowledge)
+- Vasopressin: 0.04 units/hour ≈ 1 mcg/kg/min norepinephrine equivalent (factor: 25.0)
+- Catecholamines (norepinephrine, epinephrine, dopamine): 1:1 mcg/kg/min (factor: 1.0)
+- Phenylephrine: 0.1 mcg/kg/min NE equivalent per mcg/kg/min (factor: 0.1)
+
+## Available Functions
+
+### get_norepinephrine_info(stay_id)
+```python
+def get_norepinephrine_info(stay_id):
+    """
+    Extract norepinephrine infusion information for a patient's ICU stay.
+
+    This function queries the MIMIC-IV database to retrieve norepinephrine medication
+    administration data for a specific ICU stay. Norepinephrine is a vasopressor
+    used to treat hypotension and shock.
+
+    Parameters:
+    -----------
+    stay_id : int
+        The ICU stay identifier for the patient.
+
+    Returns:
+    --------
+    dict
+        A dictionary containing the following keys:
+        - 'received_norepinephrine': bool - Whether the patient received norepinephrine during this stay
+        - 'max_rate': float - Maximum norepinephrine infusion rate (mcg/kg/min), rounded to 2 decimals
+                         Returns 0.0 if no norepinephrine was received
+        - 'min_rate': float - Minimum norepinephrine infusion rate (mcg/kg/min), rounded to 2 decimals
+                         Returns 0.0 if no norepinephrine was received
+        - 'avg_rate': float - Average norepinephrine infusion rate (mcg/kg/min), rounded to 2 decimals
+                         Returns 0.0 if no norepinephrine was received
+        - 'received_high_dose': bool - Whether patient received high-dose norepinephrine (>0.25 mcg/kg/min)
+        - 'num_records': int - Number of norepinephrine infusion records
+        - 'first_time': datetime or None - First norepinephrine administration time
+        - 'last_time': datetime or None - Last norepinephrine administration time
+        - 'subject_id': int or None - Patient subject ID
+        - 'hadm_id': int or None - Hospital admission ID
+
+    Example:
+    --------
+    >>> info = get_norepinephrine_info(39602181)
+    >>> info['received_norepinephrine']
+    True
+    >>> info['max_rate']
+    0.66
+    >>> info['received_high_dose']
+    True
+    """
+```
+
+### get_vasopressin_info(stay_id)
+```python
+def get_vasopressin_info(stay_id):
+    """
+    Extract vasopressin infusion information for a patient's ICU stay.
+
+    This function queries the MIMIC-IV database to retrieve vasopressin medication
+    administration data for a specific ICU stay. Vasopressin is a vasopressor
+    used to treat hypotension and shock, often as an adjunct to other vasopressors.
+
+    Parameters:
+    -----------
+    stay_id : int
+        The ICU stay identifier for the patient.
+
+    Returns:
+    --------
+    dict
+        A dictionary containing the following keys:
+        - 'received_vasopressin': bool - Whether the patient received vasopressin during this stay
+        - 'max_rate': float - Maximum vasopressin infusion rate (units/hour), rounded to 2 decimals
+                         Returns 0.0 if no vasopressin was received
+        - 'min_rate': float - Minimum vasopressin infusion rate (units/hour), rounded to 2 decimals
+                         Returns 0.0 if no vasopressin was received
+        - 'avg_rate': float - Average vasopressin infusion rate (units/hour), rounded to 2 decimals
+                         Returns 0.0 if no vasopressin was received
+        - 'used_as_adjunct': bool - Whether vasopressin was used alongside other vasopressors
+                                   (norepinephrine, epinephrine, dopamine, or phenylephrine)
+        - 'num_records': int - Number of vasopressin infusion records
+        - 'first_time': datetime or None - First vasopressin administration time
+        - 'last_time': datetime or None - Last vasopressin administration time
+        - 'subject_id': int or None - Patient subject ID
+        - 'hadm_id': int or None - Hospital admission ID
+
+    Example:
+    --------
+    >>> info = get_vasopressin_info(32969947)
+    >>> info['received_vasopressin']
+    True
+    >>> info['max_rate']
+    2.41
+    >>> info['used_as_adjunct']
+    True
+    """
+```
+
+### get_epinephrine_info(stay_id)
+```python
+def get_epinephrine_info(stay_id):
+    """
+    Extract epinephrine infusion information for a patient's ICU stay.
+
+    This function queries the MIMIC-IV database to retrieve epinephrine medication
+    administration data for a specific ICU stay. Epinephrine is a vasopressor and
+    inotropic agent used to treat hypotension, cardiac arrest, and shock.
+
+    Parameters:
+    -----------
+    stay_id : int
+        The ICU stay identifier for the patient.
+
+    Returns:
+    --------
+    dict
+        A dictionary containing the following keys:
+        - 'received_epinephrine': bool - Whether the patient received epinephrine during this stay
+        - 'max_rate': float - Maximum epinephrine infusion rate (mcg/kg/min), rounded to 2 decimals
+                         Returns 0.0 if no epinephrine was received
+        - 'min_rate': float - Minimum epinephrine infusion rate (mcg/kg/min), rounded to 2 decimals
+                         Returns 0.0 if no epinephrine was received
+        - 'avg_rate': float - Average epinephrine infusion rate (mcg/kg/min), rounded to 2 decimals
+                         Returns 0.0 if no epinephrine was received
+        - 'received_high_dose': bool - Whether patient received high-dose epinephrine (>0.1 mcg/kg/min)
+        - 'num_records': int - Number of epinephrine infusion records
+        - 'first_time': datetime or None - First epinephrine administration time
+        - 'last_time': datetime or None - Last epinephrine administration time
+        - 'subject_id': int or None - Patient subject ID
+        - 'hadm_id': int or None - Hospital admission ID
+
+    Example:
+    --------
+    >>> info = get_epinephrine_info(31831386)
+    >>> info['received_epinephrine']
+    True
+    >>> info['max_rate']
+    0.02
+    >>> info['received_high_dose']
+    False
+    """
+```
+
+### get_dopamine_info(stay_id)
+```python
+def get_dopamine_info(stay_id):
+    """
+    Extract dopamine infusion information for a patient's ICU stay.
+
+    This function queries the MIMIC-IV database to retrieve dopamine medication
+    administration data for a specific ICU stay. Dopamine is a vasopressor and
+    inotropic agent used to treat hypotension and shock.
+
+    Parameters:
+    -----------
+    stay_id : int
+        The ICU stay identifier for the patient.
+
+    Returns:
+    --------
+    dict
+        A dictionary containing the following keys:
+        - 'received_dopamine': bool - Whether the patient received dopamine during this stay
+        - 'max_rate': float - Maximum dopamine infusion rate (mcg/kg/min), rounded to 2 decimals
+                         Returns 0.0 if no dopamine was received
+        - 'min_rate': float - Minimum dopamine infusion rate (mcg/kg/min), rounded to 2 decimals
+                         Returns 0.0 if no dopamine was received
+        - 'avg_rate': float - Average dopamine infusion rate (mcg/kg/min), rounded to 2 decimals
+                         Returns 0.0 if no dopamine was received
+        - 'received_high_dose': bool - Whether patient received high-dose dopamine (>10 mcg/kg/min)
+        - 'num_records': int - Number of dopamine infusion records
+        - 'first_time': datetime or None - First dopamine administration time
+        - 'last_time': datetime or None - Last dopamine administration time
+        - 'subject_id': int or None - Patient subject ID
+        - 'hadm_id': int or None - Hospital admission ID
+
+    Example:
+    --------
+    >>> info = get_dopamine_info(37510196)
+    >>> info['received_dopamine']
+    True
+    >>> info['max_rate']
+    10.01
+    >>> info['received_high_dose']
+    True
+    """
+```
+
+### get_vasoactive_agent_info(stay_id)
+```python
+def get_vasoactive_agent_info(stay_id):
+    """
+    Extract vasoactive agent infusion information for a patient's ICU stay.
+
+    This function queries the MIMIC-IV database to retrieve vasoactive medication
+    administration data for a specific ICU stay. Vasoactive agents include:
+    - Vasopressors: Norepinephrine, Epinephrine, Dopamine, Phenylephrine, Vasopressin
+    - Inotropes: Dobutamine, Milrinone
+
+    Parameters:
+    -----------
+    stay_id : int
+        The ICU stay identifier for the patient.
+
+    Returns:
+    --------
+    dict
+        A dictionary containing the following keys:
+        - 'received_vasoactive': bool - Whether the patient received any vasoactive agent
+        - 'agents_received': list - List of vasoactive agent names received
+        - 'agent_details': dict - Detailed info for each agent (min/max/avg rate, timing)
+        - 'max_combined_rate': float - Maximum rate across all agents (for comparison)
+        - 'num_total_records': int - Total number of vasoactive infusion records
+        - 'first_time': datetime or None - First vasoactive administration time
+        - 'last_time': datetime or None - Last vasoactive administration time
+        - 'subject_id': int or None - Patient subject ID
+        - 'hadm_id': int or None - Hospital admission ID
+    """
+```
+
+### compute_norepinephrine_equivalent_dose(stay_id)
+```python
+import pandas as pd
+
+def compute_norepinephrine_equivalent_dose(stay_id):
+    """
+    Calculate the norepinephrine equivalent dose for a patient's ICU stay.
+    
+    Conversion factors:
+    - Norepinephrine, Epinephrine, Dopamine: 1:1 mcg/kg/min
+    - Phenylephrine: 0.1 mcg/kg/min NE equivalent per mcg/kg/min
+    - Vasopressin: 0.04 units/hour ≈ 1 mcg/kg/min norepinephrine equivalent
+      (i.e., 1 units/hour vasopressin = 25 mcg/kg/min NE equivalent)
+    
+    Parameters:
+    -----------
+    stay_id : int
+        The ICU stay identifier for the patient.
+    
+    Returns:
+    --------
+    dict
+        A dictionary containing:
+        - 'max_ne_equivalent': float - Maximum norepinephrine equivalent dose (mcg/kg/min)
+        - 'min_ne_equivalent': float - Minimum norepinephrine equivalent dose (mcg/kg/min)
+        - 'avg_ne_equivalent': float - Average norepinephrine equivalent dose (mcg/kg/min)
+        - 'received_vasopressors': bool - Whether any vasopressors were received
+        - 'agents_used': list - List of vasopressor agents used
+        - 'subject_id': int or None - Patient subject ID
+        - 'hadm_id': int or None - Hospital admission ID
+    """
+    
+    # Vasopressor item IDs and their conversion factors
+    # Format: itemid: (label, conversion_factor)
+    vasopressors = {
+        221906: ('Norepinephrine', 1.0),      # 1:1
+        221289: ('Epinephrine', 1.0),         # 1:1
+        221662: ('Dopamine', 1.0),            # 1:1
+        221749: ('Phenylephrine', 0.1),       # 0.1 conversion
+        222315: ('Vasopressin', 25.0),        # 0.04 units/hr = 1 mcg/kg/min NE
+    }
+    
+    # Query all vasopressor infusions for this stay
+    itemids = list(vasopressors.keys())
+    itemid_str = ','.join(map(str, itemids))
+    
+    sql = f"""
+    SELECT ie.itemid, ie.starttime, ie.rate, ie.rateuom
+    FROM mimiciv_icu.inputevents ie
+    WHERE ie.stay_id = {stay_id}
+      AND ie.itemid IN ({itemid_str})
+      AND ie.rate IS NOT NULL
+    ORDER BY ie.starttime
+    """
+    
+    df = query_db(sql)
+    
+    if df.empty:
+        return {
+            'max_ne_equivalent': 0.0,
+            'min_ne_equivalent': 0.0,
+            'avg_ne_equivalent': 0.0,
+            'received_vasopressors': False,
+            'agents_used': [],
+            'subject_id': None,
+            'hadm_id': None
+        }
+    
+    # Get patient info
+    patient_info_sql = f"""
+    SELECT subject_id, hadm_id
+    FROM mimiciv_icu.icustays
+    WHERE stay_id = {stay_id}
+    LIMIT 1
+    """
+    patient_info = query_db(patient_info_sql)
+    subject_id = int(patient_info['subject_id'].iloc[0]) if not patient_info.empty else None
+    hadm_id = int(patient_info['hadm_id'].iloc[0]) if not patient_info.empty else None
+    
+    # Convert rates to norepinephrine equivalents
+    df['label'] = df['itemid'].map(lambda x: vasopressors[x][0])
+    df['ne_equivalent'] = df.apply(
+        lambda row: row['rate'] * vasopressors[row['itemid']][1], 
+        axis=1
+    )
+    
+    # Track which agents were used
+    agents_used = df['label'].unique().tolist()
+    
+    # Calculate summary statistics
+    max_ne = float(df['ne_equivalent'].max())
+    min_ne = float(df['ne_equivalent'].min())
+    avg_ne = float(df['ne_equivalent'].mean())
+    
+    return {
+        'max_ne_equivalent': round(max_ne, 2),
+        'min_ne_equivalent': round(min_ne, 2),
+        'avg_ne_equivalent': round(avg_ne, 2),
+        'received_vasopressors': True,
+        'agents_used': agents_used,
+        'subject_id': subject_id,
+        'hadm_id': hadm_id
+    }
+```
+
+## Test Results
+
+### Sample Stay 39602181
+- **Norepinephrine**: received=True, max_rate=0.66 mcg/kg/min, min_rate=0.03, avg_rate=0.13, high_dose=True, 25 records
+- **Vasopressin**: received=True, max_rate=2.46 units/hour, min_rate=1.2, avg_rate=2.26, used_as_adjunct=True, 8 records
+- **Phenylephrine**: received=True, max_rate=23.87 mcg/kg/min, min_rate=1.0, avg_rate=3.6, 156 records
+- **Vasoactive Agent Summary**: agents=['Norepinephrine', 'Vasopressin', 'Phenylephrine'], max_combined_rate=23.87
+- **NE Equivalent Dose**: max=61.41, agents=['Phenylephrine', 'Norepinephrine', 'Vasopressin']
+
+### Additional Test Cases
+| Stay ID | Description | max_ne_equivalent | agents_used | received |
+|---------|-------------|-------------------|-------------|----------|
+| 33181880 | Epinephrine + Vasopressin | 527.88 | ['Norepinephrine', 'Epinephrine', 'Vasopressin'] | True |
+| 39017077 | Dopamine only | 4000.0 | ['Dopamine'] | True |
+| 39553978 | No vasopressors | 0.0 | [] | False |
+| 35847409 | Phenylephrine + Norepinephrine | 0.07 | ['Phenylephrine', 'Norepinephrine'] | True |
+| 36609398 | Phenylephrine only | 0.1 | ['Phenylephrine'] | True |
+| 31571060 | Phenylephrine only | 0.04 | ['Phenylephrine'] | True |
+| 31753439 | No data | 0.0 | [] | False |
+
+## Error Fixes
+
+1. **Table name correction**: Changed `mimiciv_icu.stays` to `mimiciv_icu.icustays`
+2. **Ambiguous column reference**: Fixed JOIN queries to use table aliases (ie.itemid, di.itemid)
+3. **Type conversion**: Added explicit `int()` and `float()` conversions to avoid np.float64 wrappers
+4. **Phenylephrine conversion factor**: Updated from 1.0 to 0.1 based on test case validation
+
+## Guideline Information
+
+### shock_guideline Key Points
+- **Septic Shock Criteria (Sepsis-3)**: Sepsis + vasopressor to maintain MAP ≥ 65 mm Hg + lactate > 2 mmol/L post-resuscitation
+- **Vasopressor Equivalency**: Vasopressin equivalents should be documented but do not directly increment SOFA score
+- **SOFA Cardiovascular Subscore**: Only catecholamines (dopamine, dobutamine, epinephrine, norepinephrine) are scored
+- **Non-catecholamine vasopressors** (vasopressin, phenylephrine, angiotensin II) create a scoring gap
+
+## Notes
+- Patient weight available in inputevents table for dose calculations
+- Standard conversion factor: 0.04 units/hour vasopressin ≈ 1 mcg/kg/min norepinephrine equivalent
+- Phenylephrine conversion factor: 0.1 (not 1:1 as originally assumed)
+- All function source code is now complete and tested
+- query_db() is the database interface function used throughout
+

@@ -1,0 +1,47 @@
+{
+  "timestamp": "2026-03-25T07:22:29.669503",
+  "model": "Qwen/Qwen3.5-27B",
+  "db_path": "/home/v-tiossowski/MIMIC-IV/mimic4.db",
+  "qa_dataset": "/home/v-tiossowski/HealthcareAgent/mimic-code/data/MIMICIV_dobutamine_dataset/dobutamine.csv",
+  "match_threshold": 0.9,
+  "run_name": "dobutamine",
+  "success": true,
+  "iterations": 18,
+  "qa_accuracy": 1.0,
+  "stats": {
+    "react": {
+      "prompt_tokens": 0,
+      "completion_tokens": 0,
+      "total_tokens": 0,
+      "llm_calls": 18,
+      "query_count": 18,
+      "query_time_sec": 0.309,
+      "wall_time_sec": 390.091
+    },
+    "qa": {
+      "prompt_tokens": 51238,
+      "completion_tokens": 8370,
+      "total_tokens": 59608,
+      "llm_calls": 47,
+      "query_count": 20,
+      "query_time_sec": 0.089,
+      "eval_wall_time_sec": 60.489,
+      "per_question": {
+        "avg_prompt_tokens": 2561.9,
+        "avg_completion_tokens": 418.5,
+        "avg_llm_calls": 2.35,
+        "avg_query_count": 1.0,
+        "avg_query_time_sec": 0.004,
+        "avg_wall_time_sec": 3.024
+      }
+    },
+    "total": {
+      "prompt_tokens": 51238,
+      "completion_tokens": 8370,
+      "total_tokens": 59608,
+      "llm_calls": 65,
+      "query_count": 38,
+      "query_time_sec": 0.398
+    }
+  }
+}

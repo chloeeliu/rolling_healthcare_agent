@@ -1,0 +1,47 @@
+{
+  "timestamp": "2026-03-26T03:08:29.567159",
+  "model": "Qwen/Qwen3.5-27B",
+  "db_path": "/home/v-tiossowski/MIMIC-IV/mimic4.db",
+  "qa_dataset": "/home/v-tiossowski/HealthcareAgent/mimic-code/data/MIMICIV_norepinephrine_equivalent_dose_dataset/norepinephrine_equivalent_dose.csv",
+  "match_threshold": 0.9,
+  "run_name": "norepinephrine_equivalent_dose",
+  "success": false,
+  "iterations": 100,
+  "qa_accuracy": 0.75,
+  "stats": {
+    "react": {
+      "prompt_tokens": 0,
+      "completion_tokens": 0,
+      "total_tokens": 0,
+      "llm_calls": 102,
+      "query_count": 142,
+      "query_time_sec": 0.402,
+      "wall_time_sec": 3060.455
+    },
+    "qa": {
+      "prompt_tokens": 42605,
+      "completion_tokens": 9903,
+      "total_tokens": 52508,
+      "llm_calls": 45,
+      "query_count": 35,
+      "query_time_sec": 0.057,
+      "eval_wall_time_sec": 54.528,
+      "per_question": {
+        "avg_prompt_tokens": 2130.2,
+        "avg_completion_tokens": 495.1,
+        "avg_llm_calls": 2.25,
+        "avg_query_count": 1.75,
+        "avg_query_time_sec": 0.003,
+        "avg_wall_time_sec": 2.726
+      }
+    },
+    "total": {
+      "prompt_tokens": 42605,
+      "completion_tokens": 9903,
+      "total_tokens": 52508,
+      "llm_calls": 147,
+      "query_count": 177,
+      "query_time_sec": 0.459
+    }
+  }
+}

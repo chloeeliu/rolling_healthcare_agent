@@ -1,0 +1,527 @@
+2026-03-25 16:36:31  INFO      Using database: /home/v-tiossowski/MIMIC-IV/mimic4.db
+2026-03-25 16:36:31  INFO      No --model_url provided; loading vLLM in-process …
+INFO 03-25 16:36:36 [utils.py:238] non-default args: {'trust_remote_code': True, 'max_model_len': 40000, 'disable_log_stats': True, 'model': 'Qwen/Qwen3.5-27B'}
+The argument `trust_remote_code` is to be used with Auto classes. It has no effect here and is ignored.
+The argument `trust_remote_code` is to be used with Auto classes. It has no effect here and is ignored.
+The argument `trust_remote_code` is to be used with Auto classes. It has no effect here and is ignored.
+INFO 03-25 16:36:37 [model.py:531] Resolved architecture: Qwen3_5ForConditionalGeneration
+INFO 03-25 16:36:37 [model.py:1554] Using max model len 40000
+INFO 03-25 16:36:37 [scheduler.py:231] Chunked prefill is enabled with max_num_batched_tokens=8192.
+INFO 03-25 16:36:38 [config.py:544] Setting attention block size to 784 tokens to ensure that attention page size is >= mamba page size.
+INFO 03-25 16:36:38 [config.py:575] Padding mamba page size by 0.13% to ensure that mamba page size and attention page size are exactly equal.
+INFO 03-25 16:36:38 [vllm.py:747] Asynchronous scheduling is enabled.
+WARNING 03-25 16:36:46 [system_utils.py:152] We must use the `spawn` multiprocessing start method. Overriding VLLM_WORKER_MULTIPROC_METHOD to 'spawn'. See https://docs.vllm.ai/en/latest/usage/troubleshooting.html#python-multiprocessing for more information. Reasons: CUDA is initialized
+(EngineCore_DP0 pid=30837) INFO 03-25 16:36:51 [core.py:101] Initializing a V1 LLM engine (v0.17.1) with config: model='Qwen/Qwen3.5-27B', speculative_config=None, tokenizer='Qwen/Qwen3.5-27B', skip_tokenizer_init=False, tokenizer_mode=auto, revision=None, tokenizer_revision=None, trust_remote_code=True, dtype=torch.bfloat16, max_seq_len=40000, download_dir=None, load_format=auto, tensor_parallel_size=1, pipeline_parallel_size=1, data_parallel_size=1, disable_custom_all_reduce=False, quantization=None, enforce_eager=False, enable_return_routed_experts=False, kv_cache_dtype=auto, device_config=cuda, structured_outputs_config=StructuredOutputsConfig(backend='auto', disable_fallback=False, disable_any_whitespace=False, disable_additional_properties=False, reasoning_parser='', reasoning_parser_plugin='', enable_in_reasoning=False), observability_config=ObservabilityConfig(show_hidden_metrics_for_version=None, otlp_traces_endpoint=None, collect_detailed_traces=None, kv_cache_metrics=False, kv_cache_metrics_sample=0.01, cudagraph_metrics=False, enable_layerwise_nvtx_tracing=False, enable_mfu_metrics=False, enable_mm_processor_stats=False, enable_logging_iteration_details=False), seed=0, served_model_name=Qwen/Qwen3.5-27B, enable_prefix_caching=False, enable_chunked_prefill=True, pooler_config=None, compilation_config={'level': None, 'mode': <CompilationMode.VLLM_COMPILE: 3>, 'debug_dump_path': None, 'cache_dir': '', 'compile_cache_save_format': 'binary', 'backend': 'inductor', 'custom_ops': ['none'], 'splitting_ops': ['vllm::unified_attention', 'vllm::unified_attention_with_output', 'vllm::unified_mla_attention', 'vllm::unified_mla_attention_with_output', 'vllm::mamba_mixer2', 'vllm::mamba_mixer', 'vllm::short_conv', 'vllm::linear_attention', 'vllm::plamo2_mamba_mixer', 'vllm::gdn_attention_core', 'vllm::kda_attention', 'vllm::sparse_attn_indexer', 'vllm::rocm_aiter_sparse_attn_indexer', 'vllm::unified_kv_cache_update', 'vllm::unified_mla_kv_cache_update'], 'compile_mm_encoder': False, 'compile_sizes': [], 'compile_ranges_split_points': [8192], 'inductor_compile_config': {'enable_auto_functionalized_v2': False, 'combo_kernels': True, 'benchmark_combo_kernel': True}, 'inductor_passes': {}, 'cudagraph_mode': <CUDAGraphMode.FULL_AND_PIECEWISE: (2, 1)>, 'cudagraph_num_of_warmups': 1, 'cudagraph_capture_sizes': [1, 2, 4, 8, 16, 24, 32, 40, 48, 56, 64, 72, 80, 88, 96, 104, 112, 120, 128, 136, 144, 152, 160, 168, 176, 184, 192, 200, 208, 216, 224, 232, 240, 248, 256, 272, 288, 304, 320, 336, 352, 368, 384, 400, 416, 432, 448, 464, 480, 496, 512], 'cudagraph_copy_inputs': False, 'cudagraph_specialize_lora': True, 'use_inductor_graph_partition': False, 'pass_config': {'fuse_norm_quant': False, 'fuse_act_quant': False, 'fuse_attn_quant': False, 'enable_sp': False, 'fuse_gemm_comms': False, 'fuse_allreduce_rms': False}, 'max_cudagraph_capture_size': 512, 'dynamic_shapes_config': {'type': <DynamicShapesType.BACKED: 'backed'>, 'evaluate_guards': False, 'assume_32_bit_indexing': False}, 'local_cache_dir': None, 'fast_moe_cold_start': True, 'static_all_moe_layers': []}
+(EngineCore_DP0 pid=30837) INFO 03-25 16:36:53 [parallel_state.py:1393] world_size=1 rank=0 local_rank=0 distributed_init_method=tcp://10.8.144.167:56949 backend=nccl
+(EngineCore_DP0 pid=30837) INFO 03-25 16:36:53 [parallel_state.py:1715] rank 0 in world size 1 is assigned as DP rank 0, PP rank 0, PCP rank 0, TP rank 0, EP rank N/A, EPLB rank N/A
+(EngineCore_DP0 pid=30837) INFO 03-25 16:37:00 [base.py:106] Offloader set to NoopOffloader
+(EngineCore_DP0 pid=30837) INFO 03-25 16:37:00 [gpu_model_runner.py:4281] Starting to load model Qwen/Qwen3.5-27B...
+(EngineCore_DP0 pid=30837) INFO 03-25 16:37:00 [cuda.py:453] Using backend AttentionBackendEnum.FLASH_ATTN for vit attention
+(EngineCore_DP0 pid=30837) INFO 03-25 16:37:00 [mm_encoder_attention.py:215] Using AttentionBackendEnum.FLASH_ATTN for MMEncoderAttention.
+(EngineCore_DP0 pid=30837) INFO 03-25 16:37:00 [cuda.py:405] Using FLASH_ATTN attention backend out of potential backends: ['FLASH_ATTN', 'FLASHINFER', 'TRITON_ATTN', 'FLEX_ATTENTION'].
+(EngineCore_DP0 pid=30837) INFO 03-25 16:37:00 [flash_attn.py:587] Using FlashAttention version 2
+(EngineCore_DP0 pid=30837) <frozen importlib._bootstrap_external>:1301: FutureWarning: The cuda.cudart module is deprecated and will be removed in a future release, please switch to use the cuda.bindings.runtime module instead.
+(EngineCore_DP0 pid=30837) <frozen importlib._bootstrap_external>:1301: FutureWarning: The cuda.nvrtc module is deprecated and will be removed in a future release, please switch to use the cuda.bindings.nvrtc module instead.
+(EngineCore_DP0 pid=30837) Loading safetensors checkpoint shards:   0% Completed | 0/11 [00:00<?, ?it/s]
+(EngineCore_DP0 pid=30837) Loading safetensors checkpoint shards:   9% Completed | 1/11 [00:00<00:05,  1.88it/s]
+(EngineCore_DP0 pid=30837) Loading safetensors checkpoint shards:  18% Completed | 2/11 [00:01<00:05,  1.68it/s]
+(EngineCore_DP0 pid=30837) Loading safetensors checkpoint shards:  27% Completed | 3/11 [00:01<00:05,  1.57it/s]
+(EngineCore_DP0 pid=30837) Loading safetensors checkpoint shards:  36% Completed | 4/11 [00:02<00:04,  1.50it/s]
+(EngineCore_DP0 pid=30837) Loading safetensors checkpoint shards:  45% Completed | 5/11 [00:03<00:04,  1.47it/s]
+(EngineCore_DP0 pid=30837) Loading safetensors checkpoint shards:  55% Completed | 6/11 [00:03<00:03,  1.45it/s]
+(EngineCore_DP0 pid=30837) Loading safetensors checkpoint shards:  64% Completed | 7/11 [00:04<00:02,  1.45it/s]
+(EngineCore_DP0 pid=30837) Loading safetensors checkpoint shards:  73% Completed | 8/11 [00:05<00:02,  1.46it/s]
+(EngineCore_DP0 pid=30837) Loading safetensors checkpoint shards:  82% Completed | 9/11 [00:06<00:01,  1.45it/s]
+(EngineCore_DP0 pid=30837) Loading safetensors checkpoint shards:  91% Completed | 10/11 [00:06<00:00,  1.45it/s]
+(EngineCore_DP0 pid=30837) Loading safetensors checkpoint shards: 100% Completed | 11/11 [00:07<00:00,  1.62it/s]
+(EngineCore_DP0 pid=30837) Loading safetensors checkpoint shards: 100% Completed | 11/11 [00:07<00:00,  1.53it/s]
+(EngineCore_DP0 pid=30837) 
+(EngineCore_DP0 pid=30837) INFO 03-25 16:37:08 [default_loader.py:293] Loading weights took 7.25 seconds
+(EngineCore_DP0 pid=30837) INFO 03-25 16:37:09 [gpu_model_runner.py:4364] Model loading took 51.1 GiB memory and 8.330819 seconds
+(EngineCore_DP0 pid=30837) INFO 03-25 16:37:09 [gpu_model_runner.py:5280] Encoder cache will be initialized with a budget of 16384 tokens, and profiled with 1 image items of the maximum feature size.
+(EngineCore_DP0 pid=30837) INFO 03-25 16:37:17 [decorators.py:465] Directly load AOT compilation from path /home/v-tiossowski/.cache/vllm/torch_compile_cache/torch_aot_compile/0232891e22bd4d7db98ac2f43c441f0f81d0a431216053ca49fadeaff23e2af3/rank_0_0/model
+(EngineCore_DP0 pid=30837) INFO 03-25 16:37:17 [backends.py:916] Using cache directory: /home/v-tiossowski/.cache/vllm/torch_compile_cache/feaf61af16/rank_0_0/backbone for vLLM's torch.compile
+(EngineCore_DP0 pid=30837) INFO 03-25 16:37:17 [backends.py:976] Dynamo bytecode transform time: 3.51 s
+(EngineCore_DP0 pid=30837) INFO 03-25 16:37:27 [backends.py:266] Directly load the compiled graph(s) for compile range (1, 8192) from the cache, took 9.424 s
+(EngineCore_DP0 pid=30837) INFO 03-25 16:37:27 [monitor.py:35] torch.compile takes 13.78 s in total
+(EngineCore_DP0 pid=30837) INFO 03-25 16:37:29 [gpu_worker.py:424] Available KV cache memory: 18.3 GiB
+(EngineCore_DP0 pid=30837) INFO 03-25 16:37:29 [kv_cache_utils.py:1314] GPU KV cache size: 74,480 tokens
+(EngineCore_DP0 pid=30837) INFO 03-25 16:37:29 [kv_cache_utils.py:1319] Maximum concurrency for 40,000 tokens per request: 6.95x
+(EngineCore_DP0 pid=30837) Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):   0%|          | 0/51 [00:00<?, ?it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):   2%|▏         | 1/51 [00:00<00:08,  5.81it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):   4%|▍         | 2/51 [00:00<00:08,  6.01it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):   6%|▌         | 3/51 [00:00<00:07,  6.07it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):   8%|▊         | 4/51 [00:00<00:07,  6.08it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  10%|▉         | 5/51 [00:00<00:07,  6.11it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  12%|█▏        | 6/51 [00:00<00:07,  6.14it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  14%|█▎        | 7/51 [00:01<00:07,  6.16it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  16%|█▌        | 8/51 [00:01<00:06,  6.16it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  18%|█▊        | 9/51 [00:01<00:06,  6.47it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  20%|█▉        | 10/51 [00:01<00:06,  6.72it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  22%|██▏       | 11/51 [00:01<00:05,  6.73it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  24%|██▎       | 12/51 [00:01<00:05,  6.90it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  25%|██▌       | 13/51 [00:02<00:05,  6.96it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  27%|██▋       | 14/51 [00:02<00:05,  7.09it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  29%|██▉       | 15/51 [00:02<00:05,  7.19it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  31%|███▏      | 16/51 [00:02<00:04,  7.27it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  33%|███▎      | 17/51 [00:02<00:04,  7.60it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  35%|███▌      | 18/51 [00:02<00:04,  7.85it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  37%|███▋      | 19/51 [00:02<00:03,  8.06it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  39%|███▉      | 20/51 [00:02<00:03,  8.20it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  41%|████      | 21/51 [00:02<00:03,  8.32it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  43%|████▎     | 22/51 [00:03<00:03,  8.39it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  45%|████▌     | 23/51 [00:03<00:03,  8.43it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  47%|████▋     | 24/51 [00:03<00:03,  8.37it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  49%|████▉     | 25/51 [00:03<00:03,  8.39it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  51%|█████     | 26/51 [00:03<00:02,  8.42it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  53%|█████▎    | 27/51 [00:03<00:02,  8.34it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  55%|█████▍    | 28/51 [00:03<00:02,  8.29it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  57%|█████▋    | 29/51 [00:03<00:02,  8.35it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  59%|█████▉    | 30/51 [00:04<00:02,  8.38it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  61%|██████    | 31/51 [00:04<00:02,  8.32it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  63%|██████▎   | 32/51 [00:04<00:02,  8.29it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  65%|██████▍   | 33/51 [00:04<00:02,  8.52it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  67%|██████▋   | 34/51 [00:04<00:01,  8.87it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  69%|██████▊   | 35/51 [00:04<00:01,  9.17it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  71%|███████   | 36/51 [00:04<00:01,  9.27it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  73%|███████▎  | 37/51 [00:04<00:01,  9.37it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  75%|███████▍  | 38/51 [00:04<00:01,  9.52it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  76%|███████▋  | 39/51 [00:05<00:01,  9.62it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  78%|███████▊  | 40/51 [00:05<00:01,  9.65it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  80%|████████  | 41/51 [00:05<00:01,  9.74it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  84%|████████▍ | 43/51 [00:05<00:00,  9.87it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  88%|████████▊ | 45/51 [00:05<00:00, 10.07it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  92%|█████████▏| 47/51 [00:05<00:00, 10.30it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  96%|█████████▌| 49/51 [00:06<00:00, 10.51it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE): 100%|██████████| 51/51 [00:06<00:00, 10.44it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE): 100%|██████████| 51/51 [00:06<00:00,  8.23it/s]
+(EngineCore_DP0 pid=30837) Capturing CUDA graphs (decode, FULL):   0%|          | 0/35 [00:00<?, ?it/s]Capturing CUDA graphs (decode, FULL):   3%|▎         | 1/35 [00:00<00:06,  5.65it/s]Capturing CUDA graphs (decode, FULL):   6%|▌         | 2/35 [00:00<00:05,  6.15it/s]Capturing CUDA graphs (decode, FULL):   9%|▊         | 3/35 [00:00<00:05,  6.36it/s]Capturing CUDA graphs (decode, FULL):  11%|█▏        | 4/35 [00:00<00:04,  6.49it/s]Capturing CUDA graphs (decode, FULL):  14%|█▍        | 5/35 [00:00<00:04,  6.56it/s]Capturing CUDA graphs (decode, FULL):  17%|█▋        | 6/35 [00:00<00:04,  6.57it/s]Capturing CUDA graphs (decode, FULL):  20%|██        | 7/35 [00:01<00:04,  6.64it/s]Capturing CUDA graphs (decode, FULL):  23%|██▎       | 8/35 [00:01<00:04,  6.72it/s]Capturing CUDA graphs (decode, FULL):  26%|██▌       | 9/35 [00:01<00:03,  6.79it/s]Capturing CUDA graphs (decode, FULL):  29%|██▊       | 10/35 [00:01<00:03,  6.86it/s]Capturing CUDA graphs (decode, FULL):  31%|███▏      | 11/35 [00:01<00:03,  6.88it/s]Capturing CUDA graphs (decode, FULL):  34%|███▍      | 12/35 [00:01<00:03,  6.96it/s]Capturing CUDA graphs (decode, FULL):  37%|███▋      | 13/35 [00:01<00:03,  6.99it/s]Capturing CUDA graphs (decode, FULL):  40%|████      | 14/35 [00:02<00:02,  7.02it/s]Capturing CUDA graphs (decode, FULL):  43%|████▎     | 15/35 [00:02<00:02,  7.08it/s]Capturing CUDA graphs (decode, FULL):  46%|████▌     | 16/35 [00:02<00:02,  7.15it/s]Capturing CUDA graphs (decode, FULL):  49%|████▊     | 17/35 [00:02<00:02,  7.41it/s]Capturing CUDA graphs (decode, FULL):  51%|█████▏    | 18/35 [00:02<00:02,  7.64it/s]Capturing CUDA graphs (decode, FULL):  54%|█████▍    | 19/35 [00:02<00:02,  7.88it/s]Capturing CUDA graphs (decode, FULL):  57%|█████▋    | 20/35 [00:02<00:01,  8.04it/s]Capturing CUDA graphs (decode, FULL):  60%|██████    | 21/35 [00:02<00:01,  8.17it/s]Capturing CUDA graphs (decode, FULL):  63%|██████▎   | 22/35 [00:03<00:01,  8.21it/s]Capturing CUDA graphs (decode, FULL):  66%|██████▌   | 23/35 [00:03<00:01,  8.29it/s]Capturing CUDA graphs (decode, FULL):  69%|██████▊   | 24/35 [00:03<00:01,  8.22it/s]Capturing CUDA graphs (decode, FULL):  71%|███████▏  | 25/35 [00:03<00:01,  8.26it/s]Capturing CUDA graphs (decode, FULL):  74%|███████▍  | 26/35 [00:03<00:01,  8.46it/s]Capturing CUDA graphs (decode, FULL):  77%|███████▋  | 27/35 [00:03<00:00,  8.49it/s]Capturing CUDA graphs (decode, FULL):  80%|████████  | 28/35 [00:03<00:00,  8.47it/s]Capturing CUDA graphs (decode, FULL):  83%|████████▎ | 29/35 [00:03<00:00,  8.56it/s]Capturing CUDA graphs (decode, FULL):  86%|████████▌ | 30/35 [00:04<00:00,  8.63it/s]Capturing CUDA graphs (decode, FULL):  89%|████████▊ | 31/35 [00:04<00:00,  8.72it/s]Capturing CUDA graphs (decode, FULL):  91%|█████████▏| 32/35 [00:04<00:00,  8.74it/s]Capturing CUDA graphs (decode, FULL):  94%|█████████▍| 33/35 [00:04<00:00,  8.85it/s]Capturing CUDA graphs (decode, FULL):  97%|█████████▋| 34/35 [00:04<00:00,  8.82it/s]Capturing CUDA graphs (decode, FULL): 100%|██████████| 35/35 [00:04<00:00,  8.98it/s]Capturing CUDA graphs (decode, FULL): 100%|██████████| 35/35 [00:04<00:00,  7.67it/s]
+(EngineCore_DP0 pid=30837) INFO 03-25 16:37:40 [gpu_model_runner.py:5386] Graph capturing finished in 12 secs, took 1.13 GiB
+(EngineCore_DP0 pid=30837) INFO 03-25 16:37:40 [core.py:282] init engine (profile, create kv cache, warmup model) took 31.43 seconds
+(EngineCore_DP0 pid=30837) INFO 03-25 16:37:41 [vllm.py:747] Asynchronous scheduling is enabled.
+INFO 03-25 16:37:41 [llm.py:388] Supported tasks: ['generate']
+2026-03-25 16:37:41  INFO      Loading QA dataset from /home/v-tiossowski/HealthcareAgent/mimic-code/data/MIMICIV_vasoactive_agent_dataset/vasoactive_agent.csv
+2026-03-25 16:37:41  INFO      Dataset: 1000 rows, columns: ['subject_id', 'hadm_id', 'stay_id', 'intime', 'outtime', 'first_careunit', 'last_careunit', 'gt_label', 'question', 'gt_answer_type', 'split', 'received_vasopressor', 'multi_vasopressor', 'norepi_rate_max']
+2026-03-25 16:37:41  INFO      Filtered to train split: 100 rows
+2026-03-25 16:37:41  INFO      Auto-discovered ground-truth SQL: /home/v-tiossowski/HealthcareAgent/mimic-code/mimic-iv/concepts_duckdb/medication/vasoactive_agent.sql
+2026-03-25 16:37:41  INFO      === Iteration 1/100  run=vasoactive_agent  best_qa=0.0% ===
+INFO 03-25 16:37:43 [hf.py:318] Detected the chat template content format to be 'string'. You can set `--chat-template-content-format` to override this.
+2026-03-25 16:37:57  INFO      Exec block 1/1 …
+2026-03-25 16:37:57  INFO      Output: []
+
+2026-03-25 16:37:57  INFO      === Iteration 2/100  run=vasoactive_agent  best_qa=0.0% ===
+2026-03-25 16:37:59  INFO      Exec block 1/1 …
+2026-03-25 16:37:59  INFO      Output: []
+
+2026-03-25 16:37:59  INFO      === Iteration 3/100  run=vasoactive_agent  best_qa=0.0% ===
+2026-03-25 16:38:02  INFO      Exec block 1/1 …
+2026-03-25 16:38:02  INFO      Output: ['acidosis_guideline', 'acute_decompensated_heart_failure_guideline', 'acute_hepatic_failure_guideline', 'adverse_effect_of_anticoagulants_guideline', 'alcohol_withdrawal_syndrome_guideline', 'anemia_icu_critically_ill_hemoglobin_transfusion_guideline', 'apache_iii_guideline', 'atrial_fibrillation_guideline', 'bradycardia_guideline', 'cerebral_infarction_guideline', 'coma_altered_consciousness_icu_guideline', 'copd_exacerbation_guideline', 'coronary_artery_disease_guideline', 'deep_vein_thrombos
+2026-03-25 16:38:02  INFO      === Iteration 4/100  run=vasoactive_agent  best_qa=0.0% ===
+2026-03-25 16:38:04  INFO      Exec block 1/1 …
+2026-03-25 16:38:04  INFO      Output: ['acei', 'age', 'antibiotic', 'arb', 'bg', 'blood_differential', 'cardiac_marker', 'charlson', 'chemistry', 'coagulation', 'code_status', 'complete_blood_count', 'creatinine_baseline', 'crrt', 'dobutamine', 'dopamine', 'enzyme', 'epinephrine', 'gcs', 'height', '... (18 more; pass a keyword to filter)']
+
+2026-03-25 16:38:04  INFO      === Iteration 5/100  run=vasoactive_agent  best_qa=0.0% ===
+2026-03-25 16:38:09  INFO      Exec block 1/1 …
+2026-03-25 16:38:09  INFO      Output: 'def get_epinephrine_info(stay_id):\n    """\n    Extract epinephrine infusion information for a patient\'s ICU stay.\n\n    This function queries the MIMIC-IV database to retrieve epinephrine medication\n    administration data for a specific ICU stay. Epinephrine is a vasopressor and\n    inotropic agent used to treat hypotension, cardiac arrest, and shock.\n\n    Parameters:\n    -----------\n    stay_id : int\n        The ICU stay identifier for the patient.\n\n    Returns:\n    --------\n  
+2026-03-25 16:38:09  INFO      === Iteration 6/100  run=vasoactive_agent  best_qa=0.0% ===
+2026-03-25 16:38:11  INFO      Exec block 1/1 …
+2026-03-25 16:38:11  INFO      Output: 'def get_dopamine_info(stay_id):\n    """\n    Extract dopamine infusion information for a patient\'s ICU stay.\n\n    This function queries the MIMIC-IV database to retrieve dopamine medication\n    administration data for a specific ICU stay. Dopamine is a vasopressor and\n    inotropic agent used to treat hypotension and shock.\n\n    Parameters:\n    -----------\n    stay_id : int\n        The ICU stay identifier for the patient.\n\n    Returns:\n    --------\n    dict\n        A dictionary 
+2026-03-25 16:38:11  INFO      === Iteration 7/100  run=vasoactive_agent  best_qa=0.0% ===
+2026-03-25 16:38:15  INFO      Exec block 1/1 …
+2026-03-25 16:38:15  INFO      Output: ['vasopressin']
+
+2026-03-25 16:38:15  INFO      === Iteration 8/100  run=vasoactive_agent  best_qa=0.0% ===
+2026-03-25 16:38:18  INFO      Exec block 1/1 …
+2026-03-25 16:38:18  INFO      Output: ['norepinephrine']
+
+2026-03-25 16:38:18  INFO      === Iteration 9/100  run=vasoactive_agent  best_qa=0.0% ===
+2026-03-25 16:38:20  INFO      Exec block 1/1 …
+2026-03-25 16:38:20  INFO      Output: 'def get_vasopressin_info(stay_id):\n    """\n    Extract vasopressin infusion information for a patient\'s ICU stay.\n\n    This function queries the MIMIC-IV database to retrieve vasopressin medication\n    administration data for a specific ICU stay. Vasopressin is a vasopressor\n    used to treat hypotension and shock, often as an adjunct to other vasopressors.\n\n    Parameters:\n    -----------\n    stay_id : int\n        The ICU stay identifier for the patient.\n\n    Returns:\n    ------
+2026-03-25 16:38:20  INFO      === Iteration 10/100  run=vasoactive_agent  best_qa=0.0% ===
+2026-03-25 16:38:23  INFO      Exec block 1/1 …
+2026-03-25 16:38:23  INFO      Output: 'def get_norepinephrine_info(stay_id):\n    """\n    Extract norepinephrine infusion information for a patient\'s ICU stay.\n\n    This function queries the MIMIC-IV database to retrieve norepinephrine medication\n    administration data for a specific ICU stay. Norepinephrine is a vasopressor\n    used to treat hypotension and shock.\n\n    Parameters:\n    -----------\n    stay_id : int\n        The ICU stay identifier for the patient.\n\n    Returns:\n    --------\n    dict\n        A diction
+2026-03-25 16:38:23  INFO      === Iteration 11/100  run=vasoactive_agent  best_qa=0.0% ===
+2026-03-25 16:38:30  INFO      Exec block 1/1 …
+2026-03-25 16:38:30  INFO      Output: []
+
+2026-03-25 16:38:30  INFO      === Iteration 12/100  run=vasoactive_agent  best_qa=0.0% ===
+2026-03-25 16:38:38  INFO      Exec block 1/1 …
+2026-03-25 16:38:38  INFO      Output:     itemid                          label     category      linksto
+0   221289                    Epinephrine  Medications  inputevents
+1   221653                     Dobutamine  Medications  inputevents
+2   221662                       Dopamine  Medications  inputevents
+3   221749                  Phenylephrine  Medications  inputevents
+4   221906                 Norepinephrine  Medications  inputevents
+5   221986                      Milrinone  Medications  inputevents
+6   222315              
+2026-03-25 16:38:38  INFO      === Iteration 13/100  run=vasoactive_agent  best_qa=0.0% ===
+2026-03-25 16:38:45  INFO      Exec block 1/1 …
+2026-03-25 16:38:45  INFO      Output:    subject_id   hadm_id   stay_id  caregiver_id           starttime             endtime           storetime  itemid    amount amountuom      rate     rateuom  orderid  linkorderid ordercategoryname secondaryordercategoryname ordercomponenttypedescription ordercategorydescription  patientweight  totalamount totalamountuom  isopenbag  continueinnextdept statusdescription  originalamount  originalrate
+0    10345771  23775355  37521308          6714 2167-03-08 09:08:00 2167-03-08 10:14:00 2167-03-08
+2026-03-25 16:38:45  INFO      === Iteration 14/100  run=vasoactive_agent  best_qa=0.0% ===
+2026-03-25 16:38:57  INFO      Exec block 1/1 …
+2026-03-25 16:38:57  INFO      Output: "Functions from 'vasopressin' loaded successfully."
+
+2026-03-25 16:38:57  INFO      === Iteration 15/100  run=vasoactive_agent  best_qa=0.0% ===
+2026-03-25 16:39:02  INFO      Exec block 1/1 …
+2026-03-25 16:39:02  INFO      Output: "Functions from 'dobutamine' loaded successfully."
+
+2026-03-25 16:39:02  INFO      === Iteration 16/100  run=vasoactive_agent  best_qa=0.0% ===
+2026-03-25 16:39:10  INFO      Exec block 1/1 …
+2026-03-25 16:39:10  INFO      Output: Norepinephrine info: {'received_norepinephrine': False, 'max_rate': 0.0, 'min_rate': 0.0, 'avg_rate': 0.0, 'received_high_dose': False, 'num_records': 0, 'first_time': None, 'last_time': None, 'subject_id': None, 'hadm_id': None}
+
+2026-03-25 16:39:10  INFO      === Iteration 17/100  run=vasoactive_agent  best_qa=0.0% ===
+2026-03-25 16:39:16  INFO      Exec block 1/1 …
+2026-03-25 16:39:16  INFO      Output:     stay_id  subject_id   hadm_id
+0  35664828    10488906  25817228
+1  35372278    10494486  23282265
+2  30730448    10511102  28911462
+3  33312952    10520608  20056344
+4  32911376    10526039  26282150
+
+2026-03-25 16:39:16  INFO      === Iteration 18/100  run=vasoactive_agent  best_qa=0.0% ===
+2026-03-25 16:39:21  INFO      Exec block 1/1 …
+2026-03-25 16:39:21  INFO      Output: Norepinephrine info: {'received_norepinephrine': True, 'max_rate': 0.51, 'min_rate': 0.02, 'avg_rate': 0.28, 'received_high_dose': True, 'num_records': 24, 'first_time': Timestamp('2161-11-09 06:20:00'), 'last_time': Timestamp('2161-11-11 00:10:00'), 'subject_id': 10488906, 'hadm_id': 25817228}
+
+2026-03-25 16:39:21  INFO      === Iteration 19/100  run=vasoactive_agent  best_qa=0.0% ===
+2026-03-25 16:39:35  INFO      Exec block 1/1 …
+2026-03-25 16:39:35  INFO      Output:     itemid                          label     category
+0   221289                    Epinephrine  Medications
+1   221653                     Dobutamine  Medications
+2   221662                       Dopamine  Medications
+3   221749                  Phenylephrine  Medications
+4   221906                 Norepinephrine  Medications
+5   221986                      Milrinone  Medications
+6   222315                    Vasopressin  Medications
+7   229617                   Epinephrine.  Medications
+8   2
+2026-03-25 16:39:35  INFO      === Iteration 20/100  run=vasoactive_agent  best_qa=0.0% ===
+2026-03-25 16:39:53  INFO      Exec block 1/1 …
+2026-03-25 16:39:53  INFO      Output:    subject_id   hadm_id   stay_id  caregiver_id           starttime             endtime           storetime  itemid     amount amountuom      rate     rateuom  orderid  linkorderid ordercategoryname secondaryordercategoryname ordercomponenttypedescription ordercategorydescription  patientweight  totalamount totalamountuom  isopenbag  continueinnextdept statusdescription  originalamount  originalrate
+0    10000690  25860671  37081114         17393 2150-11-02 20:00:00 2150-11-02 22:45:00 2150-11-0
+2026-03-25 16:39:53  INFO      === Iteration 21/100  run=vasoactive_agent  best_qa=0.0% ===
+2026-03-25 16:40:10  INFO      Exec block 1/1 …
+2026-03-25 16:40:10  INFO      Output: Error:
+Traceback (most recent call last):
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 643, in execute
+    _run_with_timeout(_do_execute, timeout)
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 174, in _run_with_timeout
+    raise error[0]
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 156, in target
+    result[0] = func(*args, **kwargs)
+                ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/v-tiossowsk
+2026-03-25 16:40:10  INFO      === Iteration 22/100  run=vasoactive_agent  best_qa=0.0% ===
+2026-03-25 16:40:31  INFO      Exec block 1/1 …
+2026-03-25 16:40:31  INFO      Output:     itemid                          label     category
+0   221289                    Epinephrine  Medications
+1   221653                     Dobutamine  Medications
+2   221662                       Dopamine  Medications
+3   221749                  Phenylephrine  Medications
+4   221906                 Norepinephrine  Medications
+5   221986                      Milrinone  Medications
+6   222315                    Vasopressin  Medications
+7   229617                   Epinephrine.  Medications
+8   2
+2026-03-25 16:40:31  INFO      === Iteration 23/100  run=vasoactive_agent  best_qa=0.0% ===
+2026-03-25 16:40:55  INFO      Exec block 1/1 …
+2026-03-25 16:40:55  INFO      Output:      stay_id  itemid          label           starttime             endtime      rate
+0   37521308  221749  Phenylephrine 2167-03-07 14:51:00 2167-03-07 15:06:00  1.000651
+1   37521308  221289    Epinephrine 2167-03-07 15:00:00 2167-03-07 16:01:00  0.090094
+2   37521308  221749  Phenylephrine 2167-03-07 15:06:00 2167-03-07 16:21:00  0.400260
+3   37521308  221289    Epinephrine 2167-03-07 16:01:00 2167-03-07 16:30:00  0.080246
+4   37521308  221749  Phenylephrine 2167-03-07 16:21:00 2167-03-07 18:
+2026-03-25 16:40:55  INFO      === Iteration 24/100  run=vasoactive_agent  best_qa=0.0% ===
+2026-03-25 16:41:14  INFO      Exec block 1/1 …
+2026-03-25 16:41:14  INFO      Output:     itemid                          label     category
+0   221289                    Epinephrine  Medications
+1   221662                       Dopamine  Medications
+2   221749                  Phenylephrine  Medications
+3   221906                 Norepinephrine  Medications
+4   222315                    Vasopressin  Medications
+5   229617                   Epinephrine.  Medications
+6   229630         Phenylephrine (50/250)  Medications
+7   229631  Phenylephrine (200/250)_OLD_1  Medications
+8   2
+2026-03-25 16:41:14  INFO      === Iteration 25/100  run=vasoactive_agent  best_qa=0.0% ===
+2026-03-25 16:41:31  INFO      Exec block 1/1 …
+2026-03-25 16:41:31  INFO      Output:     itemid                          label                     category
+0   221206                     Novasource  Fluids - Other (Not In Use)
+1   221289                    Epinephrine                  Medications
+2   221653                     Dobutamine                  Medications
+3   221662                       Dopamine                  Medications
+4   221749                  Phenylephrine                  Medications
+5   221906                 Norepinephrine                  Medications
+6  
+2026-03-25 16:41:31  INFO      === Iteration 26/100  run=vasoactive_agent  best_qa=0.0% ===
+2026-03-25 16:41:51  INFO      Exec block 1/1 …
+2026-03-25 16:41:52  INFO      Output:       rateuom
+0     mcg/min
+1   mg/kg/min
+2  units/hour
+3  mcg/kg/min
+4   units/min
+
+2026-03-25 16:41:52  INFO      === Iteration 27/100  run=vasoactive_agent  best_qa=0.0% ===
+2026-03-25 16:42:17  INFO      Exec block 1/1 …
+2026-03-25 16:42:17  INFO      Output:      stay_id  itemid          label           starttime             endtime      rate
+0   37521308  221749  Phenylephrine 2167-03-07 14:51:00 2167-03-07 15:06:00  1.000651
+1   37521308  221289    Epinephrine 2167-03-07 15:00:00 2167-03-07 16:01:00  0.090094
+2   37521308  221749  Phenylephrine 2167-03-07 15:06:00 2167-03-07 16:21:00  0.400260
+3   37521308  221289    Epinephrine 2167-03-07 16:01:00 2167-03-07 16:30:00  0.080246
+4   37521308  221749  Phenylephrine 2167-03-07 16:21:00 2167-03-07 18:
+2026-03-25 16:42:17  INFO      === Iteration 28/100  run=vasoactive_agent  best_qa=0.0% ===
+2026-03-25 16:42:37  INFO      Exec block 1/1 …
+2026-03-25 16:42:37  INFO      Output:    subject_id   hadm_id   stay_id  caregiver_id           starttime             endtime           storetime  itemid    amount amountuom      rate     rateuom  orderid  linkorderid ordercategoryname secondaryordercategoryname ordercomponenttypedescription ordercategorydescription  patientweight  totalamount totalamountuom  isopenbag  continueinnextdept statusdescription  originalamount  originalrate
+0    10488906  25817228  35664828         54990 2161-11-09 06:20:00 2161-11-09 08:46:00 2161-11-09
+2026-03-25 16:42:37  INFO      === Iteration 29/100  run=vasoactive_agent  best_qa=0.0% ===
+2026-03-25 16:43:01  INFO      Exec block 1/1 …
+2026-03-25 16:43:01  INFO      Output:      stay_id   item1   item2           starttime             endtime              start2                end2
+0   37521308  221289  221749 2167-03-07 23:27:00 2167-03-08 02:05:00 2167-03-07 21:14:00 2167-03-08 00:00:00
+1   37521308  221289  221749 2167-03-07 18:22:00 2167-03-07 21:42:00 2167-03-07 21:14:00 2167-03-08 00:00:00
+2   37521308  221289  221749 2167-03-07 21:42:00 2167-03-07 21:44:00 2167-03-07 21:14:00 2167-03-08 00:00:00
+3   37521308  221289  221749 2167-03-07 21:44:00 2167-03-07 23:2
+2026-03-25 16:43:01  INFO      === Iteration 30/100  run=vasoactive_agent  best_qa=0.0% ===
+2026-03-25 16:43:19  INFO      Exec block 1/1 …
+2026-03-25 16:43:19  INFO      Output:      stay_id  itemid           label           starttime             endtime      rate     rateuom
+0   35664828  221906  Norepinephrine 2161-11-09 06:20:00 2161-11-09 08:46:00  0.501289  mcg/kg/min
+1   35664828  222315     Vasopressin 2161-11-09 06:20:00 2161-11-09 22:58:00  2.404809  units/hour
+2   35664828  221906  Norepinephrine 2161-11-09 08:46:00 2161-11-09 11:15:00  0.501402  mcg/kg/min
+3   35664828  221749   Phenylephrine 2161-11-09 08:52:00 2161-11-09 09:05:00  1.000100  mcg/kg/min
+4   3
+2026-03-25 16:43:19  INFO      === Iteration 31/100  run=vasoactive_agent  best_qa=0.0% ===
+2026-03-25 16:43:38  INFO      Exec block 1/1 …
+2026-03-25 16:43:38  INFO      Output:      stay_id  itemid           label           starttime             endtime      rate     rateuom
+0   35664828  222315     Vasopressin 2161-11-09 06:20:00 2161-11-09 22:58:00  2.404809  units/hour
+1   35664828  221906  Norepinephrine 2161-11-09 06:20:00 2161-11-09 08:46:00  0.501289  mcg/kg/min
+2   35664828  221906  Norepinephrine 2161-11-09 08:46:00 2161-11-09 11:15:00  0.501402  mcg/kg/min
+3   35664828  221749   Phenylephrine 2161-11-09 08:52:00 2161-11-09 09:05:00  1.000100  mcg/kg/min
+4   3
+2026-03-25 16:43:38  INFO      === Iteration 32/100  run=vasoactive_agent  best_qa=0.0% ===
+2026-03-25 16:44:03  INFO      Exec block 1/1 …
+2026-03-25 16:44:03  INFO      Output:      stay_id  itemid           label           starttime             endtime       rate     rateuom
+0   35664828  221906  Norepinephrine 2161-11-09 06:20:00 2161-11-09 08:46:00   0.501289  mcg/kg/min
+1   35664828  222315     Vasopressin 2161-11-09 06:20:00 2161-11-09 22:58:00   2.404809  units/hour
+2   35664828  221906  Norepinephrine 2161-11-09 08:46:00 2161-11-09 11:15:00   0.501402  mcg/kg/min
+3   35664828  221749   Phenylephrine 2161-11-09 08:52:00 2161-11-09 09:05:00   1.000100  mcg/kg/min
+
+2026-03-25 16:44:03  INFO      === Iteration 33/100  run=vasoactive_agent  best_qa=0.0% ===
+2026-03-25 16:44:24  INFO      Exec block 1/1 …
+2026-03-25 16:44:24  INFO      Output:      stay_id  itemid           label           starttime             endtime       rate     rateuom
+0   35664828  221906  Norepinephrine 2161-11-09 06:20:00 2161-11-09 08:46:00   0.501289  mcg/kg/min
+1   35664828  222315     Vasopressin 2161-11-09 06:20:00 2161-11-09 22:58:00   2.404809  units/hour
+2   35664828  221906  Norepinephrine 2161-11-09 08:46:00 2161-11-09 11:15:00   0.501402  mcg/kg/min
+3   35664828  221749   Phenylephrine 2161-11-09 08:52:00 2161-11-09 09:05:00   1.000100  mcg/kg/min
+
+2026-03-25 16:44:24  INFO      === Iteration 34/100  run=vasoactive_agent  best_qa=0.0% ===
+2026-03-25 16:44:47  INFO      Exec block 1/1 …
+2026-03-25 16:44:47  INFO      Output:      stay_id  itemid           label           starttime             endtime       rate     rateuom
+0   35664828  221906  Norepinephrine 2161-11-09 06:20:00 2161-11-09 08:46:00   0.501289  mcg/kg/min
+1   35664828  222315     Vasopressin 2161-11-09 06:20:00 2161-11-09 22:58:00   2.404809  units/hour
+2   35664828  221906  Norepinephrine 2161-11-09 08:46:00 2161-11-09 11:15:00   0.501402  mcg/kg/min
+3   35664828  221749   Phenylephrine 2161-11-09 08:52:00 2161-11-09 09:05:00   1.000100  mcg/kg/min
+
+2026-03-25 16:44:47  INFO      === Iteration 35/100  run=vasoactive_agent  best_qa=0.0% ===
+2026-03-25 16:44:47  ERROR     LLM call failed: You passed 40001 input tokens and requested 0 output tokens. However, the model's context length is only 40000 tokens, resulting in a maximum input length of 40000 tokens. Please reduce the length of the input prompt. (parameter=input_tokens, value=40001)
+2026-03-25 16:44:47  INFO      === Iteration 36/100  run=vasoactive_agent  best_qa=0.0% ===
+2026-03-25 16:44:47  ERROR     LLM call failed: You passed 40001 input tokens and requested 0 output tokens. However, the model's context length is only 40000 tokens, resulting in a maximum input length of 40000 tokens. Please reduce the length of the input prompt. (parameter=input_tokens, value=40001)
+2026-03-25 16:44:47  INFO      === Iteration 37/100  run=vasoactive_agent  best_qa=0.0% ===
+2026-03-25 16:44:47  ERROR     LLM call failed: You passed 40001 input tokens and requested 0 output tokens. However, the model's context length is only 40000 tokens, resulting in a maximum input length of 40000 tokens. Please reduce the length of the input prompt. (parameter=input_tokens, value=40001)
+2026-03-25 16:44:47  INFO      === Iteration 38/100  run=vasoactive_agent  best_qa=0.0% ===
+2026-03-25 16:44:47  ERROR     LLM call failed: You passed 40001 input tokens and requested 0 output tokens. However, the model's context length is only 40000 tokens, resulting in a maximum input length of 40000 tokens. Please reduce the length of the input prompt. (parameter=input_tokens, value=40001)
+2026-03-25 16:44:47  INFO      === Iteration 39/100  run=vasoactive_agent  best_qa=0.0% ===
+2026-03-25 16:44:47  ERROR     LLM call failed: You passed 40001 input tokens and requested 0 output tokens. However, the model's context length is only 40000 tokens, resulting in a maximum input length of 40000 tokens. Please reduce the length of the input prompt. (parameter=input_tokens, value=40001)
+2026-03-25 16:44:47  INFO      === Iteration 40/100  run=vasoactive_agent  best_qa=0.0% ===
+2026-03-25 16:44:47  ERROR     LLM call failed: You passed 40001 input tokens and requested 0 output tokens. However, the model's context length is only 40000 tokens, resulting in a maximum input length of 40000 tokens. Please reduce the length of the input prompt. (parameter=input_tokens, value=40001)
+2026-03-25 16:44:47  INFO      === Iteration 41/100  run=vasoactive_agent  best_qa=0.0% ===
+2026-03-25 16:44:47  ERROR     LLM call failed: You passed 40001 input tokens and requested 0 output tokens. However, the model's context length is only 40000 tokens, resulting in a maximum input length of 40000 tokens. Please reduce the length of the input prompt. (parameter=input_tokens, value=40001)
+2026-03-25 16:44:47  INFO      === Iteration 42/100  run=vasoactive_agent  best_qa=0.0% ===
+2026-03-25 16:44:47  ERROR     LLM call failed: You passed 40001 input tokens and requested 0 output tokens. However, the model's context length is only 40000 tokens, resulting in a maximum input length of 40000 tokens. Please reduce the length of the input prompt. (parameter=input_tokens, value=40001)
+2026-03-25 16:44:47  INFO      === Iteration 43/100  run=vasoactive_agent  best_qa=0.0% ===
+2026-03-25 16:44:47  ERROR     LLM call failed: You passed 40001 input tokens and requested 0 output tokens. However, the model's context length is only 40000 tokens, resulting in a maximum input length of 40000 tokens. Please reduce the length of the input prompt. (parameter=input_tokens, value=40001)
+2026-03-25 16:44:47  INFO      === Iteration 44/100  run=vasoactive_agent  best_qa=0.0% ===
+2026-03-25 16:44:47  INFO      Context approaching limit (20057 tokens, limit=25000) — forcing summarize + compress
+2026-03-25 16:45:33  INFO      Context compressed: 79 messages -> 2 messages
+2026-03-25 16:45:43  INFO      Exec block 1/1 …
+2026-03-25 16:45:43  INFO      Output: Vasoactive guidelines: []
+Shock guidelines: ['shock_guideline']
+Pressor guidelines: []
+
+2026-03-25 16:45:43  INFO      === Iteration 45/100  run=vasoactive_agent  best_qa=0.0% ===
+2026-03-25 16:45:46  INFO      Exec block 1/1 …
+2026-03-25 16:45:46  INFO      Output: # Shock — Clinical Guideline
+# Generated by generate_guidelines.py
+# Source articles: 10 (PMID38245889, PMID26903336, PMID26903335, PMID38245897, PMID26903338...)
+############################################################
+
+# Clinical Guideline: Shock (Septic Shock — Adult and Pediatric)
+
+---
+
+## 1. Definition
+
+### 1.1 Adult Septic Shock (Sepsis-3, 2016)
+
+Septic shock is defined as **a subset of sepsis in which particularly profound circulatory, cellular, and metabolic abnormalities are associa
+2026-03-25 16:45:46  INFO      === Iteration 46/100  run=vasoactive_agent  best_qa=0.0% ===
+2026-03-25 16:45:54  INFO      Exec block 1/1 …
+2026-03-25 16:45:54  INFO      Output: Vasoactive functions: ['vasopressin']
+Pressor functions: ['vasopressin']
+Medication functions: []
+
+2026-03-25 16:45:54  INFO      === Iteration 47/100  run=vasoactive_agent  best_qa=0.0% ===
+2026-03-25 16:45:57  INFO      Exec block 1/1 …
+2026-03-25 16:45:57  INFO      Output: def get_vasopressin_info(stay_id):
+    """
+    Extract vasopressin infusion information for a patient's ICU stay.
+
+    This function queries the MIMIC-IV database to retrieve vasopressin medication
+    administration data for a specific ICU stay. Vasopressin is a vasopressor
+    used to treat hypotension and shock, often as an adjunct to other vasopressors.
+
+    Parameters:
+    -----------
+    stay_id : int
+        The ICU stay identifier for the patient.
+
+    Returns:
+    --------
+    dict
+    
+2026-03-25 16:45:57  INFO      === Iteration 48/100  run=vasoactive_agent  best_qa=0.0% ===
+2026-03-25 16:46:08  INFO      Exec block 1/1 …
+2026-03-25 16:46:08  INFO      Output:     itemid                           label       category          linksto
+0   223998                  CT #1 Crepitus      Pulmonary      chartevents
+1   224423                  CT #2 Crepitus      Pulmonary      chartevents
+2   224428                  CT #3 Crepitus      Pulmonary      chartevents
+3   224429                  CT #4 Crepitus      Pulmonary      chartevents
+4   225851                        Cefepime    Antibiotics      inputevents
+5   221653                      Dobutamine    Medi
+2026-03-25 16:46:08  INFO      === Iteration 49/100  run=vasoactive_agent  best_qa=0.0% ===
+2026-03-25 16:46:30  INFO      Exec block 1/1 …
+2026-03-25 16:46:30  INFO      Output: Error:
+Traceback (most recent call last):
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 643, in execute
+    _run_with_timeout(_do_execute, timeout)
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 174, in _run_with_timeout
+    raise error[0]
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 156, in target
+    result[0] = func(*args, **kwargs)
+                ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/v-tiossowsk
+2026-03-25 16:46:30  INFO      === Iteration 50/100  run=vasoactive_agent  best_qa=0.0% ===
+2026-03-25 16:46:38  INFO      Exec block 1/1 …
+2026-03-25 16:46:38  INFO      Output: d_items structure:
+['itemid', 'label', 'abbreviation', 'linksto', 'category', 'unitname', 'param_type', 'lownormalvalue', 'highnormalvalue']
+   itemid                    label  ... lownormalvalue highnormalvalue
+0  220001             Problem List  ...            NaN             NaN
+1  220003       ICU Admission date  ...            NaN             NaN
+2  220045               Heart Rate  ...            NaN             NaN
+3  220046  Heart rate Alarm - High  ...            NaN             NaN
+4  2
+2026-03-25 16:46:38  INFO      === Iteration 51/100  run=vasoactive_agent  best_qa=0.0% ===
+2026-03-25 16:46:50  INFO      Exec block 1/1 …
+2026-03-25 16:46:50  INFO      Output: Vasoactive medication details:
+    itemid                          label     category unitname
+0   221289                    Epinephrine  Medications       mg
+1   221653                     Dobutamine  Medications       mg
+2   221662                       Dopamine  Medications       mg
+3   221749                  Phenylephrine  Medications       mg
+4   221906                 Norepinephrine  Medications       mg
+5   221986                      Milrinone  Medications       mg
+6   222315           
+2026-03-25 16:46:50  INFO      === Iteration 52/100  run=vasoactive_agent  best_qa=0.0% ===
+2026-03-25 16:47:08  INFO      Exec block 1/1 …
+2026-03-25 16:47:08  INFO      Output: Error:
+Traceback (most recent call last):
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 643, in execute
+    _run_with_timeout(_do_execute, timeout)
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 174, in _run_with_timeout
+    raise error[0]
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 156, in target
+    result[0] = func(*args, **kwargs)
+                ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/v-tiossowsk
+2026-03-25 16:47:08  INFO      === Iteration 53/100  run=vasoactive_agent  best_qa=0.0% ===
+2026-03-25 16:47:32  INFO      Exec block 1/1 …
+2026-03-25 16:47:32  INFO      Output: Error:
+Traceback (most recent call last):
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 643, in execute
+    _run_with_timeout(_do_execute, timeout)
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 174, in _run_with_timeout
+    raise error[0]
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 156, in target
+    result[0] = func(*args, **kwargs)
+                ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/v-tiossowsk
+2026-03-25 16:47:32  INFO      === Iteration 54/100  run=vasoactive_agent  best_qa=0.0% ===
+2026-03-25 16:47:46  INFO      Exec block 1/1 …
+2026-03-25 16:47:46  INFO      Output: Vasopressin info for stay_id 32969947:
+{'received_vasopressin': True, 'max_rate': 2.41, 'min_rate': 1.2, 'avg_rate': 1.92, 'used_as_adjunct': True, 'num_records': 5, 'first_time': Timestamp('2168-06-11 18:54:00'), 'last_time': Timestamp('2168-06-15 10:01:00'), 'subject_id': 11763262, 'hadm_id': 23249332}
+
+All vasoactive agents for stay_id 32969947:
+    itemid           label      rate     rateuom           starttime
+0   221906  Norepinephrine  0.040019  mcg/kg/min 2168-06-11 18:54:00
+1   222315 
+2026-03-25 16:47:46  INFO      === Iteration 55/100  run=vasoactive_agent  best_qa=0.0% ===
+2026-03-25 16:48:07  INFO      Exec block 1/1 …
+2026-03-25 16:48:07  INFO      Output: All vasoactive medication itemids:
+    itemid                          label unitname
+0   221653                     Dobutamine       mg
+1   221662                       Dopamine       mg
+2   221289                    Epinephrine       mg
+3   229617                   Epinephrine.       mg
+4   221986                      Milrinone       mg
+5   221906                 Norepinephrine       mg
+6   221749                  Phenylephrine       mg
+7   229632        Phenylephrine (200/250)       mg
+8   22
+2026-03-25 16:48:07  INFO      === Iteration 56/100  run=vasoactive_agent  best_qa=0.0% ===
+2026-03-25 16:48:36  INFO      Exec block 1/1 …
+2026-03-25 16:48:36  INFO      Output: Sample stay_ids with vasoactive agents:
+    stay_id  subject_id   hadm_id
+0  31002850    17020588  20311746
+1  31501786    17026123  21812097
+2  33279548    17028661  23660095
+3  32359526    17032851  21092023
+4  36600966    17033835  29227144
+
+Testing with stay_id: 31002850
+    itemid                   label  ...           starttime             endtime
+0   229630  Phenylephrine (50/250)  ... 2148-05-05 20:31:00 2148-05-05 20:46:00
+1   229630  Phenylephrine (50/250)  ... 2148-05-05 20:46:00 2148
+2026-03-25 16:48:36  INFO      === Iteration 57/100  run=vasoactive_agent  best_qa=0.0% ===
+2026-03-25 16:48:58  INFO      Exec block 1/1 …
+2026-03-25 16:48:58  INFO      Output: Vasoactive agent summary for stay_id 31002850:
+                    label  num_records  ...           last_time     rateuom
+0  Phenylephrine (50/250)           23  ... 2148-05-06 18:26:00  mcg/kg/min
+
+[1 rows x 8 columns]
+
+2026-03-25 16:48:58  INFO      === Iteration 58/100  run=vasoactive_agent  best_qa=0.0% ===
+2026-03-25 16:49:53  INFO      Exec block 1/1 …
+2026-03-25 16:49:53  INFO      Output: Testing get_vasoactive_agent_info:
+Stay 31002850: {'received_vasoactive': True, 'agents_received': ['Phenylephrine (50/250)'], 'agent_details': {'Phenylephrine (50/250)': {'num_records': 23, 'min_rate': 0.61, 'max_rate': 6.1, 'avg_rate': 1.51, 'first_time': Timestamp('2148-05-05 20:31:00'), 'last_time': Timestamp('2148-05-06 18:26:00'), 'rateuom': 'mcg/kg/min'}}, 'max_combined_rate': 6.1, 'num_total_records': 23, 'first_time': Timestamp('2148-05-05 20:31:00'), 'last_time': Timestamp('2148-05-06 
+2026-03-25 16:49:53  INFO      === Iteration 59/100  run=vasoactive_agent  best_qa=0.0% ===
+2026-03-25 16:50:09  INFO      Exec block 1/1 …
+2026-03-25 16:50:09  INFO      Output: Stay 31501786: {'received_vasoactive': True, 'agents_received': ['Epinephrine', 'Dopamine', 'Norepinephrine', 'Vasopressin'], 'agent_details': {'Epinephrine': {'num_records': 2, 'min_rate': 1.02, 'max_rate': 1.02, 'avg_rate': 1.02, 'first_time': Timestamp('2177-10-30 01:31:00'), 'last_time': Timestamp('2177-10-30 02:25:00'), 'rateuom': 'mcg/kg/min'}, 'Dopamine': {'num_records': 1, 'min_rate': 15.04, 'max_rate': 15.04, 'avg_rate': 15.04, 'first_time': Timestamp('2177-10-30 01:36:00'), 'last_time'
+2026-03-25 16:50:09  INFO      === Iteration 60/100  run=vasoactive_agent  best_qa=0.0% ===
+2026-03-25 16:50:21  INFO      Exec block 1/1 …
+2026-03-25 16:50:21  INFO      Output: Error:
+Traceback (most recent call last):
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 643, in execute
+    _run_with_timeout(_do_execute, timeout)
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 174, in _run_with_timeout
+    raise error[0]
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 156, in target
+    result[0] = func(*args, **kwargs)
+                ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/v-tiossowsk
+2026-03-25 16:50:21  INFO      === Iteration 61/100  run=vasoactive_agent  best_qa=0.0% ===
+2026-03-25 16:50:31  INFO      Exec block 1/1 …
+2026-03-25 16:50:31  INFO      Output: Sample stays:
+    stay_id  subject_id   hadm_id
+0  39553978    10000032  29079034
+1  37081114    10000690  25860671
+2  39765666    10000980  26913865
+3  37067082    10001217  24597018
+4  34592300    10001217  27703517
+
+Testing stay 39553978:
+{'received_vasoactive': False, 'agents_received': [], 'agent_details': {}, 'max_combined_rate': 0.0, 'num_total_records': 0, 'first_time': None, 'last_time': None, 'subject_id': None, 'hadm_id': None}
+
+2026-03-25 16:50:31  INFO      === Iteration 62/100  run=vasoactive_agent  best_qa=0.0% ===
+2026-03-25 16:51:30  INFO      Exec block 1/1 …
+2026-03-25 16:51:30  INFO      Output: Code executed successfully (no output).
+2026-03-25 16:51:30  INFO      Debug conversations will be saved to debug_logs
+2026-03-25 16:51:30  INFO      Using question from dataset column: Did this patient receive any vasopressor during their ICU stay?
+2026-03-25 16:51:30  INFO      Answer type for 'vasoactive_agent': numerical (per_row=True)
+2026-03-25 16:51:30  INFO      ReACT iteration 1/5 — 20 active patients
+Rendering conversations:   0%|          | 0/20 [00:00<?, ?it/s]Rendering conversations: 100%|██████████| 20/20 [00:00<00:00, 568.20it/s]
+Processed prompts:   0%|          | 0/20 [00:00<?, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s]Processed prompts:   5%|▌         | 1/20 [00:08<02:41,  8.53s/it, est. speed input: 86.80 toks/s, output: 12.67 toks/s]Processed prompts:  10%|█         | 2/20 [00:08<01:06,  3.70s/it, est. speed input: 167.32 toks/s, output: 25.10 toks/s]Processed prompts:  15%|█▌        | 3/20 [00:11<00:55,  3.27s/it, est. speed input: 191.63 toks/s, output: 34.31 toks/s]Processed prompts:  20%|██        | 4/20 [00:12<00:36,  2.28s/it, est. speed input: 239.62 toks/s, output: 47.79 toks/s]Processed prompts:  25%|██▌       | 5/20 [00:12<00:23,  1.54s/it, est. speed input: 294.35 toks/s, output: 62.72 toks/s]Processed prompts:  30%|███       | 6/20 [00:13<00:16,  1.17s/it, est. speed input: 340.57 toks/s, output: 76.50 toks/s]Processed prompts:  45%|████▌     | 9/20 [00:13<00:05,  1.87it/s, est. speed input: 499.57 toks/s, output: 122.44 toks/s]Processed prompts:  50%|█████     | 10/20 [00:17<00:13,  1.30s/it, est. speed input: 426.81 toks/s, output: 112.15 toks/s]Processed prompts:  55%|█████▌    | 11/20 [00:17<00:09,  1.08s/it, est. speed input: 459.80 toks/s, output: 127.97 toks/s]Processed prompts:  60%|██████    | 12/20 [00:18<00:07,  1.14it/s, est. speed input: 493.77 toks/s, output: 144.15 toks/s]Processed prompts:  65%|██████▌   | 13/20 [00:21<00:10,  1.53s/it, est. speed input: 451.91 toks/s, output: 141.02 toks/s]Processed prompts:  70%|███████   | 14/20 [00:21<00:07,  1.23s/it, est. speed input: 477.01 toks/s, output: 157.67 toks/s]Processed prompts:  80%|████████  | 16/20 [00:21<00:02,  1.39it/s, est. speed input: 541.46 toks/s, output: 195.36 toks/s]Processed prompts: 100%|██████████| 20/20 [00:36<00:00,  2.32s/it, est. speed input: 409.06 toks/s, output: 175.77 toks/s]Processed prompts: 100%|██████████| 20/20 [00:36<00:00,  2.32s/it, est. speed input: 409.06 toks/s, output: 175.77 toks/s]Processed prompts: 100%|██████████| 20/20 [00:36<00:00,  1.81s/it, est. speed input: 409.06 toks/s, output: 175.77 toks/s]
+2026-03-25 16:52:06  INFO      ReACT iteration 2/5 — 20 active patients
+Rendering conversations:   0%|          | 0/20 [00:00<?, ?it/s]Rendering conversations: 100%|██████████| 20/20 [00:00<00:00, 400.20it/s]
+Processed prompts:   0%|          | 0/20 [00:00<?, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s]Processed prompts:   5%|▌         | 1/20 [00:09<03:03,  9.65s/it, est. speed input: 95.17 toks/s, output: 8.60 toks/s]Processed prompts:  10%|█         | 2/20 [00:10<01:21,  4.51s/it, est. speed input: 171.66 toks/s, output: 17.52 toks/s]Processed prompts:  20%|██        | 4/20 [00:11<00:29,  1.82s/it, est. speed input: 343.70 toks/s, output: 36.22 toks/s]Processed prompts:  25%|██▌       | 5/20 [00:11<00:20,  1.39s/it, est. speed input: 423.99 toks/s, output: 45.43 toks/s]Processed prompts:  30%|███       | 6/20 [00:11<00:15,  1.14s/it, est. speed input: 479.19 toks/s, output: 54.59 toks/s]Processed prompts:  40%|████      | 8/20 [00:12<00:08,  1.36it/s, est. speed input: 633.58 toks/s, output: 74.67 toks/s]Processed prompts:  45%|████▌     | 9/20 [00:15<00:14,  1.31s/it, est. speed input: 600.70 toks/s, output: 74.32 toks/s]Processed prompts:  50%|█████     | 10/20 [00:19<00:20,  2.05s/it, est. speed input: 535.20 toks/s, output: 74.93 toks/s]Processed prompts:  55%|█████▌    | 11/20 [00:20<00:15,  1.76s/it, est. speed input: 566.88 toks/s, output: 87.84 toks/s]Processed prompts:  60%|██████    | 12/20 [00:24<00:19,  2.42s/it, est. speed input: 520.87 toks/s, output: 91.16 toks/s]Processed prompts:  65%|██████▌   | 13/20 [00:25<00:13,  1.91s/it, est. speed input: 554.41 toks/s, output: 106.97 toks/s]Processed prompts:  70%|███████   | 14/20 [00:25<00:08,  1.44s/it, est. speed input: 597.44 toks/s, output: 123.91 toks/s]Processed prompts:  75%|███████▌  | 15/20 [00:26<00:05,  1.13s/it, est. speed input: 633.90 toks/s, output: 140.20 toks/s]Processed prompts:  85%|████████▌ | 17/20 [00:27<00:02,  1.02it/s, est. speed input: 682.38 toks/s, output: 167.94 toks/s]Processed prompts:  90%|█████████ | 18/20 [00:31<00:03,  1.59s/it, est. speed input: 663.38 toks/s, output: 168.91 toks/s]Processed prompts:  95%|█████████▌| 19/20 [00:40<00:03,  3.46s/it, est. speed input: 567.04 toks/s, output: 152.87 toks/s]Processed prompts: 100%|██████████| 20/20 [00:56<00:00,  6.86s/it, est. speed input: 432.28 toks/s, output: 132.02 toks/s]Processed prompts: 100%|██████████| 20/20 [00:56<00:00,  6.86s/it, est. speed input: 432.28 toks/s, output: 132.02 toks/s]Processed prompts: 100%|██████████| 20/20 [00:56<00:00,  2.80s/it, est. speed input: 432.28 toks/s, output: 132.02 toks/s]
+2026-03-25 16:53:02  INFO      ReACT iteration 3/5 — 8 active patients
+Rendering conversations:   0%|          | 0/8 [00:00<?, ?it/s]Rendering conversations: 100%|██████████| 8/8 [00:00<00:00, 287.17it/s]
+Processed prompts:   0%|          | 0/8 [00:00<?, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s]Processed prompts:  12%|█▎        | 1/8 [00:10<01:12, 10.31s/it, est. speed input: 174.06 toks/s, output: 15.43 toks/s]Processed prompts:  25%|██▌       | 2/8 [00:12<00:32,  5.47s/it, est. speed input: 364.42 toks/s, output: 29.94 toks/s]Processed prompts:  38%|███▊      | 3/8 [00:13<00:17,  3.52s/it, est. speed input: 469.45 toks/s, output: 45.13 toks/s]Processed prompts:  50%|█████     | 4/8 [00:15<00:11,  2.78s/it, est. speed input: 532.01 toks/s, output: 58.87 toks/s]Processed prompts:  62%|██████▎   | 5/8 [00:19<00:09,  3.28s/it, est. speed input: 516.00 toks/s, output: 66.52 toks/s]Processed prompts:  75%|███████▌  | 6/8 [00:21<00:05,  2.93s/it, est. speed input: 553.46 toks/s, output: 80.47 toks/s]Processed prompts:  88%|████████▊ | 7/8 [00:23<00:02,  2.67s/it, est. speed input: 584.87 toks/s, output: 94.63 toks/s]Processed prompts: 100%|██████████| 8/8 [00:23<00:00,  1.85s/it, est. speed input: 662.14 toks/s, output: 115.58 toks/s]Processed prompts: 100%|██████████| 8/8 [00:23<00:00,  1.85s/it, est. speed input: 662.14 toks/s, output: 115.58 toks/s]Processed prompts: 100%|██████████| 8/8 [00:23<00:00,  2.99s/it, est. speed input: 662.14 toks/s, output: 115.58 toks/s]
+2026-03-25 16:53:26  INFO      ReACT iteration 4/5 — 6 active patients
+Rendering conversations:   0%|          | 0/6 [00:00<?, ?it/s]Rendering conversations: 100%|██████████| 6/6 [00:00<00:00, 207.14it/s]
+Processed prompts:   0%|          | 0/6 [00:00<?, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s]Processed prompts:  17%|█▋        | 1/6 [00:10<00:51, 10.37s/it, est. speed input: 220.68 toks/s, output: 15.43 toks/s]Processed prompts:  33%|███▎      | 2/6 [00:13<00:24,  6.09s/it, est. speed input: 368.12 toks/s, output: 29.50 toks/s]Processed prompts:  50%|█████     | 3/6 [00:13<00:10,  3.45s/it, est. speed input: 552.68 toks/s, output: 46.64 toks/s]Processed prompts:  83%|████████▎ | 5/6 [00:15<00:02,  2.00s/it, est. speed input: 836.08 toks/s, output: 76.08 toks/s]Processed prompts: 100%|██████████| 6/6 [00:33<00:00,  6.66s/it, est. speed input: 482.10 toks/s, output: 58.31 toks/s]Processed prompts: 100%|██████████| 6/6 [00:33<00:00,  6.66s/it, est. speed input: 482.10 toks/s, output: 58.31 toks/s]Processed prompts: 100%|██████████| 6/6 [00:33<00:00,  5.63s/it, est. speed input: 482.10 toks/s, output: 58.31 toks/s]
+2026-03-25 16:54:00  INFO      ReACT iteration 5/5 — 3 active patients
+Rendering conversations:   0%|          | 0/3 [00:00<?, ?it/s]Rendering conversations: 100%|██████████| 3/3 [00:00<00:00, 161.64it/s]
+Processed prompts:   0%|          | 0/3 [00:00<?, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s]Processed prompts:  33%|███▎      | 1/3 [00:09<00:18,  9.12s/it, est. speed input: 290.83 toks/s, output: 18.86 toks/s]Processed prompts:  67%|██████▋   | 2/3 [00:11<00:05,  5.43s/it, est. speed input: 491.06 toks/s, output: 35.18 toks/s]Processed prompts: 100%|██████████| 3/3 [00:30<00:00, 11.64s/it, est. speed input: 329.72 toks/s, output: 38.11 toks/s]Processed prompts: 100%|██████████| 3/3 [00:30<00:00, 11.64s/it, est. speed input: 329.72 toks/s, output: 38.11 toks/s]Processed prompts: 100%|██████████| 3/3 [00:30<00:00, 10.33s/it, est. speed input: 329.72 toks/s, output: 38.11 toks/s]
+2026-03-25 16:54:31  INFO      QA accuracy: 90.0%  (correct=18/20, parse_errors=2)
+2026-03-25 16:54:31  INFO      SUCCESS: 90.0% QA accuracy for 'vasoactive_agent' at iteration 62
+2026-03-25 16:54:31  INFO      Function code saved to autoformalized_library/functions/vasoactive_agent.py
+2026-03-25 16:54:31  INFO      Summary saved to autoformalized_library/summary.json
+[rank0]:[W325 16:54:31.017313239 ProcessGroupNCCL.cpp:1553] Warning: WARNING: destroy_process_group() was not called before program exit, which can leak resources. For more info, please see https://pytorch.org/docs/stable/distributed.html#shutdown (function operator())
+
+======================================================================
+AUTOFORMALIZATION COMPLETE
+======================================================================
+  Output dir      : autoformalized_library
+  Model           : Qwen/Qwen3.5-27B
+  Dataset         : /home/v-tiossowski/HealthcareAgent/mimic-code/data/MIMICIV_vasoactive_agent_dataset/vasoactive_agent.csv
+  Run name        : vasoactive_agent
+  Status          : SUCCESS
+  QA accuracy     : 90.0%
+  Iterations      : 62
+  Total tokens    : 101,037  (prompt 81,356 / completion 19,681)
+  LLM calls       : 111
+  SQL queries     : 68
+  Function saved  : autoformalized_library/functions/vasoactive_agent.py
+======================================================================

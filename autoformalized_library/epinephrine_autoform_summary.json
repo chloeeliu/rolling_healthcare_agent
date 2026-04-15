@@ -1,0 +1,47 @@
+{
+  "timestamp": "2026-03-25T07:34:46.330223",
+  "model": "Qwen/Qwen3.5-27B",
+  "db_path": "/home/v-tiossowski/MIMIC-IV/mimic4.db",
+  "qa_dataset": "/home/v-tiossowski/HealthcareAgent/mimic-code/data/MIMICIV_epinephrine_dataset/epinephrine.csv",
+  "match_threshold": 0.9,
+  "run_name": "epinephrine",
+  "success": true,
+  "iterations": 19,
+  "qa_accuracy": 1.0,
+  "stats": {
+    "react": {
+      "prompt_tokens": 0,
+      "completion_tokens": 0,
+      "total_tokens": 0,
+      "llm_calls": 19,
+      "query_count": 13,
+      "query_time_sec": 0.071,
+      "wall_time_sec": 305.766
+    },
+    "qa": {
+      "prompt_tokens": 52166,
+      "completion_tokens": 9101,
+      "total_tokens": 61267,
+      "llm_calls": 47,
+      "query_count": 20,
+      "query_time_sec": 0.061,
+      "eval_wall_time_sec": 70.732,
+      "per_question": {
+        "avg_prompt_tokens": 2608.3,
+        "avg_completion_tokens": 455.1,
+        "avg_llm_calls": 2.35,
+        "avg_query_count": 1.0,
+        "avg_query_time_sec": 0.003,
+        "avg_wall_time_sec": 3.537
+      }
+    },
+    "total": {
+      "prompt_tokens": 52166,
+      "completion_tokens": 9101,
+      "total_tokens": 61267,
+      "llm_calls": 66,
+      "query_count": 33,
+      "query_time_sec": 0.132
+    }
+  }
+}

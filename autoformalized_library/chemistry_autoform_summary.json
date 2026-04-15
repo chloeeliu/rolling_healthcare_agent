@@ -1,0 +1,47 @@
+{
+  "timestamp": "2026-03-24T22:58:46.180175",
+  "model": "Qwen/Qwen3.5-27B",
+  "db_path": "/home/v-tiossowski/MIMIC-IV/mimic4.db",
+  "qa_dataset": "/home/v-tiossowski/HealthcareAgent/mimic-code/data/MIMICIV_chemistry_dataset/chemistry.csv",
+  "match_threshold": 0.9,
+  "run_name": "chemistry",
+  "success": true,
+  "iterations": 27,
+  "qa_accuracy": 1.0,
+  "stats": {
+    "react": {
+      "prompt_tokens": 0,
+      "completion_tokens": 0,
+      "total_tokens": 0,
+      "llm_calls": 27,
+      "query_count": 28,
+      "query_time_sec": 0.303,
+      "wall_time_sec": 507.609
+    },
+    "qa": {
+      "prompt_tokens": 64311,
+      "completion_tokens": 9036,
+      "total_tokens": 73347,
+      "llm_calls": 40,
+      "query_count": 60,
+      "query_time_sec": 0.375,
+      "eval_wall_time_sec": 53.675,
+      "per_question": {
+        "avg_prompt_tokens": 3215.6,
+        "avg_completion_tokens": 451.8,
+        "avg_llm_calls": 2.0,
+        "avg_query_count": 3.0,
+        "avg_query_time_sec": 0.019,
+        "avg_wall_time_sec": 2.684
+      }
+    },
+    "total": {
+      "prompt_tokens": 64311,
+      "completion_tokens": 9036,
+      "total_tokens": 73347,
+      "llm_calls": 67,
+      "query_count": 88,
+      "query_time_sec": 0.678
+    }
+  }
+}

@@ -1,0 +1,181 @@
+=== Step 1 ===
+# Clinical Coding Agent Memory
+
+## Schema Facts
+
+### GCS Data Location
+- **Table**: `mimiciv_icu.chartevents`
+- **Item IDs**:
+  - `220739`: GCS - Eye Opening (scores 1-4)
+  - `223900`: GCS - Verbal Response (scores 1-5)
+  - `223901`: GCS - Motor Response (scores 1-6)
+- **Value Storage**: `valuenum` column (numeric), `value` column (text description)
+- **Key Columns**: `stay_id`, `subject_id`, `hadm_id`, `charttime`, `itemid`, `valuenum`
+
+### GCS Scoring Ranges
+- **Eye Opening**: 1=None, 2=To pain, 3=To speech, 4=Spontaneous
+- **Verbal Response**: 1=None, 2=Incomprehensible sounds, 3=Inappropriate words, 4=Confused, 5=Oriented
+- **Motor Response**: 1=None, 2=Abnormal extension, 3=Abnormal flexion, 4=Withdrawal, 5=Localizing, 6=Obeys commands
+- **Total GCS**: 3-15 (sum of E+V+M)
+
+### Clinical Thresholds
+- **Severe impairment**: GCS ≤ 8 (coma, may require intubation)
+- **Moderate impairment**: GCS 9-12
+- **Mild impairment**: GCS 13-14
+- **Normal**: GCS 15
+
+### Data Characteristics
+- GCS components may NOT always be recorded together (incomplete records exist)
+- No pre-calculated GCS total score in database
+- Intubated patients often have verbal response = 1 ("No Response-ETT")
+
+## Function Source Code
+
+```python
+import pandas as pd
+
+def gcs(stay_id):
+    """
+    Extract Glasgow Coma Scale (GCS) information for a patient's ICU stay.
+    
+    This function retrieves all GCS component scores (Eye Opening, Verbal Response,
+    Motor Response) recorded during an ICU stay and calculates the total GCS score.
+    
+    Parameters
+    ----------
+    stay_id : int
+        The ICU stay identifier.
+    
+    Returns
+    -------
+    dict
+        A dictionary containing the following keys:
+        - 'stay_id': The ICU stay identifier (int)
+        - 'subject_id': Patient identifier (int or None)
+        - 'hadm_id': Hospital admission identifier (int or None)
+        - 'gcs_records': DataFrame with all GCS recordings during the stay, containing:
+            - 'charttime': Timestamp of the GCS assessment
+            - 'eye': Eye opening score (1-4)
+            - 'verbal': Verbal response score (1-5)
+            - 'motor': Motor response score (1-6)
+            - 'gcs_total': Total GCS score (3-15)
+        - 'min_gcs': Minimum total GCS score during the stay (float or None)
+        - 'max_gcs': Maximum total GCS score during the stay (float or None)
+        - 'has_severe_impairment': Boolean indicating if GCS ≤ 8 at any point (bool)
+        - 'has_verbal_unresponsive': Boolean indicating if verbal response = 1 at any point (bool)
+        - 'first_gcs_time': Timestamp of first GCS recording (datetime or None)
+        - 'last_gcs_time': Timestamp of last GCS recording (datetime or None)
+        - 'total_gcs_assessments': Number of GCS assessments during the stay (int)
+    
+    Notes
+    -----
+    GCS Components:
+    - Eye Opening (E): 1=None, 2=To pain, 3=To speech, 4=Spontaneous
+    - Verbal Response (V): 1=None, 2=Incomprehensible sounds, 3=Inappropriate words, 
+                          4=Confused, 5=Oriented
+    - Motor Response (M): 1=None, 2=Abnormal extension, 3=Abnormal flexion, 
+                         4=Withdrawal, 5=Localizing, 6=Obeys commands
+    
+    Clinical Thresholds:
+    - Severe impairment: GCS ≤ 8 (indicates coma, may require intubation)
+    - Moderate impairment: GCS 9-12
+    - Mild impairment: GCS 13-14
+    - Normal: GCS 15
+    
+    Examples
+    --------
+    >>> gcs(37557681)
+    {'stay_id': 37557681, 'subject_id': ..., 'hadm_id': ..., 
+     'min_gcs': 15.0, 'max_gcs': 15.0, 
+     'has_severe_impairment': False, 'has_verbal_unresponsive': False, ...}
+    """
+    
+    # SQL query to get all GCS components for the stay
+    sql = """
+    WITH gcs_components AS (
+        SELECT stay_id, subject_id, hadm_id, charttime, itemid, valuenum
+        FROM mimiciv_icu.chartevents
+        WHERE stay_id = {stay_id}
+          AND itemid IN (220739, 223900, 223901)
+    ),
+    gcs_pivot AS (
+        SELECT stay_id, subject_id, hadm_id, charttime,
+               MAX(CASE WHEN itemid = 220739 THEN valuenum END) as eye,
+               MAX(CASE WHEN itemid = 223900 THEN valuenum END) as verbal,
+               MAX(CASE WHEN itemid = 223901 THEN valuenum END) as motor
+        FROM gcs_components
+        GROUP BY stay_id, subject_id, hadm_id, charttime
+    )
+    SELECT stay_id, subject_id, hadm_id, charttime, eye, verbal, motor,
+           (eye + verbal + motor) as gcs_total
+    FROM gcs_pivot
+    ORDER BY charttime
+    """
+    
+    # Execute query
+    df = query_db(sql.format(stay_id=stay_id))
+    
+    # If no GCS records found, return appropriate response
+    if df.empty:
+        return {
+            'stay_id': stay_id,
+            'subject_id': None,
+            'hadm_id': None,
+            'gcs_records': pd.DataFrame(columns=['charttime', 'eye', 'verbal', 'motor', 'gcs_total']),
+            'min_gcs': None,
+            'max_gcs': None,
+            'has_severe_impairment': False,
+            'has_verbal_unresponsive': False,
+            'first_gcs_time': None,
+            'last_gcs_time': None,
+            'total_gcs_assessments': 0
+        }
+    
+    # Extract patient identifiers
+    subject_id = df['subject_id'].iloc[0]
+    hadm_id = df['hadm_id'].iloc[0]
+    
+    # Calculate summary statistics
+    min_gcs = df['gcs_total'].min()
+    max_gcs = df['gcs_total'].max()
+    has_severe_impairment = min_gcs <= 8
+    has_verbal_unresponsive = df['verbal'].min() == 1
+    
+    # Create gcs_records DataFrame
+    gcs_records = df[['charttime', 'eye', 'verbal', 'motor', 'gcs_total']].copy()
+    
+    return {
+        'stay_id': stay_id,
+        'subject_id': subject_id,
+        'hadm_id': hadm_id,
+        'gcs_records': gcs_records,
+        'min_gcs': min_gcs,
+        'max_gcs': max_gcs,
+        'has_severe_impairment': has_severe_impairment,
+        'has_verbal_unresponsive': has_verbal_unresponsive,
+        'first_gcs_time': df['charttime'].min(),
+        'last_gcs_time': df['charttime'].max(),
+        'total_gcs_assessments': len(df)
+    }
+```
+
+## Test Results
+
+| Test | stay_id | subject_id | min_gcs | max_gcs | has_severe_impairment | has_verbal_unresponsive | total_assessments |
+|------|---------|------------|---------|---------|----------------------|------------------------|-------------------|
+| 1 | 37557681 | 10055361 | 15.0 | 15.0 | False | False | 35 |
+| 2 | 39390511 | 10209126 | 3.0 | 15.0 | True | True | 42 |
+| 3 | 32906693 | 10141364 | 3.0 | 15.0 | True | True | 109 |
+| 4 | 37743005 | None | None | None | False | False | 0 |
+
+## Error Fixes
+
+1. **Step 6**: Column name `unit_name` → `unitname` in `d_items` table
+2. **Step 9**: Ambiguous column reference `itemid` → `ce.itemid` and `di.itemid` in JOIN query
+
+## Additional Test Cases Investigated
+
+- **stay_id 34368447**: GCS range 3-15, has severe impairment, verbal unresponsive
+- **stay_id 39797200**: GCS range 3-15, has severe impairment, verbal unresponsive
+- **stay_id 35343618**: GCS range 10-15, verbal unresponsive (intubated)
+

@@ -1,0 +1,621 @@
+2026-03-25 16:15:35  INFO      Using database: /home/v-tiossowski/MIMIC-IV/mimic4.db
+2026-03-25 16:15:35  INFO      No --model_url provided; loading vLLM in-process …
+INFO 03-25 16:15:40 [utils.py:238] non-default args: {'trust_remote_code': True, 'max_model_len': 40000, 'disable_log_stats': True, 'model': 'Qwen/Qwen3.5-27B'}
+The argument `trust_remote_code` is to be used with Auto classes. It has no effect here and is ignored.
+The argument `trust_remote_code` is to be used with Auto classes. It has no effect here and is ignored.
+The argument `trust_remote_code` is to be used with Auto classes. It has no effect here and is ignored.
+INFO 03-25 16:15:40 [model.py:531] Resolved architecture: Qwen3_5ForConditionalGeneration
+INFO 03-25 16:15:40 [model.py:1554] Using max model len 40000
+INFO 03-25 16:15:40 [scheduler.py:231] Chunked prefill is enabled with max_num_batched_tokens=8192.
+INFO 03-25 16:15:42 [config.py:544] Setting attention block size to 784 tokens to ensure that attention page size is >= mamba page size.
+INFO 03-25 16:15:42 [config.py:575] Padding mamba page size by 0.13% to ensure that mamba page size and attention page size are exactly equal.
+INFO 03-25 16:15:42 [vllm.py:747] Asynchronous scheduling is enabled.
+WARNING 03-25 16:15:49 [system_utils.py:152] We must use the `spawn` multiprocessing start method. Overriding VLLM_WORKER_MULTIPROC_METHOD to 'spawn'. See https://docs.vllm.ai/en/latest/usage/troubleshooting.html#python-multiprocessing for more information. Reasons: CUDA is initialized
+(EngineCore_DP0 pid=27786) INFO 03-25 16:15:54 [core.py:101] Initializing a V1 LLM engine (v0.17.1) with config: model='Qwen/Qwen3.5-27B', speculative_config=None, tokenizer='Qwen/Qwen3.5-27B', skip_tokenizer_init=False, tokenizer_mode=auto, revision=None, tokenizer_revision=None, trust_remote_code=True, dtype=torch.bfloat16, max_seq_len=40000, download_dir=None, load_format=auto, tensor_parallel_size=1, pipeline_parallel_size=1, data_parallel_size=1, disable_custom_all_reduce=False, quantization=None, enforce_eager=False, enable_return_routed_experts=False, kv_cache_dtype=auto, device_config=cuda, structured_outputs_config=StructuredOutputsConfig(backend='auto', disable_fallback=False, disable_any_whitespace=False, disable_additional_properties=False, reasoning_parser='', reasoning_parser_plugin='', enable_in_reasoning=False), observability_config=ObservabilityConfig(show_hidden_metrics_for_version=None, otlp_traces_endpoint=None, collect_detailed_traces=None, kv_cache_metrics=False, kv_cache_metrics_sample=0.01, cudagraph_metrics=False, enable_layerwise_nvtx_tracing=False, enable_mfu_metrics=False, enable_mm_processor_stats=False, enable_logging_iteration_details=False), seed=0, served_model_name=Qwen/Qwen3.5-27B, enable_prefix_caching=False, enable_chunked_prefill=True, pooler_config=None, compilation_config={'level': None, 'mode': <CompilationMode.VLLM_COMPILE: 3>, 'debug_dump_path': None, 'cache_dir': '', 'compile_cache_save_format': 'binary', 'backend': 'inductor', 'custom_ops': ['none'], 'splitting_ops': ['vllm::unified_attention', 'vllm::unified_attention_with_output', 'vllm::unified_mla_attention', 'vllm::unified_mla_attention_with_output', 'vllm::mamba_mixer2', 'vllm::mamba_mixer', 'vllm::short_conv', 'vllm::linear_attention', 'vllm::plamo2_mamba_mixer', 'vllm::gdn_attention_core', 'vllm::kda_attention', 'vllm::sparse_attn_indexer', 'vllm::rocm_aiter_sparse_attn_indexer', 'vllm::unified_kv_cache_update', 'vllm::unified_mla_kv_cache_update'], 'compile_mm_encoder': False, 'compile_sizes': [], 'compile_ranges_split_points': [8192], 'inductor_compile_config': {'enable_auto_functionalized_v2': False, 'combo_kernels': True, 'benchmark_combo_kernel': True}, 'inductor_passes': {}, 'cudagraph_mode': <CUDAGraphMode.FULL_AND_PIECEWISE: (2, 1)>, 'cudagraph_num_of_warmups': 1, 'cudagraph_capture_sizes': [1, 2, 4, 8, 16, 24, 32, 40, 48, 56, 64, 72, 80, 88, 96, 104, 112, 120, 128, 136, 144, 152, 160, 168, 176, 184, 192, 200, 208, 216, 224, 232, 240, 248, 256, 272, 288, 304, 320, 336, 352, 368, 384, 400, 416, 432, 448, 464, 480, 496, 512], 'cudagraph_copy_inputs': False, 'cudagraph_specialize_lora': True, 'use_inductor_graph_partition': False, 'pass_config': {'fuse_norm_quant': False, 'fuse_act_quant': False, 'fuse_attn_quant': False, 'enable_sp': False, 'fuse_gemm_comms': False, 'fuse_allreduce_rms': False}, 'max_cudagraph_capture_size': 512, 'dynamic_shapes_config': {'type': <DynamicShapesType.BACKED: 'backed'>, 'evaluate_guards': False, 'assume_32_bit_indexing': False}, 'local_cache_dir': None, 'fast_moe_cold_start': True, 'static_all_moe_layers': []}
+(EngineCore_DP0 pid=27786) INFO 03-25 16:15:57 [parallel_state.py:1393] world_size=1 rank=0 local_rank=0 distributed_init_method=tcp://10.8.144.167:47941 backend=nccl
+(EngineCore_DP0 pid=27786) INFO 03-25 16:15:57 [parallel_state.py:1715] rank 0 in world size 1 is assigned as DP rank 0, PP rank 0, PCP rank 0, TP rank 0, EP rank N/A, EPLB rank N/A
+(EngineCore_DP0 pid=27786) INFO 03-25 16:16:03 [base.py:106] Offloader set to NoopOffloader
+(EngineCore_DP0 pid=27786) INFO 03-25 16:16:03 [gpu_model_runner.py:4281] Starting to load model Qwen/Qwen3.5-27B...
+(EngineCore_DP0 pid=27786) INFO 03-25 16:16:04 [cuda.py:453] Using backend AttentionBackendEnum.FLASH_ATTN for vit attention
+(EngineCore_DP0 pid=27786) INFO 03-25 16:16:04 [mm_encoder_attention.py:215] Using AttentionBackendEnum.FLASH_ATTN for MMEncoderAttention.
+(EngineCore_DP0 pid=27786) INFO 03-25 16:16:04 [cuda.py:405] Using FLASH_ATTN attention backend out of potential backends: ['FLASH_ATTN', 'FLASHINFER', 'TRITON_ATTN', 'FLEX_ATTENTION'].
+(EngineCore_DP0 pid=27786) INFO 03-25 16:16:04 [flash_attn.py:587] Using FlashAttention version 2
+(EngineCore_DP0 pid=27786) <frozen importlib._bootstrap_external>:1301: FutureWarning: The cuda.cudart module is deprecated and will be removed in a future release, please switch to use the cuda.bindings.runtime module instead.
+(EngineCore_DP0 pid=27786) <frozen importlib._bootstrap_external>:1301: FutureWarning: The cuda.nvrtc module is deprecated and will be removed in a future release, please switch to use the cuda.bindings.nvrtc module instead.
+(EngineCore_DP0 pid=27786) Loading safetensors checkpoint shards:   0% Completed | 0/11 [00:00<?, ?it/s]
+(EngineCore_DP0 pid=27786) Loading safetensors checkpoint shards:   9% Completed | 1/11 [00:00<00:05,  1.88it/s]
+(EngineCore_DP0 pid=27786) Loading safetensors checkpoint shards:  18% Completed | 2/11 [00:01<00:05,  1.68it/s]
+(EngineCore_DP0 pid=27786) Loading safetensors checkpoint shards:  27% Completed | 3/11 [00:01<00:05,  1.58it/s]
+(EngineCore_DP0 pid=27786) Loading safetensors checkpoint shards:  36% Completed | 4/11 [00:02<00:04,  1.51it/s]
+(EngineCore_DP0 pid=27786) Loading safetensors checkpoint shards:  45% Completed | 5/11 [00:03<00:04,  1.48it/s]
+(EngineCore_DP0 pid=27786) Loading safetensors checkpoint shards:  55% Completed | 6/11 [00:03<00:03,  1.46it/s]
+(EngineCore_DP0 pid=27786) Loading safetensors checkpoint shards:  64% Completed | 7/11 [00:04<00:02,  1.45it/s]
+(EngineCore_DP0 pid=27786) Loading safetensors checkpoint shards:  73% Completed | 8/11 [00:05<00:02,  1.46it/s]
+(EngineCore_DP0 pid=27786) Loading safetensors checkpoint shards:  82% Completed | 9/11 [00:06<00:01,  1.45it/s]
+(EngineCore_DP0 pid=27786) Loading safetensors checkpoint shards:  91% Completed | 10/11 [00:06<00:00,  1.44it/s]
+(EngineCore_DP0 pid=27786) Loading safetensors checkpoint shards: 100% Completed | 11/11 [00:07<00:00,  1.60it/s]
+(EngineCore_DP0 pid=27786) Loading safetensors checkpoint shards: 100% Completed | 11/11 [00:07<00:00,  1.53it/s]
+(EngineCore_DP0 pid=27786) 
+(EngineCore_DP0 pid=27786) INFO 03-25 16:16:12 [default_loader.py:293] Loading weights took 7.27 seconds
+(EngineCore_DP0 pid=27786) INFO 03-25 16:16:12 [gpu_model_runner.py:4364] Model loading took 51.1 GiB memory and 8.320743 seconds
+(EngineCore_DP0 pid=27786) INFO 03-25 16:16:13 [gpu_model_runner.py:5280] Encoder cache will be initialized with a budget of 16384 tokens, and profiled with 1 image items of the maximum feature size.
+(EngineCore_DP0 pid=27786) INFO 03-25 16:16:21 [decorators.py:465] Directly load AOT compilation from path /home/v-tiossowski/.cache/vllm/torch_compile_cache/torch_aot_compile/0232891e22bd4d7db98ac2f43c441f0f81d0a431216053ca49fadeaff23e2af3/rank_0_0/model
+(EngineCore_DP0 pid=27786) INFO 03-25 16:16:21 [backends.py:916] Using cache directory: /home/v-tiossowski/.cache/vllm/torch_compile_cache/feaf61af16/rank_0_0/backbone for vLLM's torch.compile
+(EngineCore_DP0 pid=27786) INFO 03-25 16:16:21 [backends.py:976] Dynamo bytecode transform time: 3.54 s
+(EngineCore_DP0 pid=27786) INFO 03-25 16:16:31 [backends.py:266] Directly load the compiled graph(s) for compile range (1, 8192) from the cache, took 9.445 s
+(EngineCore_DP0 pid=27786) INFO 03-25 16:16:31 [monitor.py:35] torch.compile takes 14.06 s in total
+(EngineCore_DP0 pid=27786) INFO 03-25 16:16:33 [gpu_worker.py:424] Available KV cache memory: 18.3 GiB
+(EngineCore_DP0 pid=27786) INFO 03-25 16:16:33 [kv_cache_utils.py:1314] GPU KV cache size: 74,480 tokens
+(EngineCore_DP0 pid=27786) INFO 03-25 16:16:33 [kv_cache_utils.py:1319] Maximum concurrency for 40,000 tokens per request: 6.95x
+(EngineCore_DP0 pid=27786) Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):   0%|          | 0/51 [00:00<?, ?it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):   2%|▏         | 1/51 [00:00<00:08,  5.79it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):   4%|▍         | 2/51 [00:00<00:08,  5.99it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):   6%|▌         | 3/51 [00:00<00:07,  6.02it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):   8%|▊         | 4/51 [00:00<00:07,  6.07it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  10%|▉         | 5/51 [00:00<00:07,  6.13it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  12%|█▏        | 6/51 [00:00<00:07,  6.16it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  14%|█▎        | 7/51 [00:01<00:07,  6.19it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  16%|█▌        | 8/51 [00:01<00:06,  6.19it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  18%|█▊        | 9/51 [00:01<00:06,  6.51it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  20%|█▉        | 10/51 [00:01<00:06,  6.75it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  22%|██▏       | 11/51 [00:01<00:05,  6.75it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  24%|██▎       | 12/51 [00:01<00:05,  6.86it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  25%|██▌       | 13/51 [00:02<00:05,  7.01it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  27%|██▋       | 14/51 [00:02<00:05,  7.11it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  29%|██▉       | 15/51 [00:02<00:04,  7.22it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  31%|███▏      | 16/51 [00:02<00:04,  7.29it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  33%|███▎      | 17/51 [00:02<00:04,  7.62it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  35%|███▌      | 18/51 [00:02<00:04,  7.90it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  37%|███▋      | 19/51 [00:02<00:03,  8.10it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  39%|███▉      | 20/51 [00:02<00:03,  8.19it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  41%|████      | 21/51 [00:02<00:03,  8.22it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  43%|████▎     | 22/51 [00:03<00:03,  8.34it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  45%|████▌     | 23/51 [00:03<00:03,  8.37it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  47%|████▋     | 24/51 [00:03<00:03,  8.42it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  49%|████▉     | 25/51 [00:03<00:03,  8.42it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  51%|█████     | 26/51 [00:03<00:02,  8.49it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  53%|█████▎    | 27/51 [00:03<00:02,  8.51it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  55%|█████▍    | 28/51 [00:03<00:02,  8.51it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  57%|█████▋    | 29/51 [00:03<00:02,  8.50it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  59%|█████▉    | 30/51 [00:04<00:02,  8.52it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  61%|██████    | 31/51 [00:04<00:02,  8.47it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  63%|██████▎   | 32/51 [00:04<00:02,  8.46it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  65%|██████▍   | 33/51 [00:04<00:02,  8.80it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  67%|██████▋   | 34/51 [00:04<00:01,  9.08it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  69%|██████▊   | 35/51 [00:04<00:01,  9.31it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  71%|███████   | 36/51 [00:04<00:01,  9.50it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  73%|███████▎  | 37/51 [00:04<00:01,  9.58it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  75%|███████▍  | 38/51 [00:04<00:01,  9.69it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  76%|███████▋  | 39/51 [00:05<00:01,  9.60it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  78%|███████▊  | 40/51 [00:05<00:01,  9.68it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  82%|████████▏ | 42/51 [00:05<00:00,  9.91it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  86%|████████▋ | 44/51 [00:05<00:00, 10.06it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  90%|█████████ | 46/51 [00:05<00:00, 10.25it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  94%|█████████▍| 48/51 [00:05<00:00, 10.34it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  98%|█████████▊| 50/51 [00:06<00:00, 10.47it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE): 100%|██████████| 51/51 [00:06<00:00,  8.28it/s]
+(EngineCore_DP0 pid=27786) Capturing CUDA graphs (decode, FULL):   0%|          | 0/35 [00:00<?, ?it/s]Capturing CUDA graphs (decode, FULL):   3%|▎         | 1/35 [00:00<00:05,  5.68it/s]Capturing CUDA graphs (decode, FULL):   6%|▌         | 2/35 [00:00<00:05,  6.16it/s]Capturing CUDA graphs (decode, FULL):   9%|▊         | 3/35 [00:00<00:05,  6.39it/s]Capturing CUDA graphs (decode, FULL):  11%|█▏        | 4/35 [00:00<00:04,  6.51it/s]Capturing CUDA graphs (decode, FULL):  14%|█▍        | 5/35 [00:00<00:04,  6.57it/s]Capturing CUDA graphs (decode, FULL):  17%|█▋        | 6/35 [00:00<00:04,  6.67it/s]Capturing CUDA graphs (decode, FULL):  20%|██        | 7/35 [00:01<00:04,  6.71it/s]Capturing CUDA graphs (decode, FULL):  23%|██▎       | 8/35 [00:01<00:04,  6.68it/s]Capturing CUDA graphs (decode, FULL):  26%|██▌       | 9/35 [00:01<00:03,  6.77it/s]Capturing CUDA graphs (decode, FULL):  29%|██▊       | 10/35 [00:01<00:03,  6.84it/s]Capturing CUDA graphs (decode, FULL):  31%|███▏      | 11/35 [00:01<00:03,  6.88it/s]Capturing CUDA graphs (decode, FULL):  34%|███▍      | 12/35 [00:01<00:03,  6.93it/s]Capturing CUDA graphs (decode, FULL):  37%|███▋      | 13/35 [00:01<00:03,  6.92it/s]Capturing CUDA graphs (decode, FULL):  40%|████      | 14/35 [00:02<00:02,  7.01it/s]Capturing CUDA graphs (decode, FULL):  43%|████▎     | 15/35 [00:02<00:02,  7.09it/s]Capturing CUDA graphs (decode, FULL):  46%|████▌     | 16/35 [00:02<00:02,  7.15it/s]Capturing CUDA graphs (decode, FULL):  49%|████▊     | 17/35 [00:02<00:02,  7.43it/s]Capturing CUDA graphs (decode, FULL):  51%|█████▏    | 18/35 [00:02<00:02,  7.64it/s]Capturing CUDA graphs (decode, FULL):  54%|█████▍    | 19/35 [00:02<00:02,  7.85it/s]Capturing CUDA graphs (decode, FULL):  57%|█████▋    | 20/35 [00:02<00:01,  8.03it/s]Capturing CUDA graphs (decode, FULL):  60%|██████    | 21/35 [00:02<00:01,  8.17it/s]Capturing CUDA graphs (decode, FULL):  63%|██████▎   | 22/35 [00:03<00:01,  8.24it/s]Capturing CUDA graphs (decode, FULL):  66%|██████▌   | 23/35 [00:03<00:01,  8.37it/s]Capturing CUDA graphs (decode, FULL):  69%|██████▊   | 24/35 [00:03<00:01,  8.42it/s]Capturing CUDA graphs (decode, FULL):  71%|███████▏  | 25/35 [00:03<00:01,  8.47it/s]Capturing CUDA graphs (decode, FULL):  74%|███████▍  | 26/35 [00:03<00:01,  8.53it/s]Capturing CUDA graphs (decode, FULL):  77%|███████▋  | 27/35 [00:03<00:00,  8.57it/s]Capturing CUDA graphs (decode, FULL):  80%|████████  | 28/35 [00:03<00:00,  8.56it/s]Capturing CUDA graphs (decode, FULL):  83%|████████▎ | 29/35 [00:03<00:00,  8.59it/s]Capturing CUDA graphs (decode, FULL):  86%|████████▌ | 30/35 [00:04<00:00,  8.52it/s]Capturing CUDA graphs (decode, FULL):  89%|████████▊ | 31/35 [00:04<00:00,  8.61it/s]Capturing CUDA graphs (decode, FULL):  91%|█████████▏| 32/35 [00:04<00:00,  8.68it/s]Capturing CUDA graphs (decode, FULL):  94%|█████████▍| 33/35 [00:04<00:00,  8.76it/s]Capturing CUDA graphs (decode, FULL):  97%|█████████▋| 34/35 [00:04<00:00,  8.74it/s]Capturing CUDA graphs (decode, FULL): 100%|██████████| 35/35 [00:04<00:00,  8.87it/s]Capturing CUDA graphs (decode, FULL): 100%|██████████| 35/35 [00:04<00:00,  7.67it/s]
+(EngineCore_DP0 pid=27786) INFO 03-25 16:16:44 [gpu_model_runner.py:5386] Graph capturing finished in 11 secs, took 1.13 GiB
+(EngineCore_DP0 pid=27786) INFO 03-25 16:16:44 [core.py:282] init engine (profile, create kv cache, warmup model) took 31.59 seconds
+(EngineCore_DP0 pid=27786) INFO 03-25 16:16:44 [vllm.py:747] Asynchronous scheduling is enabled.
+INFO 03-25 16:16:44 [llm.py:388] Supported tasks: ['generate']
+2026-03-25 16:16:44  INFO      Loading QA dataset from /home/v-tiossowski/HealthcareAgent/mimic-code/data/MIMICIV_ventilation_dataset/ventilation.csv
+2026-03-25 16:16:45  INFO      Dataset: 1000 rows, columns: ['subject_id', 'hadm_id', 'stay_id', 'intime', 'outtime', 'first_careunit', 'last_careunit', 'gt_label', 'question', 'gt_answer_type', 'split', 'invasive_vent', 'noninvasive_vent', 'hfnc', 'tracheostomy']
+2026-03-25 16:16:45  INFO      Filtered to train split: 100 rows
+2026-03-25 16:16:45  INFO      Auto-discovered ground-truth SQL: /home/v-tiossowski/HealthcareAgent/mimic-code/mimic-iv/concepts_duckdb/treatment/ventilation.sql
+2026-03-25 16:16:45  INFO      === Iteration 1/100  run=ventilation  best_qa=0.0% ===
+INFO 03-25 16:16:47 [hf.py:318] Detected the chat template content format to be 'string'. You can set `--chat-template-content-format` to override this.
+2026-03-25 16:17:01  INFO      Exec block 1/1 …
+2026-03-25 16:17:01  INFO      Output: []
+
+2026-03-25 16:17:01  INFO      === Iteration 2/100  run=ventilation  best_qa=0.0% ===
+2026-03-25 16:17:03  INFO      Exec block 1/1 …
+2026-03-25 16:17:03  INFO      Output: []
+
+2026-03-25 16:17:03  INFO      === Iteration 3/100  run=ventilation  best_qa=0.0% ===
+2026-03-25 16:17:05  INFO      Exec block 1/1 …
+2026-03-25 16:17:05  INFO      Output: ['acidosis_guideline', 'acute_decompensated_heart_failure_guideline', 'acute_hepatic_failure_guideline', 'adverse_effect_of_anticoagulants_guideline', 'alcohol_withdrawal_syndrome_guideline', 'anemia_icu_critically_ill_hemoglobin_transfusion_guideline', 'apache_iii_guideline', 'atrial_fibrillation_guideline', 'bradycardia_guideline', 'cerebral_infarction_guideline', 'coma_altered_consciousness_icu_guideline', 'copd_exacerbation_guideline', 'coronary_artery_disease_guideline', 'deep_vein_thrombos
+2026-03-25 16:17:05  INFO      === Iteration 4/100  run=ventilation  best_qa=0.0% ===
+2026-03-25 16:17:07  INFO      Exec block 1/1 …
+2026-03-25 16:17:07  INFO      Output: []
+
+2026-03-25 16:17:07  INFO      === Iteration 5/100  run=ventilation  best_qa=0.0% ===
+2026-03-25 16:17:10  INFO      Exec block 1/1 …
+2026-03-25 16:17:10  INFO      Output: ['acei', 'age', 'antibiotic', 'arb', 'bg', 'blood_differential', 'cardiac_marker', 'charlson', 'chemistry', 'coagulation', 'code_status', 'complete_blood_count', 'creatinine_baseline', 'crrt', 'dobutamine', 'dopamine', 'enzyme', 'epinephrine', 'gcs', 'height', '... (17 more; pass a keyword to filter)']
+
+2026-03-25 16:17:10  INFO      === Iteration 6/100  run=ventilation  best_qa=0.0% ===
+2026-03-25 16:17:12  INFO      Exec block 1/1 …
+2026-03-25 16:17:12  INFO      Output: []
+
+2026-03-25 16:17:12  INFO      === Iteration 7/100  run=ventilation  best_qa=0.0% ===
+2026-03-25 16:17:17  INFO      Exec block 1/1 …
+2026-03-25 16:17:17  INFO      Output:     itemid                                               label                     category
+0   224688                              Respiratory Rate (Set)                  Respiratory
+1   228719                                              Vented             MD Progress Note
+2   228988               Safety Restraints NCP - Interventions                   Care Plans
+3   229003                       Self harm NCP - Interventions                   Care Plans
+4   229126      Altered Sensory Percepti
+2026-03-25 16:17:17  INFO      === Iteration 8/100  run=ventilation  best_qa=0.0% ===
+2026-03-25 16:17:24  INFO      Exec block 1/1 …
+2026-03-25 16:17:24  INFO      Output:     itemid                                                                               label                category
+0   225298                                                               Neck ROM (Intubation)              Intubation
+1   226189                                Patient identified correctly by 2 means (Intubation)              Intubation
+2   225303                                                       Mask Ventilation (Intubation)              Intubation
+3   228069              
+2026-03-25 16:17:24  INFO      === Iteration 9/100  run=ventilation  best_qa=0.0% ===
+2026-03-25 16:17:29  INFO      Exec block 1/1 …
+2026-03-25 16:17:29  INFO      Output:    itemid                       label     category
+0  223848             Ventilator Type  Respiratory
+1  223849             Ventilator Mode  Respiratory
+2  227583                Autoset/CPAP  Respiratory
+3  229314  Ventilator Mode (Hamilton)  Respiratory
+
+2026-03-25 16:17:29  INFO      === Iteration 10/100  run=ventilation  best_qa=0.0% ===
+2026-03-25 16:17:33  INFO      Exec block 1/1 …
+2026-03-25 16:17:34  INFO      Output:                 value
+0                Avea
+1          BiPAP/CPAP
+2              Drager
+3            Hamilton
+4               Other
+5             PB 7200
+6   Respironics BiPAP
+7  Sensor Medic (HFO)
+
+2026-03-25 16:17:34  INFO      === Iteration 11/100  run=ventilation  best_qa=0.0% ===
+2026-03-25 16:17:39  INFO      Exec block 1/1 …
+2026-03-25 16:17:39  INFO      Output:                      value
+0                  (S) CMV
+1                     APRV
+2   APRV/Biphasic+ApnPress
+3     APRV/Biphasic+ApnVol
+4                APV (cmv)
+5                  Ambient
+6        Apnea Ventilation
+7                      CMV
+8               CMV/ASSIST
+9      CMV/ASSIST/AutoFlow
+10            CMV/AutoFlow
+11                    CPAP
+12                CPAP/PPS
+13                CPAP/PSV
+14       CPAP/PSV+Apn TCPL
+15        CPAP/PSV+ApnPres
+16         CPAP/PSV+ApnVol
+17            
+2026-03-25 16:17:39  INFO      === Iteration 12/100  run=ventilation  best_qa=0.0% ===
+2026-03-25 16:17:45  INFO      Exec block 1/1 …
+2026-03-25 16:17:45  INFO      Output:     itemid                                           label                 category
+0   228189                            CO-Tandem Heart Flow             Tandem Heart
+1   229823                                      Flow (VAD)              Durable VAD
+2   220128            Right Ventricular Assist Device Flow             Hemodynamics
+3   224692                                    Flow Pattern              Respiratory
+4   228154                             Flow Rate (Impella)                  Impe
+2026-03-25 16:17:45  INFO      === Iteration 13/100  run=ventilation  best_qa=0.0% ===
+2026-03-25 16:17:57  INFO      Exec block 1/1 …
+2026-03-25 16:17:57  INFO      Output:    itemid                         label     category
+0  227578                    BiPap Mask  Respiratory
+1  223834                       O2 Flow  Respiratory
+2  227583                  Autoset/CPAP  Respiratory
+3  225949                      NIV Mask  Respiratory
+4  227287  O2 Flow (additional cannula)  Respiratory
+5  227582                 BiPap O2 Flow  Respiratory
+
+2026-03-25 16:17:57  INFO      === Iteration 14/100  run=ventilation  best_qa=0.0% ===
+2026-03-25 16:18:03  INFO      Exec block 1/1 …
+2026-03-25 16:18:03  INFO      Output:     itemid                                             label                   category
+0   223769          O2 Saturation Pulseoxymetry Alarm - High                     Alarms
+1   227716          Cerebral Perfusion Pressure Alarm - High                     Alarms
+2   229296                         Vital High Protein (Full)        Nutrition - Enteral
+3   225308                                         Nasal ETT                 Intubation
+4   225966                                        Nasal Swab
+2026-03-25 16:18:03  INFO      === Iteration 15/100  run=ventilation  best_qa=0.0% ===
+2026-03-25 16:18:10  INFO      Exec block 1/1 …
+2026-03-25 16:18:10  INFO      Output: Empty DataFrame
+Columns: [itemid, label, category]
+Index: []
+
+2026-03-25 16:18:10  INFO      === Iteration 16/100  run=ventilation  best_qa=0.0% ===
+(EngineCore_DP0 pid=27786) /home/v-tiossowski/anaconda3/envs/autoformalization/lib/python3.12/site-packages/vllm/model_executor/layers/fla/ops/utils.py:113: UserWarning: Input tensor shape suggests potential format mismatch: seq_len (20) < num_heads (48). This may indicate the inputs were passed in head-first format [B, H, T, ...] when head_first=False was specified. Please verify your input tensor format matches the expected shape [B, T, H, ...].
+(EngineCore_DP0 pid=27786)   return fn(*contiguous_args, **contiguous_kwargs)
+2026-03-25 16:18:19  INFO      Exec block 1/1 …
+2026-03-25 16:18:19  INFO      Output:      itemid                                 label     category
+0    229659                       % Minute Volume  Respiratory
+1    224704                                 ATC %  Respiratory
+2    227134                            ATC Tube #  Respiratory
+3    229991              Absorbent changed (Anes)  Respiratory
+4    224723                  Accessory Muscle Use  Respiratory
+5    223867                   Additional Settings  Respiratory
+6    227567                       Airway Location  Respirat
+2026-03-25 16:18:19  INFO      === Iteration 17/100  run=ventilation  best_qa=0.0% ===
+2026-03-25 16:18:25  INFO      Exec block 1/1 …
+2026-03-25 16:18:25  INFO      Output:                       value
+0              Aerosol-cool
+1               Bipap mask 
+2                CPAP mask 
+3         Endotracheal tube
+4                 Face tent
+5   High flow nasal cannula
+6             High flow neb
+7         Medium conc mask 
+8             Nasal cannula
+9            Non-rebreather
+10                     None
+11                    Other
+12                 Oxymizer
+13                  T-piece
+14              Trach mask 
+15        Tracheostomy tube
+16           Ultrasonic 
+2026-03-25 16:18:25  INFO      === Iteration 18/100  run=ventilation  best_qa=0.0% ===
+2026-03-25 16:18:36  INFO      Exec block 1/1 …
+2026-03-25 16:18:36  INFO      Output:            value
+0  Nasal trumpet
+1   Nasotracheal
+2           None
+3           Oral
+
+2026-03-25 16:18:36  INFO      === Iteration 19/100  run=ventilation  best_qa=0.0% ===
+2026-03-25 16:18:54  INFO      Exec block 1/1 …
+2026-03-25 16:18:54  INFO      Output:     itemid                                                 label    category
+0   225298                                 Neck ROM (Intubation)  Intubation
+1   226189  Patient identified correctly by 2 means (Intubation)  Intubation
+2   225291                               Indication (Intubation)  Intubation
+3   225302                          Pre-Oxygentated (Intubation)  Intubation
+4   226191             Barrier precautions in place (Intubation)  Intubation
+5   226429                            
+2026-03-25 16:18:54  INFO      === Iteration 20/100  run=ventilation  best_qa=0.0% ===
+2026-03-25 16:19:01  INFO      Exec block 1/1 …
+2026-03-25 16:19:01  INFO      Output: Empty DataFrame
+Columns: [value]
+Index: []
+
+2026-03-25 16:19:01  INFO      === Iteration 21/100  run=ventilation  best_qa=0.0% ===
+2026-03-25 16:19:07  INFO      Exec block 1/1 …
+2026-03-25 16:19:07  INFO      Output: Error:
+Traceback (most recent call last):
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 643, in execute
+    _run_with_timeout(_do_execute, timeout)
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 174, in _run_with_timeout
+    raise error[0]
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 156, in target
+    result[0] = func(*args, **kwargs)
+                ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/v-tiossowsk
+2026-03-25 16:19:07  INFO      === Iteration 22/100  run=ventilation  best_qa=0.0% ===
+2026-03-25 16:19:12  INFO      Exec block 1/1 …
+2026-03-25 16:19:12  INFO      Output: Error:
+Traceback (most recent call last):
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 643, in execute
+    _run_with_timeout(_do_execute, timeout)
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 174, in _run_with_timeout
+    raise error[0]
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 156, in target
+    result[0] = func(*args, **kwargs)
+                ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/v-tiossowsk
+2026-03-25 16:19:12  INFO      === Iteration 23/100  run=ventilation  best_qa=0.0% ===
+2026-03-25 16:19:18  INFO      Exec block 1/1 …
+2026-03-25 16:19:18  INFO      Output:    subject_id   hadm_id  seq_num  chartdate icd_code  icd_version
+0    10000032  22595853        1 2180-05-07     5491            9
+1    10000032  22841357        1 2180-06-27     5491            9
+2    10000032  25742920        1 2180-08-06     5491            9
+3    10000068  25022803        1 2160-03-03     8938            9
+4    10000117  27988844        1 2183-09-19  0QS734Z           10
+
+2026-03-25 16:19:18  INFO      === Iteration 24/100  run=ventilation  best_qa=0.0% ===
+2026-03-25 16:19:31  INFO      Exec block 1/1 …
+2026-03-25 16:19:32  INFO      Output:                                value
+0                     Not applicable
+1                    Spontaneous (S)
+2  Spontaneous/Timed (S/T) (Back up)
+3                          Timed (T)
+
+2026-03-25 16:19:32  INFO      === Iteration 25/100  run=ventilation  best_qa=0.0% ===
+2026-03-25 16:19:55  INFO      Exec block 1/1 …
+2026-03-25 16:19:55  INFO      Output:     subject_id   hadm_id   stay_id           charttime  itemid              value                  label
+0     10040973  26033450  36472818 2179-04-25 14:00:00  226732          Face tent  O2 Delivery Device(s)
+1     10040973  26033450  36472818 2179-04-25 17:19:00  226732      Nasal cannula  O2 Delivery Device(s)
+2     10040973  26033450  36472818 2179-04-20 20:00:00  226732  Endotracheal tube  O2 Delivery Device(s)
+3     10040973  26033450  36472818 2179-04-21 00:00:00  226732  Endotracheal tub
+2026-03-25 16:19:55  INFO      === Iteration 26/100  run=ventilation  best_qa=0.0% ===
+2026-03-25 16:20:14  INFO      Exec block 1/1 …
+2026-03-25 16:20:14  INFO      Output:     subject_id   hadm_id   stay_id           charttime     value            label
+0     10004422  21255400  32155744 2111-01-17 14:00:00    Drager  Ventilator Type
+1     10004457  23251352  31494479 2141-12-17 14:27:00    Drager  Ventilator Type
+2     10004457  23251352  31494479 2141-12-17 16:00:00    Drager  Ventilator Type
+3     10004606  29242151  30213599 2159-02-21 09:00:00  Hamilton  Ventilator Type
+4     10004606  29242151  30213599 2159-02-21 12:00:00  Hamilton  Ventilator Type
+5     10
+2026-03-25 16:20:14  INFO      === Iteration 27/100  run=ventilation  best_qa=0.0% ===
+2026-03-25 16:20:35  INFO      Exec block 1/1 …
+2026-03-25 16:20:35  INFO      Output:             value
+0           Nasal
+1  Not applicable
+2      Oral/Nasal
+3         Pillows
+4      Total face
+
+2026-03-25 16:20:35  INFO      === Iteration 28/100  run=ventilation  best_qa=0.0% ===
+2026-03-25 16:20:54  INFO      Exec block 1/1 …
+2026-03-25 16:20:54  INFO      Output:             value
+0            Full
+1           Nasal
+2  Not applicable
+
+2026-03-25 16:20:54  INFO      === Iteration 29/100  run=ventilation  best_qa=0.0% ===
+2026-03-25 16:21:19  INFO      Exec block 1/1 …
+2026-03-25 16:21:19  INFO      Output: Error:
+Traceback (most recent call last):
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 643, in execute
+    _run_with_timeout(_do_execute, timeout)
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 174, in _run_with_timeout
+    raise error[0]
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 156, in target
+    result[0] = func(*args, **kwargs)
+                ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/v-tiossowsk
+2026-03-25 16:21:19  INFO      === Iteration 30/100  run=ventilation  best_qa=0.0% ===
+2026-03-25 16:21:25  INFO      Exec block 1/1 …
+2026-03-25 16:21:25  INFO      Output:    subject_id   hadm_id   stay_id                       first_careunit                        last_careunit              intime             outtime       los
+0    10000032  29079034  39553978   Medical Intensive Care Unit (MICU)   Medical Intensive Care Unit (MICU) 2180-07-23 14:00:00 2180-07-23 23:50:47  0.410266
+1    10000690  25860671  37081114   Medical Intensive Care Unit (MICU)   Medical Intensive Care Unit (MICU) 2150-11-02 19:37:00 2150-11-06 17:03:17  3.893252
+2    10000980  26913865  3
+2026-03-25 16:21:25  INFO      === Iteration 31/100  run=ventilation  best_qa=0.0% ===
+2026-03-25 16:21:53  INFO      Exec block 1/1 …
+2026-03-25 16:21:53  INFO      Output:    subject_id   hadm_id   stay_id           charttime                              value       label
+0    10043568  22084197  35246697 2177-07-02 19:37:00                    Spontaneous (S)  BiPap Mode
+1    10043568  22084197  35246697 2177-07-02 17:00:00                    Spontaneous (S)  BiPap Mode
+2    10043568  22084197  36272003 2177-06-29 10:03:00  Spontaneous/Timed (S/T) (Back up)  BiPap Mode
+3    10043568  22084197  36272003 2177-06-29 12:00:00                    Spontaneous (S)  BiPap 
+2026-03-25 16:21:53  INFO      === Iteration 32/100  run=ventilation  best_qa=0.0% ===
+2026-03-25 16:22:20  INFO      Exec block 1/1 …
+2026-03-25 16:22:20  INFO      Output:     subject_id   hadm_id   stay_id           charttime              value                  label
+0     10040973  26033450  36472818 2179-04-19 15:05:00  Endotracheal tube  O2 Delivery Device(s)
+1     10040973  26033450  36472818 2179-04-19 19:23:00  Endotracheal tube  O2 Delivery Device(s)
+2     10040973  26033450  36472818 2179-04-19 23:41:00  Endotracheal tube  O2 Delivery Device(s)
+3     10040973  26033450  36472818 2179-04-20 04:21:00  Endotracheal tube  O2 Delivery Device(s)
+4     10040973 
+2026-03-25 16:22:20  INFO      === Iteration 33/100  run=ventilation  best_qa=0.0% ===
+2026-03-25 16:24:28  INFO      Exec block 1/1 …
+2026-03-25 16:24:28  INFO      Output: Error:
+Traceback (most recent call last):
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 643, in execute
+    _run_with_timeout(_do_execute, timeout)
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 174, in _run_with_timeout
+    raise error[0]
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 156, in target
+    result[0] = func(*args, **kwargs)
+                ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/v-tiossowsk
+2026-03-25 16:24:28  INFO      === Iteration 34/100  run=ventilation  best_qa=0.0% ===
+2026-03-25 16:26:24  INFO      Exec block 1/1 …
+2026-03-25 16:26:25  INFO      Output: Test 1 - Stay with invasive ventilation:
+  Invasive MV: True
+  Non-invasive MV: False
+  HFNC: False
+  Any MV: True
+  O2 Devices: ['Nasal cannula', 'Endotracheal tube', 'Face tent']
+
+Test 2 - Stay with BiPap:
+  Invasive MV: True
+  Non-invasive MV: True
+  HFNC: False
+  Any MV: True
+  O2 Devices: ['Endotracheal tube', 'Nasal cannula', 'Bipap mask ']
+  BiPap modes: ['Spontaneous (S)']
+
+2026-03-25 16:26:25  INFO      === Iteration 35/100  run=ventilation  best_qa=0.0% ===
+2026-03-25 16:26:25  INFO      Context approaching limit (21833 tokens, limit=25000) — forcing summarize + compress
+2026-03-25 16:29:06  INFO      Context compressed: 70 messages -> 2 messages
+2026-03-25 16:29:23  INFO      Exec block 1/1 …
+2026-03-25 16:29:24  INFO      Output: 
+Stay ID: 36472818
+  Subject ID: 10040973, Hadm ID: 26033450
+  Invasive MV: True
+  Non-invasive MV: False
+  HFNC: False
+  Any MV: True
+  O2 Devices: ['Face tent', 'Nasal cannula', 'Endotracheal tube']
+
+Stay ID: 35246697
+  Subject ID: 10043568, Hadm ID: 22084197
+  Invasive MV: True
+  Non-invasive MV: True
+  HFNC: False
+  Any MV: True
+  O2 Devices: ['Endotracheal tube', 'Nasal cannula', 'Bipap mask ']
+
+Stay ID: 34035120
+  Subject ID: None, Hadm ID: None
+  Invasive MV: False
+  Non-invasive MV: Fals
+2026-03-25 16:29:24  INFO      === Iteration 36/100  run=ventilation  best_qa=0.0% ===
+2026-03-25 16:29:37  INFO      Exec block 1/1 …
+2026-03-25 16:29:38  INFO      Output: Stays with HFNC:
+    stay_id
+0  36975538
+1  34056688
+2  34070420
+3  38808391
+4  38856060
+
+
+Testing with subject_id and hadm_id:
+Result: {'invasive_mechanical_ventilation': True, 'non_invasive_mechanical_ventilation': False, 'high_flow_nasal_cannula': False, 'any_mechanical_ventilation': True, 'ventilation_details': {'oxygen_delivery_devices_used': ['Nasal cannula', 'Endotracheal tube', 'Face tent'], 'ventilator_types': ['Hamilton'], 'ventilator_modes': ['PSV/SBT'], 'bipap_modes': [], 'bipap_mask
+2026-03-25 16:29:38  INFO      === Iteration 37/100  run=ventilation  best_qa=0.0% ===
+2026-03-25 16:29:48  INFO      Exec block 1/1 …
+2026-03-25 16:29:49  INFO      Output: 
+Stay ID: 36975538
+  Subject ID: 10304606, Hadm ID: 25532105
+  Invasive MV: True
+  Non-invasive MV: False
+  HFNC: True
+  Any MV: True
+  O2 Devices: ['Trach mask ', 'T-piece', 'Aerosol-cool', 'Bipap mask ', 'Face tent', 'Tracheostomy tube', 'Non-rebreather', 'Endotracheal tube', 'Nasal cannula', 'High flow nasal cannula', 'High flow neb']
+
+Stay ID: 34056688
+  Subject ID: 10364180, Hadm ID: 20527973
+  Invasive MV: True
+  Non-invasive MV: True
+  HFNC: True
+  Any MV: True
+  O2 Devices: ['Medium conc
+2026-03-25 16:29:49  INFO      === Iteration 38/100  run=ventilation  best_qa=0.0% ===
+2026-03-25 16:30:06  INFO      Exec block 1/1 …
+2026-03-25 16:30:06  INFO      Output: Stays with only NIV (no invasive):
+Empty DataFrame
+Columns: [stay_id]
+Index: []
+
+2026-03-25 16:30:06  INFO      === Iteration 39/100  run=ventilation  best_qa=0.0% ===
+2026-03-25 16:30:15  INFO      Exec block 1/1 …
+2026-03-25 16:30:15  INFO      Output: Bipap values:
+         value trimmed_value
+0  Bipap mask     Bipap mask
+
+CPAP values:
+        value trimmed_value
+0  CPAP mask      CPAP mask
+
+2026-03-25 16:30:15  INFO      === Iteration 40/100  run=ventilation  best_qa=0.0% ===
+2026-03-25 16:30:32  INFO      Exec block 1/1 …
+2026-03-25 16:30:33  INFO      Output: Stays with only NIV (no invasive):
+    stay_id
+0  33814001
+1  33701188
+2  31407182
+3  39861896
+4  38932067
+
+Stay ID: 33814001
+  Invasive MV: True
+  Non-invasive MV: False
+  HFNC: False
+  Any MV: True
+  O2 Devices: ['High flow neb', 'Nasal cannula', 'Bipap mask ']
+
+Stay ID: 33701188
+  Invasive MV: False
+  Non-invasive MV: False
+  HFNC: False
+  Any MV: False
+  O2 Devices: ['CPAP mask ']
+
+Stay ID: 31407182
+  Invasive MV: False
+  Non-invasive MV: True
+  HFNC: False
+  Any MV: True
+  O2 Devices: ['CPA
+2026-03-25 16:30:33  INFO      === Iteration 41/100  run=ventilation  best_qa=0.0% ===
+2026-03-25 16:30:50  INFO      Exec block 1/1 …
+2026-03-25 16:30:50  INFO      Output: Ventilator Type: Empty DataFrame
+Columns: [value]
+Index: []
+Ventilator Mode:       value
+0  CPAP/PSV
+O2 Devices:            value        trimmed
+0    Bipap mask      Bipap mask
+1  Nasal cannula  Nasal cannula
+2  High flow neb  High flow neb
+
+2026-03-25 16:30:50  INFO      === Iteration 42/100  run=ventilation  best_qa=0.0% ===
+(EngineCore_DP0 pid=27786) /home/v-tiossowski/anaconda3/envs/autoformalization/lib/python3.12/site-packages/torch/_dynamo/eval_frame.py:1181: UserWarning: Input tensor shape suggests potential format mismatch: seq_len (12) < num_heads (16). This may indicate the inputs were passed in head-first format [B, H, T, ...] Please verify your input tensor format matches the expected shape [B, T, H, ...].
+(EngineCore_DP0 pid=27786)   return fn(*args, **kwargs)
+(EngineCore_DP0 pid=27786) /home/v-tiossowski/anaconda3/envs/autoformalization/lib/python3.12/site-packages/vllm/model_executor/layers/fla/ops/utils.py:113: UserWarning: Input tensor shape suggests potential format mismatch: seq_len (12) < num_heads (48). This may indicate the inputs were passed in head-first format [B, H, T, ...] when head_first=False was specified. Please verify your input tensor format matches the expected shape [B, T, H, ...].
+(EngineCore_DP0 pid=27786)   return fn(*contiguous_args, **contiguous_kwargs)
+2026-03-25 16:31:05  INFO      Exec block 1/1 …
+2026-03-25 16:31:05  INFO      Output: All Ventilator Modes:
+                     value
+0                  PRES/AC
+1                    P-CMV
+2                  (S) CMV
+3                     SIMV
+4               PCV+Assist
+5   APRV/Biphasic+ApnPress
+6                 CPAP/PSV
+7                  PSV/SBT
+8               CMV/ASSIST
+9             MMV/AutoFlow
+10       CPAP/PSV+Apn TCPL
+11           SIMV/AutoFlow
+12                    APRV
+13          SYNCHRON SLAVE
+14                SIMV/PSV
+15                  P-SIMV
+16    APRV/Biphasic
+2026-03-25 16:31:05  INFO      === Iteration 43/100  run=ventilation  best_qa=0.0% ===
+2026-03-25 16:33:15  INFO      Exec block 1/1 …
+2026-03-25 16:33:16  INFO      Output: Testing updated function:
+
+Stay 33814001 (should be NIV only):
+  Invasive MV: False
+  Non-invasive MV: True
+  O2 Devices: ['High flow neb', 'Bipap mask ', 'Nasal cannula']
+
+Stay 33701188 (should be NIV only - CPAP):
+  Invasive MV: False
+  Non-invasive MV: True
+  O2 Devices: ['CPAP mask ']
+
+Stay 36472818 (should be invasive only):
+  Invasive MV: True
+  Non-invasive MV: False
+  O2 Devices: ['Face tent', 'Nasal cannula', 'Endotracheal tube']
+
+Stay 34070420 (should be HFNC only):
+  Invasive MV: Fals
+2026-03-25 16:33:16  INFO      === Iteration 44/100  run=ventilation  best_qa=0.0% ===
+2026-03-25 16:33:37  INFO      Exec block 1/1 …
+2026-03-25 16:33:39  INFO      Output: Comprehensive test results:
+
+Invasive only (stay_id=36472818):
+  Invasive MV: True
+  Non-invasive MV: False
+  HFNC: False
+  Any MV: True
+  O2 Devices: ['Nasal cannula', 'Endotracheal tube', 'Face tent']
+
+Both invasive and NIV (stay_id=35246697):
+  Invasive MV: True
+  Non-invasive MV: True
+  HFNC: False
+  Any MV: True
+  O2 Devices: ['Bipap mask ', 'Endotracheal tube', 'Nasal cannula']
+
+NIV only - Bipap (stay_id=33814001):
+  Invasive MV: False
+  Non-invasive MV: True
+  HFNC: False
+  Any MV: True
+ 
+2026-03-25 16:33:39  INFO      === Iteration 45/100  run=ventilation  best_qa=0.0% ===
+2026-03-25 16:33:52  INFO      Exec block 1/1 …
+2026-03-25 16:33:52  INFO      Output: O2 Devices for stay 34056688:
+                     value                  trimmed
+0            High flow neb            High flow neb
+1            Nasal cannula            Nasal cannula
+2  High flow nasal cannula  High flow nasal cannula
+3        Medium conc mask          Medium conc mask
+4              Bipap mask                Bipap mask
+
+Ventilator Type:     value
+0  Drager
+
+2026-03-25 16:33:52  INFO      === Iteration 46/100  run=ventilation  best_qa=0.0% ===
+2026-03-25 16:34:12  INFO      Exec block 1/1 …
+2026-03-25 16:34:12  INFO      Output: Stays with no O2 delivery device records:
+    stay_id
+0  30676350
+1  38688395
+2  33652203
+
+Stay 30676350:
+  Invasive MV: False
+  Non-invasive MV: False
+  HFNC: False
+  Any MV: False
+  O2 Devices: []
+
+Stay 38688395:
+  Invasive MV: False
+  Non-invasive MV: False
+  HFNC: False
+  Any MV: False
+  O2 Devices: []
+
+Stay 33652203:
+  Invasive MV: False
+  Non-invasive MV: False
+  HFNC: False
+  Any MV: False
+  O2 Devices: []
+
+2026-03-25 16:34:12  INFO      === Iteration 47/100  run=ventilation  best_qa=0.0% ===
+2026-03-25 16:35:51  INFO      Exec block 1/1 …
+2026-03-25 16:35:51  INFO      Output: Code executed successfully (no output).
+2026-03-25 16:35:51  INFO      Debug conversations will be saved to debug_logs
+2026-03-25 16:35:51  INFO      Using question from dataset column: Is this patient on invasive mechanical ventilation during their ICU stay?
+2026-03-25 16:35:51  INFO      Answer type for 'ventilation': binary (per_row=True)
+2026-03-25 16:35:51  INFO      ReACT iteration 1/5 — 20 active patients
+Rendering conversations:   0%|          | 0/20 [00:00<?, ?it/s]Rendering conversations: 100%|██████████| 20/20 [00:00<00:00, 387.33it/s]
+Processed prompts:   0%|          | 0/20 [00:00<?, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s]Processed prompts:   5%|▌         | 1/20 [00:12<04:02, 12.74s/it, est. speed input: 87.97 toks/s, output: 12.40 toks/s]Processed prompts:  10%|█         | 2/20 [00:13<01:44,  5.79s/it, est. speed input: 164.13 toks/s, output: 24.52 toks/s]Processed prompts:  25%|██▌       | 5/20 [00:13<00:25,  1.71s/it, est. speed input: 403.17 toks/s, output: 62.92 toks/s]Processed prompts:  40%|████      | 8/20 [00:14<00:10,  1.14it/s, est. speed input: 635.65 toks/s, output: 101.53 toks/s]Processed prompts:  55%|█████▌    | 11/20 [00:14<00:04,  1.89it/s, est. speed input: 867.63 toks/s, output: 140.69 toks/s]Processed prompts:  65%|██████▌   | 13/20 [00:14<00:03,  2.21it/s, est. speed input: 988.57 toks/s, output: 162.77 toks/s]Processed prompts:  75%|███████▌  | 15/20 [00:14<00:01,  2.86it/s, est. speed input: 1126.33 toks/s, output: 188.51 toks/s]Processed prompts:  85%|████████▌ | 17/20 [00:16<00:01,  2.47it/s, est. speed input: 1191.32 toks/s, output: 204.54 toks/s]Processed prompts:  90%|█████████ | 18/20 [00:16<00:00,  2.46it/s, est. speed input: 1229.98 toks/s, output: 214.57 toks/s]Processed prompts:  95%|█████████▌| 19/20 [00:16<00:00,  2.54it/s, est. speed input: 1272.68 toks/s, output: 225.69 toks/s]Processed prompts: 100%|██████████| 20/20 [00:16<00:00,  3.02it/s, est. speed input: 1331.19 toks/s, output: 239.63 toks/s]Processed prompts: 100%|██████████| 20/20 [00:16<00:00,  3.02it/s, est. speed input: 1331.19 toks/s, output: 239.63 toks/s]Processed prompts: 100%|██████████| 20/20 [00:16<00:00,  1.18it/s, est. speed input: 1331.19 toks/s, output: 239.63 toks/s]
+2026-03-25 16:36:13  INFO      ReACT iteration 2/5 — 20 active patients
+Rendering conversations:   0%|          | 0/20 [00:00<?, ?it/s]Rendering conversations: 100%|██████████| 20/20 [00:00<00:00, 321.34it/s]
+Processed prompts:   0%|          | 0/20 [00:00<?, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s]Processed prompts:   5%|▌         | 1/20 [00:09<02:56,  9.30s/it, est. speed input: 152.03 toks/s, output: 5.81 toks/s]Processed prompts:  20%|██        | 4/20 [00:09<00:29,  1.82s/it, est. speed input: 607.64 toks/s, output: 22.88 toks/s]Processed prompts:  35%|███▌      | 7/20 [00:09<00:11,  1.12it/s, est. speed input: 1037.63 toks/s, output: 40.16 toks/s]Processed prompts:  40%|████      | 8/20 [00:10<00:09,  1.30it/s, est. speed input: 1149.69 toks/s, output: 45.73 toks/s]Processed prompts:  45%|████▌     | 9/20 [00:10<00:06,  1.58it/s, est. speed input: 1270.33 toks/s, output: 52.30 toks/s]Processed prompts:  60%|██████    | 12/20 [00:11<00:03,  2.22it/s, est. speed input: 1564.47 toks/s, output: 70.90 toks/s]Processed prompts:  65%|██████▌   | 13/20 [00:11<00:02,  2.35it/s, est. speed input: 1651.07 toks/s, output: 77.70 toks/s]Processed prompts:  70%|███████   | 14/20 [00:11<00:02,  2.43it/s, est. speed input: 1720.38 toks/s, output: 84.72 toks/s]Processed prompts:  75%|███████▌  | 15/20 [00:11<00:01,  2.63it/s, est. speed input: 1798.37 toks/s, output: 92.52 toks/s]Processed prompts:  80%|████████  | 16/20 [00:12<00:01,  2.91it/s, est. speed input: 1875.87 toks/s, output: 100.65 toks/s]Processed prompts:  85%|████████▌ | 17/20 [00:12<00:00,  3.29it/s, est. speed input: 1962.89 toks/s, output: 109.48 toks/s]Processed prompts:  90%|█████████ | 18/20 [00:12<00:00,  3.82it/s, est. speed input: 2055.16 toks/s, output: 118.67 toks/s]Processed prompts:  95%|█████████▌| 19/20 [00:12<00:00,  3.82it/s, est. speed input: 2126.08 toks/s, output: 127.02 toks/s]Processed prompts: 100%|██████████| 20/20 [00:15<00:00,  1.13it/s, est. speed input: 1883.51 toks/s, output: 120.25 toks/s]Processed prompts: 100%|██████████| 20/20 [00:15<00:00,  1.13it/s, est. speed input: 1883.51 toks/s, output: 120.25 toks/s]Processed prompts: 100%|██████████| 20/20 [00:15<00:00,  1.31it/s, est. speed input: 1883.51 toks/s, output: 120.25 toks/s]
+2026-03-25 16:36:29  INFO      QA accuracy: 100.0%  (correct=20/20, parse_errors=0)
+2026-03-25 16:36:29  INFO      SUCCESS: 100.0% QA accuracy for 'ventilation' at iteration 47
+2026-03-25 16:36:29  INFO      Function code saved to autoformalized_library/functions/ventilation.py
+2026-03-25 16:36:29  INFO      Summary saved to autoformalized_library/summary.json
+[rank0]:[W325 16:36:29.610958446 ProcessGroupNCCL.cpp:1553] Warning: WARNING: destroy_process_group() was not called before program exit, which can leak resources. For more info, please see https://pytorch.org/docs/stable/distributed.html#shutdown (function operator())
+
+======================================================================
+AUTOFORMALIZATION COMPLETE
+======================================================================
+  Output dir      : autoformalized_library
+  Model           : Qwen/Qwen3.5-27B
+  Dataset         : /home/v-tiossowski/HealthcareAgent/mimic-code/data/MIMICIV_ventilation_dataset/ventilation.csv
+  Run name        : ventilation
+  Status          : SUCCESS
+  QA accuracy     : 100.0%
+  Iterations      : 47
+  Total tokens    : 57,158  (prompt 51,268 / completion 5,890)
+  LLM calls       : 88
+  SQL queries     : 433
+  Function saved  : autoformalized_library/functions/ventilation.py
+======================================================================

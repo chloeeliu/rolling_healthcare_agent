@@ -1,0 +1,2148 @@
+=== Step 1 ===
+# Clinical Coding Agent - Rolling Memory
+
+## Schema Facts
+
+### Tables
+| Schema | Table | Key Columns |
+|--------|-------|-------------|
+| mimiciv_hosp | microbiologyevents | microevent_id, subject_id, hadm_id, spec_type_desc, chartdate, charttime, test_name, org_name, interpretation |
+| mimiciv_hosp | prescriptions | subject_id, hadm_id, pharmacy_id, drug, starttime, stoptime |
+| mimiciv_hosp | pharmacy | subject_id, hadm_id, pharmacy_id, medication, starttime, stoptime |
+| mimiciv_hosp | admissions | subject_id, hadm_id, admittime, dischtime |
+| mimiciv_icu | icustays | stay_id, subject_id, hadm_id, intime, outtime, first_careunit, last_careunit |
+| mimiciv_icu | d_items | itemid, label, category, unitname, param_type |
+| mimiciv_icu | chartevents | subject_id, hadm_id, stay_id, itemid, charttime, value, valuenum |
+| mimiciv_icu | inputevents | subject_id, hadm_id, stay_id, itemid, starttime, endtime, amount |
+
+### Culture Types (spec_type_desc values)
+- BLOOD CULTURE, URINE, SPUTUM, STOOL, WOUND, CSF Culture, BAL Fluid Culture, Pleural Fluid Culture, Nasal Swab, Rectal Swab, MRSA SCREEN, BRONCHOALVEOLAR LAVAGE, etc.
+
+### Antibiotic Identification
+- ICU: inputevents table with d_items.category = 'Antibiotics'
+- Hospital: prescriptions table with drug name pattern matching
+
+## Functions
+
+### get_antibiotic_info (loaded from existing)
+```python
+def get_antibiotic_info(stay_id, hadm_id, subject_id):
+    """
+    Extract antibiotic administration information for a patient.
+
+    This function queries both ICU input events and hospital prescriptions/pharmacy
+    records to identify antibiotic administrations. It can answer questions such as:
+    - Did this patient receive antibiotics during their hospital admission?
+    - How many distinct antibiotics did this patient receive?
+    - Did this patient receive antibiotics within the first 48 hours of ICU admission?
+
+    Parameters
+    ----------
+    stay_id : int, optional
+        ICU stay identifier. If provided, returns ICU-specific antibiotic data.
+    hadm_id : int, optional
+        Hospital admission identifier. If provided, returns hospital-wide antibiotic data.
+    subject_id : int, optional
+        Patient identifier. If provided with hadm_id, filters to that admission.
+        If provided alone, returns all antibiotic data for the patient across all admissions.
+
+    Returns
+    -------
+    dict
+        A dictionary containing:
+        - 'antibiotic_administrations': DataFrame with all antibiotic administrations
+          (columns: source, stay_id, hadm_id, subject_id, antibiotic_name, admin_time)
+        - 'received_antibiotics': bool indicating if any antibiotics were received
+        - 'distinct_antibiotics': list of unique antibiotic names received
+        - 'distinct_antibiotic_count': int count of unique antibiotics
+        - 'icu_intime': datetime of ICU admission (if stay_id provided)
+        - 'within_48hrs_icu': bool indicating if antibiotics received within 48h of ICU admission
+        - 'antibiotics_within_48hrs_icu': list of antibiotics received within 48h of ICU admission
+
+    Notes
+    -----
+    - At least one identifier (stay_id, hadm_id, or subject_id) must be provided.
+    - Antibiotics are identified from:
+      * ICU inputevents table using d_items category = 'Antibiotics'
+      * Hospital prescriptions table using drug name pattern matching
+    - The function normalizes antibiotic names for consistent counting.
+    - Only TRUE antibacterial antibiotics are counted (excludes antifungals, antivirals, etc.)
+    """
+
+def normalize_abx_name(name):
+```
+
+### get_suspicion_of_infection (newly created)
+```python
+import pandas as pd
+from datetime import datetime, timedelta
+
+def get_suspicion_of_infection(stay_id=None, hadm_id=None, subject_id=None):
+    """
+    Determine if a patient had suspicion of infection during their ICU stay or hospital admission.
+    
+    Suspicion of infection is identified by:
+    1. Culture orders (blood, urine, sputum, wound, etc.) - indicates clinician suspected infection
+    2. Antibiotic administration - often prescribed when infection is suspected
+    
+    This function can answer questions such as:
+    - Does this patient have a suspected infection during this ICU stay?
+    - What types of cultures were ordered for this patient?
+    - Did this patient receive antibiotics during their admission?
+    
+    Parameters
+    ----------
+    stay_id : int, optional
+        ICU stay identifier. If provided, returns ICU-specific infection suspicion data.
+    hadm_id : int, optional
+        Hospital admission identifier. If provided, returns hospital-wide infection suspicion data.
+    subject_id : int, optional
+        Patient identifier. If provided with hadm_id, filters to that admission.
+        If provided alone, returns all infection suspicion data for the patient across all admissions.
+    
+    Returns
+    -------
+    dict
+        A dictionary containing:
+        - 'has_suspicion_of_infection': bool indicating if there was suspicion of infection
+        - 'culture_orders': DataFrame with all culture orders during the period
+          (columns: subject_id, hadm_id, stay_id, spec_type_desc, culture_time)
+        - 'antibiotic_info': dict from get_antibiotic_info with antibiotic administration data
+        - 'distinct_culture_types': list of unique culture types ordered
+        - 'culture_count': int count of culture orders
+        - 'icu_intime': datetime of ICU admission (if stay_id provided)
+        - 'icu_outtime': datetime of ICU discharge (if stay_id provided)
+    
+    Notes
+    -----
+    - At least one identifier (stay_id, hadm_id, or subject_id) must be provided.
+    - Culture orders are identified from the microbiologyevents table.
+    - Antibiotic information is obtained using the get_antibiotic_info function.
+    - Suspicion of infection is considered present if either cultures were ordered
+      OR antibiotics were administered during the specified period.
+    """
+    
+    # Build the query based on provided identifiers
+    if stay_id is not None:
+        # Query for cultures during ICU stay
+        sql = f"""
+        SELECT m.subject_id, m.hadm_id, i.stay_id, 
+               m.spec_type_desc,
+               CAST(m.chartdate AS DATE) + CAST(m.charttime AS TIME) as culture_time,
+               i.intime as icu_intime,
+               i.outtime as icu_outtime
+        FROM mimiciv_hosp.microbiologyevents m
+        JOIN mimiciv_icu.icustays i ON m.subject_id = i.subject_id AND m.hadm_id = i.hadm_id
+        WHERE i.stay_id = {stay_id}
+          AND m.hadm_id IS NOT NULL
+          AND (CAST(m.chartdate AS DATE) + CAST(m.charttime AS TIME)) >= i.intime
+          AND (CAST(m.chartdate AS DATE) + CAST(m.charttime AS TIME)) <= i.outtime
+        ORDER BY culture_time
+        """
+        culture_df = query_db(sql)
+        
+        # Get ICU stay times
+        stay_info = query_db(f"""
+        SELECT intime, outtime FROM mimiciv_icu.icustays WHERE stay_id = {stay_id}
+        """)
+        icu_intime = stay_info['intime'].iloc[0] if len(stay_info) > 0 else None
+        icu_outtime = stay_info['outtime'].iloc[0] if len(stay_info) > 0 else None
+        
+        # Get antibiotic info for this stay
+        antibiotic_info = get_antibiotic_info(stay_id=stay_id)
+        
+    elif hadm_id is not None:
+        # Query for cultures during hospital admission
+        if subject_id is not None:
+            sql = f"""
+            SELECT m.subject_id, m.hadm_id, 
+                   m.spec_type_desc,
+                   CAST(m.chartdate AS DATE) + CAST(m.charttime AS TIME) as culture_time
+            FROM mimiciv_hosp.microbiologyevents m
+            WHERE m.hadm_id = {hadm_id}
+              AND m.subject_id = {subject_id}
+              AND m.hadm_id IS NOT NULL
+            ORDER BY culture_time
+            """
+        else:
+            sql = f"""
+            SELECT m.subject_id, m.hadm_id, 
+                   m.spec_type_desc,
+                   CAST(m.chartdate AS DATE) + CAST(m.charttime AS TIME) as culture_time
+            FROM mimiciv_hosp.microbiologyevents m
+            WHERE m.hadm_id = {hadm_id}
+              AND m.hadm_id IS NOT NULL
+            ORDER BY culture_time
+            """
+        culture_df = query_db(sql)
+        
+        icu_intime = None
+        icu_outtime = None
+        
+        # Get antibiotic info for this admission
+        antibiotic_info = get_antibiotic_info(hadm_id=hadm_id, subject_id=subject_id)
+        
+    elif subject_id is not None:
+        # Query for all cultures for this patient across all admissions
+        sql = f"""
+        SELECT m.subject_id, m.hadm_id, 
+               m.spec_type_desc,
+               CAST(m.chartdate AS DATE) + CAST(m.charttime AS TIME) as culture_time
+        FROM mimiciv_hosp.microbiologyevents m
+        WHERE m.subject_id = {subject_id}
+          AND m.hadm_id IS NOT NULL
+        ORDER BY culture_time
+        """
+        culture_df = query_db(sql)
+        
+        icu_intime = None
+        icu_outtime = None
+        
+        # Get antibiotic info for this patient
+        antibiotic_info = get_antibiotic_info(subject_id=subject_id)
+    else:
+        raise ValueError("At least one identifier (stay_id, hadm_id, or subject_id) must be provided.")
+    
+    # Determine if there was suspicion of infection
+    has_cultures = len(culture_df) > 0
+    has_antibiotics = antibiotic_info.get('received_antibiotics', False)
+    has_suspicion = has_cultures or has_antibiotics
+    
+    # Get distinct culture types
+    distinct_culture_types = culture_df['spec_type_desc'].dropna().unique().tolist() if len(culture_df) > 0 else []
+    
+    # Build result
+    result = {
+        'has_suspicion_of_infection': has_suspicion,
+        'culture_orders': culture_df,
+        'antibiotic_info': antibiotic_info,
+        'distinct_culture_types': distinct_culture_types,
+        'culture_count': len(culture_df),
+        'icu_intime': icu_intime,
+        'icu_outtime': icu_outtime
+    }
+    
+    return result
+```
+
+## Test Results
+
+### Positive Cases
+| stay_id | Culture Count | Antibiotics | Has Suspicion |
+|---------|---------------|-------------|---------------|
+| 36032605 | 506 | True (Vancomycin, Cefepime, Cefazolin, Meropenem, Piperacillin/Tazobactam) | True |
+| 39553978 | 1 (MRSA SCREEN) | False | True |
+| 29850931 (hadm_id) | 514 | True | True |
+| 16175244 (subject_id) | 514 | True | True |
+
+### Negative Cases
+| stay_id | Culture Count | Antibiotics | Has Suspicion |
+|---------|---------------|-------------|---------------|
+| 37509585 | 0 | False | False |
+
+### False Positive Investigation
+| stay_id | Culture Types | Antibiotics | Notes |
+|---------|---------------|-------------|-------|
+| 30768901 | MRSA SCREEN (1) | False | MRSA screen may be prophylactic |
+| 38134134 | URINE, MRSA SCREEN (2), BLOOD CULTURE (1) | False | Mixed culture types |
+| 35827482 | None | Cefazolin | Single antibiotic |
+| 32781895 | None | Cefazolin | Single antibiotic |
+| 32776114 | None | Vancomycin | Single antibiotic |
+
+## Error Fixes
+
+### Step 11 - Column Name Error
+- **Error**: `Binder Error: Referenced column "unit_name" not found`
+- **Fix**: Changed `unit_name` to `unitname` in d_items table query
+
+### Step 14 - Empty Chartevents
+- **Finding**: Culture orders not in chartevents table
+- **Resolution**: Use microbiologyevents table instead for culture data
+
+## Clinical Guideline Facts (Sepsis)
+
+### Adult Sepsis (Sepsis-3, 2016)
+- Definition: Life-threatening organ dysfunction caused by dysregulated host response to infection
+- Primary criterion: Suspected or documented infection AND acute increase in SOFA score ≥ 2 points
+- qSOFA screening (non-ICU): Respiratory rate ≥ 22, altered mentation, SBP ≤ 100 mm Hg
+
+### Pediatric Sepsis (Phoenix Criteria, 2024)
+- Definition: Infection with potentially life-threatening organ dysfunction in children < 18 years
+- Criterion: Suspected infection AND Phoenix Sepsis Score ≥ 2 points
+
+### Septic Shock (Adult)
+- Vasopressor therapy required to maintain MAP ≥ 65 mm Hg
+- Serum lactate > 2 mmol/L (> 18 mg/dL) after adequate fluid resuscitation
+
+=== Step 2 ===
+# Clinical Coding Agent - Rolling Memory
+
+## Schema Facts
+
+### Tables
+| Schema | Table | Key Columns |
+|--------|-------|-------------|
+| mimiciv_hosp | microbiologyevents | microevent_id, subject_id, hadm_id, spec_type_desc, chartdate, charttime, test_name, org_name, interpretation |
+| mimiciv_hosp | prescriptions | subject_id, hadm_id, pharmacy_id, drug, starttime, stoptime |
+| mimiciv_hosp | pharmacy | subject_id, hadm_id, pharmacy_id, medication, starttime, stoptime |
+| mimiciv_hosp | admissions | subject_id, hadm_id, admittime, dischtime |
+| mimiciv_hosp | procedures_icd | subject_id, hadm_id, seq_num, chartdate, icd_code, icd_version |
+| mimiciv_icu | icustays | stay_id, subject_id, hadm_id, intime, outtime, first_careunit, last_careunit |
+| mimiciv_icu | d_items | itemid, label, category, unitname, param_type |
+| mimiciv_icu | chartevents | subject_id, hadm_id, stay_id, itemid, charttime, value, valuenum |
+| mimiciv_icu | inputevents | subject_id, hadm_id, stay_id, itemid, starttime, endtime, amount |
+
+### Culture Types (spec_type_desc values)
+- **Diagnostic**: BLOOD CULTURE, URINE, SPUTUM, STOOL, WOUND, CSF Culture, BAL Fluid Culture, Pleural Fluid Culture, Nasal Swab, Rectal Swab, BRONCHOALVEOLAR LAVAGE, JOINT FLUID, etc.
+- **Screening (excluded from infection suspicion)**: MRSA SCREEN, CRE Screen, Cipro Resistant Screen, C, E, & A Screening, Infection Control Yeast, Swab R/O Yeast Screen, MICRO PROBLEM PATIENT, Isolate, XXX
+
+### Antibiotic Identification
+- ICU: inputevents table with d_items.category = 'Antibiotics'
+- Hospital: prescriptions table with drug name pattern matching (vancomycin, cefepime, meropenem, piperacillin, cefazolin, ceftriaxone, ampicillin, gentamicin, levofloxacin, ciprofloxacin, metronidazole, linezolid, daptomycin, cefotaxime, ceftazidime, aztreonam, imipenem, tigecycline, colistin, polymyxin, teicoplanin)
+
+## Functions
+
+### normalize_abx_name
+```python
+def normalize_abx_name(name):
+    """Normalize antibiotic name for consistent counting."""
+    if pd.isna(name):
+        return None
+    name = str(name).lower().strip()
+    # Common variations
+    name = name.replace(' ', '').replace('-', '').replace('/', '')
+    return name
+```
+
+### get_antibiotic_info
+```python
+def get_antibiotic_info(stay_id=None, hadm_id=None, subject_id=None):
+    """
+    Extract antibiotic administration information for a patient.
+    
+    This function queries both ICU input events and hospital prescriptions/pharmacy
+    records to identify antibiotic administrations.
+    
+    Parameters
+    ----------
+    stay_id : int, optional
+        ICU stay identifier. If provided, returns ICU-specific antibiotic data.
+    hadm_id : int, optional
+        Hospital admission identifier. If provided, returns hospital-wide antibiotic data.
+    subject_id : int, optional
+        Patient identifier. If provided with hadm_id, filters to that admission.
+        If provided alone, returns all antibiotic data for the patient across all admissions.
+    
+    Returns
+    -------
+    dict
+        A dictionary containing:
+        - 'antibiotic_administrations': DataFrame with all antibiotic administrations
+        - 'received_antibiotics': bool indicating if any antibiotics were received
+        - 'distinct_antibiotics': list of unique antibiotic names received
+        - 'distinct_antibiotic_count': int count of unique antibiotics
+        - 'icu_intime': datetime of ICU admission (if stay_id provided)
+        - 'within_48hrs_icu': bool indicating if antibiotics received within 48h of ICU admission
+        - 'antibiotics_within_48hrs_icu': list of antibiotics received within 48h of ICU admission
+    """
+    if stay_id is None and hadm_id is None and subject_id is None:
+        raise ValueError("At least one identifier (stay_id, hadm_id, or subject_id) must be provided.")
+    
+    all_admins = []
+    
+    # Query ICU input events for antibiotics
+    if stay_id is not None:
+        sql = f"""
+        SELECT i.stay_id, i.hadm_id, i.subject_id, d.label as antibiotic_name, i.starttime as admin_time
+        FROM mimiciv_icu.inputevents i
+        JOIN mimiciv_icu.d_items d ON i.itemid = d.itemid
+        WHERE i.stay_id = {stay_id}
+          AND d.category = 'Antibiotics'
+        """
+        icu_abx = query_db(sql)
+        if len(icu_abx) > 0:
+            icu_abx['source'] = 'ICU_inputevents'
+            all_admins.append(icu_abx)
+    
+    # Query hospital prescriptions for antibiotics
+    if hadm_id is not None or subject_id is not None:
+        if hadm_id is not None and subject_id is not None:
+            sql = f"""
+            SELECT p.subject_id, p.hadm_id, p.drug as antibiotic_name, p.starttime as admin_time
+            FROM mimiciv_hosp.prescriptions p
+            WHERE p.hadm_id = {hadm_id}
+              AND p.subject_id = {subject_id}
+              AND (p.drug ILIKE '%vancomycin%' OR p.drug ILIKE '%cefepime%' OR p.drug ILIKE '%meropenem%' 
+                   OR p.drug ILIKE '%piperacillin%' OR p.drug ILIKE '%cefazolin%' OR p.drug ILIKE '%ceftriaxone%'
+                   OR p.drug ILIKE '%ampicillin%' OR p.drug ILIKE '%gentamicin%' OR p.drug ILIKE '%levofloxacin%'
+                   OR p.drug ILIKE '%ciprofloxacin%' OR p.drug ILIKE '%metronidazole%' OR p.drug ILIKE '%linezolid%'
+                   OR p.drug ILIKE '%daptomycin%' OR p.drug ILIKE '%cefotaxime%' OR p.drug ILIKE '%ceftazidime%'
+                   OR p.drug ILIKE '%aztreonam%' OR p.drug ILIKE '%imipenem%' OR p.drug ILIKE '%tigecycline%'
+                   OR p.drug ILIKE '%colistin%' OR p.drug ILIKE '%polymyxin%' OR p.drug ILIKE '%teicoplanin%')
+            """
+        elif hadm_id is not None:
+            sql = f"""
+            SELECT p.subject_id, p.hadm_id, p.drug as antibiotic_name, p.starttime as admin_time
+            FROM mimiciv_hosp.prescriptions p
+            WHERE p.hadm_id = {hadm_id}
+              AND (p.drug ILIKE '%vancomycin%' OR p.drug ILIKE '%cefepime%' OR p.drug ILIKE '%meropenem%' 
+                   OR p.drug ILIKE '%piperacillin%' OR p.drug ILIKE '%cefazolin%' OR p.drug ILIKE '%ceftriaxone%'
+                   OR p.drug ILIKE '%ampicillin%' OR p.drug ILIKE '%gentamicin%' OR p.drug ILIKE '%levofloxacin%'
+                   OR p.drug ILIKE '%ciprofloxacin%' OR p.drug ILIKE '%metronidazole%' OR p.drug ILIKE '%linezolid%'
+                   OR p.drug ILIKE '%daptomycin%' OR p.drug ILIKE '%cefotaxime%' OR p.drug ILIKE '%ceftazidime%'
+                   OR p.drug ILIKE '%aztreonam%' OR p.drug ILIKE '%imipenem%' OR p.drug ILIKE '%tigecycline%'
+                   OR p.drug ILIKE '%colistin%' OR p.drug ILIKE '%polymyxin%' OR p.drug ILIKE '%teicoplanin%')
+            """
+        else:
+            sql = f"""
+            SELECT p.subject_id, p.hadm_id, p.drug as antibiotic_name, p.starttime as admin_time
+            FROM mimiciv_hosp.prescriptions p
+            WHERE p.subject_id = {subject_id}
+              AND (p.drug ILIKE '%vancomycin%' OR p.drug ILIKE '%cefepime%' OR p.drug ILIKE '%meropenem%' 
+                   OR p.drug ILIKE '%piperacillin%' OR p.drug ILIKE '%cefazolin%' OR p.drug ILIKE '%ceftriaxone%'
+                   OR p.drug ILIKE '%ampicillin%' OR p.drug ILIKE '%gentamicin%' OR p.drug ILIKE '%levofloxacin%'
+                   OR p.drug ILIKE '%ciprofloxacin%' OR p.drug ILIKE '%metronidazole%' OR p.drug ILIKE '%linezolid%'
+                   OR p.drug ILIKE '%daptomycin%' OR p.drug ILIKE '%cefotaxime%' OR p.drug ILIKE '%ceftazidime%'
+                   OR p.drug ILIKE '%aztreonam%' OR p.drug ILIKE '%imipenem%' OR p.drug ILIKE '%tigecycline%'
+                   OR p.drug ILIKE '%colistin%' OR p.drug ILIKE '%polymyxin%' OR p.drug ILIKE '%teicoplanin%')
+            """
+        hosp_abx = query_db(sql)
+        if len(hosp_abx) > 0:
+            hosp_abx['source'] = 'hospital_prescriptions'
+            all_admins.append(hosp_abx)
+    
+    # Combine all administrations
+    if all_admins:
+        antibiotic_admins = pd.concat(all_admins, ignore_index=True)
+    else:
+        antibiotic_admins = pd.DataFrame(columns=['source', 'stay_id', 'hadm_id', 'subject_id', 'antibiotic_name', 'admin_time'])
+    
+    # Get distinct antibiotics
+    distinct_antibiotics = antibiotic_admins['antibiotic_name'].dropna().unique().tolist() if len(antibiotic_admins) > 0 else []
+    
+    # Get ICU intime if stay_id provided
+    icu_intime = None
+    within_48hrs_icu = False
+    antibiotics_within_48hrs_icu = []
+    
+    if stay_id is not None:
+        stay_info = query_db(f"""
+        SELECT intime FROM mimiciv_icu.icustays WHERE stay_id = {stay_id}
+        """)
+        if len(stay_info) > 0:
+            icu_intime = stay_info['intime'].iloc[0]
+            
+            # Check for antibiotics within 48 hours of ICU admission
+            if len(antibiotic_admins) > 0:
+                antibiotic_admins['admin_time'] = pd.to_datetime(antibiotic_admins['admin_time'])
+                within_48 = antibiotic_admins[
+                    (antibiotic_admins['admin_time'] >= icu_intime) & 
+                    (antibiotic_admins['admin_time'] <= icu_intime + timedelta(hours=48))
+                ]
+                within_48hrs_icu = len(within_48) > 0
+                antibiotics_within_48hrs_icu = within_48['antibiotic_name'].dropna().unique().tolist()
+    
+    result = {
+        'antibiotic_administrations': antibiotic_admins,
+        'received_antibiotics': len(distinct_antibiotics) > 0,
+        'distinct_antibiotics': distinct_antibiotics,
+        'distinct_antibiotic_count': len(distinct_antibiotics),
+        'icu_intime': icu_intime,
+        'within_48hrs_icu': within_48hrs_icu,
+        'antibiotics_within_48hrs_icu': antibiotics_within_48hrs_icu
+    }
+    
+    return result
+```
+
+### get_suspicion_of_infection
+```python
+import pandas as pd
+from datetime import datetime, timedelta
+
+# Screening cultures that should NOT count as suspicion of infection
+# These are surveillance/screening cultures for colonization, not active infection
+SCREENING_CULTURES = [
+    'MRSA SCREEN',
+    'CRE Screen', 
+    'Cipro Resistant Screen',
+    'C, E, & A Screening',
+    'Infection Control Yeast',
+    'Swab R/O Yeast Screen',
+    'MICRO PROBLEM PATIENT',
+    'Isolate',
+    'XXX'
+]
+
+def get_suspicion_of_infection(stay_id=None, hadm_id=None, subject_id=None):
+    """
+    Determine if a patient had suspicion of infection during their ICU stay or hospital admission.
+    
+    Suspicion of infection is identified by:
+    1. Diagnostic culture orders (blood, urine, sputum, wound, etc.) - indicates clinician suspected infection
+       - Excludes screening cultures (MRSA SCREEN, CRE Screen, etc.) which are for colonization surveillance
+    2. Antibiotic administration with treatment pattern (multiple doses or extended duration)
+       - Single-dose antibiotics (like surgical prophylaxis) are excluded
+    
+    This function can answer questions such as:
+    - Does this patient have a suspected infection during this ICU stay?
+    - What types of diagnostic cultures were ordered for this patient?
+    - Did this patient receive antibiotics for treatment (not just prophylaxis)?
+    
+    Parameters
+    ----------
+    stay_id : int, optional
+        ICU stay identifier. If provided, returns ICU-specific infection suspicion data.
+    hadm_id : int, optional
+        Hospital admission identifier. If provided, returns hospital-wide infection suspicion data.
+    subject_id : int, optional
+        Patient identifier. If provided with hadm_id, filters to that admission.
+        If provided alone, returns all infection suspicion data for the patient across all admissions.
+    
+    Returns
+    -------
+    dict
+        A dictionary containing:
+        - 'has_suspicion_of_infection': bool indicating if there was suspicion of infection
+        - 'culture_orders': DataFrame with all diagnostic culture orders during the period
+          (columns: subject_id, hadm_id, stay_id, spec_type_desc, culture_time)
+        - 'antibiotic_info': dict with antibiotic administration data
+        - 'distinct_culture_types': list of unique diagnostic culture types ordered
+        - 'culture_count': int count of diagnostic culture orders
+        - 'has_treatment_pattern': bool indicating if antibiotics suggest treatment (not prophylaxis)
+        - 'icu_intime': datetime of ICU admission (if stay_id provided)
+        - 'icu_outtime': datetime of ICU discharge (if stay_id provided)
+    
+    Notes
+    -----
+    - At least one identifier (stay_id, hadm_id, or subject_id) must be provided.
+    - Screening cultures (MRSA SCREEN, CRE Screen, etc.) are excluded as they indicate
+      colonization surveillance, not active infection suspicion.
+    - Antibiotic prophylaxis (single dose) is excluded from suspicion determination.
+    """
+    
+    # Build the NOT IN clause for screening cultures
+    not_in_clause = "', '".join(SCREENING_CULTURES)
+    
+    # Build the query based on provided identifiers
+    if stay_id is not None:
+        # Query for diagnostic cultures during ICU stay (excluding screening)
+        sql = f"""
+        SELECT m.subject_id, m.hadm_id, i.stay_id, 
+               m.spec_type_desc,
+               CAST(m.chartdate AS DATE) + CAST(m.charttime AS TIME) as culture_time,
+               i.intime as icu_intime,
+               i.outtime as icu_outtime
+        FROM mimiciv_hosp.microbiologyevents m
+        JOIN mimiciv_icu.icustays i ON m.subject_id = i.subject_id AND m.hadm_id = i.hadm_id
+        WHERE i.stay_id = {stay_id}
+          AND m.hadm_id IS NOT NULL
+          AND (CAST(m.chartdate AS DATE) + CAST(m.charttime AS TIME)) >= i.intime
+          AND (CAST(m.chartdate AS DATE) + CAST(m.charttime AS TIME)) <= i.outtime
+          AND m.spec_type_desc NOT IN ('{not_in_clause}')
+        ORDER BY culture_time
+        """
+        culture_df = query_db(sql)
+        
+        # Get ICU stay times
+        stay_info = query_db(f"""
+        SELECT intime, outtime FROM mimiciv_icu.icustays WHERE stay_id = {stay_id}
+        """)
+        icu_intime = stay_info['intime'].iloc[0] if len(stay_info) > 0 else None
+        icu_outtime = stay_info['outtime'].iloc[0] if len(stay_info) > 0 else None
+        
+        # Get antibiotic info for this stay
+        antibiotic_info = get_antibiotic_info(stay_id=stay_id)
+        
+    elif hadm_id is not None:
+        # Query for diagnostic cultures during hospital admission (excluding screening)
+        if subject_id is not None:
+            sql = f"""
+            SELECT m.subject_id, m.hadm_id, 
+                   m.spec_type_desc,
+                   CAST(m.chartdate AS DATE) + CAST(m.charttime AS TIME) as culture_time
+            FROM mimiciv_hosp.microbiologyevents m
+            WHERE m.hadm_id = {hadm_id}
+              AND m.subject_id = {subject_id}
+              AND m.hadm_id IS NOT NULL
+              AND m.spec_type_desc NOT IN ('{not_in_clause}')
+            ORDER BY culture_time
+            """
+        else:
+            sql = f"""
+            SELECT m.subject_id, m.hadm_id, 
+                   m.spec_type_desc,
+                   CAST(m.chartdate AS DATE) + CAST(m.charttime AS TIME) as culture_time
+            FROM mimiciv_hosp.microbiologyevents m
+            WHERE m.hadm_id = {hadm_id}
+              AND m.hadm_id IS NOT NULL
+              AND m.spec_type_desc NOT IN ('{not_in_clause}')
+            ORDER BY culture_time
+            """
+        culture_df = query_db(sql)
+        
+        icu_intime = None
+        icu_outtime = None
+        
+        # Get antibiotic info for this admission
+        antibiotic_info = get_antibiotic_info(hadm_id=hadm_id, subject_id=subject_id)
+        
+    elif subject_id is not None:
+        # Query for all diagnostic cultures for this patient across all admissions (excluding screening)
+        sql = f"""
+        SELECT m.subject_id, m.hadm_id, 
+               m.spec_type_desc,
+               CAST(m.chartdate AS DATE) + CAST(m.charttime AS TIME) as culture_time
+        FROM mimiciv_hosp.microbiologyevents m
+        WHERE m.subject_id = {subject_id}
+          AND m.hadm_id IS NOT NULL
+          AND m.spec_type_desc NOT IN ('{not_in_clause}')
+        ORDER BY culture_time
+        """
+        culture_df = query_db(sql)
+        
+        icu_intime = None
+        icu_outtime = None
+        
+        # Get antibiotic info for this patient
+        antibiotic_info = get_antibiotic_info(subject_id=subject_id)
+    else:
+        raise ValueError("At least one identifier (stay_id, hadm_id, or subject_id) must be provided.")
+    
+    # Determine if there was suspicion of infection
+    has_cultures = len(culture_df) > 0
+    
+    # For antibiotics, check if there's a treatment pattern (multiple doses or extended duration)
+    has_antibiotics = antibiotic_info.get('received_antibiotics', False)
+    antibiotic_admins = antibiotic_info.get('antibiotic_administrations', pd.DataFrame())
+    
+    # Check for treatment pattern: multiple doses of the same antibiotic
+    has_treatment_pattern = False
+    if len(antibiotic_admins) > 0:
+        # Count doses per antibiotic
+        dose_counts = antibiotic_admins.groupby('antibiotic_name').size()
+        # If any antibiotic has >= 2 doses, consider it treatment
+        if dose_counts.max() >= 2:
+            has_treatment_pattern = True
+        # Or if there are multiple distinct antibiotics
+        if len(dose_counts) >= 2:
+            has_treatment_pattern = True
+    
+    has_suspicion = has_cultures or has_treatment_pattern
+    
+    # Get distinct culture types
+    distinct_culture_types = culture_df['spec_type_desc'].dropna().unique().tolist() if len(culture_df) > 0 else []
+    
+    # Build result
+    result = {
+        'has_suspicion_of_infection': has_suspicion,
+        'culture_orders': culture_df,
+        'antibiotic_info': antibiotic_info,
+        'distinct_culture_types': distinct_culture_types,
+        'culture_count': len(culture_df),
+        'has_treatment_pattern': has_treatment_pattern,
+        'icu_intime': icu_intime,
+        'icu_outtime': icu_outtime
+    }
+    
+    return result
+```
+
+## Test Results
+
+### Positive Cases (Refined Function)
+| stay_id | Culture Count | Antibiotics | Treatment Pattern | Has Suspicion |
+|---------|---------------|-------------|-------------------|---------------|
+| 36032605 | 504 | Multiple (Vancomycin, Cefepime, etc.) | True | True |
+| 38134134 | 2 (URINE, BLOOD CULTURE) | None | False | True |
+| 32776114 | 0 | Vancomycin (4 doses) | True | True |
+| 29850931 (hadm_id) | 511 | Multiple | True | True |
+| 16175244 (subject_id) | 511 | Multiple | True | True |
+
+### Negative Cases (Refined Function)
+| stay_id | Culture Count | Antibiotics | Treatment Pattern | Has Suspicion |
+|---------|---------------|-------------|-------------------|---------------|
+| 37509585 | 0 | None | False | False |
+| 39553978 | 0 (MRSA SCREEN excluded) | None | False | False |
+| 35827482 | 0 | Cefazolin (1 dose) | False | False |
+
+### Borderline Cases
+| stay_id | Culture Count | Antibiotics | Treatment Pattern | Has Suspicion | Notes |
+|---------|---------------|-------------|-------------------|---------------|-------|
+| 32781895 | 0 | Cefazolin (2 doses) | True | True | 2 doses = treatment pattern |
+| 33417167 | 0 | Cefazolin + Vancomycin | True | True | Multiple antibiotics |
+| 32126026 | 2 | Multiple antibiotics | True | True | |
+| 31580610 | 1 | Multiple antibiotics | True | True | |
+| 34606843 | 0 | Cefazolin + Vancomycin | True | True | Multiple antibiotics |
+
+## Error Fixes
+
+### Step 7 - SQL String Formatting Error
+- **Error**: `SyntaxError: f-string: unmatched ')'`
+- **Fix**: Changed `f"'{ "', "'.join(screening_cultures) }'"` to build `not_in_clause` separately first
+
+### Step 12 - julianday Function Error
+- **Error**: `Catalog Error: Scalar Function with name julianday does not exist!`
+- **Fix**: DuckDB doesn't have julianday; use `(p.stoptime - p.starttime)` directly for duration
+
+### Step 14 - Culture Data Location
+- **Finding**: Culture orders not in chartevents table
+- **Resolution**: Use microbiologyevents table instead for culture data
+
+## Clinical Guideline Facts (Sepsis)
+
+### Adult Sepsis (Sepsis-3, 2016)
+- Definition: Life-threatening organ dysfunction caused by dysregulated host response to infection
+- Primary criterion: Suspected or documented infection AND acute increase in SOFA score ≥ 2 points
+- qSOFA screening (non-ICU): Respiratory rate ≥ 22, altered mentation, SBP ≤ 100 mm Hg
+
+### Pediatric Sepsis (Phoenix Criteria, 2024)
+- Definition: Infection with potentially life-threatening organ dysfunction in children < 18 years
+- Criterion: Suspected infection AND Phoenix Sepsis Score ≥ 2 points
+
+### Septic Shock (Adult)
+- Vasopressor therapy required to maintain MAP ≥ 65 mm Hg
+- Serum lactate > 2 mmol/L (> 18 mg/dL) after adequate fluid resuscitation
+
+### MRSA Screening vs. Infection
+- **MRSA SCREEN**: Surveillance culture for colonization, NOT active infection
+- **MRSA Infection**: Isolation from sterile site OR clinical signs/symptoms at non-sterile site
+- Screening cultures should be excluded from infection suspicion determination
+
+=== Step 3 ===
+# Clinical Coding Agent - Rolling Memory
+
+## Schema Facts
+
+### Tables
+| Schema | Table | Key Columns |
+|--------|-------|-------------|
+| mimiciv_hosp | microbiologyevents | microevent_id, subject_id, hadm_id, spec_type_desc, chartdate, charttime, test_name, org_name, interpretation |
+| mimiciv_hosp | prescriptions | subject_id, hadm_id, pharmacy_id, drug, starttime, stoptime |
+| mimiciv_hosp | pharmacy | subject_id, hadm_id, pharmacy_id, medication, starttime, stoptime |
+| mimiciv_hosp | admissions | subject_id, hadm_id, admittime, dischtime |
+| mimiciv_hosp | procedures_icd | subject_id, hadm_id, seq_num, chartdate, icd_code, icd_version |
+| mimiciv_icu | icustays | stay_id, subject_id, hadm_id, intime, outtime, first_careunit, last_careunit |
+| mimiciv_icu | d_items | itemid, label, category, unitname, param_type |
+| mimiciv_icu | chartevents | subject_id, hadm_id, stay_id, itemid, charttime, value, valuenum |
+| mimiciv_icu | inputevents | subject_id, hadm_id, stay_id, itemid, starttime, endtime, amount |
+
+### Culture Types (spec_type_desc values)
+- **Diagnostic**: BLOOD CULTURE, URINE, SPUTUM, STOOL, WOUND, CSF Culture, BAL Fluid Culture, Pleural Fluid Culture, Nasal Swab, Rectal Swab, BRONCHOALVEOLAR LAVAGE, JOINT FLUID, etc.
+- **Screening (excluded from infection suspicion)**: MRSA SCREEN, CRE Screen, Cipro Resistant Screen, C, E, & A Screening, Infection Control Yeast, Swab R/O Yeast Screen, MICRO PROBLEM PATIENT, Isolate, XXX
+
+### Antibiotic Identification
+- ICU: inputevents table with d_items.category = 'Antibiotics'
+- Hospital: prescriptions table with drug name pattern matching (vancomycin, cefepime, meropenem, piperacillin, cefazolin, ceftriaxone, ampicillin, gentamicin, levofloxacin, ciprofloxacin, metronidazole, linezolid, daptomycin, cefotaxime, ceftazidime, aztreonam, imipenem, tigecycline, colistin, polymyxin, teicoplanin)
+
+## Functions
+
+### get_antibiotic_info
+```python
+def get_antibiotic_info(stay_id=None, hadm_id=None, subject_id=None):
+    """
+    Extract antibiotic administration information for a patient.
+    
+    This function queries both ICU input events and hospital prescriptions/pharmacy
+    records to identify antibiotic administrations.
+    
+    Parameters
+    ----------
+    stay_id : int, optional
+        ICU stay identifier. If provided, returns ICU-specific antibiotic data.
+    hadm_id : int, optional
+        Hospital admission identifier. If provided, returns hospital-wide antibiotic data.
+    subject_id : int, optional
+        Patient identifier. If provided with hadm_id, filters to that admission.
+        If provided alone, returns all antibiotic data for the patient across all admissions.
+    
+    Returns
+    -------
+    dict
+        A dictionary containing:
+        - 'antibiotic_administrations': DataFrame with all antibiotic administrations
+        - 'received_antibiotics': bool indicating if any antibiotics were received
+        - 'distinct_antibiotics': list of unique antibiotic names received
+        - 'distinct_antibiotic_count': int count of unique antibiotics
+        - 'icu_intime': datetime of ICU admission (if stay_id provided)
+        - 'within_48hrs_icu': bool indicating if antibiotics received within 48h of ICU admission
+        - 'antibiotics_within_48hrs_icu': list of antibiotics received within 48h of ICU admission
+    """
+    if stay_id is None and hadm_id is None and subject_id is None:
+        raise ValueError("At least one identifier (stay_id, hadm_id, or subject_id) must be provided.")
+    
+    all_admins = []
+    
+    # Get hadm_id and subject_id from stay_id if needed
+    stay_hadm_id = None
+    stay_subject_id = None
+    if stay_id is not None:
+        stay_info = query_db(f"""
+        SELECT hadm_id, subject_id FROM mimiciv_icu.icustays WHERE stay_id = {stay_id}
+        """)
+        if len(stay_info) > 0:
+            stay_hadm_id = stay_info['hadm_id'].iloc[0]
+            stay_subject_id = stay_info['subject_id'].iloc[0]
+    
+    # Query ICU input events for antibiotics
+    if stay_id is not None:
+        sql = f"""
+        SELECT i.stay_id, i.hadm_id, i.subject_id, d.label as antibiotic_name, i.starttime as admin_time
+        FROM mimiciv_icu.inputevents i
+        JOIN mimiciv_icu.d_items d ON i.itemid = d.itemid
+        WHERE i.stay_id = {stay_id}
+          AND d.category = 'Antibiotics'
+        """
+        icu_abx = query_db(sql)
+        if len(icu_abx) > 0:
+            icu_abx['source'] = 'ICU_inputevents'
+            all_admins.append(icu_abx)
+    
+    # Query hospital prescriptions for antibiotics
+    # When stay_id is provided, use the hadm_id from that stay
+    query_hadm_id = stay_hadm_id if stay_id is not None else hadm_id
+    query_subject_id = stay_subject_id if stay_id is not None else subject_id
+    
+    if query_hadm_id is not None or query_subject_id is not None:
+        if query_hadm_id is not None and query_subject_id is not None:
+            sql = f"""
+            SELECT p.subject_id, p.hadm_id, p.drug as antibiotic_name, p.starttime as admin_time
+            FROM mimiciv_hosp.prescriptions p
+            WHERE p.hadm_id = {query_hadm_id}
+              AND p.subject_id = {query_subject_id}
+              AND (p.drug ILIKE '%vancomycin%' OR p.drug ILIKE '%cefepime%' OR p.drug ILIKE '%meropenem%' 
+                   OR p.drug ILIKE '%piperacillin%' OR p.drug ILIKE '%cefazolin%' OR p.drug ILIKE '%ceftriaxone%'
+                   OR p.drug ILIKE '%ampicillin%' OR p.drug ILIKE '%gentamicin%' OR p.drug ILIKE '%levofloxacin%'
+                   OR p.drug ILIKE '%ciprofloxacin%' OR p.drug ILIKE '%metronidazole%' OR p.drug ILIKE '%linezolid%'
+                   OR p.drug ILIKE '%daptomycin%' OR p.drug ILIKE '%cefotaxime%' OR p.drug ILIKE '%ceftazidime%'
+                   OR p.drug ILIKE '%aztreonam%' OR p.drug ILIKE '%imipenem%' OR p.drug ILIKE '%tigecycline%'
+                   OR p.drug ILIKE '%colistin%' OR p.drug ILIKE '%polymyxin%' OR p.drug ILIKE '%teicoplanin%')
+            """
+        elif query_hadm_id is not None:
+            sql = f"""
+            SELECT p.subject_id, p.hadm_id, p.drug as antibiotic_name, p.starttime as admin_time
+            FROM mimiciv_hosp.prescriptions p
+            WHERE p.hadm_id = {query_hadm_id}
+              AND (p.drug ILIKE '%vancomycin%' OR p.drug ILIKE '%cefepime%' OR p.drug ILIKE '%meropenem%' 
+                   OR p.drug ILIKE '%piperacillin%' OR p.drug ILIKE '%cefazolin%' OR p.drug ILIKE '%ceftriaxone%'
+                   OR p.drug ILIKE '%ampicillin%' OR p.drug ILIKE '%gentamicin%' OR p.drug ILIKE '%levofloxacin%'
+                   OR p.drug ILIKE '%ciprofloxacin%' OR p.drug ILIKE '%metronidazole%' OR p.drug ILIKE '%linezolid%'
+                   OR p.drug ILIKE '%daptomycin%' OR p.drug ILIKE '%cefotaxime%' OR p.drug ILIKE '%ceftazidime%'
+                   OR p.drug ILIKE '%aztreonam%' OR p.drug ILIKE '%imipenem%' OR p.drug ILIKE '%tigecycline%'
+                   OR p.drug ILIKE '%colistin%' OR p.drug ILIKE '%polymyxin%' OR p.drug ILIKE '%teicoplanin%')
+            """
+        else:
+            sql = f"""
+            SELECT p.subject_id, p.hadm_id, p.drug as antibiotic_name, p.starttime as admin_time
+            FROM mimiciv_hosp.prescriptions p
+            WHERE p.subject_id = {query_subject_id}
+              AND (p.drug ILIKE '%vancomycin%' OR p.drug ILIKE '%cefepime%' OR p.drug ILIKE '%meropenem%' 
+                   OR p.drug ILIKE '%piperacillin%' OR p.drug ILIKE '%cefazolin%' OR p.drug ILIKE '%ceftriaxone%'
+                   OR p.drug ILIKE '%ampicillin%' OR p.drug ILIKE '%gentamicin%' OR p.drug ILIKE '%levofloxacin%'
+                   OR p.drug ILIKE '%ciprofloxacin%' OR p.drug ILIKE '%metronidazole%' OR p.drug ILIKE '%linezolid%'
+                   OR p.drug ILIKE '%daptomycin%' OR p.drug ILIKE '%cefotaxime%' OR p.drug ILIKE '%ceftazidime%'
+                   OR p.drug ILIKE '%aztreonam%' OR p.drug ILIKE '%imipenem%' OR p.drug ILIKE '%tigecycline%'
+                   OR p.drug ILIKE '%colistin%' OR p.drug ILIKE '%polymyxin%' OR p.drug ILIKE '%teicoplanin%')
+            """
+        hosp_abx = query_db(sql)
+        if len(hosp_abx) > 0:
+            hosp_abx['source'] = 'hospital_prescriptions'
+            all_admins.append(hosp_abx)
+    
+    # Combine all administrations
+    if all_admins:
+        antibiotic_admins = pd.concat(all_admins, ignore_index=True)
+    else:
+        antibiotic_admins = pd.DataFrame(columns=['source', 'stay_id', 'hadm_id', 'subject_id', 'antibiotic_name', 'admin_time'])
+    
+    # Get distinct antibiotics
+    distinct_antibiotics = antibiotic_admins['antibiotic_name'].dropna().unique().tolist() if len(antibiotic_admins) > 0 else []
+    
+    # Get ICU intime if stay_id provided
+    icu_intime = None
+    within_48hrs_icu = False
+    antibiotics_within_48hrs_icu = []
+    
+    if stay_id is not None:
+        stay_info = query_db(f"""
+        SELECT intime FROM mimiciv_icu.icustays WHERE stay_id = {stay_id}
+        """)
+        if len(stay_info) > 0:
+            icu_intime = stay_info['intime'].iloc[0]
+            
+            # Check for antibiotics within 48 hours of ICU admission
+            if len(antibiotic_admins) > 0:
+                antibiotic_admins['admin_time'] = pd.to_datetime(antibiotic_admins['admin_time'])
+                within_48 = antibiotic_admins[
+                    (antibiotic_admins['admin_time'] >= icu_intime) & 
+                    (antibiotic_admins['admin_time'] <= icu_intime + timedelta(hours=48))
+                ]
+                within_48hrs_icu = len(within_48) > 0
+                antibiotics_within_48hrs_icu = within_48['antibiotic_name'].dropna().unique().tolist()
+    
+    result = {
+        'antibiotic_administrations': antibiotic_admins,
+        'received_antibiotics': len(distinct_antibiotics) > 0,
+        'distinct_antibiotics': distinct_antibiotics,
+        'distinct_antibiotic_count': len(distinct_antibiotics),
+        'icu_intime': icu_intime,
+        'within_48hrs_icu': within_48hrs_icu,
+        'antibiotics_within_48hrs_icu': antibiotics_within_48hrs_icu
+    }
+    
+    return result
+```
+
+### get_suspicion_of_infection
+```python
+import pandas as pd
+from datetime import datetime, timedelta
+
+# Screening cultures that should NOT count as suspicion of infection
+# These are surveillance/screening cultures for colonization, not active infection
+SCREENING_CULTURES = [
+    'MRSA SCREEN',
+    'CRE Screen', 
+    'Cipro Resistant Screen',
+    'C, E, & A Screening',
+    'Infection Control Yeast',
+    'Swab R/O Yeast Screen',
+    'MICRO PROBLEM PATIENT',
+    'Isolate',
+    'XXX'
+]
+
+def get_suspicion_of_infection(stay_id=None, hadm_id=None, subject_id=None):
+    """
+    Determine if a patient had suspicion of infection during their ICU stay or hospital admission.
+    
+    Suspicion of infection is identified by:
+    1. Diagnostic culture orders (blood, urine, sputum, wound, etc.) - indicates clinician suspected infection
+       - Excludes screening cultures (MRSA SCREEN, CRE Screen, etc.) which are for colonization surveillance
+    2. Antibiotic administration with treatment pattern (multiple doses or extended duration)
+       - Single-dose antibiotics (like surgical prophylaxis) are excluded
+    
+    This function can answer questions such as:
+    - Does this patient have a suspected infection during this ICU stay?
+    - What types of diagnostic cultures were ordered for this patient?
+    - Did this patient receive antibiotics for treatment (not just prophylaxis)?
+    
+    Parameters
+    ----------
+    stay_id : int, optional
+        ICU stay identifier. If provided, returns ICU-specific infection suspicion data.
+    hadm_id : int, optional
+        Hospital admission identifier. If provided, returns hospital-wide infection suspicion data.
+    subject_id : int, optional
+        Patient identifier. If provided with hadm_id, filters to that admission.
+        If provided alone, returns all infection suspicion data for the patient across all admissions.
+    
+    Returns
+    -------
+    dict
+        A dictionary containing:
+        - 'has_suspicion_of_infection': bool indicating if there was suspicion of infection
+        - 'culture_orders': DataFrame with all diagnostic culture orders during the period
+          (columns: subject_id, hadm_id, stay_id, spec_type_desc, culture_time)
+        - 'antibiotic_info': dict with antibiotic administration data
+        - 'distinct_culture_types': list of unique diagnostic culture types ordered
+        - 'culture_count': int count of diagnostic culture orders
+        - 'has_treatment_pattern': bool indicating if antibiotics suggest treatment (not prophylaxis)
+        - 'icu_intime': datetime of ICU admission (if stay_id provided)
+        - 'icu_outtime': datetime of ICU discharge (if stay_id provided)
+    
+    Notes
+    -----
+    - At least one identifier (stay_id, hadm_id, or subject_id) must be provided.
+    - Screening cultures (MRSA SCREEN, CRE Screen, etc.) are excluded as they indicate
+      colonization surveillance, not active infection suspicion.
+    - Antibiotic prophylaxis (single dose) is excluded from suspicion determination.
+    """
+    
+    # Build the NOT IN clause for screening cultures
+    not_in_clause = "', '".join(SCREENING_CULTURES)
+    
+    # Build the query based on provided identifiers
+    if stay_id is not None:
+        # Query for diagnostic cultures during ICU stay (excluding screening)
+        sql = f"""
+        SELECT m.subject_id, m.hadm_id, i.stay_id, 
+               m.spec_type_desc,
+               CAST(m.chartdate AS DATE) + CAST(m.charttime AS TIME) as culture_time,
+               i.intime as icu_intime,
+               i.outtime as icu_outtime
+        FROM mimiciv_hosp.microbiologyevents m
+        JOIN mimiciv_icu.icustays i ON m.subject_id = i.subject_id AND m.hadm_id = i.hadm_id
+        WHERE i.stay_id = {stay_id}
+          AND m.hadm_id IS NOT NULL
+          AND (CAST(m.chartdate AS DATE) + CAST(m.charttime AS TIME)) >= i.intime
+          AND (CAST(m.chartdate AS DATE) + CAST(m.charttime AS TIME)) <= i.outtime
+          AND m.spec_type_desc NOT IN ('{not_in_clause}')
+        ORDER BY culture_time
+        """
+        culture_df = query_db(sql)
+        
+        # Get ICU stay times
+        stay_info = query_db(f"""
+        SELECT intime, outtime FROM mimiciv_icu.icustays WHERE stay_id = {stay_id}
+        """)
+        icu_intime = stay_info['intime'].iloc[0] if len(stay_info) > 0 else None
+        icu_outtime = stay_info['outtime'].iloc[0] if len(stay_info) > 0 else None
+        
+        # Get antibiotic info for this stay
+        antibiotic_info = get_antibiotic_info(stay_id=stay_id)
+        
+    elif hadm_id is not None:
+        # Query for diagnostic cultures during hospital admission (excluding screening)
+        if subject_id is not None:
+            sql = f"""
+            SELECT m.subject_id, m.hadm_id, 
+                   m.spec_type_desc,
+                   CAST(m.chartdate AS DATE) + CAST(m.charttime AS TIME) as culture_time
+            FROM mimiciv_hosp.microbiologyevents m
+            WHERE m.hadm_id = {hadm_id}
+              AND m.subject_id = {subject_id}
+              AND m.hadm_id IS NOT NULL
+              AND m.spec_type_desc NOT IN ('{not_in_clause}')
+            ORDER BY culture_time
+            """
+        else:
+            sql = f"""
+            SELECT m.subject_id, m.hadm_id, 
+                   m.spec_type_desc,
+                   CAST(m.chartdate AS DATE) + CAST(m.charttime AS TIME) as culture_time
+            FROM mimiciv_hosp.microbiologyevents m
+            WHERE m.hadm_id = {hadm_id}
+              AND m.hadm_id IS NOT NULL
+              AND m.spec_type_desc NOT IN ('{not_in_clause}')
+            ORDER BY culture_time
+            """
+        culture_df = query_db(sql)
+        
+        icu_intime = None
+        icu_outtime = None
+        
+        # Get antibiotic info for this admission
+        antibiotic_info = get_antibiotic_info(hadm_id=hadm_id, subject_id=subject_id)
+        
+    elif subject_id is not None:
+        # Query for all diagnostic cultures for this patient across all admissions (excluding screening)
+        sql = f"""
+        SELECT m.subject_id, m.hadm_id, 
+               m.spec_type_desc,
+               CAST(m.chartdate AS DATE) + CAST(m.charttime AS TIME) as culture_time
+        FROM mimiciv_hosp.microbiologyevents m
+        WHERE m.subject_id = {subject_id}
+          AND m.hadm_id IS NOT NULL
+          AND m.spec_type_desc NOT IN ('{not_in_clause}')
+        ORDER BY culture_time
+        """
+        culture_df = query_db(sql)
+        
+        icu_intime = None
+        icu_outtime = None
+        
+        # Get antibiotic info for this patient
+        antibiotic_info = get_antibiotic_info(subject_id=subject_id)
+    else:
+        raise ValueError("At least one identifier (stay_id, hadm_id, or subject_id) must be provided.")
+    
+    # Determine if there was suspicion of infection
+    has_cultures = len(culture_df) > 0
+    
+    # For antibiotics, check if there's a treatment pattern (multiple doses or extended duration)
+    has_antibiotics = antibiotic_info.get('received_antibiotics', False)
+    antibiotic_admins = antibiotic_info.get('antibiotic_administrations', pd.DataFrame())
+    
+    # Check for treatment pattern: multiple doses of the same antibiotic
+    has_treatment_pattern = False
+    if len(antibiotic_admins) > 0:
+        # Count doses per antibiotic
+        dose_counts = antibiotic_admins.groupby('antibiotic_name').size()
+        # If any antibiotic has >= 2 doses, consider it treatment
+        if dose_counts.max() >= 2:
+            has_treatment_pattern = True
+        # Or if there are multiple distinct antibiotics
+        if len(dose_counts) >= 2:
+            has_treatment_pattern = True
+    
+    has_suspicion = has_cultures or has_treatment_pattern
+    
+    # Get distinct culture types
+    distinct_culture_types = culture_df['spec_type_desc'].dropna().unique().tolist() if len(culture_df) > 0 else []
+    
+    # Build result
+    result = {
+        'has_suspicion_of_infection': has_suspicion,
+        'culture_orders': culture_df,
+        'antibiotic_info': antibiotic_info,
+        'distinct_culture_types': distinct_culture_types,
+        'culture_count': len(culture_df),
+        'has_treatment_pattern': has_treatment_pattern,
+        'icu_intime': icu_intime,
+        'icu_outtime': icu_outtime
+    }
+    
+    return result
+```
+
+## Test Results
+
+### Positive Cases (All Pass)
+| stay_id | Culture Count | Antibiotics | Treatment Pattern | Has Suspicion |
+|---------|---------------|-------------|-------------------|---------------|
+| 36032605 | 504 | Multiple (Vancomycin, Cefepime, etc.) | True | True |
+| 38134134 | 2 (URINE, BLOOD CULTURE) | None | False | True |
+| 32776114 | 0 | Vancomycin (4 doses) | True | True |
+| 29850931 (hadm_id) | 511 | Multiple | True | True |
+| 16175244 (subject_id) | 511 | Multiple | True | True |
+
+### Negative Cases (All Pass)
+| stay_id | Culture Count | Antibiotics | Treatment Pattern | Has Suspicion |
+|---------|---------------|-------------|-------------------|---------------|
+| 37509585 | 0 | None | False | False |
+| 39553978 | 0 (MRSA SCREEN excluded) | None | False | False |
+| 35827482 | 0 | Cefazolin (1 dose) | False | False |
+
+### Borderline Cases
+| stay_id | Culture Count | Antibiotics | Treatment Pattern | Has Suspicion | Notes |
+|---------|---------------|-------------|-------------------|---------------|-------|
+| 32781895 | 0 | Cefazolin (2 doses) | True | True | 2 doses = treatment pattern |
+| 33417167 | 0 | Cefazolin + Vancomycin | True | True | Multiple antibiotics |
+| 32126026 | 2 | Multiple antibiotics | True | True | |
+| 31580610 | 1 | Multiple antibiotics | True | True | |
+| 34606843 | 0 | Cefazolin + Vancomycin | True | True | Multiple antibiotics |
+
+## Error Fixes
+
+### Step 7 - SQL String Formatting Error
+- **Error**: `SyntaxError: f-string: unmatched ')'`
+- **Fix**: Changed `f"'{ "', "'.join(screening_cultures) }'"` to build `not_in_clause` separately first
+
+### Step 12 - julianday Function Error
+- **Error**: `Catalog Error: Scalar Function with name julianday does not exist!`
+- **Fix**: DuckDB doesn't have julianday; use `(p.stoptime - p.starttime)` directly for duration
+
+### Step 14 - Culture Data Location
+- **Finding**: Culture orders not in chartevents table
+- **Resolution**: Use microbiologyevents table instead for culture data
+
+### Step 6 - Antibiotic Query for stay_id
+- **Error**: When `stay_id` provided, function only queried ICU inputevents, missing hospital prescriptions
+- **Fix**: Updated `get_antibiotic_info` to also query hospital prescriptions using the hadm_id from the stay when `stay_id` is provided
+
+## Clinical Guideline Facts (Sepsis)
+
+### Adult Sepsis (Sepsis-3, 2016)
+- Definition: Life-threatening organ dysfunction caused by dysregulated host response to infection
+- Primary criterion: Suspected or documented infection AND acute increase in SOFA score ≥ 2 points
+- qSOFA screening (non-ICU): Respiratory rate ≥ 22, altered mentation, SBP ≤ 100 mm Hg
+
+### Pediatric Sepsis (Phoenix Criteria, 2024)
+- Definition: Infection with potentially life-threatening organ dysfunction in children < 18 years
+- Criterion: Suspected infection AND Phoenix Sepsis Score ≥ 2 points
+
+### Septic Shock (Adult)
+- Vasopressor therapy required to maintain MAP ≥ 65 mm Hg
+- Serum lactate > 2 mmol/L (> 18 mg/dL) after adequate fluid resuscitation
+
+### MRSA Screening vs. Infection
+- **MRSA SCREEN**: Surveillance culture for colonization, NOT active infection
+- **MRSA Infection**: Isolation from sterile site OR clinical signs/symptoms at non-sterile site
+- Screening cultures should be excluded from infection suspicion determination
+
+=== Step 4 ===
+# Clinical Coding Agent - Rolling Memory
+
+## Schema Facts
+
+### Tables
+| Schema | Table | Key Columns |
+|--------|-------|-------------|
+| mimiciv_hosp | microbiologyevents | microevent_id, subject_id, hadm_id, spec_type_desc, chartdate, charttime, test_name, org_name, interpretation |
+| mimiciv_hosp | prescriptions | subject_id, hadm_id, pharmacy_id, drug, starttime, stoptime |
+| mimiciv_hosp | pharmacy | subject_id, hadm_id, pharmacy_id, medication, starttime, stoptime |
+| mimiciv_hosp | admissions | subject_id, hadm_id, admittime, dischtime |
+| mimiciv_hosp | procedures_icd | subject_id, hadm_id, seq_num, chartdate, icd_code, icd_version |
+| mimiciv_hosp | diagnoses_icd | subject_id, hadm_id, seq_num, icd_code |
+| mimiciv_hosp | d_icd_diagnoses | icd_code, long_title |
+| mimiciv_hosp | d_icd_procedures | icd_code, long_title |
+| mimiciv_icu | icustays | stay_id, subject_id, hadm_id, intime, outtime, first_careunit, last_careunit |
+| mimiciv_icu | d_items | itemid, label, category, unitname, param_type |
+| mimiciv_icu | chartevents | subject_id, hadm_id, stay_id, itemid, charttime, value, valuenum |
+| mimiciv_icu | inputevents | subject_id, hadm_id, stay_id, itemid, starttime, endtime, amount |
+
+### Culture Types (spec_type_desc values)
+- **Diagnostic**: BLOOD CULTURE, URINE, SPUTUM, STOOL, WOUND, CSF Culture, BAL Fluid Culture, Pleural Fluid Culture, Nasal Swab, Rectal Swab, BRONCHOALVEOLAR LAVAGE, JOINT FLUID, Mini-BAL, PERITONEAL FLUID, ASPIRATE, SWAB, FLUID,OTHER, SEROLOGY/BLOOD
+- **Screening (excluded from infection suspicion)**: MRSA SCREEN, CRE Screen, Cipro Resistant Screen, C, E, & A Screening, Infection Control Yeast, Swab R/O Yeast Screen, MICRO PROBLEM PATIENT, Isolate, XXX
+
+### Antibiotic Identification
+- ICU: inputevents table with d_items.category = 'Antibiotics'
+- Hospital: prescriptions table with drug name pattern matching (vancomycin, cefepime, meropenem, piperacillin, cefazolin, ceftriaxone, ampicillin, gentamicin, levofloxacin, ciprofloxacin, metronidazole, linezolid, daptomycin, cefotaxime, ceftazidime, aztreonam, imipenem, tigecycline, colistin, polymyxin, teicoplanin)
+
+### Antibiotic Classification (NEW)
+- **Prophylaxis antibiotics** (typically single dose, surgical prophylaxis): Cefazolin
+- **Treatment antibiotics** (multiple doses, therapeutic): Vancomycin, Cefepime, Meropenem, Piperacillin, Ceftriaxone, etc.
+
+## Functions
+
+### get_antibiotic_info
+```python
+def get_antibiotic_info(stay_id=None, hadm_id=None, subject_id=None):
+    """
+    Extract antibiotic administration information for a patient.
+    
+    This function queries both ICU input events and hospital prescriptions/pharmacy
+    records to identify antibiotic administrations.
+    
+    Parameters
+    ----------
+    stay_id : int, optional
+        ICU stay identifier. If provided, returns ICU-specific antibiotic data.
+    hadm_id : int, optional
+        Hospital admission identifier. If provided, returns hospital-wide antibiotic data.
+    subject_id : int, optional
+        Patient identifier. If provided with hadm_id, filters to that admission.
+        If provided alone, returns all antibiotic data for the patient across all admissions.
+    
+    Returns
+    -------
+    dict
+        A dictionary containing:
+        - 'antibiotic_administrations': DataFrame with all antibiotic administrations
+        - 'received_antibiotics': bool indicating if any antibiotics were received
+        - 'distinct_antibiotics': list of unique antibiotic names received
+        - 'distinct_antibiotic_count': int count of unique antibiotics
+        - 'icu_intime': datetime of ICU admission (if stay_id provided)
+        - 'within_48hrs_icu': bool indicating if antibiotics received within 48h of ICU admission
+        - 'antibiotics_within_48hrs_icu': list of antibiotics received within 48h of ICU admission
+    """
+    if stay_id is None and hadm_id is None and subject_id is None:
+        raise ValueError("At least one identifier (stay_id, hadm_id, or subject_id) must be provided.")
+    
+    all_admins = []
+    
+    # Get hadm_id and subject_id from stay_id if needed
+    stay_hadm_id = None
+    stay_subject_id = None
+    if stay_id is not None:
+        stay_info = query_db(f"""
+        SELECT hadm_id, subject_id FROM mimiciv_icu.icustays WHERE stay_id = {stay_id}
+        """)
+        if len(stay_info) > 0:
+            stay_hadm_id = stay_info['hadm_id'].iloc[0]
+            stay_subject_id = stay_info['subject_id'].iloc[0]
+    
+    # Query ICU input events for antibiotics
+    if stay_id is not None:
+        sql = f"""
+        SELECT i.stay_id, i.hadm_id, i.subject_id, d.label as antibiotic_name, i.starttime as admin_time
+        FROM mimiciv_icu.inputevents i
+        JOIN mimiciv_icu.d_items d ON i.itemid = d.itemid
+        WHERE i.stay_id = {stay_id}
+          AND d.category = 'Antibiotics'
+        """
+        icu_abx = query_db(sql)
+        if len(icu_abx) > 0:
+            icu_abx['source'] = 'ICU_inputevents'
+            all_admins.append(icu_abx)
+    
+    # Query hospital prescriptions for antibiotics
+    # When stay_id is provided, use the hadm_id from that stay
+    query_hadm_id = stay_hadm_id if stay_id is not None else hadm_id
+    query_subject_id = stay_subject_id if stay_id is not None else subject_id
+    
+    if query_hadm_id is not None or query_subject_id is not None:
+        if query_hadm_id is not None and query_subject_id is not None:
+            sql = f"""
+            SELECT p.subject_id, p.hadm_id, p.drug as antibiotic_name, p.starttime as admin_time
+            FROM mimiciv_hosp.prescriptions p
+            WHERE p.hadm_id = {query_hadm_id}
+              AND p.subject_id = {query_subject_id}
+              AND (p.drug ILIKE '%vancomycin%' OR p.drug ILIKE '%cefepime%' OR p.drug ILIKE '%meropenem%' 
+                   OR p.drug ILIKE '%piperacillin%' OR p.drug ILIKE '%cefazolin%' OR p.drug ILIKE '%ceftriaxone%'
+                   OR p.drug ILIKE '%ampicillin%' OR p.drug ILIKE '%gentamicin%' OR p.drug ILIKE '%levofloxacin%'
+                   OR p.drug ILIKE '%ciprofloxacin%' OR p.drug ILIKE '%metronidazole%' OR p.drug ILIKE '%linezolid%'
+                   OR p.drug ILIKE '%daptomycin%' OR p.drug ILIKE '%cefotaxime%' OR p.drug ILIKE '%ceftazidime%'
+                   OR p.drug ILIKE '%aztreonam%' OR p.drug ILIKE '%imipenem%' OR p.drug ILIKE '%tigecycline%'
+                   OR p.drug ILIKE '%colistin%' OR p.drug ILIKE '%polymyxin%' OR p.drug ILIKE '%teicoplanin%')
+            """
+        elif query_hadm_id is not None:
+            sql = f"""
+            SELECT p.subject_id, p.hadm_id, p.drug as antibiotic_name, p.starttime as admin_time
+            FROM mimiciv_hosp.prescriptions p
+            WHERE p.hadm_id = {query_hadm_id}
+              AND (p.drug ILIKE '%vancomycin%' OR p.drug ILIKE '%cefepime%' OR p.drug ILIKE '%meropenem%' 
+                   OR p.drug ILIKE '%piperacillin%' OR p.drug ILIKE '%cefazolin%' OR p.drug ILIKE '%ceftriaxone%'
+                   OR p.drug ILIKE '%ampicillin%' OR p.drug ILIKE '%gentamicin%' OR p.drug ILIKE '%levofloxacin%'
+                   OR p.drug ILIKE '%ciprofloxacin%' OR p.drug ILIKE '%metronidazole%' OR p.drug ILIKE '%linezolid%'
+                   OR p.drug ILIKE '%daptomycin%' OR p.drug ILIKE '%cefotaxime%' OR p.drug ILIKE '%ceftazidime%'
+                   OR p.drug ILIKE '%aztreonam%' OR p.drug ILIKE '%imipenem%' OR p.drug ILIKE '%tigecycline%'
+                   OR p.drug ILIKE '%colistin%' OR p.drug ILIKE '%polymyxin%' OR p.drug ILIKE '%teicoplanin%')
+            """
+        else:
+            sql = f"""
+            SELECT p.subject_id, p.hadm_id, p.drug as antibiotic_name, p.starttime as admin_time
+            FROM mimiciv_hosp.prescriptions p
+            WHERE p.subject_id = {query_subject_id}
+              AND (p.drug ILIKE '%vancomycin%' OR p.drug ILIKE '%cefepime%' OR p.drug ILIKE '%meropenem%' 
+                   OR p.drug ILIKE '%piperacillin%' OR p.drug ILIKE '%cefazolin%' OR p.drug ILIKE '%ceftriaxone%'
+                   OR p.drug ILIKE '%ampicillin%' OR p.drug ILIKE '%gentamicin%' OR p.drug ILIKE '%levofloxacin%'
+                   OR p.drug ILIKE '%ciprofloxacin%' OR p.drug ILIKE '%metronidazole%' OR p.drug ILIKE '%linezolid%'
+                   OR p.drug ILIKE '%daptomycin%' OR p.drug ILIKE '%cefotaxime%' OR p.drug ILIKE '%ceftazidime%'
+                   OR p.drug ILIKE '%aztreonam%' OR p.drug ILIKE '%imipenem%' OR p.drug ILIKE '%tigecycline%'
+                   OR p.drug ILIKE '%colistin%' OR p.drug ILIKE '%polymyxin%' OR p.drug ILIKE '%teicoplanin%')
+            """
+        hosp_abx = query_db(sql)
+        if len(hosp_abx) > 0:
+            hosp_abx['source'] = 'hospital_prescriptions'
+            all_admins.append(hosp_abx)
+    
+    # Combine all administrations
+    if all_admins:
+        antibiotic_admins = pd.concat(all_admins, ignore_index=True)
+    else:
+        antibiotic_admins = pd.DataFrame(columns=['source', 'stay_id', 'hadm_id', 'subject_id', 'antibiotic_name', 'admin_time'])
+    
+    # Get distinct antibiotics
+    distinct_antibiotics = antibiotic_admins['antibiotic_name'].dropna().unique().tolist() if len(antibiotic_admins) > 0 else []
+    
+    # Get ICU intime if stay_id provided
+    icu_intime = None
+    within_48hrs_icu = False
+    antibiotics_within_48hrs_icu = []
+    
+    if stay_id is not None:
+        stay_info = query_db(f"""
+        SELECT intime FROM mimiciv_icu.icustays WHERE stay_id = {stay_id}
+        """)
+        if len(stay_info) > 0:
+            icu_intime = stay_info['intime'].iloc[0]
+            
+            # Check for antibiotics within 48 hours of ICU admission
+            if len(antibiotic_admins) > 0:
+                antibiotic_admins['admin_time'] = pd.to_datetime(antibiotic_admins['admin_time'])
+                within_48 = antibiotic_admins[
+                    (antibiotic_admins['admin_time'] >= icu_intime) & 
+                    (antibiotic_admins['admin_time'] <= icu_intime + timedelta(hours=48))
+                ]
+                within_48hrs_icu = len(within_48) > 0
+                antibiotics_within_48hrs_icu = within_48['antibiotic_name'].dropna().unique().tolist()
+    
+    result = {
+        'antibiotic_administrations': antibiotic_admins,
+        'received_antibiotics': len(distinct_antibiotics) > 0,
+        'distinct_antibiotics': distinct_antibiotics,
+        'distinct_antibiotic_count': len(distinct_antibiotics),
+        'icu_intime': icu_intime,
+        'within_48hrs_icu': within_48hrs_icu,
+        'antibiotics_within_48hrs_icu': antibiotics_within_48hrs_icu
+    }
+    
+    return result
+```
+
+### get_suspicion_of_infection
+```python
+import pandas as pd
+from datetime import datetime, timedelta
+
+# Screening cultures that should NOT count as suspicion of infection
+# These are surveillance/screening cultures for colonization, not active infection
+SCREENING_CULTURES = [
+    'MRSA SCREEN',
+    'CRE Screen', 
+    'Cipro Resistant Screen',
+    'C, E, & A Screening',
+    'Infection Control Yeast',
+    'Swab R/O Yeast Screen',
+    'MICRO PROBLEM PATIENT',
+    'Isolate',
+    'XXX'
+]
+
+def get_suspicion_of_infection(stay_id=None, hadm_id=None, subject_id=None):
+    """
+    Determine if a patient had suspicion of infection during their ICU stay or hospital admission.
+    
+    Suspicion of infection is identified by:
+    1. Diagnostic culture orders (blood, urine, sputum, wound, etc.) - indicates clinician suspected infection
+       - Excludes screening cultures (MRSA SCREEN, CRE Screen, etc.) which are for colonization surveillance
+    2. Antibiotic administration with treatment pattern (multiple doses or extended duration)
+       - Single-dose antibiotics (like surgical prophylaxis) are excluded
+    
+    This function can answer questions such as:
+    - Does this patient have a suspected infection during this ICU stay?
+    - What types of diagnostic cultures were ordered for this patient?
+    - Did this patient receive antibiotics for treatment (not just prophylaxis)?
+    
+    Parameters
+    ----------
+    stay_id : int, optional
+        ICU stay identifier. If provided, returns ICU-specific infection suspicion data.
+    hadm_id : int, optional
+        Hospital admission identifier. If provided, returns hospital-wide infection suspicion data.
+    subject_id : int, optional
+        Patient identifier. If provided with hadm_id, filters to that admission.
+        If provided alone, returns all infection suspicion data for the patient across all admissions.
+    
+    Returns
+    -------
+    dict
+        A dictionary containing:
+        - 'has_suspicion_of_infection': bool indicating if there was suspicion of infection
+        - 'culture_orders': DataFrame with all diagnostic culture orders during the period
+          (columns: subject_id, hadm_id, stay_id, spec_type_desc, culture_time)
+        - 'antibiotic_info': dict with antibiotic administration data
+        - 'distinct_culture_types': list of unique diagnostic culture types ordered
+        - 'culture_count': int count of diagnostic culture orders
+        - 'has_treatment_pattern': bool indicating if antibiotics suggest treatment (not prophylaxis)
+        - 'icu_intime': datetime of ICU admission (if stay_id provided)
+        - 'icu_outtime': datetime of ICU discharge (if stay_id provided)
+    
+    Notes
+    -----
+    - At least one identifier (stay_id, hadm_id, or subject_id) must be provided.
+    - Screening cultures (MRSA SCREEN, CRE Screen, etc.) are excluded as they indicate
+      colonization surveillance, not active infection suspicion.
+    - Antibiotic prophylaxis (single dose) is excluded from suspicion determination.
+    """
+    
+    # Build the NOT IN clause for screening cultures
+    not_in_clause = "', '".join(SCREENING_CULTURES)
+    
+    # Build the query based on provided identifiers
+    if stay_id is not None:
+        # Query for diagnostic cultures during ICU stay (excluding screening)
+        sql = f"""
+        SELECT m.subject_id, m.hadm_id, i.stay_id, 
+               m.spec_type_desc,
+               CAST(m.chartdate AS DATE) + CAST(m.charttime AS TIME) as culture_time,
+               i.intime as icu_intime,
+               i.outtime as icu_outtime
+        FROM mimiciv_hosp.microbiologyevents m
+        JOIN mimiciv_icu.icustays i ON m.subject_id = i.subject_id AND m.hadm_id = i.hadm_id
+        WHERE i.stay_id = {stay_id}
+          AND m.hadm_id IS NOT NULL
+          AND (CAST(m.chartdate AS DATE) + CAST(m.charttime AS TIME)) >= i.intime
+          AND (CAST(m.chartdate AS DATE) + CAST(m.charttime AS TIME)) <= i.outtime
+          AND m.spec_type_desc NOT IN ('{not_in_clause}')
+        ORDER BY culture_time
+        """
+        culture_df = query_db(sql)
+        
+        # Get ICU stay times
+        stay_info = query_db(f"""
+        SELECT intime, outtime FROM mimiciv_icu.icustays WHERE stay_id = {stay_id}
+        """)
+        icu_intime = stay_info['intime'].iloc[0] if len(stay_info) > 0 else None
+        icu_outtime = stay_info['outtime'].iloc[0] if len(stay_info) > 0 else None
+        
+        # Get antibiotic info for this stay
+        antibiotic_info = get_antibiotic_info(stay_id=stay_id)
+        
+    elif hadm_id is not None:
+        # Query for diagnostic cultures during hospital admission (excluding screening)
+        if subject_id is not None:
+            sql = f"""
+            SELECT m.subject_id, m.hadm_id, 
+                   m.spec_type_desc,
+                   CAST(m.chartdate AS DATE) + CAST(m.charttime AS TIME) as culture_time
+            FROM mimiciv_hosp.microbiologyevents m
+            WHERE m.hadm_id = {hadm_id}
+              AND m.subject_id = {subject_id}
+              AND m.hadm_id IS NOT NULL
+              AND m.spec_type_desc NOT IN ('{not_in_clause}')
+            ORDER BY culture_time
+            """
+        else:
+            sql = f"""
+            SELECT m.subject_id, m.hadm_id, 
+                   m.spec_type_desc,
+                   CAST(m.chartdate AS DATE) + CAST(m.charttime AS TIME) as culture_time
+            FROM mimiciv_hosp.microbiologyevents m
+            WHERE m.hadm_id = {hadm_id}
+              AND m.hadm_id IS NOT NULL
+              AND m.spec_type_desc NOT IN ('{not_in_clause}')
+            ORDER BY culture_time
+            """
+        culture_df = query_db(sql)
+        
+        icu_intime = None
+        icu_outtime = None
+        
+        # Get antibiotic info for this admission
+        antibiotic_info = get_antibiotic_info(hadm_id=hadm_id, subject_id=subject_id)
+        
+    elif subject_id is not None:
+        # Query for all diagnostic cultures for this patient across all admissions (excluding screening)
+        sql = f"""
+        SELECT m.subject_id, m.hadm_id, 
+               m.spec_type_desc,
+               CAST(m.chartdate AS DATE) + CAST(m.charttime AS TIME) as culture_time
+        FROM mimiciv_hosp.microbiologyevents m
+        WHERE m.subject_id = {subject_id}
+          AND m.hadm_id IS NOT NULL
+          AND m.spec_type_desc NOT IN ('{not_in_clause}')
+        ORDER BY culture_time
+        """
+        culture_df = query_db(sql)
+        
+        icu_intime = None
+        icu_outtime = None
+        
+        # Get antibiotic info for this patient
+        antibiotic_info = get_antibiotic_info(subject_id=subject_id)
+    else:
+        raise ValueError("At least one identifier (stay_id, hadm_id, or subject_id) must be provided.")
+    
+    # Determine if there was suspicion of infection
+    has_cultures = len(culture_df) > 0
+    
+    # For antibiotics, check if there's a treatment pattern (multiple doses or extended duration)
+    has_antibiotics = antibiotic_info.get('received_antibiotics', False)
+    antibiotic_admins = antibiotic_info.get('antibiotic_administrations', pd.DataFrame())
+    
+    # Check for treatment pattern: multiple doses of the same antibiotic
+    has_treatment_pattern = False
+    if len(antibiotic_admins) > 0:
+        # Count doses per antibiotic
+        dose_counts = antibiotic_admins.groupby('antibiotic_name').size()
+        # If any antibiotic has >= 2 doses, consider it treatment
+        if dose_counts.max() >= 2:
+            has_treatment_pattern = True
+        # Or if there are multiple distinct antibiotics
+        if len(dose_counts) >= 2:
+            has_treatment_pattern = True
+    
+    has_suspicion = has_cultures or has_treatment_pattern
+    
+    # Get distinct culture types
+    distinct_culture_types = culture_df['spec_type_desc'].dropna().unique().tolist() if len(culture_df) > 0 else []
+    
+    # Build result
+    result = {
+        'has_suspicion_of_infection': has_suspicion,
+        'culture_orders': culture_df,
+        'antibiotic_info': antibiotic_info,
+        'distinct_culture_types': distinct_culture_types,
+        'culture_count': len(culture_df),
+        'has_treatment_pattern': has_treatment_pattern,
+        'icu_intime': icu_intime,
+        'icu_outtime': icu_outtime
+    }
+    
+    return result
+```
+
+## Test Results
+
+### Positive Cases (All Pass)
+| stay_id | Culture Count | Antibiotics | Treatment Pattern | Has Suspicion |
+|---------|---------------|-------------|-------------------|---------------|
+| 36032605 | 504 | Multiple (Vancomycin, Cefepime, etc.) | True | True |
+| 38134134 | 2 (URINE, BLOOD CULTURE) | None | False | True |
+| 32776114 | 0 | Vancomycin (4 doses) | True | True |
+| 29850931 (hadm_id) | 511 | Multiple | True | True |
+| 16175244 (subject_id) | 511 | Multiple | True | True |
+
+### Negative Cases (All Pass)
+| stay_id | Culture Count | Antibiotics | Treatment Pattern | Has Suspicion |
+|---------|---------------|-------------|-------------------|---------------|
+| 37509585 | 0 | None | False | False |
+| 39553978 | 0 (MRSA SCREEN excluded) | None | False | False |
+| 35827482 | 0 | Cefazolin (1 dose) | False | False |
+
+### Borderline Cases
+| stay_id | Culture Count | Antibiotics | Treatment Pattern | Has Suspicion | Notes |
+|---------|---------------|-------------|-------------------|---------------|-------|
+| 32781895 | 0 | Cefazolin (2 doses) | True | True | 2 doses = treatment pattern |
+| 33417167 | 0 | Cefazolin + Vancomycin | True | True | Multiple antibiotics |
+| 32126026 | 2 | Multiple antibiotics | True | True | |
+| 31580610 | 1 | Multiple antibiotics | True | True | |
+| 34606843 | 0 | Cefazolin + Vancomycin | True | True | Multiple antibiotics |
+
+### False Positive Cases (Need Investigation)
+| stay_id | Culture Count | Antibiotics | Treatment Pattern | Actual | Notes |
+|---------|---------------|-------------|-------------------|--------|-------|
+| 32781895 | 0 | Cefazolin (2 doses) | True | NO | Cefazolin = surgical prophylaxis |
+| 32776114 | 0 | Vancomycin (4 doses) | True | NO | Cardiac surgery patient, no cultures |
+| 38134134 | 2 (URINE, BLOOD CULTURE) | None | False | NO | Cultures without organisms |
+| 34970946 | 0 | Ceftriaxone + Vancomycin | True | NO | Antibiotics BEFORE ICU admission |
+
+## Error Fixes
+
+### Step 7 - SQL String Formatting Error
+- **Error**: `SyntaxError: f-string: unmatched ')'`
+- **Fix**: Changed `f"'{ "', "'.join(screening_cultures) }'"` to build `not_in_clause` separately first
+
+### Step 12 - julianday Function Error
+- **Error**: `Catalog Error: Scalar Function with name julianday does not exist!`
+- **Fix**: DuckDB doesn't have julianday; use `(p.stoptime - p.starttime)` directly for duration
+
+### Step 14 - Culture Data Location
+- **Finding**: Culture orders not in chartevents table
+- **Resolution**: Use microbiologyevents table instead for culture data
+
+### Step 6 - Antibiotic Query for stay_id
+- **Error**: When `stay_id` provided, function only queried ICU inputevents, missing hospital prescriptions
+- **Fix**: Updated `get_antibiotic_info` to also query hospital prescriptions using the hadm_id from the stay when `stay_id` is provided
+
+### Step 8-9 - Column Name Errors
+- **Error**: `Binder Error: Ambiguous reference to column name "icd_code"` and `Table "dd" does not have a column named "short_title"`
+- **Fix**: Use table aliases (d.icd_code, dd.long_title) and correct column name (long_title instead of short_title)
+
+## Clinical Guideline Facts (Sepsis)
+
+### Adult Sepsis (Sepsis-3, 2016)
+- Definition: Life-threatening organ dysfunction caused by dysregulated host response to infection
+- Primary criterion: Suspected or documented infection AND acute increase in SOFA score ≥ 2 points
+- qSOFA screening (non-ICU): Respiratory rate ≥ 22, altered mentation, SBP ≤ 100 mm Hg
+
+### Pediatric Sepsis (Phoenix Criteria, 2024)
+- Definition: Infection with potentially life-threatening organ dysfunction in children < 18 years
+- Criterion: Suspected infection AND Phoenix Sepsis Score ≥ 2 points
+
+### Septic Shock (Adult)
+- Vasopressor therapy required to maintain MAP ≥ 65 mm Hg
+- Serum lactate > 2 mmol/L (> 18 mg/dL) after adequate fluid resuscitation
+
+### MRSA Screening vs. Infection
+- **MRSA SCREEN**: Surveillance culture for colonization, NOT active infection
+- **MRSA Infection**: Isolation from sterile site OR clinical signs/symptoms at non-sterile site
+- Screening cultures should be excluded from infection suspicion determination
+
+### Antibiotic Prophylaxis vs. Treatment (NEW)
+- **Cefazolin**: Typically surgical prophylaxis (single dose or limited doses)
+- **Treatment antibiotics**: Multiple doses over extended period (Vancomycin, Cefepime, Meropenem, etc.)
+- Antibiotics administered BEFORE ICU admission may not indicate ICU-specific infection suspicion
+- Cultures without organisms may not indicate active infection suspicion
+
+## Key Findings from Investigation (NEW)
+
+### False Positive Patterns Identified
+1. **Cefazolin prophylaxis**: 2 doses of Cefazolin (stay 32781895) - typically surgical prophylaxis, not treatment
+2. **Cardiac surgery patients**: Vancomycin for cardiac surgery prophylaxis (stay 32776114) - no cultures, cardiac procedures
+3. **Cultures without organisms**: URINE and BLOOD CULTURE with no organisms detected (stay 38134134)
+4. **Antibiotics before ICU**: Antibiotics administered before ICU admission (stay 34970946) - may not indicate ICU infection
+
+### True Positive Patterns
+1. **Multiple cultures with organisms**: 511 cultures, 305 with organisms (stay 36032605)
+2. **Multiple antibiotic types**: Vancomycin + Levofloxacin + Ampicillin (stay 32126026)
+3. **Culture types indicating infection**: BLOOD CULTURE, SPUTUM, Mini-BAL, BRONCHOALVEOLAR LAVAGE
+
+=== Step 5 ===
+# Clinical Coding Agent - Rolling Memory
+
+## Schema Facts
+
+### Tables
+| Schema | Table | Key Columns |
+|--------|-------|-------------|
+| mimiciv_hosp | microbiologyevents | microevent_id, subject_id, hadm_id, spec_type_desc, chartdate, charttime, test_name, org_name, interpretation |
+| mimiciv_hosp | prescriptions | subject_id, hadm_id, pharmacy_id, drug, starttime, stoptime |
+| mimiciv_hosp | pharmacy | subject_id, hadm_id, pharmacy_id, medication, starttime, stoptime |
+| mimiciv_hosp | admissions | subject_id, hadm_id, admittime, dischtime, deathtime, admission_type, admit_provider_id, admission_location, discharge_location, insurance, language, marital_status, race, edregtime, edouttime, hospital_expire_flag |
+| mimiciv_hosp | procedures_icd | subject_id, hadm_id, seq_num, chartdate, icd_code, icd_version |
+| mimiciv_hosp | diagnoses_icd | subject_id, hadm_id, seq_num, icd_code |
+| mimiciv_hosp | d_icd_diagnoses | icd_code, long_title |
+| mimiciv_hosp | d_icd_procedures | icd_code, long_title |
+| mimiciv_icu | icustays | stay_id, subject_id, hadm_id, intime, outtime, first_careunit, last_careunit |
+| mimiciv_icu | d_items | itemid, label, category, unitname, param_type |
+| mimiciv_icu | chartevents | subject_id, hadm_id, stay_id, itemid, charttime, value, valuenum |
+| mimiciv_icu | inputevents | subject_id, hadm_id, stay_id, itemid, starttime, endtime, amount |
+
+### Culture Types (spec_type_desc values)
+- **Diagnostic**: BLOOD CULTURE, URINE, SPUTUM, STOOL, WOUND, CSF Culture, BAL Fluid Culture, Pleural Fluid Culture, Nasal Swab, Rectal Swab, BRONCHOALVEOLAR LAVAGE, JOINT FLUID, Mini-BAL, PERITONEAL FLUID, ASPIRATE, SWAB, FLUID, OTHER, SEROLOGY/BLOOD
+- **Screening (excluded from infection suspicion)**: MRSA SCREEN, CRE Screen, Cipro Resistant Screen, C, E, & A Screening, Infection Control Yeast, Swab R/O Yeast Screen, MICRO PROBLEM PATIENT, Isolate, XXX
+
+### Antibiotic Identification
+- ICU: inputevents table with d_items.category = 'Antibiotics'
+- Hospital: prescriptions table with drug name pattern matching (vancomycin, cefepime, meropenem, piperacillin, cefazolin, ceftriaxone, ampicillin, gentamicin, levofloxacin, ciprofloxacin, metronidazole, linezolid, daptomycin, cefotaxime, ceftazidime, aztreonam, imipenem, tigecycline, colistin, polymyxin, teicoplanin)
+
+### Antibiotic Classification
+- **Prophylaxis antibiotics** (typically single dose, surgical prophylaxis): Cefazolin, Cefazolin Sodium
+- **Treatment antibiotics** (multiple doses, therapeutic): Vancomycin, Cefepime, Meropenem, Piperacillin, Ceftriaxone, etc.
+
+### Cardiac Surgery ICD Codes
+- Coronary artery bypass: 3610, 3613, 3614, 3615, 3616, 3617
+- Extracorporeal circulation: 3961-3969
+- Heart valve procedures: 3510-3598
+
+### Culture Interpretation Codes
+- P = Positive, N = Negative, R = Resistant, I = Intermediate, S = Susceptible, Z = Sensitive, D = Duplicate
+
+## Functions
+
+### get_antibiotic_info
+```python
+def get_antibiotic_info(stay_id=None, hadm_id=None, subject_id=None):
+    """
+    Extract antibiotic administration information for a patient.
+    
+    This function queries both ICU input events and hospital prescriptions/pharmacy
+    records to identify antibiotic administrations.
+    
+    Parameters
+    ----------
+    stay_id : int, optional
+        ICU stay identifier. If provided, returns ICU-specific antibiotic data.
+    hadm_id : int, optional
+        Hospital admission identifier. If provided, returns hospital-wide antibiotic data.
+    subject_id : int, optional
+        Patient identifier. If provided with hadm_id, filters to that admission.
+        If provided alone, returns all antibiotic data for the patient across all admissions.
+    
+    Returns
+    -------
+    dict
+        A dictionary containing:
+        - 'antibiotic_administrations': DataFrame with all antibiotic administrations
+        - 'received_antibiotics': bool indicating if any antibiotics were received
+        - 'distinct_antibiotics': list of unique antibiotic names received
+        - 'distinct_antibiotic_count': int count of unique antibiotics
+        - 'icu_intime': datetime of ICU admission (if stay_id provided)
+        - 'within_48hrs_icu': bool indicating if antibiotics received within 48h of ICU admission
+        - 'antibiotics_within_48hrs_icu': list of antibiotics received within 48h of ICU admission
+    """
+    if stay_id is None and hadm_id is None and subject_id is None:
+        raise ValueError("At least one identifier (stay_id, hadm_id, or subject_id) must be provided.")
+    
+    all_admins = []
+    
+    # Get hadm_id and subject_id from stay_id if needed
+    stay_hadm_id = None
+    stay_subject_id = None
+    if stay_id is not None:
+        stay_info = query_db(f"""
+        SELECT hadm_id, subject_id FROM mimiciv_icu.icustays WHERE stay_id = {stay_id}
+        """)
+        if len(stay_info) > 0:
+            stay_hadm_id = stay_info['hadm_id'].iloc[0]
+            stay_subject_id = stay_info['subject_id'].iloc[0]
+    
+    # Query ICU input events for antibiotics
+    if stay_id is not None:
+        sql = f"""
+        SELECT i.stay_id, i.hadm_id, i.subject_id, d.label as antibiotic_name, i.starttime as admin_time
+        FROM mimiciv_icu.inputevents i
+        JOIN mimiciv_icu.d_items d ON i.itemid = d.itemid
+        WHERE i.stay_id = {stay_id}
+          AND d.category = 'Antibiotics'
+        """
+        icu_abx = query_db(sql)
+        if len(icu_abx) > 0:
+            icu_abx['source'] = 'ICU_inputevents'
+            all_admins.append(icu_abx)
+    
+    # Query hospital prescriptions for antibiotics
+    query_hadm_id = stay_hadm_id if stay_id is not None else hadm_id
+    query_subject_id = stay_subject_id if stay_id is not None else subject_id
+    
+    if query_hadm_id is not None or query_subject_id is not None:
+        if query_hadm_id is not None and query_subject_id is not None:
+            sql = f"""
+            SELECT p.subject_id, p.hadm_id, p.drug as antibiotic_name, p.starttime as admin_time
+            FROM mimiciv_hosp.prescriptions p
+            WHERE p.hadm_id = {query_hadm_id}
+              AND p.subject_id = {query_subject_id}
+              AND (p.drug ILIKE '%vancomycin%' OR p.drug ILIKE '%cefepime%' OR p.drug ILIKE '%meropenem%' 
+                   OR p.drug ILIKE '%piperacillin%' OR p.drug ILIKE '%cefazolin%' OR p.drug ILIKE '%ceftriaxone%'
+                   OR p.drug ILIKE '%ampicillin%' OR p.drug ILIKE '%gentamicin%' OR p.drug ILIKE '%levofloxacin%'
+                   OR p.drug ILIKE '%ciprofloxacin%' OR p.drug ILIKE '%metronidazole%' OR p.drug ILIKE '%linezolid%'
+                   OR p.drug ILIKE '%daptomycin%' OR p.drug ILIKE '%cefotaxime%' OR p.drug ILIKE '%ceftazidime%'
+                   OR p.drug ILIKE '%aztreonam%' OR p.drug ILIKE '%imipenem%' OR p.drug ILIKE '%tigecycline%'
+                   OR p.drug ILIKE '%colistin%' OR p.drug ILIKE '%polymyxin%' OR p.drug ILIKE '%teicoplanin%')
+            """
+        elif query_hadm_id is not None:
+            sql = f"""
+            SELECT p.subject_id, p.hadm_id, p.drug as antibiotic_name, p.starttime as admin_time
+            FROM mimiciv_hosp.prescriptions p
+            WHERE p.hadm_id = {query_hadm_id}
+              AND (p.drug ILIKE '%vancomycin%' OR p.drug ILIKE '%cefepime%' OR p.drug ILIKE '%meropenem%' 
+                   OR p.drug ILIKE '%piperacillin%' OR p.drug ILIKE '%cefazolin%' OR p.drug ILIKE '%ceftriaxone%'
+                   OR p.drug ILIKE '%ampicillin%' OR p.drug ILIKE '%gentamicin%' OR p.drug ILIKE '%levofloxacin%'
+                   OR p.drug ILIKE '%ciprofloxacin%' OR p.drug ILIKE '%metronidazole%' OR p.drug ILIKE '%linezolid%'
+                   OR p.drug ILIKE '%daptomycin%' OR p.drug ILIKE '%cefotaxime%' OR p.drug ILIKE '%ceftazidime%'
+                   OR p.drug ILIKE '%aztreonam%' OR p.drug ILIKE '%imipenem%' OR p.drug ILIKE '%tigecycline%'
+                   OR p.drug ILIKE '%colistin%' OR p.drug ILIKE '%polymyxin%' OR p.drug ILIKE '%teicoplanin%')
+            """
+        else:
+            sql = f"""
+            SELECT p.subject_id, p.hadm_id, p.drug as antibiotic_name, p.starttime as admin_time
+            FROM mimiciv_hosp.prescriptions p
+            WHERE p.subject_id = {query_subject_id}
+              AND (p.drug ILIKE '%vancomycin%' OR p.drug ILIKE '%cefepime%' OR p.drug ILIKE '%meropenem%' 
+                   OR p.drug ILIKE '%piperacillin%' OR p.drug ILIKE '%cefazolin%' OR p.drug ILIKE '%ceftriaxone%'
+                   OR p.drug ILIKE '%ampicillin%' OR p.drug ILIKE '%gentamicin%' OR p.drug ILIKE '%levofloxacin%'
+                   OR p.drug ILIKE '%ciprofloxacin%' OR p.drug ILIKE '%metronidazole%' OR p.drug ILIKE '%linezolid%'
+                   OR p.drug ILIKE '%daptomycin%' OR p.drug ILIKE '%cefotaxime%' OR p.drug ILIKE '%ceftazidime%'
+                   OR p.drug ILIKE '%aztreonam%' OR p.drug ILIKE '%imipenem%' OR p.drug ILIKE '%tigecycline%'
+                   OR p.drug ILIKE '%colistin%' OR p.drug ILIKE '%polymyxin%' OR p.drug ILIKE '%teicoplanin%')
+            """
+        hosp_abx = query_db(sql)
+        if len(hosp_abx) > 0:
+            hosp_abx['source'] = 'hospital_prescriptions'
+            all_admins.append(hosp_abx)
+    
+    # Combine all administrations
+    if all_admins:
+        antibiotic_admins = pd.concat(all_admins, ignore_index=True)
+    else:
+        antibiotic_admins = pd.DataFrame(columns=['source', 'stay_id', 'hadm_id', 'subject_id', 'antibiotic_name', 'admin_time'])
+    
+    # Get distinct antibiotics
+    distinct_antibiotics = antibiotic_admins['antibiotic_name'].dropna().unique().tolist() if len(antibiotic_admins) > 0 else []
+    
+    # Get ICU intime if stay_id provided
+    icu_intime = None
+    within_48hrs_icu = False
+    antibiotics_within_48hrs_icu = []
+    
+    if stay_id is not None:
+        stay_info = query_db(f"""
+        SELECT intime FROM mimiciv_icu.icustays WHERE stay_id = {stay_id}
+        """)
+        if len(stay_info) > 0:
+            icu_intime = stay_info['intime'].iloc[0]
+            
+            # Check for antibiotics within 48 hours of ICU admission
+            if len(antibiotic_admins) > 0:
+                antibiotic_admins['admin_time'] = pd.to_datetime(antibiotic_admins['admin_time'])
+                within_48 = antibiotic_admins[
+                    (antibiotic_admins['admin_time'] >= icu_intime) & 
+                    (antibiotic_admins['admin_time'] <= icu_intime + timedelta(hours=48))
+                ]
+                within_48hrs_icu = len(within_48) > 0
+                antibiotics_within_48hrs_icu = within_48['antibiotic_name'].dropna().unique().tolist()
+    
+    result = {
+        'antibiotic_administrations': antibiotic_admins,
+        'received_antibiotics': len(distinct_antibiotics) > 0,
+        'distinct_antibiotics': distinct_antibiotics,
+        'distinct_antibiotic_count': len(distinct_antibiotics),
+        'icu_intime': icu_intime,
+        'within_48hrs_icu': within_48hrs_icu,
+        'antibiotics_within_48hrs_icu': antibiotics_within_48hrs_icu
+    }
+    
+    return result
+```
+
+### has_cardiac_surgery
+```python
+def has_cardiac_surgery(hadm_id):
+    """Check if patient had cardiac surgery during admission."""
+    cardiac_codes_str = "', '".join(CARDIAC_SURGERY_ICD_CODES)
+    result = query_db(f"""
+    SELECT COUNT(*) as cnt
+    FROM mimiciv_hosp.procedures_icd p
+    WHERE p.hadm_id = {hadm_id}
+      AND p.icd_code IN ('{cardiac_codes_str}')
+    """)
+    return result['cnt'].iloc[0] > 0 if len(result) > 0 else False
+```
+
+### get_suspicion_of_infection
+```python
+import pandas as pd
+from datetime import datetime, timedelta
+
+# Screening cultures that should NOT count as suspicion of infection
+SCREENING_CULTURES = [
+    'MRSA SCREEN',
+    'CRE Screen', 
+    'Cipro Resistant Screen',
+    'C, E, & A Screening',
+    'Infection Control Yeast',
+    'Swab R/O Yeast Screen',
+    'MICRO PROBLEM PATIENT',
+    'Isolate',
+    'XXX'
+]
+
+# Prophylaxis antibiotics (typically single dose, surgical prophylaxis)
+PROPHYLAXIS_ANTIBIOTICS = ['cefazolin', 'cefazolin sodium']
+
+# Cardiac surgery ICD procedure codes (Vancomycin often used for prophylaxis)
+CARDIAC_SURGERY_ICD_CODES = [
+    '3610', '3613', '3614', '3615', '3616', '3617',  # Coronary artery bypass
+    '3961', '3962', '3963', '3964', '3965', '3966', '3967', '3968', '3969',  # Extracorporeal circulation
+    '3510', '3511', '3512', '3513', '3514', '3515', '3516', '3517', '3518',  # Heart valve procedures
+    '3520', '3521', '3522', '3523', '3524', '3525', '3526', '3527', '3528',  # Heart valve procedures
+    '3530', '3531', '3532', '3533', '3534', '3535', '3536', '3537', '3538',  # Heart valve procedures
+    '3540', '3541', '3542', '3543', '3544', '3545', '3546', '3547', '3548',  # Heart valve procedures
+    '3550', '3551', '3552', '3553', '3554', '3555', '3556', '3557', '3558',  # Heart valve procedures
+    '3560', '3561', '3562', '3563', '3564', '3565', '3566', '3567', '3568',  # Heart valve procedures
+    '3570', '3571', '3572', '3573', '3574', '3575', '3576', '3577', '3578',  # Heart valve procedures
+    '3580', '3581', '3582', '3583', '3584', '3585', '3586', '3587', '3588',  # Heart valve procedures
+    '3590', '3591', '3592', '3593', '3594', '3595', '3596', '3597', '3598',  # Heart valve procedures
+]
+
+def get_suspicion_of_infection(stay_id=None, hadm_id=None, subject_id=None):
+    """
+    Determine if a patient had suspicion of infection during their ICU stay or hospital admission.
+    
+    Suspicion of infection is identified by:
+    1. Diagnostic culture orders (blood, urine, sputum, wound, etc.) - indicates clinician suspected infection
+       - Excludes screening cultures (MRSA SCREEN, CRE Screen, etc.)
+    2. Antibiotic administration with treatment pattern (multiple doses or extended duration)
+       - Excludes prophylaxis antibiotics (Cefazolin)
+       - Excludes antibiotics administered before ICU admission
+       - Excludes cardiac surgery prophylaxis (Vancomycin in cardiac surgery patients without cultures)
+    
+    Parameters
+    ----------
+    stay_id : int, optional
+        ICU stay identifier.
+    hadm_id : int, optional
+        Hospital admission identifier.
+    subject_id : int, optional
+        Patient identifier.
+    
+    Returns
+    -------
+    dict
+        Dictionary with suspicion of infection information.
+    """
+    
+    # Build the NOT IN clause for screening cultures
+    not_in_clause = "', '".join(SCREENING_CULTURES)
+    
+    # Build the query based on provided identifiers
+    if stay_id is not None:
+        # Query for diagnostic cultures during ICU stay (excluding screening)
+        sql = f"""
+        SELECT m.subject_id, m.hadm_id, i.stay_id, 
+               m.spec_type_desc,
+               CAST(m.chartdate AS DATE) + CAST(m.charttime AS TIME) as culture_time,
+               i.intime as icu_intime,
+               i.outtime as icu_outtime
+        FROM mimiciv_hosp.microbiologyevents m
+        JOIN mimiciv_icu.icustays i ON m.subject_id = i.subject_id AND m.hadm_id = i.hadm_id
+        WHERE i.stay_id = {stay_id}
+          AND m.hadm_id IS NOT NULL
+          AND (CAST(m.chartdate AS DATE) + CAST(m.charttime AS TIME)) >= i.intime
+          AND (CAST(m.chartdate AS DATE) + CAST(m.charttime AS TIME)) <= i.outtime
+          AND m.spec_type_desc NOT IN ('{not_in_clause}')
+        ORDER BY culture_time
+        """
+        culture_df = query_db(sql)
+        
+        # Get ICU stay times
+        stay_info = query_db(f"""
+        SELECT intime, outtime, hadm_id FROM mimiciv_icu.icustays WHERE stay_id = {stay_id}
+        """)
+        icu_intime = stay_info['intime'].iloc[0] if len(stay_info) > 0 else None
+        icu_outtime = stay_info['outtime'].iloc[0] if len(stay_info) > 0 else None
+        stay_hadm_id = stay_info['hadm_id'].iloc[0] if len(stay_info) > 0 else None
+        
+        # Get antibiotic info for this stay
+        antibiotic_info = get_antibiotic_info(stay_id=stay_id)
+        
+    elif hadm_id is not None:
+        # Query for diagnostic cultures during hospital admission (excluding screening)
+        if subject_id is not None:
+            sql = f"""
+            SELECT m.subject_id, m.hadm_id, 
+                   m.spec_type_desc,
+                   CAST(m.chartdate AS DATE) + CAST(m.charttime AS TIME) as culture_time
+            FROM mimiciv_hosp.microbiologyevents m
+            WHERE m.hadm_id = {hadm_id}
+              AND m.subject_id = {subject_id}
+              AND m.hadm_id IS NOT NULL
+              AND m.spec_type_desc NOT IN ('{not_in_clause}')
+            ORDER BY culture_time
+            """
+        else:
+            sql = f"""
+            SELECT m.subject_id, m.hadm_id, 
+                   m.spec_type_desc,
+                   CAST(m.chartdate AS DATE) + CAST(m.charttime AS TIME) as culture_time
+            FROM mimiciv_hosp.microbiologyevents m
+            WHERE m.hadm_id = {hadm_id}
+              AND m.hadm_id IS NOT NULL
+              AND m.spec_type_desc NOT IN ('{not_in_clause}')
+            ORDER BY culture_time
+            """
+        culture_df = query_db(sql)
+        
+        icu_intime = None
+        icu_outtime = None
+        stay_hadm_id = hadm_id
+        
+        # Get antibiotic info for this admission
+        antibiotic_info = get_antibiotic_info(hadm_id=hadm_id, subject_id=subject_id)
+        
+    elif subject_id is not None:
+        # Query for all diagnostic cultures for this patient across all admissions (excluding screening)
+        sql = f"""
+        SELECT m.subject_id, m.hadm_id, 
+               m.spec_type_desc,
+               CAST(m.chartdate AS DATE) + CAST(m.charttime AS TIME) as culture_time
+        FROM mimiciv_hosp.microbiologyevents m
+        WHERE m.subject_id = {subject_id}
+          AND m.hadm_id IS NOT NULL
+          AND m.spec_type_desc NOT IN ('{not_in_clause}')
+        ORDER BY culture_time
+        """
+        culture_df = query_db(sql)
+        
+        icu_intime = None
+        icu_outtime = None
+        stay_hadm_id = None
+        
+        # Get antibiotic info for this patient
+        antibiotic_info = get_antibiotic_info(subject_id=subject_id)
+    else:
+        raise ValueError("At least one identifier must be provided.")
+    
+    # Determine if there was suspicion of infection
+    has_cultures = len(culture_df) > 0
+    
+    # For antibiotics, check if there's a treatment pattern
+    has_antibiotics = antibiotic_info.get('received_antibiotics', False)
+    antibiotic_admins = antibiotic_info.get('antibiotic_administrations', pd.DataFrame())
+    
+    # Check for treatment pattern: multiple doses of the same antibiotic (excluding prophylaxis)
+    has_treatment_pattern = False
+    if len(antibiotic_admins) > 0:
+        # Filter out prophylaxis antibiotics (Cefazolin)
+        non_prophylaxis_abx = antibiotic_admins[
+            ~antibiotic_admins['antibiotic_name'].str.lower().isin(PROPHYLAXIS_ANTIBIOTICS)
+        ].copy()
+        
+        if len(non_prophylaxis_abx) > 0:
+            # For ICU stays, only count antibiotics administered during or after ICU admission
+            if stay_id is not None and icu_intime is not None:
+                non_prophylaxis_abx['admin_time'] = pd.to_datetime(non_prophylaxis_abx['admin_time'])
+                non_prophylaxis_abx = non_prophylaxis_abx[
+                    non_prophylaxis_abx['admin_time'] >= icu_intime
+                ]
+            
+            if len(non_prophylaxis_abx) > 0:
+                # Count doses per antibiotic
+                dose_counts = non_prophylaxis_abx.groupby('antibiotic_name').size()
+                
+                # If any antibiotic has >= 2 doses, consider it treatment
+                if dose_counts.max() >= 2:
+                    has_treatment_pattern = True
+                # Or if there are multiple distinct antibiotics
+                elif len(dose_counts) >= 2:
+                    has_treatment_pattern = True
+                
+                # Special case: Vancomycin in cardiac surgery patients without cultures
+                # If only Vancomycin and no cultures, and patient had cardiac surgery, exclude
+                if has_treatment_pattern and not has_cultures:
+                    if len(non_prophylaxis_abx) > 0:
+                        abx_names = non_prophylaxis_abx['antibiotic_name'].str.lower().unique()
+                        if 'vancomycin' in abx_names and len(abx_names) == 1:
+                            # Check if cardiac surgery
+                            if stay_hadm_id is not None and has_cardiac_surgery(stay_hadm_id):
+                                has_treatment_pattern = False
+    
+    has_suspicion = has_cultures or has_treatment_pattern
+    
+    # Get distinct culture types
+    distinct_culture_types = culture_df['spec_type_desc'].dropna().unique().tolist() if len(culture_df) > 0 else []
+    
+    # Build result
+    result = {
+        'has_suspicion_of_infection': has_suspicion,
+        'culture_orders': culture_df,
+        'antibiotic_info': antibiotic_info,
+        'distinct_culture_types': distinct_culture_types,
+        'culture_count': len(culture_df),
+        'has_treatment_pattern': has_treatment_pattern,
+        'icu_intime': icu_intime,
+        'icu_outtime': icu_outtime
+    }
+    
+    return result
+```
+
+## Test Results
+
+### Positive Cases (All Pass)
+| stay_id | Culture Count | Antibiotics | Treatment Pattern | Has Suspicion |
+|---------|---------------|-------------|-------------------|---------------|
+| 36032605 | 504 | Multiple (Vancomycin, Cefepime, etc.) | True | True |
+| 38134134 | 2 (URINE, BLOOD CULTURE) | None | False | True |
+| 32776114 | 0 | Vancomycin (4 doses) | False | False |
+| 29850931 (hadm_id) | 511 | Multiple | True | True |
+| 16175244 (subject_id) | 511 | Multiple | True | True |
+| 32126026 | 2 | Multiple antibiotics | True | True |
+
+### Negative Cases (All Pass)
+| stay_id | Culture Count | Antibiotics | Treatment Pattern | Has Suspicion |
+|---------|---------------|-------------|-------------------|---------------|
+| 37509585 | 0 | None | False | False |
+| 39553978 | 0 (MRSA SCREEN excluded) | None | False | False |
+| 35827482 | 0 | Cefazolin (1 dose) | False | False |
+| 32781895 | 0 | Cefazolin (2 doses) | False | False |
+| 32776114 | 0 | Vancomycin (4 doses, cardiac surgery) | False | False |
+| 34970946 | 0 | Ceftriaxone + Vancomycin (before ICU) | False | False |
+
+### Key Findings
+1. **Cefazolin prophylaxis**: 2 doses of Cefazolin correctly excluded (surgical prophylaxis)
+2. **Cardiac surgery patients**: Vancomycin for cardiac surgery prophylaxis correctly excluded (no cultures, cardiac procedures)
+3. **Cultures without organisms**: URINE and BLOOD CULTURE with no organisms still indicate suspicion (clinician ordered them)
+4. **Antibiotics before ICU**: Antibiotics administered before ICU admission correctly excluded for ICU-specific suspicion
+
+## Error Fixes
+
+### Step 7 - SQL String Formatting Error
+- **Error**: `SyntaxError: f-string: unmatched ')'`
+- **Fix**: Changed `f"'{ "', "'.join(screening_cultures) }'"` to build `not_in_clause` separately first
+
+### Step 9 - DuckDB Comment Syntax Error
+- **Error**: `Parser Error: syntax error at or near "#"`
+- **Fix**: DuckDB doesn't support `#` comments in SQL; removed inline comments from SQL queries
+
+### Step 12 - julianday Function Error
+- **Error**: `Catalog Error: Scalar Function with name julianday does not exist!`
+- **Fix**: DuckDB doesn't have julianday; use `(p.stoptime - p.starttime)` directly for duration
+
+### Step 14 - Culture Data Location
+- **Finding**: Culture orders not in chartevents table
+- **Resolution**: Use microbiologyevents table instead for culture data
+
+### Step 6 - Antibiotic Query for stay_id
+- **Error**: When `stay_id` provided, function only queried ICU inputevents, missing hospital prescriptions
+- **Fix**: Updated `get_antibiotic_info` to also query hospital prescriptions using the hadm_id from the stay when `stay_id` is provided
+
+### Step 8 - Column Name Errors
+- **Error**: `Binder Error: Ambiguous reference to column name "icd_code"` and `Table "dd" does not have a column named "short_title"`
+- **Fix**: Use table aliases (d.icd_code, dd.long_title) and correct column name (long_title instead of short_title)
+
+### Step 7 - Admissions Table Column Error
+- **Error**: `Binder Error: Referenced column "admitting_service" not found in FROM clause!`
+- **Fix**: Use correct column names from admissions table (admission_type, not admitting_service)
+
+## Clinical Guideline Facts (Sepsis)
+
+### Adult Sepsis (Sepsis-3, 2016)
+- Definition: Life-threatening organ dysfunction caused by dysregulated host response to infection
+- Primary criterion: Suspected or documented infection AND acute increase in SOFA score ≥ 2 points
+- qSOFA screening (non-ICU): Respiratory rate ≥ 22, altered mentation, SBP ≤ 100 mm Hg
+
+### Pediatric Sepsis (Phoenix Criteria, 2024)
+- Definition: Infection with potentially life-threatening organ dysfunction in children < 18 years
+- Criterion: Suspected infection AND Phoenix Sepsis Score ≥ 2 points
+
+### Septic Shock (Adult)
+- Vasopressor therapy required to maintain MAP ≥ 65 mm Hg
+- Serum lactate > 2 mmol/L (> 18 mg/dL) after adequate fluid resuscitation
+
+### MRSA Screening vs. Infection
+- **MRSA SCREEN**: Surveillance culture for colonization, NOT active infection
+- **MRSA Infection**: Isolation from sterile site OR clinical signs/symptoms at non-sterile site
+- Screening cultures should be excluded from infection suspicion determination
+
+### Antibiotic Prophylaxis vs. Treatment
+- **Cefazolin**: Typically surgical prophylaxis (single dose or limited doses)
+- **Treatment antibiotics**: Multiple doses over extended period (Vancomycin, Cefepime, Meropenem, etc.)
+- Antibiotics administered BEFORE ICU admission may not indicate ICU-specific infection suspicion
+- Cultures without organisms still indicate suspicion (clinician ordered them)
+- Vancomycin in cardiac surgery patients without cultures is typically prophylaxis
+

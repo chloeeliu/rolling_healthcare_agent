@@ -1,0 +1,1395 @@
+=== Step 1 ===
+# Clinical Coding Agent Memory
+
+## Schema Facts
+
+### Tables
+- `mimiciv_icu.outputevents` - Contains urine output data (itemid, value, charttime, stay_id)
+- `mimiciv_icu.chartevents` - Contains weight data (itemid, valuenum, valueuom, charttime, stay_id)
+- `mimiciv_icu.d_items` - Item metadata (itemid, label, category, unitname)
+- `mimiciv_icu.icustays` - ICU stay info (stay_id, intime, outtime)
+
+### Urine Output ItemIDs (outputevents)
+- 226557: R Ureteral Stent
+- 226558: L Ureteral Stent
+- 226559: Foley
+- 226560: Void
+- 226561: Condom Cath
+- 226563: Suprapubic
+- 226564: R Nephrostomy
+- 226565: L Nephrostomy
+- 226566: Urine and GU Irrigant Out
+- 226567: Straight Cath
+- 226582: Ostomy (output)
+- 226627: OR Urine
+- 226631: PACU Urine
+- 227489: GU Irrigant/Urine Volume Out
+
+### Weight ItemIDs (chartevents, unitname='kg')
+- 224639: Daily Weight
+- 226512: Admission Weight (Kg)
+- 226846: Feeding Weight
+
+### Clinical Thresholds
+- Oliguria: < 0.5 mL/kg/hr
+- Severe oliguria: < 0.3 mL/kg/hr
+
+## Function Source Code
+
+```python
+def get_urine_output_rate(stay_id):
+    """
+    Extract urine output rate information for a patient's ICU stay.
+    
+    This function queries the MIMIC-IV database to calculate urine output rates
+    and identify periods of oliguria during an ICU stay.
+    
+    Parameters
+    ----------
+    stay_id : int
+        The ICU stay identifier for the patient.
+    
+    Returns
+    -------
+    dict or None
+        A dictionary containing the following keys:
+        - 'stay_id': The ICU stay identifier (int)
+        - 'weight_kg': Patient weight in kg (float or None)
+        - 'total_urine_output_mL': Total urine output during ICU stay (float or None)
+        - 'urine_output_records': Number of urine output records (int)
+        - 'min_hourly_rate_mL_kg_hr': Minimum hourly urine output rate (float or None)
+        - 'max_hourly_rate_mL_kg_hr': Maximum hourly urine output rate (float or None)
+        - 'mean_hourly_rate_mL_kg_hr': Mean hourly urine output rate (float or None)
+        - 'min_6hr_rate_mL_kg_hr': Minimum 6-hour rolling urine output rate (float or None)
+        - 'has_oliguria': Boolean indicating if patient had oliguria (< 0.5 mL/kg/hr) at any point
+        - 'has_severe_oliguria': Boolean indicating if patient had severe oliguria (< 0.3 mL/kg/hr) at any point
+        - 'oliguria_periods': Number of hourly periods with oliguria (int)
+        - 'severe_oliguria_periods': Number of hourly periods with severe oliguria (int)
+        
+        Returns None if no matching ICU stay is found or no urine output data exists.
+    
+    Notes
+    -----
+    Urine output items included:
+    - 226557: R Ureteral Stent
+    - 226558: L Ureteral Stent
+    - 226559: Foley
+    - 226560: Void
+    - 226561: Condom Cath
+    - 226563: Suprapubic
+    - 226564: R Nephrostomy
+    - 226565: L Nephrostomy
+    - 226566: Urine and GU Irrigant Out
+    - 226567: Straight Cath
+    - 226582: Ostomy (output)
+    - 226627: OR Urine
+    - 226631: PACU Urine
+    - 227489: GU Irrigant/Urine Volume Out
+    
+    Weight items included:
+    - 224639: Daily Weight (kg)
+    - 226512: Admission Weight (Kg)
+    - 226846: Feeding Weight (kg)
+    
+    Clinical thresholds:
+    - Oliguria: urine output rate < 0.5 mL/kg/hr
+    - Severe oliguria: urine output rate < 0.3 mL/kg/hr
+    
+    Examples
+    --------
+    >>> result = get_urine_output_rate(37081114)
+    >>> result['has_oliguria']
+    True
+    >>> result['min_hourly_rate_mL_kg_hr']
+    0.1356
+    """
+    
+    import pandas as pd
+    import numpy as np
+    
+    # Define urine output item IDs
+    urine_item_ids = [226557, 226558, 226559, 226560, 226561, 226563, 226564, 226565, 
+                      226566, 226567, 226582, 226627, 226631, 227489]
+    
+    # Define weight item IDs
+    weight_item_ids = [224639, 226512, 226846]
+    
+    # SQL query to get urine output, weight, and ICU stay data
+    urine_items_str = ','.join([str(id) for id in urine_item_ids])
+    weight_items_str = ','.join([str(id) for id in weight_item_ids])
+    
+    sql = f"""
+    WITH urine_output AS (
+        SELECT oe.charttime, oe.value, oe.stay_id
+        FROM mimiciv_icu.outputevents oe
+        WHERE oe.stay_id = {stay_id}
+        AND oe.itemid IN ({urine_items_str})
+        AND oe.value > 0
+    ),
+    weight_data AS (
+        SELECT ce.valuenum as weight_kg
+        FROM mimiciv_icu.chartevents ce
+        WHERE ce.stay_id = {stay_id}
+        AND ce.itemid IN ({weight_items_str})
+        AND ce.valueuom = 'kg'
+        ORDER BY ce.charttime
+        LIMIT 1
+    ),
+    stay_info AS (
+        SELECT intime, outtime
+        FROM mimiciv_icu.icustays
+        WHERE stay_id = {stay_id}
+    )
+    SELECT u.charttime, u.value, w.weight_kg, s.intime, s.outtime
+    FROM urine_output u
+    CROSS JOIN weight_data w
+    CROSS JOIN stay_info s
+    ORDER BY u.charttime
+    """
+    
+    try:
+        df = query_db(sql)
+    except Exception as e:
+        return None
+    
+    # Check if we have any data
+    if df.empty:
+        return None
+    
+    # Convert timestamps
+    df['charttime'] = pd.to_datetime(df['charttime'])
+    df['intime'] = pd.to_datetime(df['intime'])
+    df['outtime'] = pd.to_datetime(df['outtime'])
+    
+    weight_kg = df['weight_kg'].iloc[0]
+    intime = df['intime'].iloc[0]
+    outtime = df['outtime'].iloc[0]
+    
+    # Filter to ICU stay period
+    df = df[(df['charttime'] >= intime) & (df['charttime'] <= outtime)]
+    
+    # Check if we have any data after filtering
+    if df.empty:
+        return None
+    
+    # Calculate total urine output
+    total_urine_output = df['value'].sum()
+    
+    # Calculate hourly urine output rate based on time since previous record
+    df = df.sort_values('charttime').reset_index(drop=True)
+    df['time_diff_hours'] = df['charttime'].diff().dt.total_seconds() / 3600
+    df['hourly_rate_mL_kg_hr'] = (df['value'] / df['time_diff_hours'].replace(0, np.nan)) / weight_kg
+    
+    # Get valid hourly rates
+    valid_rates = df['hourly_rate_mL_kg_hr'].dropna()
+    
+    # Calculate 6-hour rolling urine output rates
+    df_indexed = df.set_index('charttime')
+    df_hourly = df_indexed['value'].resample('h').sum().fillna(0)
+    df_hourly_6hr = df_hourly.rolling('6h').sum()
+    df_hourly_6hr_rate = (df_hourly_6hr / 6) / weight_kg
+    
+    # Build result dictionary
+    result = {
+        'stay_id': stay_id,
+        'weight_kg': round(weight_kg, 2) if weight_kg else None,
+        'total_urine_output_mL': round(total_urine_output, 2) if total_urine_output else None,
+        'urine_output_records': len(df),
+        'min_hourly_rate_mL_kg_hr': round(valid_rates.min(), 4) if len(valid_rates) > 0 else None,
+        'max_hourly_rate_mL_kg_hr': round(valid_rates.max(), 4) if len(valid_rates) > 0 else None,
+        'mean_hourly_rate_mL_kg_hr': round(valid_rates.mean(), 4) if len(valid_rates) > 0 else None,
+        'min_6hr_rate_mL_kg_hr': round(df_hourly_6hr_rate.min(), 4) if len(df_hourly_6hr_rate.dropna()) > 0 else None,
+        'has_oliguria': bool((valid_rates < 0.5).any()) if len(valid_rates) > 0 else False,
+        'has_severe_oliguria': bool((valid_rates < 0.3).any()) if len(valid_rates) > 0 else False,
+        'oliguria_periods': int((valid_rates < 0.5).sum()) if len(valid_rates) > 0 else 0,
+        'severe_oliguria_periods': int((valid_rates < 0.3).sum()) if len(valid_rates) > 0 else 0
+    }
+    
+    return result
+```
+
+## Test Results
+
+### get_urine_output_rate(37081114)
+```
+{
+  'stay_id': 37081114,
+  'weight_kg': 55.3,
+  'total_urine_output_mL': 6717.0,
+  'urine_output_records': 71,
+  'min_hourly_rate_mL_kg_hr': 0.1356,
+  'max_hourly_rate_mL_kg_hr': 8.1374,
+  'mean_hourly_rate_mL_kg_hr': 1.5263,
+  'min_6hr_rate_mL_kg_hr': 0.217,
+  'has_oliguria': True,
+  'has_severe_oliguria': True,
+  'oliguria_periods': 21,
+  'severe_oliguria_periods': 9
+}
+```
+
+### weight_durations(37081114)
+```
+{
+  'stay_id': 37081114,
+  'weight_count': 1,
+  'all_weights_kg': [55.3],
+  'min_weight_kg': 55.3,
+  'max_weight_kg': 55.3,
+  'avg_weight_kg': 55.3,
+  'has_weight_80_or_more': False,
+  'has_weight_100_or_more': False
+}
+```
+
+## Error Fixes
+
+1. **Column name fix**: Changed `unit_name` to `unitname` in d_items table queries
+2. **SQL ambiguity fix**: Added table aliases (ce, di) to avoid ambiguous column references in JOIN queries
+3. **Pandas frequency fix**: Changed resample frequency from 'H' to 'h' (lowercase) for hourly resampling
+
+=== Step 2 ===
+# Clinical Coding Agent Memory
+
+## Schema Facts
+
+### Tables
+- `mimiciv_icu.outputevents` - Contains urine output data (itemid, value, charttime, stay_id)
+- `mimiciv_icu.chartevents` - Contains weight data (itemid, valuenum, valueuom, charttime, stay_id)
+- `mimiciv_icu.d_items` - Item metadata (itemid, label, category, unitname)
+- `mimiciv_icu.icustays` - ICU stay info (stay_id, intime, outtime)
+
+### Urine Output ItemIDs (outputevents)
+- 226557: R Ureteral Stent
+- 226558: L Ureteral Stent
+- 226559: Foley
+- 226560: Void
+- 226561: Condom Cath
+- 226563: Suprapubic
+- 226564: R Nephrostomy
+- 226565: L Nephrostomy
+- 226566: Urine and GU Irrigant Out
+- 226567: Straight Cath
+- 226582: Ostomy (output)
+- 226627: OR Urine
+- 226631: PACU Urine
+- 227489: GU Irrigant/Urine Volume Out
+
+### Weight ItemIDs (chartevents, unitname='kg')
+- 224639: Daily Weight
+- 226512: Admission Weight (Kg)
+- 226846: Feeding Weight
+
+### Clinical Thresholds
+- Oliguria: < 0.5 mL/kg/hr
+- Severe oliguria: < 0.3 mL/kg/hr
+
+## Function Source Code
+
+```python
+import pandas as pd
+import numpy as np
+
+def get_urine_output_rate(stay_id):
+    """
+    Extract urine output rate information for a patient's ICU stay.
+    
+    This function queries the MIMIC-IV database to calculate urine output rates
+    and identify periods of oliguria during an ICU stay.
+    
+    Parameters
+    ----------
+    stay_id : int
+        The ICU stay identifier for the patient.
+    
+    Returns
+    -------
+    dict or None
+        A dictionary containing the following keys:
+        - 'stay_id': The ICU stay identifier (int)
+        - 'weight_kg': Patient weight in kg (float or None)
+        - 'total_urine_output_mL': Total urine output during ICU stay (float or None)
+        - 'urine_output_records': Number of urine output records (int)
+        - 'min_hourly_rate_mL_kg_hr': Minimum hourly urine output rate (float or None)
+        - 'max_hourly_rate_mL_kg_hr': Maximum hourly urine output rate (float or None)
+        - 'mean_hourly_rate_mL_kg_hr': Mean hourly urine output rate (float or None)
+        - 'min_6hr_rate_mL_kg_hr': Minimum 6-hour rolling urine output rate (float or None)
+        - 'has_oliguria': Boolean indicating if patient had oliguria (< 0.5 mL/kg/hr) at any point
+        - 'has_severe_oliguria': Boolean indicating if patient had severe oliguria (< 0.3 mL/kg/hr) at any point
+        - 'oliguria_periods': Number of hourly periods with oliguria (int)
+        - 'severe_oliguria_periods': Number of hourly periods with severe oliguria (int)
+        
+        Returns None if no matching ICU stay is found or no urine output data exists.
+    
+    Notes
+    -----
+    Urine output items included:
+    - 226557: R Ureteral Stent
+    - 226558: L Ureteral Stent
+    - 226559: Foley
+    - 226560: Void
+    - 226561: Condom Cath
+    - 226563: Suprapubic
+    - 226564: R Nephrostomy
+    - 226565: L Nephrostomy
+    - 226566: Urine and GU Irrigant Out
+    - 226567: Straight Cath
+    - 226582: Ostomy (output)
+    - 226627: OR Urine
+    - 226631: PACU Urine
+    - 227489: GU Irrigant/Urine Volume Out
+    
+    Weight items included:
+    - 224639: Daily Weight (kg)
+    - 226512: Admission Weight (Kg)
+    - 226846: Feeding Weight (kg)
+    
+    Clinical thresholds:
+    - Oliguria: urine output rate < 0.5 mL/kg/hr
+    - Severe oliguria: urine output rate < 0.3 mL/kg/hr
+    """
+    
+    # Define urine output item IDs
+    urine_item_ids = [226557, 226558, 226559, 226560, 226561, 226563, 226564, 226565, 
+                      226566, 226567, 226582, 226627, 226631, 227489]
+    
+    # Define weight item IDs
+    weight_item_ids = [224639, 226512, 226846]
+    
+    # SQL query to get urine output, weight, and ICU stay data
+    urine_items_str = ','.join([str(id) for id in urine_item_ids])
+    weight_items_str = ','.join([str(id) for id in weight_item_ids])
+    
+    sql = f"""
+    WITH urine_output AS (
+        SELECT oe.charttime, oe.value, oe.stay_id
+        FROM mimiciv_icu.outputevents oe
+        WHERE oe.stay_id = {stay_id}
+        AND oe.itemid IN ({urine_items_str})
+        AND oe.value > 0
+    ),
+    weight_data AS (
+        SELECT ce.valuenum as weight_kg
+        FROM mimiciv_icu.chartevents ce
+        WHERE ce.stay_id = {stay_id}
+        AND ce.itemid IN ({weight_items_str})
+        AND ce.valueuom = 'kg'
+        ORDER BY ce.charttime
+        LIMIT 1
+    ),
+    stay_info AS (
+        SELECT intime, outtime
+        FROM mimiciv_icu.icustays
+        WHERE stay_id = {stay_id}
+    )
+    SELECT u.charttime, u.value, w.weight_kg, s.intime, s.outtime
+    FROM urine_output u
+    CROSS JOIN weight_data w
+    CROSS JOIN stay_info s
+    ORDER BY u.charttime
+    """
+    
+    try:
+        df = query_db(sql)
+    except Exception as e:
+        return None
+    
+    # Check if we have any data
+    if df.empty:
+        return None
+    
+    # Convert timestamps
+    df['charttime'] = pd.to_datetime(df['charttime'])
+    df['intime'] = pd.to_datetime(df['intime'])
+    df['outtime'] = pd.to_datetime(df['outtime'])
+    
+    weight_kg = df['weight_kg'].iloc[0]
+    intime = df['intime'].iloc[0]
+    outtime = df['outtime'].iloc[0]
+    
+    # Filter to ICU stay period
+    df = df[(df['charttime'] >= intime) & (df['charttime'] <= outtime)]
+    
+    # Check if we have any data after filtering
+    if df.empty:
+        return None
+    
+    # Calculate total urine output
+    total_urine_output = df['value'].sum()
+    
+    # Calculate hourly urine output rate based on time since previous record
+    df = df.sort_values('charttime').reset_index(drop=True)
+    df['time_diff_hours'] = df['charttime'].diff().dt.total_seconds() / 3600
+    df['hourly_rate_mL_kg_hr'] = (df['value'] / df['time_diff_hours'].replace(0, np.nan)) / weight_kg
+    
+    # Get valid hourly rates
+    valid_rates = df['hourly_rate_mL_kg_hr'].dropna()
+    
+    # Calculate 6-hour rolling urine output rates
+    df_indexed = df.set_index('charttime')
+    df_hourly = df_indexed['value'].resample('h').sum().fillna(0)
+    df_hourly_6hr = df_hourly.rolling('6h').sum()
+    df_hourly_6hr_rate = (df_hourly_6hr / 6) / weight_kg
+    
+    # Build result dictionary with native Python types
+    result = {
+        'stay_id': int(stay_id),
+        'weight_kg': round(float(weight_kg), 2) if weight_kg is not None else None,
+        'total_urine_output_mL': round(float(total_urine_output), 2) if total_urine_output is not None else None,
+        'urine_output_records': int(len(df)),
+        'min_hourly_rate_mL_kg_hr': round(float(valid_rates.min()), 4) if len(valid_rates) > 0 else None,
+        'max_hourly_rate_mL_kg_hr': round(float(valid_rates.max()), 4) if len(valid_rates) > 0 else None,
+        'mean_hourly_rate_mL_kg_hr': round(float(valid_rates.mean()), 4) if len(valid_rates) > 0 else None,
+        'min_6hr_rate_mL_kg_hr': round(float(df_hourly_6hr_rate.min()), 4) if len(df_hourly_6hr_rate.dropna()) > 0 else None,
+        'has_oliguria': bool((valid_rates < 0.5).any()) if len(valid_rates) > 0 else False,
+        'has_severe_oliguria': bool((valid_rates < 0.3).any()) if len(valid_rates) > 0 else False,
+        'oliguria_periods': int((valid_rates < 0.5).sum()) if len(valid_rates) > 0 else 0,
+        'severe_oliguria_periods': int((valid_rates < 0.3).sum()) if len(valid_rates) > 0 else 0
+    }
+    
+    return result
+```
+
+## Test Results
+
+### get_urine_output_rate(37081114)
+```
+{
+  'stay_id': 37081114,
+  'weight_kg': 55.3,
+  'total_urine_output_mL': 6717.0,
+  'urine_output_records': 71,
+  'min_hourly_rate_mL_kg_hr': 0.1356,
+  'max_hourly_rate_mL_kg_hr': 8.1374,
+  'mean_hourly_rate_mL_kg_hr': 1.5263,
+  'min_6hr_rate_mL_kg_hr': 0.217,
+  'has_oliguria': True,
+  'has_severe_oliguria': True,
+  'oliguria_periods': 21,
+  'severe_oliguria_periods': 9
+}
+```
+
+### get_urine_output_rate(30066007)
+```
+{
+  'stay_id': 30066007,
+  'weight_kg': 73.0,
+  'total_urine_output_mL': 3620.0,
+  'urine_output_records': 28,
+  'min_hourly_rate_mL_kg_hr': 0.274,
+  'max_hourly_rate_mL_kg_hr': 6.9654,
+  'mean_hourly_rate_mL_kg_hr': 1.7057,
+  'min_6hr_rate_mL_kg_hr': 0.3196,
+  'has_oliguria': True,
+  'has_severe_oliguria': True,
+  'oliguria_periods': 7,
+  'severe_oliguria_periods': 1
+}
+```
+
+### get_urine_output_rate(33832011)
+```
+{
+  'stay_id': 33832011,
+  'weight_kg': 103.6,
+  'total_urine_output_mL': 61299.0,
+  'urine_output_records': 367,
+  'min_hourly_rate_mL_kg_hr': 0.0312,
+  'max_hourly_rate_mL_kg_hr': 9.6525,
+  'mean_hourly_rate_mL_kg_hr': 1.3145,
+  'min_6hr_rate_mL_kg_hr': 0.0,
+  'has_oliguria': True,
+  'has_severe_oliguria': True,
+  'oliguria_periods': 117,
+  'severe_oliguria_periods': 29
+}
+```
+
+### Edge Case Tests
+- Non-existent stay_id (99999999): Returns None ✓
+- Stay_id with urine but no weight (34603956): Returns None ✓
+
+## QA Investigation Findings
+
+### Numerical Accuracy Issue
+- QA shows 20% numerical accuracy on rate predictions
+- Expected values don't match calculated values
+
+### Rate Calculation Methods Tested
+| Method | Description | Example (35869404) |
+|--------|-------------|-------------------|
+| mean_rate | total_urine / stay_duration_hours / weight | 2.2696 |
+| mean_hourly_rate | Mean of hourly rates between records | 2.1821 |
+| median_hourly_rate | Median of hourly rates | 1.5228 |
+| min_hourly_rate | Minimum hourly rate | 0.7614 |
+| min_6hr_rate | Minimum 6-hour rolling rate | 0.1354 |
+| mean_6hr_rate | Mean of 6-hour rolling rates | 2.0739 |
+
+### Problematic Stay IDs (Expected vs Calculated)
+| stay_id | Expected | mean_rate | mean_hourly | median_hourly | min_hourly | min_6hr |
+|---------|----------|-----------|-------------|---------------|------------|---------|
+| 35869404 | 1.1 | 2.2696 | 2.1821 | 1.5228 | 0.7614 | 0.1354 |
+| 32047467 | 1.19 | 0.6151 | 2.7376 | 2.9283 | 1.1896 | 0.0000 |
+| 39876701 | 0.298 | 0.5660 | 0.7605 | 0.7605 | 0.2978 | 0.0000 |
+| 37704589 | 0.206 | 1.2761 | 1.4090 | 0.8621 | 0.1724 | 0.1437 |
+
+### Key Observations
+- Expected values are consistently lower than calculated rates
+- min_hourly_rate is closest to expected for 39876701 (0.2978 vs 0.298)
+- min_6hr_rate is closest to expected for 37704589 (0.1437 vs 0.206)
+- Different rate calculation methods produce significantly different results
+- May need to investigate expected output format definition
+
+## Error Fixes
+
+1. **Column name fix**: Changed `unit_name` to `unitname` in d_items table queries
+2. **SQL ambiguity fix**: Added table aliases (ce, di) to avoid ambiguous column references in JOIN queries
+3. **Pandas frequency fix**: Changed resample frequency from 'H' to 'h' (lowercase) for hourly resampling
+4. **Type conversion fix**: Added explicit float() and int() conversions to return native Python types instead of numpy types
+5. **Rounding fix**: Applied round() to float conversions for cleaner output
+
+=== Step 3 ===
+# Clinical Coding Agent Memory
+
+## Schema Facts
+
+### Tables
+- `mimiciv_icu.outputevents` - Contains urine output data (itemid, value, charttime, stay_id)
+- `mimiciv_icu.chartevents` - Contains weight data (itemid, valuenum, valueuom, charttime, stay_id)
+- `mimiciv_icu.d_items` - Item metadata (itemid, label, category, unitname)
+- `mimiciv_icu.icustays` - ICU stay info (stay_id, intime, outtime)
+
+### Urine Output ItemIDs (outputevents)
+- 226557: R Ureteral Stent
+- 226558: L Ureteral Stent
+- 226559: Foley
+- 226560: Void
+- 226561: Condom Cath
+- 226563: Suprapubic
+- 226564: R Nephrostomy
+- 226565: L Nephrostomy
+- 226566: Urine and GU Irrigant Out
+- 226567: Straight Cath
+- 226582: Ostomy (output)
+- 226627: OR Urine
+- 226631: PACU Urine
+- 227489: GU Irrigant/Urine Volume Out
+
+### Weight ItemIDs (chartevents, unitname='kg')
+- 224639: Daily Weight
+- 226512: Admission Weight (Kg)
+- 226846: Feeding Weight
+
+### Clinical Thresholds
+- Oliguria: < 0.5 mL/kg/hr
+- Severe oliguria: < 0.3 mL/kg/hr
+
+## Function Source Code
+
+```python
+import pandas as pd
+import numpy as np
+
+def get_urine_output_rate(stay_id):
+    """
+    Extract urine output rate information for a patient's ICU stay.
+    
+    This function queries the MIMIC-IV database to calculate urine output rates
+    and identify periods of oliguria during an ICU stay.
+    
+    Parameters
+    ----------
+    stay_id : int
+        The ICU stay identifier for the patient.
+    
+    Returns
+    -------
+    dict or None
+        A dictionary containing the following keys:
+        - 'stay_id': The ICU stay identifier (int)
+        - 'weight_kg': Patient weight in kg (float or None)
+        - 'total_urine_output_mL': Total urine output during ICU stay (float or None)
+        - 'urine_output_records': Number of urine output records (int)
+        - 'min_hourly_rate_mL_kg_hr': Minimum hourly urine output rate (float or None)
+        - 'max_hourly_rate_mL_kg_hr': Maximum hourly urine output rate (float or None)
+        - 'mean_hourly_rate_mL_kg_hr': Mean hourly urine output rate (float or None)
+        - 'min_6hr_rate_mL_kg_hr': Minimum 6-hour rolling urine output rate (float or None)
+        - 'has_oliguria': Boolean indicating if patient had oliguria (< 0.5 mL/kg/hr) at any point
+        - 'has_severe_oliguria': Boolean indicating if patient had severe oliguria (< 0.3 mL/kg/hr) at any point
+        - 'oliguria_periods': Number of hourly periods with oliguria (int)
+        - 'severe_oliguria_periods': Number of hourly periods with severe oliguria (int)
+        
+        Returns None if no matching ICU stay is found or no urine output data exists.
+    
+    Notes
+    -----
+    Urine output items included:
+    - 226557: R Ureteral Stent
+    - 226558: L Ureteral Stent
+    - 226559: Foley
+    - 226560: Void
+    - 226561: Condom Cath
+    - 226563: Suprapubic
+    - 226564: R Nephrostomy
+    - 226565: L Nephrostomy
+    - 226566: Urine and GU Irrigant Out
+    - 226567: Straight Cath
+    - 226582: Ostomy (output)
+    - 226627: OR Urine
+    - 226631: PACU Urine
+    - 227489: GU Irrigant/Urine Volume Out
+    
+    Weight items included:
+    - 224639: Daily Weight (kg)
+    - 226512: Admission Weight (Kg)
+    - 226846: Feeding Weight (kg)
+    
+    Clinical thresholds:
+    - Oliguria: urine output rate < 0.5 mL/kg/hr
+    - Severe oliguria: urine output rate < 0.3 mL/kg/hr
+    """
+    
+    # Define urine output item IDs
+    urine_item_ids = [226557, 226558, 226559, 226560, 226561, 226563, 226564, 226565, 
+                      226566, 226567, 226582, 226627, 226631, 227489]
+    
+    # Define weight item IDs
+    weight_item_ids = [224639, 226512, 226846]
+    
+    # SQL query to get urine output, weight, and ICU stay data
+    urine_items_str = ','.join([str(id) for id in urine_item_ids])
+    weight_items_str = ','.join([str(id) for id in weight_item_ids])
+    
+    sql = f"""
+    WITH urine_output AS (
+        SELECT oe.charttime, oe.value, oe.stay_id
+        FROM mimiciv_icu.outputevents oe
+        WHERE oe.stay_id = {stay_id}
+        AND oe.itemid IN ({urine_items_str})
+        AND oe.value > 0
+    ),
+    weight_data AS (
+        SELECT ce.valuenum as weight_kg
+        FROM mimiciv_icu.chartevents ce
+        WHERE ce.stay_id = {stay_id}
+        AND ce.itemid IN ({weight_items_str})
+        AND ce.valueuom = 'kg'
+        ORDER BY ce.charttime
+        LIMIT 1
+    ),
+    stay_info AS (
+        SELECT intime, outtime
+        FROM mimiciv_icu.icustays
+        WHERE stay_id = {stay_id}
+    )
+    SELECT u.charttime, u.value, w.weight_kg, s.intime, s.outtime
+    FROM urine_output u
+    CROSS JOIN weight_data w
+    CROSS JOIN stay_info s
+    ORDER BY u.charttime
+    """
+    
+    try:
+        df = query_db(sql)
+    except Exception as e:
+        return None
+    
+    # Check if we have any data
+    if df.empty:
+        return None
+    
+    # Convert timestamps
+    df['charttime'] = pd.to_datetime(df['charttime'])
+    df['intime'] = pd.to_datetime(df['intime'])
+    df['outtime'] = pd.to_datetime(df['outtime'])
+    
+    weight_kg = df['weight_kg'].iloc[0]
+    intime = df['intime'].iloc[0]
+    outtime = df['outtime'].iloc[0]
+    
+    # Filter to ICU stay period
+    df = df[(df['charttime'] >= intime) & (df['charttime'] <= outtime)]
+    
+    # Check if we have any data after filtering
+    if df.empty:
+        return None
+    
+    # Calculate total urine output
+    total_urine_output = df['value'].sum()
+    
+    # Calculate hourly urine output rate based on time since previous record
+    df = df.sort_values('charttime').reset_index(drop=True)
+    df['time_diff_hours'] = df['charttime'].diff().dt.total_seconds() / 3600
+    df['hourly_rate_mL_kg_hr'] = (df['value'] / df['time_diff_hours'].replace(0, np.nan)) / weight_kg
+    
+    # Get valid hourly rates
+    valid_rates = df['hourly_rate_mL_kg_hr'].dropna()
+    
+    # Calculate 6-hour rolling urine output rates
+    df_indexed = df.set_index('charttime')
+    df_hourly = df_indexed['value'].resample('h').sum().fillna(0)
+    df_hourly_6hr = df_hourly.rolling('6h').sum()
+    df_hourly_6hr_rate = (df_hourly_6hr / 6) / weight_kg
+    
+    # Build result dictionary with native Python types
+    result = {
+        'stay_id': int(stay_id),
+        'weight_kg': round(float(weight_kg), 2) if weight_kg is not None else None,
+        'total_urine_output_mL': round(float(total_urine_output), 2) if total_urine_output is not None else None,
+        'urine_output_records': int(len(df)),
+        'min_hourly_rate_mL_kg_hr': round(float(valid_rates.min()), 4) if len(valid_rates) > 0 else None,
+        'max_hourly_rate_mL_kg_hr': round(float(valid_rates.max()), 4) if len(valid_rates) > 0 else None,
+        'mean_hourly_rate_mL_kg_hr': round(float(valid_rates.mean()), 4) if len(valid_rates) > 0 else None,
+        'min_6hr_rate_mL_kg_hr': round(float(df_hourly_6hr_rate.min()), 4) if len(df_hourly_6hr_rate.dropna()) > 0 else None,
+        'has_oliguria': bool((valid_rates < 0.5).any()) if len(valid_rates) > 0 else False,
+        'has_severe_oliguria': bool((valid_rates < 0.3).any()) if len(valid_rates) > 0 else False,
+        'oliguria_periods': int((valid_rates < 0.5).sum()) if len(valid_rates) > 0 else 0,
+        'severe_oliguria_periods': int((valid_rates < 0.3).sum()) if len(valid_rates) > 0 else 0
+    }
+    
+    return result
+```
+
+## Test Results
+
+### get_urine_output_rate(37081114)
+```
+{
+  'stay_id': 37081114,
+  'weight_kg': 55.3,
+  'total_urine_output_mL': 6717.0,
+  'urine_output_records': 71,
+  'min_hourly_rate_mL_kg_hr': 0.1356,
+  'max_hourly_rate_mL_kg_hr': 8.1374,
+  'mean_hourly_rate_mL_kg_hr': 1.5263,
+  'min_6hr_rate_mL_kg_hr': 0.217,
+  'has_oliguria': True,
+  'has_severe_oliguria': True,
+  'oliguria_periods': 21,
+  'severe_oliguria_periods': 9
+}
+```
+
+### get_urine_output_rate(30066007)
+```
+{
+  'stay_id': 30066007,
+  'weight_kg': 73.0,
+  'total_urine_output_mL': 3620.0,
+  'urine_output_records': 28,
+  'min_hourly_rate_mL_kg_hr': 0.274,
+  'max_hourly_rate_mL_kg_hr': 6.9654,
+  'mean_hourly_rate_mL_kg_hr': 1.7057,
+  'min_6hr_rate_mL_kg_hr': 0.3196,
+  'has_oliguria': True,
+  'has_severe_oliguria': True,
+  'oliguria_periods': 7,
+  'severe_oliguria_periods': 1
+}
+```
+
+### get_urine_output_rate(33832011)
+```
+{
+  'stay_id': 33832011,
+  'weight_kg': 103.6,
+  'total_urine_output_mL': 61299.0,
+  'urine_output_records': 367,
+  'min_hourly_rate_mL_kg_hr': 0.0312,
+  'max_hourly_rate_mL_kg_hr': 9.6525,
+  'mean_hourly_rate_mL_kg_hr': 1.3145,
+  'min_6hr_rate_mL_kg_hr': 0.0,
+  'has_oliguria': True,
+  'has_severe_oliguria': True,
+  'oliguria_periods': 117,
+  'severe_oliguria_periods': 29
+}
+```
+
+### Edge Case Tests
+- Non-existent stay_id (99999999): Returns None ✓
+- Stay_id with urine but no weight (34603956): Returns None ✓
+
+## QA Investigation Findings
+
+### Numerical Accuracy Issue
+- QA shows 20% numerical accuracy on rate predictions
+- Expected values don't match calculated values for some stays
+
+### Rate Calculation Methods Tested
+| Method | Description | Example (35869404) |
+|--------|-------------|-------------------|
+| mean_rate | total_urine / stay_duration_hours / weight | 2.2696 |
+| mean_hourly_rate | Mean of hourly rates between records | 2.1821 |
+| median_hourly_rate | Median of hourly rates | 1.5228 |
+| min_hourly_rate | Minimum hourly rate | 0.7614 |
+| min_6hr_rate | Minimum 6-hour rolling rate | 0.1354 |
+| mean_6hr_rate | Mean of 6-hour rolling rates | 2.0739 |
+
+### Problematic Stay IDs (Expected vs Calculated)
+| stay_id | Expected | min_hourly_rate | Match? |
+|---------|----------|-----------------|--------|
+| 35869404 | 1.1 | 0.7614 | NO (30.78% diff) |
+| 32047467 | 1.19 | 1.1896 | YES (0.03% diff) |
+| 39876701 | 0.298 | 0.2978 | YES (0.08% diff) |
+| 37704589 | 0.206 | 0.1724 | NO (16.30% diff) |
+
+### Key Observations
+- Expected values match min_hourly_rate for 2 of 4 problematic stays (32047467, 39876701)
+- For stays 35869404 and 37704589, expected values are higher than calculated min_hourly_rate
+- No consistent pattern found across different calculation methods (rolling windows, percentiles, time_diff filters)
+- Weight variations tested (first, last, average) did not resolve discrepancies
+- Hourly binned rates and consecutive rates both show same minimum values
+- Investigation inconclusive - expected value calculation method remains unclear
+
+## Error Fixes
+
+1. **Column name fix**: Changed `unit_name` to `unitname` in d_items table queries
+2. **SQL ambiguity fix**: Added table aliases (ce, di) to avoid ambiguous column references in JOIN queries
+3. **Pandas frequency fix**: Changed resample frequency from 'H' to 'h' (lowercase) for hourly resampling
+4. **Type conversion fix**: Added explicit float() and int() conversions to return native Python types instead of numpy types
+5. **Rounding fix**: Applied round() to float conversions for cleaner output
+
+=== Step 4 ===
+# Clinical Coding Agent Memory
+
+## Schema Facts
+
+### Tables
+- `mimiciv_icu.outputevents` - Contains urine output data (itemid, value, charttime, stay_id)
+- `mimiciv_icu.chartevents` - Contains weight data (itemid, valuenum, valueuom, charttime, stay_id)
+- `mimiciv_icu.d_items` - Item metadata (itemid, label, category, unitname)
+- `mimiciv_icu.icustays` - ICU stay info (stay_id, intime, outtime)
+
+### Urine Output ItemIDs (outputevents)
+- 226557: R Ureteral Stent
+- 226558: L Ureteral Stent
+- 226559: Foley
+- 226560: Void
+- 226561: Condom Cath
+- 226563: Suprapubic
+- 226564: R Nephrostomy
+- 226565: L Nephrostomy
+- 226566: Urine and GU Irrigant Out
+- 226567: Straight Cath
+- 226582: Ostomy (output)
+- 226627: OR Urine
+- 226631: PACU Urine
+- 227489: GU Irrigant/Urine Volume Out
+
+### Weight ItemIDs (chartevents, unitname='kg')
+- 224639: Daily Weight
+- 226512: Admission Weight (Kg)
+- 226846: Feeding Weight
+
+### Clinical Thresholds
+- Oliguria: < 0.5 mL/kg/hr
+- Severe oliguria: < 0.3 mL/kg/hr
+
+## Function Source Code
+
+```python
+import pandas as pd
+import numpy as np
+
+def get_urine_output_rate(stay_id):
+    """
+    Extract urine output rate information for a patient's ICU stay.
+    
+    This function queries the MIMIC-IV database to calculate urine output rates
+    and identify periods of oliguria during an ICU stay.
+    
+    Parameters
+    ----------
+    stay_id : int
+        The ICU stay identifier for the patient.
+    
+    Returns
+    -------
+    dict or None
+        A dictionary containing the following keys:
+        - 'stay_id': The ICU stay identifier (int)
+        - 'weight_kg': Patient weight in kg (float or None)
+        - 'total_urine_output_mL': Total urine output during ICU stay (float or None)
+        - 'urine_output_records': Number of urine output records (int)
+        - 'min_hourly_rate_mL_kg_hr': Minimum hourly urine output rate (float or None)
+        - 'max_hourly_rate_mL_kg_hr': Maximum hourly urine output rate (float or None)
+        - 'mean_hourly_rate_mL_kg_hr': Mean hourly urine output rate (float or None)
+        - 'min_6hr_rate_mL_kg_hr': Minimum 6-hour rolling urine output rate (float or None)
+        - 'has_oliguria': Boolean indicating if patient had oliguria (< 0.5 mL/kg/hr) at any point
+        - 'has_severe_oliguria': Boolean indicating if patient had severe oliguria (< 0.3 mL/kg/hr) at any point
+        - 'oliguria_periods': Number of hourly periods with oliguria (int)
+        - 'severe_oliguria_periods': Number of hourly periods with severe oliguria (int)
+        
+        Returns None if no matching ICU stay is found or no urine output data exists.
+    
+    Notes
+    -----
+    Urine output items included:
+    - 226557: R Ureteral Stent
+    - 226558: L Ureteral Stent
+    - 226559: Foley
+    - 226560: Void
+    - 226561: Condom Cath
+    - 226563: Suprapubic
+    - 226564: R Nephrostomy
+    - 226565: L Nephrostomy
+    - 226566: Urine and GU Irrigant Out
+    - 226567: Straight Cath
+    - 226582: Ostomy (output)
+    - 226627: OR Urine
+    - 226631: PACU Urine
+    - 227489: GU Irrigant/Urine Volume Out
+    
+    Weight items included:
+    - 224639: Daily Weight (kg)
+    - 226512: Admission Weight (Kg)
+    - 226846: Feeding Weight (kg)
+    
+    Clinical thresholds:
+    - Oliguria: urine output rate < 0.5 mL/kg/hr
+    - Severe oliguria: urine output rate < 0.3 mL/kg/hr
+    """
+    
+    # Define urine output item IDs
+    urine_item_ids = [226557, 226558, 226559, 226560, 226561, 226563, 226564, 226565, 
+                      226566, 226567, 226582, 226627, 226631, 227489]
+    
+    # Define weight item IDs
+    weight_item_ids = [224639, 226512, 226846]
+    
+    urine_items_str = ','.join([str(id) for id in urine_item_ids])
+    weight_items_str = ','.join([str(id) for id in weight_item_ids])
+    
+    # SQL query to get urine output, weight, and ICU stay data
+    sql = f"""
+    WITH urine_output AS (
+        SELECT oe.charttime, oe.value, oe.stay_id
+        FROM mimiciv_icu.outputevents oe
+        WHERE oe.stay_id = {stay_id}
+        AND oe.itemid IN ({urine_items_str})
+        AND oe.value > 0
+    ),
+    weight_data AS (
+        SELECT ce.valuenum as weight_kg
+        FROM mimiciv_icu.chartevents ce
+        WHERE ce.stay_id = {stay_id}
+        AND ce.itemid IN ({weight_items_str})
+        AND ce.valueuom = 'kg'
+        ORDER BY ce.charttime
+        LIMIT 1
+    ),
+    stay_info AS (
+        SELECT intime, outtime
+        FROM mimiciv_icu.icustays
+        WHERE stay_id = {stay_id}
+    )
+    SELECT u.charttime, u.value, w.weight_kg, s.intime, s.outtime
+    FROM urine_output u
+    CROSS JOIN weight_data w
+    CROSS JOIN stay_info s
+    ORDER BY u.charttime
+    """
+    
+    try:
+        df = query_db(sql)
+    except Exception as e:
+        return None
+    
+    # Check if we have any data
+    if df.empty:
+        return None
+    
+    # Convert timestamps
+    df['charttime'] = pd.to_datetime(df['charttime'])
+    df['intime'] = pd.to_datetime(df['intime'])
+    df['outtime'] = pd.to_datetime(df['outtime'])
+    
+    weight_kg = df['weight_kg'].iloc[0]
+    intime = df['intime'].iloc[0]
+    outtime = df['outtime'].iloc[0]
+    
+    # Filter to ICU stay period
+    df = df[(df['charttime'] >= intime) & (df['charttime'] <= outtime)]
+    
+    # Check if we have any data after filtering
+    if df.empty:
+        return None
+    
+    # Calculate total urine output
+    total_urine_output = df['value'].sum()
+    
+    # Calculate hourly urine output rate based on time since previous record
+    df = df.sort_values('charttime').reset_index(drop=True)
+    df['time_diff_hours'] = df['charttime'].diff().dt.total_seconds() / 3600
+    df['hourly_rate_mL_kg_hr'] = (df['value'] / df['time_diff_hours']) / weight_kg
+    
+    # Get valid hourly rates (exclude first record which has NaN time_diff)
+    valid_rates = df['hourly_rate_mL_kg_hr'].dropna()
+    
+    # Calculate 6-hour rolling urine output rates
+    df_indexed = df.set_index('charttime')
+    df_hourly = df_indexed['value'].resample('h').sum().fillna(0)
+    df_hourly_6hr = df_hourly.rolling('6h').sum()
+    df_hourly_6hr_rate = (df_hourly_6hr / 6) / weight_kg
+    
+    # Build result dictionary with native Python types
+    result = {
+        'stay_id': int(stay_id),
+        'weight_kg': round(float(weight_kg), 2) if weight_kg is not None else None,
+        'total_urine_output_mL': round(float(total_urine_output), 2) if total_urine_output is not None else None,
+        'urine_output_records': int(len(df)),
+        'min_hourly_rate_mL_kg_hr': round(float(valid_rates.min()), 4) if len(valid_rates) > 0 else None,
+        'max_hourly_rate_mL_kg_hr': round(float(valid_rates.max()), 4) if len(valid_rates) > 0 else None,
+        'mean_hourly_rate_mL_kg_hr': round(float(valid_rates.mean()), 4) if len(valid_rates) > 0 else None,
+        'min_6hr_rate_mL_kg_hr': round(float(df_hourly_6hr_rate.min()), 4) if len(df_hourly_6hr_rate.dropna()) > 0 else None,
+        'has_oliguria': bool((valid_rates < 0.5).any()) if len(valid_rates) > 0 else False,
+        'has_severe_oliguria': bool((valid_rates < 0.3).any()) if len(valid_rates) > 0 else False,
+        'oliguria_periods': int((valid_rates < 0.5).sum()) if len(valid_rates) > 0 else 0,
+        'severe_oliguria_periods': int((valid_rates < 0.3).sum()) if len(valid_rates) > 0 else 0
+    }
+    
+    return result
+```
+
+## Test Results
+
+### Original Test Cases
+```
+get_urine_output_rate(37081114):
+{
+  'stay_id': 37081114,
+  'weight_kg': 55.3,
+  'total_urine_output_mL': 6717.0,
+  'urine_output_records': 71,
+  'min_hourly_rate_mL_kg_hr': 0.1356,
+  'max_hourly_rate_mL_kg_hr': 8.1374,
+  'mean_hourly_rate_mL_kg_hr': 1.5263,
+  'min_6hr_rate_mL_kg_hr': 0.217,
+  'has_oliguria': True,
+  'has_severe_oliguria': True,
+  'oliguria_periods': 21,
+  'severe_oliguria_periods': 9
+}
+```
+
+### QA Problematic Stay Tests (Step 15)
+| stay_id | Expected | Calculated | Match? |
+|---------|----------|------------|--------|
+| 35869404 | 1.1 | 0.7614 | NO (30.78% diff) |
+| 32047467 | 1.19 | 1.1896 | YES (0.03% diff) |
+| 39876701 | 0.298 | 0.2978 | YES (0.08% diff) |
+| 37704589 | 0.206 | 0.1724 | NO (16.30% diff) |
+
+### Edge Case Tests
+- Non-existent stay_id (99999999): Returns None ✓
+- Stay_id with urine but no weight (34603956): Returns None ✓
+
+## QA Investigation Findings
+
+### Rate Calculation Method
+- **Method**: Minimum hourly rate considering time gaps between records
+- **Formula**: `value / time_diff_hours / weight_kg`
+- This is the clinically appropriate method for calculating urine output rates
+
+### Key Findings from Steps 4-16
+1. **2 out of 4 problematic stays match exactly** using min_hourly_rate with time gaps:
+   - 32047467: 1.1896 vs 1.19 (0.03% diff)
+   - 39876701: 0.2978 vs 0.298 (0.08% diff)
+
+2. **2 stays have discrepancies** that could not be resolved:
+   - 35869404: 0.7614 vs 1.1 (30.78% diff)
+   - 37704589: 0.1724 vs 0.206 (16.30% diff)
+
+3. **Methods tested but not matching**:
+   - Percentiles (5th-30th)
+   - Gap filters (2h, 3h, 4h, 6h, 8h, 10h)
+   - Consecutive hourly rates only
+   - Rolling 6-hour windows
+   - Mean/median rates
+
+4. **Conclusion**: The function correctly implements the minimum hourly rate with time gaps. Discrepancies in 2 stays may be due to different calculation methods in the QA system or data quality issues.
+
+## Error Fixes
+
+1. **Column name fix**: Changed `unit_name` to `unitname` in d_items table queries
+2. **SQL ambiguity fix**: Added table aliases (ce, di) to avoid ambiguous column references in JOIN queries
+3. **Pandas frequency fix**: Changed resample frequency from 'H' to 'h' (lowercase) for hourly resampling
+4. **Type conversion fix**: Added explicit float() and int() conversions to return native Python types instead of numpy types
+5. **Rounding fix**: Applied round() to float conversions for cleaner output
+
+=== Step 5 ===
+# Clinical Coding Agent Memory
+
+## Schema Facts
+
+### Tables
+- `mimiciv_icu.outputevents` - Contains urine output data (itemid, value, charttime, stay_id)
+- `mimiciv_icu.chartevents` - Contains weight data (itemid, valuenum, valueuom, charttime, stay_id)
+- `mimiciv_icu.d_items` - Item metadata (itemid, label, category, unitname)
+- `mimiciv_icu.icustays` - ICU stay info (stay_id, intime, outtime)
+
+### Urine Output ItemIDs (outputevents)
+- 226557: R Ureteral Stent
+- 226558: L Ureteral Stent
+- 226559: Foley
+- 226560: Void
+- 226561: Condom Cath
+- 226563: Suprapubic
+- 226564: R Nephrostomy
+- 226565: L Nephrostomy
+- 226566: Urine and GU Irrigant Out
+- 226567: Straight Cath
+- 226582: Ostomy (output)
+- 226627: OR Urine
+- 226631: PACU Urine
+- 227489: GU Irrigant/Urine Volume Out
+
+### Weight ItemIDs (chartevents, unitname='kg')
+- 224639: Daily Weight
+- 226512: Admission Weight (Kg)
+- 226846: Feeding Weight
+
+### Clinical Thresholds
+- Oliguria: < 0.5 mL/kg/hr
+- Severe oliguria: < 0.3 mL/kg/hr
+
+## Function Source Code
+
+```python
+import pandas as pd
+import numpy as np
+
+def get_urine_output_rate(stay_id):
+    """
+    Extract urine output rate information for a patient's ICU stay.
+    
+    This function queries the MIMIC-IV database to calculate urine output rates
+    and identify periods of oliguria during an ICU stay.
+    
+    Parameters
+    ----------
+    stay_id : int
+        The ICU stay identifier for the patient.
+    
+    Returns
+    -------
+    dict or None
+        A dictionary containing the following keys:
+        - 'stay_id': The ICU stay identifier (int)
+        - 'weight_kg': Patient weight in kg (float or None)
+        - 'total_urine_output_mL': Total urine output during ICU stay (float or None)
+        - 'urine_output_records': Number of urine output records (int)
+        - 'min_hourly_rate_mL_kg_hr': Minimum hourly urine output rate (float or None)
+        - 'max_hourly_rate_mL_kg_hr': Maximum hourly urine output rate (float or None)
+        - 'mean_hourly_rate_mL_kg_hr': Mean hourly urine output rate (float or None)
+        - 'min_6hr_rate_mL_kg_hr': Minimum 6-hour rolling urine output rate (float or None)
+        - 'has_oliguria': Boolean indicating if patient had oliguria (< 0.5 mL/kg/hr) at any point
+        - 'has_severe_oliguria': Boolean indicating if patient had severe oliguria (< 0.3 mL/kg/hr) at any point
+        - 'oliguria_periods': Number of hourly periods with oliguria (int)
+        - 'severe_oliguria_periods': Number of hourly periods with severe oliguria (int)
+        
+        Returns None if no matching ICU stay is found or no urine output data exists.
+    
+    Notes
+    -----
+    Urine output items included:
+    - 226557: R Ureteral Stent
+    - 226558: L Ureteral Stent
+    - 226559: Foley
+    - 226560: Void
+    - 226561: Condom Cath
+    - 226563: Suprapubic
+    - 226564: R Nephrostomy
+    - 226565: L Nephrostomy
+    - 226566: Urine and GU Irrigant Out
+    - 226567: Straight Cath
+    - 226582: Ostomy (output)
+    - 226627: OR Urine
+    - 226631: PACU Urine
+    - 227489: GU Irrigant/Urine Volume Out
+    
+    Weight items included:
+    - 224639: Daily Weight (kg)
+    - 226512: Admission Weight (Kg)
+    - 226846: Feeding Weight (kg)
+    
+    Clinical thresholds:
+    - Oliguria: urine output rate < 0.5 mL/kg/hr
+    - Severe oliguria: urine output rate < 0.3 mL/kg/hr
+    """
+    
+    # Define urine output item IDs
+    urine_item_ids = [226557, 226558, 226559, 226560, 226561, 226563, 226564, 226565, 
+                      226566, 226567, 226582, 226627, 226631, 227489]
+    
+    # Define weight item IDs
+    weight_item_ids = [224639, 226512, 226846]
+    
+    urine_items_str = ','.join([str(id) for id in urine_item_ids])
+    weight_items_str = ','.join([str(id) for id in weight_item_ids])
+    
+    # SQL query to get urine output, weight, and ICU stay data
+    sql = f"""
+    WITH urine_output AS (
+        SELECT oe.charttime, oe.value, oe.stay_id
+        FROM mimiciv_icu.outputevents oe
+        WHERE oe.stay_id = {stay_id}
+        AND oe.itemid IN ({urine_items_str})
+        AND oe.value > 0
+    ),
+    weight_data AS (
+        SELECT ce.valuenum as weight_kg
+        FROM mimiciv_icu.chartevents ce
+        WHERE ce.stay_id = {stay_id}
+        AND ce.itemid IN ({weight_items_str})
+        AND ce.valueuom = 'kg'
+        ORDER BY ce.charttime
+        LIMIT 1
+    ),
+    stay_info AS (
+        SELECT intime, outtime
+        FROM mimiciv_icu.icustays
+        WHERE stay_id = {stay_id}
+    )
+    SELECT u.charttime, u.value, w.weight_kg, s.intime, s.outtime
+    FROM urine_output u
+    CROSS JOIN weight_data w
+    CROSS JOIN stay_info s
+    ORDER BY u.charttime
+    """
+    
+    try:
+        df = query_db(sql)
+    except Exception as e:
+        return None
+    
+    # Check if we have any data
+    if df.empty:
+        return None
+    
+    # Convert timestamps
+    df['charttime'] = pd.to_datetime(df['charttime'])
+    df['intime'] = pd.to_datetime(df['intime'])
+    df['outtime'] = pd.to_datetime(df['outtime'])
+    
+    weight_kg = df['weight_kg'].iloc[0]
+    intime = df['intime'].iloc[0]
+    outtime = df['outtime'].iloc[0]
+    
+    # Filter to ICU stay period
+    df = df[(df['charttime'] >= intime) & (df['charttime'] <= outtime)]
+    
+    # Check if we have any data after filtering
+    if df.empty:
+        return None
+    
+    # Calculate total urine output
+    total_urine_output = df['value'].sum()
+    
+    # Calculate hourly urine output rate based on time since previous record
+    df = df.sort_values('charttime').reset_index(drop=True)
+    df['time_diff_hours'] = df['charttime'].diff().dt.total_seconds() / 3600
+    df['hourly_rate_mL_kg_hr'] = (df['value'] / df['time_diff_hours']) / weight_kg
+    
+    # Get valid hourly rates (exclude first record which has NaN time_diff)
+    valid_rates = df['hourly_rate_mL_kg_hr'].dropna()
+    
+    # Calculate 6-hour rolling urine output rates
+    df_indexed = df.set_index('charttime')
+    df_hourly = df_indexed['value'].resample('h').sum().fillna(0)
+    df_hourly_6hr = df_hourly.rolling('6h').sum()
+    df_hourly_6hr_rate = (df_hourly_6hr / 6) / weight_kg
+    
+    # Build result dictionary with native Python types
+    result = {
+        'stay_id': int(stay_id),
+        'weight_kg': round(float(weight_kg), 2) if weight_kg is not None else None,
+        'total_urine_output_mL': round(float(total_urine_output), 2) if total_urine_output is not None else None,
+        'urine_output_records': int(len(df)),
+        'min_hourly_rate_mL_kg_hr': round(float(valid_rates.min()), 4) if len(valid_rates) > 0 else None,
+        'max_hourly_rate_mL_kg_hr': round(float(valid_rates.max()), 4) if len(valid_rates) > 0 else None,
+        'mean_hourly_rate_mL_kg_hr': round(float(valid_rates.mean()), 4) if len(valid_rates) > 0 else None,
+        'min_6hr_rate_mL_kg_hr': round(float(df_hourly_6hr_rate.min()), 4) if len(df_hourly_6hr_rate.dropna()) > 0 else None,
+        'has_oliguria': bool((valid_rates < 0.5).any()) if len(valid_rates) > 0 else False,
+        'has_severe_oliguria': bool((valid_rates < 0.3).any()) if len(valid_rates) > 0 else False,
+        'oliguria_periods': int((valid_rates < 0.5).sum()) if len(valid_rates) > 0 else 0,
+        'severe_oliguria_periods': int((valid_rates < 0.3).sum()) if len(valid_rates) > 0 else 0
+    }
+    
+    return result
+```
+
+## Test Results
+
+### Original Test Cases
+```
+get_urine_output_rate(37081114):
+{
+  'stay_id': 37081114,
+  'weight_kg': 55.3,
+  'total_urine_output_mL': 6717.0,
+  'urine_output_records': 71,
+  'min_hourly_rate_mL_kg_hr': 0.1356,
+  'max_hourly_rate_mL_kg_hr': 8.1374,
+  'mean_hourly_rate_mL_kg_hr': 1.5263,
+  'min_6hr_rate_mL_kg_hr': 0.217,
+  'has_oliguria': True,
+  'has_severe_oliguria': True,
+  'oliguria_periods': 21,
+  'severe_oliguria_periods': 9
+}
+```
+
+### QA Problematic Stay Tests (Step 15)
+| stay_id | Expected | Calculated | Match? |
+|---------|----------|------------|--------|
+| 35869404 | 1.1 | 0.7614 | NO (30.78% diff) |
+| 32047467 | 1.19 | 1.1896 | YES (0.03% diff) |
+| 39876701 | 0.298 | 0.2978 | YES (0.08% diff) |
+| 37704589 | 0.206 | 0.1724 | NO (16.30% diff) |
+
+### Edge Case Tests
+- Non-existent stay_id (99999999): Returns None ✓
+- Stay_id with urine but no weight (34603956): Returns None ✓
+
+## QA Investigation Findings
+
+### Rate Calculation Method
+- **Method**: Minimum hourly rate considering time gaps between records
+- **Formula**: `value / time_diff_hours / weight_kg`
+- This is the clinically appropriate method for calculating urine output rates
+
+### Key Findings from Steps 4-16
+1. **2 out of 4 problematic stays match exactly** using min_hourly_rate with time gaps:
+   - 32047467: 1.1896 vs 1.19 (0.03% diff) - Weight: 68.3 kg, 5 urine records
+   - 39876701: 0.2978 vs 0.298 (0.08% diff) - Weight: 52.0 kg, 3 urine records
+
+2. **2 stays have discrepancies** that could not be resolved:
+   - 35869404: 0.7614 vs 1.1 (30.78% diff) - Weight: 39.4 kg, 36 urine records, all Foley (226559)
+   - 37704589: 0.1724 vs 0.206 (16.30% diff) - Weight: 58.0/58.8/58.7 kg, 56 urine records, all Foley (226559)
+
+3. **Methods tested but not matching**:
+   - Percentiles (5th-30th) - 25th percentile for 35869404 is 1.1104 (close to expected 1.1)
+   - Gap filters (2h, 3h, 4h, 6h, 8h, 10h)
+   - Consecutive hourly rates only
+   - Rolling 6-hour windows
+   - Mean/median rates
+   - Different weight selections (admission, daily, closest to first urine, closest to min urine)
+   - Excluding first record
+
+4. **Detailed stay analysis**:
+   - **35869404**: Stay duration 44.42 hours, total urine 3972 mL, average rate 2.2696 mL/kg/hr. Min urine output 30 mL at 06:00. All records are Foley (226559).
+   - **37704589**: Stay duration ~74 hours, total urine 5470 mL. Multiple weight records (58.0, 58.8, 58.7 kg). All records are Foley (226559).
+
+5. **Conclusion**: The function correctly implements the minimum hourly rate with time gaps. Discrepancies in 2 stays may be due to different calculation methods in the QA system or data quality issues. The 25th percentile approach shows promise for 35869404 (1.1104 vs expected 1.1).
+
+## Error Fixes
+
+1. **Column name fix**: Changed `unit_name` to `unitname` in d_items table queries
+2. **SQL ambiguity fix**: Added table aliases (ce, di) to avoid ambiguous column references in JOIN queries
+3. **Pandas frequency fix**: Changed resample frequency from 'H' to 'h' (lowercase) for hourly resampling
+4. **Type conversion fix**: Added explicit float() and int() conversions to return native Python types instead of numpy types
+5. **Rounding fix**: Applied round() to float conversions for cleaner output
+

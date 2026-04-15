@@ -1,0 +1,173 @@
+=== Step 1 ===
+# Clinical Coding Agent Memory
+
+## Schema Facts
+
+### Tables & Columns
+- **mimiciv_hosp.patients**: subject_id (INTEGER), gender (VARCHAR), anchor_age (SMALLINT), anchor_year (SMALLINT), anchor_year_group (VARCHAR), dod (DATE)
+- **mimiciv_hosp.admissions**: subject_id (INTEGER), hadm_id (INTEGER), admittime (TIMESTAMP), dischtime (TIMESTAMP), deathtime (TIMESTAMP), admission_type (VARCHAR), admit_provider_id (VARCHAR), admission_location (VARCHAR), discharge_location (VARCHAR), insurance (VARCHAR), language (VARCHAR), marital_status (VARCHAR), race (VARCHAR), edregtime (TIMESTAMP), edouttime (TIMESTAMP), hospital_expire_flag (SMALLINT)
+- **mimiciv_icu.icustays**: stay_id (INTEGER), hadm_id (INTEGER)
+
+### Age Calculation Formula
+- Base: `anchor_age + (admission_year - anchor_year)` (integer years)
+- Precise: `anchor_age + days_diff / 365.25` where days_diff = days from Jan 1 of anchor_year to admission date
+- Expected values show small discrepancies (0.00002 to 0.0026) suggesting possible different divisor or anchor date
+
+## Function Source Code
+
+```python
+import pandas as pd
+
+def get_patient_age(subject_id=None, hadm_id=None, stay_id=None):
+    """
+    Calculate patient age at hospital admission.
+    
+    This function retrieves patient age information from the MIMIC-IV database
+    and calculates the age at the time of hospital admission.
+    
+    The age calculation uses the anchor_age and anchor_year from the patients
+    table, adjusted by the difference between the admission year and anchor year.
+    
+    Parameters
+    ----------
+    subject_id : int, optional
+        The patient's subject_id. If provided, returns age for all admissions.
+    hadm_id : int, optional
+        The hospital admission ID. If provided, returns age for that specific admission.
+    stay_id : int, optional
+        The ICU stay ID. If provided, returns age for the associated admission.
+    
+    Returns
+    -------
+    dict or list of dict or None
+        If a single admission is queried (hadm_id or stay_id), returns a dict with:
+        - 'subject_id': patient identifier (int)
+        - 'hadm_id': admission identifier (int)
+        - 'age_at_admission': calculated age in years (float)
+        - 'age_65_or_older': boolean indicating if age >= 65
+        - 'age_80_or_older': boolean indicating if age >= 80
+        
+        If subject_id is provided (multiple admissions), returns a list of dicts
+        with the same structure, ordered by admission time.
+        
+        Returns None if no matching patient/admission is found.
+    
+    Raises
+    ------
+    ValueError
+        If none of subject_id, hadm_id, or stay_id is provided.
+    
+    Examples
+    --------
+    >>> get_patient_age(hadm_id=22595853)
+    {'subject_id': 10000032, 'hadm_id': 22595853, 'age_at_admission': 52.0, 
+     'age_65_or_older': False, 'age_80_or_older': False}
+    
+    >>> get_patient_age(subject_id=10000032)
+    [{'subject_id': 10000032, 'hadm_id': 22595853, 'age_at_admission': 52.0, ...}, ...]
+    
+    >>> get_patient_age(stay_id=39553978)
+    {'subject_id': 10000032, 'hadm_id': 29079034, 'age_at_admission': 52.0, ...}
+    """
+    
+    # Build query based on input parameters
+    if stay_id is not None:
+        # First get hadm_id from stay_id
+        stay_query = query_db(f"""
+            SELECT hadm_id 
+            FROM mimiciv_icu.icustays 
+            WHERE stay_id = {stay_id}
+        """)
+        
+        if stay_query.empty:
+            return None
+        
+        hadm_id = stay_query.iloc[0]['hadm_id']
+    
+    if hadm_id is not None:
+        # Query for specific admission
+        df = query_db(f"""
+            SELECT 
+                p.subject_id,
+                a.hadm_id,
+                p.anchor_age + (EXTRACT(YEAR FROM a.admittime) - p.anchor_year) as age_at_admission
+            FROM mimiciv_hosp.patients p
+            JOIN mimiciv_hosp.admissions a ON p.subject_id = a.subject_id
+            WHERE a.hadm_id = {hadm_id}
+        """)
+        
+        if df.empty:
+            return None
+        
+        age = float(df.iloc[0]['age_at_admission'])
+        result = {
+            'subject_id': int(df.iloc[0]['subject_id']),
+            'hadm_id': int(df.iloc[0]['hadm_id']),
+            'age_at_admission': age,
+            'age_65_or_older': bool(age >= 65),
+            'age_80_or_older': bool(age >= 80)
+        }
+        return result
+    
+    elif subject_id is not None:
+        # Query for all admissions of a patient
+        df = query_db(f"""
+            SELECT 
+                p.subject_id,
+                a.hadm_id,
+                p.anchor_age + (EXTRACT(YEAR FROM a.admittime) - p.anchor_year) as age_at_admission
+            FROM mimiciv_hosp.patients p
+            JOIN mimiciv_hosp.admissions a ON p.subject_id = a.subject_id
+            WHERE p.subject_id = {subject_id}
+            ORDER BY a.admittime
+        """)
+        
+        if df.empty:
+            return None
+        
+        results = []
+        for _, row in df.iterrows():
+            age = float(row['age_at_admission'])
+            results.append({
+                'subject_id': int(row['subject_id']),
+                'hadm_id': int(row['hadm_id']),
+                'age_at_admission': age,
+                'age_65_or_older': bool(age >= 65),
+                'age_80_or_older': bool(age >= 80)
+            })
+        return results
+    
+    else:
+        raise ValueError("Must provide at least one of: subject_id, hadm_id, or stay_id")
+
+FINAL_FUNCTION = get_patient_age
+```
+
+## Test Results
+
+### Passed Tests (Steps 12-19)
+- `hadm_id=22595853`: age=52.0, age_65_or_older=False, age_80_or_older=False ✓
+- `hadm_id=23052089`: age=72.0, age_65_or_older=True, age_80_or_older=False ✓
+- `hadm_id=20642640`: age=81.0, age_65_or_older=True, age_80_or_older=True ✓
+- `hadm_id=23280645`: age=86.0, age_65_or_older=True, age_80_or_older=True ✓
+- `stay_id=39553978`: age=52.0 ✓
+- Non-existent IDs return None ✓
+
+### Error Fixes
+- Step 12: Changed `%s` parameter syntax to f-string interpolation (DuckDB doesn't support %s)
+- Step 14-16: Fixed table name from `mimiciv_icu.stays` to `mimiciv_icu.icustays`
+- Step 17: Added `bool()` conversion for age_65_or_older and age_80_or_older to avoid np.bool_
+
+### Ongoing Investigation (Steps 20-41)
+- Expected ages have decimal precision (e.g., 71.24925544038078)
+- Current formula: `anchor_age + days_diff / 365.25` (days from Jan 1 of anchor_year)
+- Discrepancies found:
+  - subject_id=11928785, hadm_id=29146600: diff=-0.0000205690
+  - subject_id=18901084, hadm_id=21298094: diff=-0.0023804508
+  - subject_id=12812999, hadm_id=21506375: diff=-0.0025973714
+  - subject_id=16036089, hadm_id=20187371: diff=-0.0007954814
+  - subject_id=16452004, hadm_id=25122330: diff=-0.0016077289
+- Tested divisors: 365.242199, 365.2422, 365.2425, 365.24219878, 365.24219, 365.24218
+- Best error with 365.25: total_error=0.0074016016
+- May need to investigate anchor date (not necessarily Jan 1) or different divisor
+

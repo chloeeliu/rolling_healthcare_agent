@@ -1,0 +1,47 @@
+{
+  "timestamp": "2026-03-25T03:44:07.631921",
+  "model": "Qwen/Qwen3.5-27B",
+  "db_path": "/home/v-tiossowski/MIMIC-IV/mimic4.db",
+  "qa_dataset": "/home/v-tiossowski/HealthcareAgent/mimic-code/data/MIMICIV_inflammation_dataset/inflammation.csv",
+  "match_threshold": 0.9,
+  "run_name": "inflammation",
+  "success": true,
+  "iterations": 61,
+  "qa_accuracy": 0.9,
+  "stats": {
+    "react": {
+      "prompt_tokens": 0,
+      "completion_tokens": 0,
+      "total_tokens": 0,
+      "llm_calls": 62,
+      "query_count": 64,
+      "query_time_sec": 1.654,
+      "wall_time_sec": 2302.841
+    },
+    "qa": {
+      "prompt_tokens": 97036,
+      "completion_tokens": 13226,
+      "total_tokens": 110262,
+      "llm_calls": 57,
+      "query_count": 30,
+      "query_time_sec": 0.684,
+      "eval_wall_time_sec": 130.779,
+      "per_question": {
+        "avg_prompt_tokens": 4851.8,
+        "avg_completion_tokens": 661.3,
+        "avg_llm_calls": 2.85,
+        "avg_query_count": 1.5,
+        "avg_query_time_sec": 0.034,
+        "avg_wall_time_sec": 6.539
+      }
+    },
+    "total": {
+      "prompt_tokens": 97036,
+      "completion_tokens": 13226,
+      "total_tokens": 110262,
+      "llm_calls": 119,
+      "query_count": 94,
+      "query_time_sec": 2.338
+    }
+  }
+}

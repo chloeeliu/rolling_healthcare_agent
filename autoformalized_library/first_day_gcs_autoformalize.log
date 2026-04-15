@@ -1,0 +1,1229 @@
+2026-03-25 19:49:17  INFO      Using database: /home/v-tiossowski/MIMIC-IV/mimic4.db
+2026-03-25 19:49:17  INFO      No --model_url provided; loading vLLM in-process …
+INFO 03-25 19:49:22 [utils.py:238] non-default args: {'trust_remote_code': True, 'max_model_len': 40000, 'disable_log_stats': True, 'model': 'Qwen/Qwen3.5-27B'}
+The argument `trust_remote_code` is to be used with Auto classes. It has no effect here and is ignored.
+The argument `trust_remote_code` is to be used with Auto classes. It has no effect here and is ignored.
+The argument `trust_remote_code` is to be used with Auto classes. It has no effect here and is ignored.
+INFO 03-25 19:49:22 [model.py:531] Resolved architecture: Qwen3_5ForConditionalGeneration
+INFO 03-25 19:49:22 [model.py:1554] Using max model len 40000
+INFO 03-25 19:49:22 [scheduler.py:231] Chunked prefill is enabled with max_num_batched_tokens=8192.
+INFO 03-25 19:49:24 [config.py:544] Setting attention block size to 784 tokens to ensure that attention page size is >= mamba page size.
+INFO 03-25 19:49:24 [config.py:575] Padding mamba page size by 0.13% to ensure that mamba page size and attention page size are exactly equal.
+INFO 03-25 19:49:24 [vllm.py:747] Asynchronous scheduling is enabled.
+WARNING 03-25 19:49:33 [system_utils.py:152] We must use the `spawn` multiprocessing start method. Overriding VLLM_WORKER_MULTIPROC_METHOD to 'spawn'. See https://docs.vllm.ai/en/latest/usage/troubleshooting.html#python-multiprocessing for more information. Reasons: CUDA is initialized
+(EngineCore_DP0 pid=118698) INFO 03-25 19:49:37 [core.py:101] Initializing a V1 LLM engine (v0.17.1) with config: model='Qwen/Qwen3.5-27B', speculative_config=None, tokenizer='Qwen/Qwen3.5-27B', skip_tokenizer_init=False, tokenizer_mode=auto, revision=None, tokenizer_revision=None, trust_remote_code=True, dtype=torch.bfloat16, max_seq_len=40000, download_dir=None, load_format=auto, tensor_parallel_size=1, pipeline_parallel_size=1, data_parallel_size=1, disable_custom_all_reduce=False, quantization=None, enforce_eager=False, enable_return_routed_experts=False, kv_cache_dtype=auto, device_config=cuda, structured_outputs_config=StructuredOutputsConfig(backend='auto', disable_fallback=False, disable_any_whitespace=False, disable_additional_properties=False, reasoning_parser='', reasoning_parser_plugin='', enable_in_reasoning=False), observability_config=ObservabilityConfig(show_hidden_metrics_for_version=None, otlp_traces_endpoint=None, collect_detailed_traces=None, kv_cache_metrics=False, kv_cache_metrics_sample=0.01, cudagraph_metrics=False, enable_layerwise_nvtx_tracing=False, enable_mfu_metrics=False, enable_mm_processor_stats=False, enable_logging_iteration_details=False), seed=0, served_model_name=Qwen/Qwen3.5-27B, enable_prefix_caching=False, enable_chunked_prefill=True, pooler_config=None, compilation_config={'level': None, 'mode': <CompilationMode.VLLM_COMPILE: 3>, 'debug_dump_path': None, 'cache_dir': '', 'compile_cache_save_format': 'binary', 'backend': 'inductor', 'custom_ops': ['none'], 'splitting_ops': ['vllm::unified_attention', 'vllm::unified_attention_with_output', 'vllm::unified_mla_attention', 'vllm::unified_mla_attention_with_output', 'vllm::mamba_mixer2', 'vllm::mamba_mixer', 'vllm::short_conv', 'vllm::linear_attention', 'vllm::plamo2_mamba_mixer', 'vllm::gdn_attention_core', 'vllm::kda_attention', 'vllm::sparse_attn_indexer', 'vllm::rocm_aiter_sparse_attn_indexer', 'vllm::unified_kv_cache_update', 'vllm::unified_mla_kv_cache_update'], 'compile_mm_encoder': False, 'compile_sizes': [], 'compile_ranges_split_points': [8192], 'inductor_compile_config': {'enable_auto_functionalized_v2': False, 'combo_kernels': True, 'benchmark_combo_kernel': True}, 'inductor_passes': {}, 'cudagraph_mode': <CUDAGraphMode.FULL_AND_PIECEWISE: (2, 1)>, 'cudagraph_num_of_warmups': 1, 'cudagraph_capture_sizes': [1, 2, 4, 8, 16, 24, 32, 40, 48, 56, 64, 72, 80, 88, 96, 104, 112, 120, 128, 136, 144, 152, 160, 168, 176, 184, 192, 200, 208, 216, 224, 232, 240, 248, 256, 272, 288, 304, 320, 336, 352, 368, 384, 400, 416, 432, 448, 464, 480, 496, 512], 'cudagraph_copy_inputs': False, 'cudagraph_specialize_lora': True, 'use_inductor_graph_partition': False, 'pass_config': {'fuse_norm_quant': False, 'fuse_act_quant': False, 'fuse_attn_quant': False, 'enable_sp': False, 'fuse_gemm_comms': False, 'fuse_allreduce_rms': False}, 'max_cudagraph_capture_size': 512, 'dynamic_shapes_config': {'type': <DynamicShapesType.BACKED: 'backed'>, 'evaluate_guards': False, 'assume_32_bit_indexing': False}, 'local_cache_dir': None, 'fast_moe_cold_start': True, 'static_all_moe_layers': []}
+(EngineCore_DP0 pid=118698) INFO 03-25 19:49:40 [parallel_state.py:1393] world_size=1 rank=0 local_rank=0 distributed_init_method=tcp://10.8.144.167:50799 backend=nccl
+(EngineCore_DP0 pid=118698) INFO 03-25 19:49:40 [parallel_state.py:1715] rank 0 in world size 1 is assigned as DP rank 0, PP rank 0, PCP rank 0, TP rank 0, EP rank N/A, EPLB rank N/A
+(EngineCore_DP0 pid=118698) INFO 03-25 19:49:48 [base.py:106] Offloader set to NoopOffloader
+(EngineCore_DP0 pid=118698) INFO 03-25 19:49:48 [gpu_model_runner.py:4281] Starting to load model Qwen/Qwen3.5-27B...
+(EngineCore_DP0 pid=118698) INFO 03-25 19:49:48 [cuda.py:453] Using backend AttentionBackendEnum.FLASH_ATTN for vit attention
+(EngineCore_DP0 pid=118698) INFO 03-25 19:49:48 [mm_encoder_attention.py:215] Using AttentionBackendEnum.FLASH_ATTN for MMEncoderAttention.
+(EngineCore_DP0 pid=118698) INFO 03-25 19:49:49 [cuda.py:405] Using FLASH_ATTN attention backend out of potential backends: ['FLASH_ATTN', 'FLASHINFER', 'TRITON_ATTN', 'FLEX_ATTENTION'].
+(EngineCore_DP0 pid=118698) INFO 03-25 19:49:49 [flash_attn.py:587] Using FlashAttention version 2
+(EngineCore_DP0 pid=118698) <frozen importlib._bootstrap_external>:1301: FutureWarning: The cuda.cudart module is deprecated and will be removed in a future release, please switch to use the cuda.bindings.runtime module instead.
+(EngineCore_DP0 pid=118698) <frozen importlib._bootstrap_external>:1301: FutureWarning: The cuda.nvrtc module is deprecated and will be removed in a future release, please switch to use the cuda.bindings.nvrtc module instead.
+(EngineCore_DP0 pid=118698) Loading safetensors checkpoint shards:   0% Completed | 0/11 [00:00<?, ?it/s]
+(EngineCore_DP0 pid=118698) Loading safetensors checkpoint shards:   9% Completed | 1/11 [00:00<00:05,  1.89it/s]
+(EngineCore_DP0 pid=118698) Loading safetensors checkpoint shards:  18% Completed | 2/11 [00:01<00:05,  1.67it/s]
+(EngineCore_DP0 pid=118698) Loading safetensors checkpoint shards:  27% Completed | 3/11 [00:01<00:05,  1.57it/s]
+(EngineCore_DP0 pid=118698) Loading safetensors checkpoint shards:  36% Completed | 4/11 [00:02<00:04,  1.51it/s]
+(EngineCore_DP0 pid=118698) Loading safetensors checkpoint shards:  45% Completed | 5/11 [00:03<00:04,  1.47it/s]
+(EngineCore_DP0 pid=118698) Loading safetensors checkpoint shards:  55% Completed | 6/11 [00:03<00:03,  1.46it/s]
+(EngineCore_DP0 pid=118698) Loading safetensors checkpoint shards:  64% Completed | 7/11 [00:04<00:02,  1.44it/s]
+(EngineCore_DP0 pid=118698) Loading safetensors checkpoint shards:  73% Completed | 8/11 [00:05<00:02,  1.44it/s]
+(EngineCore_DP0 pid=118698) Loading safetensors checkpoint shards:  82% Completed | 9/11 [00:06<00:01,  1.44it/s]
+(EngineCore_DP0 pid=118698) Loading safetensors checkpoint shards:  91% Completed | 10/11 [00:06<00:00,  1.44it/s]
+(EngineCore_DP0 pid=118698) Loading safetensors checkpoint shards: 100% Completed | 11/11 [00:07<00:00,  1.61it/s]
+(EngineCore_DP0 pid=118698) Loading safetensors checkpoint shards: 100% Completed | 11/11 [00:07<00:00,  1.52it/s]
+(EngineCore_DP0 pid=118698) 
+(EngineCore_DP0 pid=118698) INFO 03-25 19:49:57 [default_loader.py:293] Loading weights took 7.28 seconds
+(EngineCore_DP0 pid=118698) INFO 03-25 19:49:57 [gpu_model_runner.py:4364] Model loading took 51.1 GiB memory and 8.561803 seconds
+(EngineCore_DP0 pid=118698) INFO 03-25 19:49:57 [gpu_model_runner.py:5280] Encoder cache will be initialized with a budget of 16384 tokens, and profiled with 1 image items of the maximum feature size.
+(EngineCore_DP0 pid=118698) INFO 03-25 19:50:06 [decorators.py:465] Directly load AOT compilation from path /home/v-tiossowski/.cache/vllm/torch_compile_cache/torch_aot_compile/0232891e22bd4d7db98ac2f43c441f0f81d0a431216053ca49fadeaff23e2af3/rank_0_0/model
+(EngineCore_DP0 pid=118698) INFO 03-25 19:50:06 [backends.py:916] Using cache directory: /home/v-tiossowski/.cache/vllm/torch_compile_cache/feaf61af16/rank_0_0/backbone for vLLM's torch.compile
+(EngineCore_DP0 pid=118698) INFO 03-25 19:50:06 [backends.py:976] Dynamo bytecode transform time: 3.60 s
+(EngineCore_DP0 pid=118698) INFO 03-25 19:50:16 [backends.py:266] Directly load the compiled graph(s) for compile range (1, 8192) from the cache, took 9.375 s
+(EngineCore_DP0 pid=118698) INFO 03-25 19:50:16 [monitor.py:35] torch.compile takes 13.86 s in total
+(EngineCore_DP0 pid=118698) INFO 03-25 19:50:17 [gpu_worker.py:424] Available KV cache memory: 18.3 GiB
+(EngineCore_DP0 pid=118698) INFO 03-25 19:50:17 [kv_cache_utils.py:1314] GPU KV cache size: 74,480 tokens
+(EngineCore_DP0 pid=118698) INFO 03-25 19:50:17 [kv_cache_utils.py:1319] Maximum concurrency for 40,000 tokens per request: 6.95x
+(EngineCore_DP0 pid=118698) Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):   0%|          | 0/51 [00:00<?, ?it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):   2%|▏         | 1/51 [00:00<00:08,  5.80it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):   4%|▍         | 2/51 [00:00<00:08,  5.93it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):   6%|▌         | 3/51 [00:00<00:07,  6.05it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):   8%|▊         | 4/51 [00:00<00:07,  6.09it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  10%|▉         | 5/51 [00:00<00:07,  6.14it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  12%|█▏        | 6/51 [00:00<00:07,  6.18it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  14%|█▎        | 7/51 [00:01<00:07,  6.19it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  16%|█▌        | 8/51 [00:01<00:06,  6.19it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  18%|█▊        | 9/51 [00:01<00:06,  6.45it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  20%|█▉        | 10/51 [00:01<00:06,  6.73it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  22%|██▏       | 11/51 [00:01<00:05,  6.71it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  24%|██▎       | 12/51 [00:01<00:05,  6.86it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  25%|██▌       | 13/51 [00:02<00:05,  6.96it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  27%|██▋       | 14/51 [00:02<00:05,  7.07it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  29%|██▉       | 15/51 [00:02<00:05,  7.19it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  31%|███▏      | 16/51 [00:02<00:04,  7.30it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  33%|███▎      | 17/51 [00:02<00:04,  7.63it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  35%|███▌      | 18/51 [00:02<00:04,  7.91it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  37%|███▋      | 19/51 [00:02<00:03,  8.08it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  39%|███▉      | 20/51 [00:02<00:03,  8.22it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  41%|████      | 21/51 [00:02<00:03,  8.32it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  43%|████▎     | 22/51 [00:03<00:03,  8.32it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  45%|████▌     | 23/51 [00:03<00:03,  8.40it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  47%|████▋     | 24/51 [00:03<00:03,  8.46it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  49%|████▉     | 25/51 [00:03<00:03,  8.51it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  51%|█████     | 26/51 [00:03<00:02,  8.55it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  53%|█████▎    | 27/51 [00:03<00:02,  8.54it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  55%|█████▍    | 28/51 [00:03<00:02,  8.49it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  57%|█████▋    | 29/51 [00:03<00:02,  8.57it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  59%|█████▉    | 30/51 [00:04<00:02,  8.59it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  61%|██████    | 31/51 [00:04<00:02,  8.62it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  63%|██████▎   | 32/51 [00:04<00:02,  8.64it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  65%|██████▍   | 33/51 [00:04<00:02,  8.95it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  67%|██████▋   | 34/51 [00:04<00:01,  9.14it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  69%|██████▊   | 35/51 [00:04<00:01,  9.34it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  73%|███████▎  | 37/51 [00:04<00:01,  9.64it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  75%|███████▍  | 38/51 [00:04<00:01,  9.72it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  78%|███████▊  | 40/51 [00:05<00:01,  9.77it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  82%|████████▏ | 42/51 [00:05<00:00,  9.97it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  86%|████████▋ | 44/51 [00:05<00:00, 10.16it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  90%|█████████ | 46/51 [00:05<00:00, 10.37it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  94%|█████████▍| 48/51 [00:05<00:00, 10.64it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  98%|█████████▊| 50/51 [00:06<00:00, 10.76it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE): 100%|██████████| 51/51 [00:06<00:00,  8.34it/s]
+(EngineCore_DP0 pid=118698) Capturing CUDA graphs (decode, FULL):   0%|          | 0/35 [00:00<?, ?it/s]Capturing CUDA graphs (decode, FULL):   3%|▎         | 1/35 [00:00<00:05,  5.72it/s]Capturing CUDA graphs (decode, FULL):   6%|▌         | 2/35 [00:00<00:05,  6.22it/s]Capturing CUDA graphs (decode, FULL):   9%|▊         | 3/35 [00:00<00:04,  6.42it/s]Capturing CUDA graphs (decode, FULL):  11%|█▏        | 4/35 [00:00<00:04,  6.55it/s]Capturing CUDA graphs (decode, FULL):  14%|█▍        | 5/35 [00:00<00:04,  6.61it/s]Capturing CUDA graphs (decode, FULL):  17%|█▋        | 6/35 [00:00<00:04,  6.70it/s]Capturing CUDA graphs (decode, FULL):  20%|██        | 7/35 [00:01<00:04,  6.72it/s]Capturing CUDA graphs (decode, FULL):  23%|██▎       | 8/35 [00:01<00:03,  6.80it/s]Capturing CUDA graphs (decode, FULL):  26%|██▌       | 9/35 [00:01<00:03,  6.88it/s]Capturing CUDA graphs (decode, FULL):  29%|██▊       | 10/35 [00:01<00:03,  6.94it/s]Capturing CUDA graphs (decode, FULL):  31%|███▏      | 11/35 [00:01<00:03,  6.97it/s]Capturing CUDA graphs (decode, FULL):  34%|███▍      | 12/35 [00:01<00:03,  6.98it/s]Capturing CUDA graphs (decode, FULL):  37%|███▋      | 13/35 [00:01<00:03,  7.00it/s]Capturing CUDA graphs (decode, FULL):  40%|████      | 14/35 [00:02<00:02,  7.07it/s]Capturing CUDA graphs (decode, FULL):  43%|████▎     | 15/35 [00:02<00:02,  7.15it/s]Capturing CUDA graphs (decode, FULL):  46%|████▌     | 16/35 [00:02<00:02,  7.23it/s]Capturing CUDA graphs (decode, FULL):  49%|████▊     | 17/35 [00:02<00:02,  7.50it/s]Capturing CUDA graphs (decode, FULL):  51%|█████▏    | 18/35 [00:02<00:02,  7.75it/s]Capturing CUDA graphs (decode, FULL):  54%|█████▍    | 19/35 [00:02<00:02,  7.97it/s]Capturing CUDA graphs (decode, FULL):  57%|█████▋    | 20/35 [00:02<00:01,  8.16it/s]Capturing CUDA graphs (decode, FULL):  60%|██████    | 21/35 [00:02<00:01,  8.29it/s]Capturing CUDA graphs (decode, FULL):  63%|██████▎   | 22/35 [00:03<00:01,  8.34it/s]Capturing CUDA graphs (decode, FULL):  66%|██████▌   | 23/35 [00:03<00:01,  8.45it/s]Capturing CUDA graphs (decode, FULL):  69%|██████▊   | 24/35 [00:03<00:01,  8.54it/s]Capturing CUDA graphs (decode, FULL):  71%|███████▏  | 25/35 [00:03<00:01,  8.69it/s]Capturing CUDA graphs (decode, FULL):  74%|███████▍  | 26/35 [00:03<00:01,  8.85it/s]Capturing CUDA graphs (decode, FULL):  77%|███████▋  | 27/35 [00:03<00:00,  8.93it/s]Capturing CUDA graphs (decode, FULL):  80%|████████  | 28/35 [00:03<00:00,  8.91it/s]Capturing CUDA graphs (decode, FULL):  83%|████████▎ | 29/35 [00:03<00:00,  8.99it/s]Capturing CUDA graphs (decode, FULL):  86%|████████▌ | 30/35 [00:03<00:00,  8.98it/s]Capturing CUDA graphs (decode, FULL):  89%|████████▊ | 31/35 [00:04<00:00,  9.07it/s]Capturing CUDA graphs (decode, FULL):  91%|█████████▏| 32/35 [00:04<00:00,  9.16it/s]Capturing CUDA graphs (decode, FULL):  94%|█████████▍| 33/35 [00:04<00:00,  9.22it/s]Capturing CUDA graphs (decode, FULL):  97%|█████████▋| 34/35 [00:04<00:00,  9.23it/s]Capturing CUDA graphs (decode, FULL): 100%|██████████| 35/35 [00:04<00:00,  9.39it/s]Capturing CUDA graphs (decode, FULL): 100%|██████████| 35/35 [00:04<00:00,  7.85it/s]
+(EngineCore_DP0 pid=118698) INFO 03-25 19:50:29 [gpu_model_runner.py:5386] Graph capturing finished in 11 secs, took 1.13 GiB
+(EngineCore_DP0 pid=118698) INFO 03-25 19:50:29 [core.py:282] init engine (profile, create kv cache, warmup model) took 31.29 seconds
+(EngineCore_DP0 pid=118698) INFO 03-25 19:50:29 [vllm.py:747] Asynchronous scheduling is enabled.
+INFO 03-25 19:50:29 [llm.py:388] Supported tasks: ['generate']
+2026-03-25 19:50:29  INFO      Loading QA dataset from /home/v-tiossowski/HealthcareAgent/mimic-code/data/MIMICIV_first_day_gcs_dataset/first_day_gcs.csv
+2026-03-25 19:50:29  INFO      Dataset: 1000 rows, columns: ['subject_id', 'hadm_id', 'stay_id', 'intime', 'outtime', 'first_careunit', 'last_careunit', 'gt_label', 'question', 'gt_answer_type', 'split', 'gcs_min', 'gcs_motor', 'gcs_verbal', 'gcs_eyes']
+2026-03-25 19:50:29  INFO      Filtered to train split: 100 rows
+2026-03-25 19:50:29  INFO      Auto-discovered ground-truth SQL: /home/v-tiossowski/HealthcareAgent/mimic-code/mimic-iv/concepts_duckdb/firstday/first_day_gcs.sql
+2026-03-25 19:50:29  INFO      === Iteration 1/100  run=first_day_gcs  best_qa=0.0% ===
+INFO 03-25 19:50:32 [hf.py:318] Detected the chat template content format to be 'string'. You can set `--chat-template-content-format` to override this.
+2026-03-25 19:50:46  INFO      Exec block 1/1 …
+2026-03-25 19:50:46  INFO      Output: []
+
+2026-03-25 19:50:46  INFO      === Iteration 2/100  run=first_day_gcs  best_qa=0.0% ===
+2026-03-25 19:50:48  INFO      Exec block 1/1 …
+2026-03-25 19:50:48  INFO      Output: ['coma_altered_consciousness_icu_guideline']
+
+2026-03-25 19:50:48  INFO      === Iteration 3/100  run=first_day_gcs  best_qa=0.0% ===
+2026-03-25 19:50:51  INFO      Exec block 1/1 …
+2026-03-25 19:50:51  INFO      Output: '# coma altered consciousness ICU — Clinical Guideline\n# Generated by generate_guidelines.py\n# Source articles: 0 (none — generated from training knowledge)\n############################################################\n\n# Clinical Guideline: Assessment of Coma and Altered Consciousness in the ICU\n\n> **Source Note:** No PubMed/PMC articles were retrieved for this query. The entire guideline is generated from training knowledge and should be treated as **[training knowledge]** throughout. Al
+2026-03-25 19:50:51  INFO      === Iteration 4/100  run=first_day_gcs  best_qa=0.0% ===
+2026-03-25 19:50:54  INFO      Exec block 1/1 …
+2026-03-25 19:50:54  INFO      Output: ['acei', 'age', 'antibiotic', 'arb', 'bg', 'blood_differential', 'cardiac_marker', 'charlson', 'chemistry', 'coagulation', 'code_status', 'complete_blood_count', 'creatinine_baseline', 'crrt', 'dobutamine', 'dopamine', 'enzyme', 'epinephrine', 'first_day_bg', 'first_day_bg_art', '... (22 more; pass a keyword to filter)']
+
+2026-03-25 19:50:54  INFO      === Iteration 5/100  run=first_day_gcs  best_qa=0.0% ===
+2026-03-25 19:50:57  INFO      Exec block 1/1 …
+2026-03-25 19:50:57  INFO      Output: ['gcs']
+
+2026-03-25 19:50:57  INFO      === Iteration 6/100  run=first_day_gcs  best_qa=0.0% ===
+2026-03-25 19:51:00  INFO      Exec block 1/1 …
+2026-03-25 19:51:00  INFO      Output: 'def gcs(stay_id):\n    """\n    Extract Glasgow Coma Scale (GCS) information for a patient\'s ICU stay.\n\n    This function retrieves all GCS component scores (Eye Opening, Verbal Response,\n    Motor Response) recorded during an ICU stay and calculates the total GCS score.\n\n    The primary numerical output is the minimum GCS score when the patient was\n    not intubated (verbal response > 1), as intubation artificially lowers GCS.\n\n    Parameters\n    ----------\n    stay_id : int\n      
+2026-03-25 19:51:00  INFO      === Iteration 7/100  run=first_day_gcs  best_qa=0.0% ===
+2026-03-25 19:51:04  INFO      Exec block 1/1 …
+2026-03-25 19:51:04  INFO      Output: ['first_day_bg', 'first_day_bg_art']
+
+2026-03-25 19:51:04  INFO      === Iteration 8/100  run=first_day_gcs  best_qa=0.0% ===
+2026-03-25 19:51:08  INFO      Exec block 1/1 …
+2026-03-25 19:51:08  INFO      Output: 'def first_day_bg(stay_id, subject_id, hadm_id):\n    """\n    Extract blood gas information for the first day of an ICU stay.\n\n    This function retrieves blood gas measurements (lactate, pH) from both \n    chartevents (ICU) and labevents (hospital) tables for the period from \n    hospital admission to 24 hours after ICU admission.\n\n    Parameters\n    ----------\n    stay_id : int, optional\n        The ICU stay ID. If provided, returns data for that specific stay.\n    subject_id : int,
+2026-03-25 19:51:08  INFO      === Iteration 9/100  run=first_day_gcs  best_qa=0.0% ===
+2026-03-25 19:51:13  INFO      Exec block 1/1 …
+2026-03-25 19:51:13  INFO      Output:      column_name  data_type
+0     subject_id    INTEGER
+1        hadm_id    INTEGER
+2        stay_id    INTEGER
+3   caregiver_id    INTEGER
+4      charttime  TIMESTAMP
+5      storetime  TIMESTAMP
+6         itemid    INTEGER
+7          value    VARCHAR
+8       valuenum      FLOAT
+9       valueuom    VARCHAR
+10       warning   SMALLINT
+
+2026-03-25 19:51:13  INFO      === Iteration 10/100  run=first_day_gcs  best_qa=0.0% ===
+2026-03-25 19:51:19  INFO      Exec block 1/1 …
+2026-03-25 19:51:19  INFO      Output:     itemid                               label                category unitname
+0   225184                            Eye Care              Treatments      NaN
+1   220739                   GCS - Eye Opening            Neurological      NaN
+2   223901                GCS - Motor Response            Neurological      NaN
+3   223900               GCS - Verbal Response            Neurological      NaN
+4   226756                 GCSEyeApacheIIValue      Scores - APACHE II      NaN
+5   227011          
+2026-03-25 19:51:19  INFO      === Iteration 11/100  run=first_day_gcs  best_qa=0.0% ===
+2026-03-25 19:51:26  INFO      Exec block 1/1 …
+2026-03-25 19:51:26  INFO      Output: Empty DataFrame
+Columns: [column_name, data_type]
+Index: []
+
+2026-03-25 19:51:26  INFO      === Iteration 12/100  run=first_day_gcs  best_qa=0.0% ===
+2026-03-25 19:51:31  INFO      Exec block 1/1 …
+2026-03-25 19:51:31  INFO      Output:          table_name
+0         caregiver
+1       chartevents
+2           d_items
+3    datetimeevents
+4          icustays
+5  ingredientevents
+6       inputevents
+7      outputevents
+8   procedureevents
+
+2026-03-25 19:51:31  INFO      === Iteration 13/100  run=first_day_gcs  best_qa=0.0% ===
+2026-03-25 19:51:36  INFO      Exec block 1/1 …
+2026-03-25 19:51:36  INFO      Output:       column_name  data_type
+0      subject_id    INTEGER
+1         hadm_id    INTEGER
+2         stay_id    INTEGER
+3  first_careunit    VARCHAR
+4   last_careunit    VARCHAR
+5          intime  TIMESTAMP
+6         outtime  TIMESTAMP
+7             los      FLOAT
+
+2026-03-25 19:51:36  INFO      === Iteration 14/100  run=first_day_gcs  best_qa=0.0% ===
+2026-03-25 19:51:43  INFO      Exec block 1/1 …
+2026-03-25 19:51:43  INFO      Output:     itemid           charttime            value  valuenum                  label
+0   220739 2110-01-11 13:00:00             None       1.0      GCS - Eye Opening
+1   223901 2110-01-11 13:00:00      No response       1.0   GCS - Motor Response
+2   223900 2110-01-11 13:00:00  No Response-ETT       1.0  GCS - Verbal Response
+3   223901 2110-01-11 16:00:00   Obeys Commands       6.0   GCS - Motor Response
+4   220739 2110-01-11 16:00:00        To Speech       3.0      GCS - Eye Opening
+5   223900 211
+2026-03-25 19:51:43  INFO      === Iteration 15/100  run=first_day_gcs  best_qa=0.0% ===
+2026-03-25 19:51:53  INFO      Exec block 1/1 …
+2026-03-25 19:51:53  INFO      Output: "Functions from 'gcs' loaded successfully."
+
+2026-03-25 19:51:53  INFO      === Iteration 16/100  run=first_day_gcs  best_qa=0.0% ===
+2026-03-25 19:52:01  INFO      Exec block 1/1 …
+2026-03-25 19:52:01  INFO      Output:     stay_id  subject_id   hadm_id              intime
+0  39553978    10000032  29079034 2180-07-23 14:00:00
+1  37081114    10000690  25860671 2150-11-02 19:37:00
+2  39765666    10000980  26913865 2189-06-27 08:42:00
+3  37067082    10001217  24597018 2157-11-20 19:18:02
+4  34592300    10001217  27703517 2157-12-19 15:42:24
+
+2026-03-25 19:52:01  INFO      === Iteration 17/100  run=first_day_gcs  best_qa=0.0% ===
+2026-03-25 19:52:05  INFO      Exec block 1/1 …
+2026-03-25 19:52:05  INFO      Output: {'stay_id': 39553978, 'subject_id': np.int32(10000032), 'hadm_id': np.int32(29079034), 'gcs_records':             charttime  eye  verbal  motor  gcs_total
+0 2180-07-23 14:45:00  4.0     4.0    6.0       14.0
+1 2180-07-23 18:22:00  4.0     5.0    6.0       15.0
+2 2180-07-23 20:00:00  4.0     5.0    6.0       15.0, 'min_gcs': np.float32(14.0), 'min_gcs_all': np.float32(14.0), 'max_gcs': np.float32(15.0), 'has_severe_impairment': np.False_, 'has_verbal_unresponsive': np.False_, 'first_gcs_time': Ti
+2026-03-25 19:52:05  INFO      === Iteration 18/100  run=first_day_gcs  best_qa=0.0% ===
+2026-03-25 19:52:13  INFO      Exec block 1/1 …
+2026-03-25 19:52:13  INFO      Output: "Functions from 'first_day_bg' loaded successfully."
+
+2026-03-25 19:52:13  INFO      === Iteration 19/100  run=first_day_gcs  best_qa=0.0% ===
+2026-03-25 19:52:21  INFO      Exec block 1/1 …
+2026-03-25 19:52:21  INFO      Output: {'stay_id': 39553978, 'subject_id': 10000032, 'hadm_id': 29079034, 'intime': '2180-07-23 14:00:00', 'first_lactate': None, 'first_pH': None, 'has_elevated_lactate': False, 'has_acidosis': False, 'has_severe_acidosis': False, 'lactate_measurements': [], 'ph_measurements': []}
+
+2026-03-25 19:52:21  INFO      === Iteration 20/100  run=first_day_gcs  best_qa=0.0% ===
+2026-03-25 19:52:31  INFO      Exec block 1/1 …
+2026-03-25 19:52:31  INFO      Output:     stay_id  subject_id   hadm_id              intime       first_day_end
+0  39553978    10000032  29079034 2180-07-23 14:00:00 2180-07-24 14:00:00
+
+2026-03-25 19:52:31  INFO      === Iteration 21/100  run=first_day_gcs  best_qa=0.0% ===
+2026-03-25 19:52:49  INFO      Exec block 1/1 …
+2026-03-25 19:52:49  INFO      Output:             charttime  eye  verbal  motor  gcs_total
+0 2180-07-23 14:45:00  4.0     4.0    6.0       14.0
+1 2180-07-23 18:22:00  4.0     5.0    6.0       15.0
+2 2180-07-23 20:00:00  4.0     5.0    6.0       15.0
+
+2026-03-25 19:52:49  INFO      === Iteration 22/100  run=first_day_gcs  best_qa=0.0% ===
+2026-03-25 19:52:58  INFO      Exec block 1/1 …
+2026-03-25 19:52:58  INFO      Output:     stay_id  subject_id   hadm_id              intime
+0  37081114    10000690  25860671 2150-11-02 19:37:00
+
+2026-03-25 19:52:58  INFO      === Iteration 23/100  run=first_day_gcs  best_qa=0.0% ===
+2026-03-25 19:53:03  INFO      Exec block 1/1 …
+2026-03-25 19:53:03  INFO      Output: {'stay_id': 37081114, 'subject_id': np.int32(10000690), 'hadm_id': np.int32(25860671), 'gcs_records':              charttime  eye  verbal  motor  gcs_total
+0  2150-11-02 20:28:00  4.0     5.0    6.0       15.0
+1  2150-11-03 00:50:00  4.0     5.0    6.0       15.0
+2  2150-11-03 04:38:00  4.0     5.0    6.0       15.0
+3  2150-11-03 08:00:00  4.0     4.0    6.0       14.0
+4  2150-11-03 12:00:00  4.0     4.0    5.0       13.0
+5  2150-11-03 16:00:00  3.0     4.0    5.0       12.0
+6  2150-11-03 20:00:
+2026-03-25 19:53:03  INFO      === Iteration 24/100  run=first_day_gcs  best_qa=0.0% ===
+2026-03-25 19:53:25  INFO      Exec block 1/1 …
+2026-03-25 19:53:26  INFO      Output:     stay_id           charttime  gcs_total       time_diff
+0  37989934 2136-11-16 19:00:00        3.0 0 days 18:01:00
+1  34603895 2136-10-04 05:00:00        3.0 0 days 00:22:22
+2  37989934 2136-11-16 20:00:00        3.0 0 days 19:01:00
+3  32839318 2123-02-18 16:35:00        3.0 0 days 01:54:00
+4  32622708 2183-07-20 12:00:00        3.0 0 days 10:46:55
+5  37989934 2136-11-16 02:00:00        3.0 0 days 01:01:00
+6  33092548 2149-05-04 00:00:00        3.0 0 days 12:00:35
+7  37069142 2122-09-26 16:00
+2026-03-25 19:53:26  INFO      === Iteration 25/100  run=first_day_gcs  best_qa=0.0% ===
+2026-03-25 19:53:32  INFO      Exec block 1/1 …
+2026-03-25 19:53:32  INFO      Output: {'stay_id': 37989934, 'subject_id': np.int32(11051867), 'hadm_id': np.int32(25012347), 'gcs_records':              charttime  eye  verbal  motor  gcs_total
+0  2136-11-16 02:00:00  1.0     1.0    1.0        3.0
+1  2136-11-16 03:00:00  1.0     1.0    1.0        3.0
+2  2136-11-16 04:00:00  1.0     1.0    1.0        3.0
+3  2136-11-16 05:00:00  1.0     1.0    1.0        3.0
+4  2136-11-16 06:00:00  1.0     1.0    1.0        3.0
+5  2136-11-16 07:00:00  1.0     1.0    1.0        3.0
+6  2136-11-16 08:00:
+2026-03-25 19:53:32  INFO      === Iteration 26/100  run=first_day_gcs  best_qa=0.0% ===
+2026-03-25 19:55:08  INFO      Exec block 1/1 …
+2026-03-25 19:55:08  INFO      Output: {'stay_id': 37989934, 'subject_id': np.int32(11051867), 'hadm_id': np.int32(25012347), 'intime': '2136-11-16 00:59:00', 'first_day_end': '2136-11-17 00:59:00', 'first_day_gcs_records':              charttime  eye  verbal  motor  gcs_total
+0  2136-11-16 02:00:00  1.0     1.0    1.0        3.0
+1  2136-11-16 03:00:00  1.0     1.0    1.0        3.0
+2  2136-11-16 04:00:00  1.0     1.0    1.0        3.0
+3  2136-11-16 05:00:00  1.0     1.0    1.0        3.0
+4  2136-11-16 06:00:00  1.0     1.0    1.0   
+2026-03-25 19:55:08  INFO      === Iteration 27/100  run=first_day_gcs  best_qa=0.0% ===
+2026-03-25 19:55:18  INFO      Exec block 1/1 …
+2026-03-25 19:55:18  INFO      Output: Patient 39553978 (normal GCS):
+{'stay_id': 39553978, 'subject_id': np.int32(10000032), 'hadm_id': np.int32(29079034), 'intime': '2180-07-23 14:00:00', 'first_day_end': '2180-07-24 14:00:00', 'first_day_gcs_records':             charttime  eye  verbal  motor  gcs_total
+0 2180-07-23 14:45:00  4.0     4.0    6.0       14.0
+1 2180-07-23 18:22:00  4.0     5.0    6.0       15.0
+2 2180-07-23 20:00:00  4.0     5.0    6.0       15.0, 'min_gcs_first_day': 14.0, 'min_gcs_first_day_all': 14.0, 'max_gcs_firs
+2026-03-25 19:55:18  INFO      === Iteration 28/100  run=first_day_gcs  best_qa=0.0% ===
+2026-03-25 19:55:26  INFO      Exec block 1/1 …
+2026-03-25 19:55:26  INFO      Output: Patient 37081114:
+{'stay_id': 37081114, 'subject_id': np.int32(10000690), 'hadm_id': np.int32(25860671), 'intime': '2150-11-02 19:37:00', 'first_day_end': '2150-11-03 19:37:00', 'first_day_gcs_records':             charttime  eye  verbal  motor  gcs_total
+0 2150-11-02 20:28:00  4.0     5.0    6.0       15.0
+1 2150-11-03 00:50:00  4.0     5.0    6.0       15.0
+2 2150-11-03 04:38:00  4.0     5.0    6.0       15.0
+3 2150-11-03 08:00:00  4.0     4.0    6.0       14.0
+4 2150-11-03 12:00:00  4.0     4
+2026-03-25 19:55:26  INFO      === Iteration 29/100  run=first_day_gcs  best_qa=0.0% ===
+2026-03-25 19:55:39  INFO      Exec block 1/1 …
+2026-03-25 19:55:39  INFO      Output:     stay_id  subject_id   hadm_id              intime
+0  37743005    10050755  20050796 2134-02-26 01:03:02
+1  36438063    10052938  25231169 2189-05-04 10:54:52
+2  39701064    10091724  27974453 2126-01-11 09:08:59
+3  33581507    10156159  22244108 2171-09-22 22:39:01
+4  38341975    10165963  21801344 2158-12-28 02:30:33
+
+2026-03-25 19:55:39  INFO      === Iteration 30/100  run=first_day_gcs  best_qa=0.0% ===
+2026-03-25 19:55:48  INFO      Exec block 1/1 …
+2026-03-25 19:55:48  INFO      Output: Patient 37743005 (no GCS data):
+{'stay_id': 37743005, 'subject_id': np.int32(10050755), 'hadm_id': np.int32(20050796), 'intime': '2134-02-26 01:03:02', 'first_day_end': None, 'first_day_gcs_records': Empty DataFrame
+Columns: []
+Index: [], 'min_gcs_first_day': None, 'min_gcs_first_day_all': None, 'max_gcs_first_day': None, 'has_severe_impairment_first_day': False, 'has_mild_or_normal_first_day': False, 'first_gcs_time_first_day': None, 'last_gcs_time_first_day': None, 'total_gcs_assessments_first
+2026-03-25 19:55:48  INFO      === Iteration 31/100  run=first_day_gcs  best_qa=0.0% ===
+2026-03-25 19:55:57  INFO      Exec block 1/1 …
+2026-03-25 19:55:57  INFO      Output: Invalid stay_id:
+{'stay_id': 999999999, 'subject_id': None, 'hadm_id': None, 'intime': None, 'first_day_end': None, 'first_day_gcs_records': Empty DataFrame
+Columns: []
+Index: [], 'min_gcs_first_day': None, 'min_gcs_first_day_all': None, 'max_gcs_first_day': None, 'has_severe_impairment_first_day': False, 'has_mild_or_normal_first_day': False, 'first_gcs_time_first_day': None, 'last_gcs_time_first_day': None, 'total_gcs_assessments_first_day': 0, 'has_verbal_unresponsive_first_day': False}
+
+2026-03-25 19:55:57  INFO      === Iteration 32/100  run=first_day_gcs  best_qa=0.0% ===
+2026-03-25 19:56:20  INFO      Exec block 1/1 …
+2026-03-25 19:56:20  INFO      Output:     stay_id           charttime  gcs_total
+0  37971050 2162-03-21 00:22:00        9.0
+1  36696687 2170-11-03 04:00:00        9.0
+2  31594296 2177-09-25 12:00:00        9.0
+3  30360736 2168-10-21 13:55:00        9.0
+4  32636373 2174-10-07 20:00:00        9.0
+5  36120655 2154-03-02 08:17:00        9.0
+6  36654885 2160-01-27 04:00:00        9.0
+7  35370883 2189-01-24 02:00:00        9.0
+8  38520141 2141-08-29 00:00:00        9.0
+9  36133739 2165-02-03 00:00:00        9.0
+
+2026-03-25 19:56:20  INFO      === Iteration 33/100  run=first_day_gcs  best_qa=0.0% ===
+2026-03-25 19:56:29  INFO      Exec block 1/1 …
+2026-03-25 19:56:29  INFO      Output: Patient 37971050 (moderate impairment):
+{'stay_id': 37971050, 'subject_id': np.int32(13021365), 'hadm_id': np.int32(20241702), 'intime': '2162-03-20 16:22:00', 'first_day_end': '2162-03-21 16:22:00', 'first_day_gcs_records':             charttime  eye  verbal  motor  gcs_total
+0 2162-03-20 17:54:00  4.0     5.0    6.0       15.0
+1 2162-03-20 20:32:00  4.0     1.0    4.0        9.0
+2 2162-03-21 00:22:00  4.0     1.0    4.0        9.0
+3 2162-03-21 04:32:00  4.0     1.0    4.0        9.0
+4 2162-03-
+2026-03-25 19:56:29  INFO      === Iteration 34/100  run=first_day_gcs  best_qa=0.0% ===
+2026-03-25 19:58:11  INFO      Exec block 1/1 …
+2026-03-25 19:58:11  INFO      Output: Code executed successfully (no output).
+2026-03-25 19:58:11  INFO      Debug conversations will be saved to debug_logs
+2026-03-25 19:58:11  INFO      Using question from dataset column: Does this patient have a Glasgow Coma Scale score of 8 or less (severe impairment) on their first ICU day?
+2026-03-25 19:58:11  INFO      Answer type for 'first_day_gcs': numerical (per_row=True)
+2026-03-25 19:58:11  INFO      ReACT iteration 1/5 — 20 active patients
+Rendering conversations:   0%|          | 0/20 [00:00<?, ?it/s]Rendering conversations: 100%|██████████| 20/20 [00:00<00:00, 394.19it/s]
+Processed prompts:   0%|          | 0/20 [00:00<?, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s]Processed prompts:   5%|▌         | 1/20 [00:16<05:07, 16.20s/it, est. speed input: 69.95 toks/s, output: 13.71 toks/s]Processed prompts:  10%|█         | 2/20 [00:25<03:37, 12.09s/it, est. speed input: 89.18 toks/s, output: 25.35 toks/s]Processed prompts:  15%|█▌        | 3/20 [00:25<01:55,  6.82s/it, est. speed input: 130.94 toks/s, output: 41.60 toks/s]Processed prompts:  20%|██        | 4/20 [00:26<01:08,  4.27s/it, est. speed input: 172.15 toks/s, output: 57.81 toks/s]Processed prompts:  25%|██▌       | 5/20 [00:26<00:43,  2.90s/it, est. speed input: 211.36 toks/s, output: 73.72 toks/s]Processed prompts:  30%|███       | 6/20 [00:27<00:28,  2.00s/it, est. speed input: 251.23 toks/s, output: 90.02 toks/s]Processed prompts:  35%|███▌      | 7/20 [00:27<00:18,  1.39s/it, est. speed input: 291.72 toks/s, output: 106.63 toks/s]Processed prompts:  40%|████      | 8/20 [00:27<00:12,  1.04s/it, est. speed input: 329.78 toks/s, output: 122.58 toks/s]Processed prompts:  45%|████▌     | 9/20 [00:27<00:09,  1.20it/s, est. speed input: 365.95 toks/s, output: 138.10 toks/s]Processed prompts:  55%|█████▌    | 11/20 [00:27<00:04,  2.12it/s, est. speed input: 445.27 toks/s, output: 171.96 toks/s]Processed prompts:  70%|███████   | 14/20 [00:28<00:02,  2.93it/s, est. speed input: 553.99 toks/s, output: 219.16 toks/s]Processed prompts:  75%|███████▌  | 15/20 [00:28<00:01,  3.11it/s, est. speed input: 588.15 toks/s, output: 234.81 toks/s]Processed prompts:  85%|████████▌ | 17/20 [00:31<00:02,  1.46it/s, est. speed input: 609.03 toks/s, output: 249.11 toks/s]Processed prompts:  95%|█████████▌| 19/20 [00:31<00:00,  2.01it/s, est. speed input: 674.75 toks/s, output: 283.48 toks/s]Processed prompts: 100%|██████████| 20/20 [00:32<00:00,  1.62it/s, est. speed input: 685.94 toks/s, output: 292.51 toks/s]Processed prompts: 100%|██████████| 20/20 [00:32<00:00,  1.62it/s, est. speed input: 685.94 toks/s, output: 292.51 toks/s]Processed prompts: 100%|██████████| 20/20 [00:32<00:00,  1.65s/it, est. speed input: 685.94 toks/s, output: 292.51 toks/s]
+2026-03-25 19:58:45  INFO      ReACT iteration 2/5 — 20 active patients
+Rendering conversations:   0%|          | 0/20 [00:00<?, ?it/s]Rendering conversations: 100%|██████████| 20/20 [00:00<00:00, 275.58it/s]
+Processed prompts:   0%|          | 0/20 [00:00<?, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s]Processed prompts:   5%|▌         | 1/20 [00:14<04:44, 15.00s/it, est. speed input: 114.82 toks/s, output: 7.67 toks/s]Processed prompts:  10%|█         | 2/20 [00:15<01:59,  6.64s/it, est. speed input: 229.77 toks/s, output: 15.45 toks/s]Processed prompts:  15%|█▌        | 3/20 [00:15<01:02,  3.69s/it, est. speed input: 356.78 toks/s, output: 23.72 toks/s]Processed prompts:  20%|██        | 4/20 [00:16<00:36,  2.31s/it, est. speed input: 476.70 toks/s, output: 32.05 toks/s]Processed prompts:  25%|██▌       | 5/20 [00:16<00:23,  1.57s/it, est. speed input: 582.33 toks/s, output: 40.43 toks/s]Processed prompts:  30%|███       | 6/20 [00:16<00:15,  1.08s/it, est. speed input: 684.52 toks/s, output: 48.93 toks/s]Processed prompts:  40%|████      | 8/20 [00:16<00:07,  1.56it/s, est. speed input: 891.56 toks/s, output: 65.77 toks/s]Processed prompts:  50%|█████     | 10/20 [00:17<00:04,  2.33it/s, est. speed input: 1097.89 toks/s, output: 83.30 toks/s]Processed prompts:  55%|█████▌    | 11/20 [00:17<00:03,  2.45it/s, est. speed input: 1187.20 toks/s, output: 91.41 toks/s]Processed prompts:  60%|██████    | 12/20 [00:17<00:02,  2.87it/s, est. speed input: 1286.79 toks/s, output: 100.50 toks/s]Processed prompts:  65%|██████▌   | 13/20 [00:17<00:02,  3.22it/s, est. speed input: 1373.69 toks/s, output: 109.36 toks/s]Processed prompts:  70%|███████   | 14/20 [00:19<00:03,  1.56it/s, est. speed input: 1358.67 toks/s, output: 111.88 toks/s]Processed prompts:  80%|████████  | 16/20 [00:24<00:05,  1.47s/it, est. speed input: 1240.49 toks/s, output: 111.75 toks/s]Processed prompts:  85%|████████▌ | 17/20 [00:27<00:05,  1.78s/it, est. speed input: 1181.40 toks/s, output: 115.80 toks/s]Processed prompts:  90%|█████████ | 18/20 [00:27<00:02,  1.37s/it, est. speed input: 1240.83 toks/s, output: 130.44 toks/s]Processed prompts:  95%|█████████▌| 19/20 [00:29<00:01,  1.54s/it, est. speed input: 1227.11 toks/s, output: 137.79 toks/s]Processed prompts: 100%|██████████| 20/20 [00:36<00:00,  3.06s/it, est. speed input: 1037.06 toks/s, output: 129.31 toks/s]Processed prompts: 100%|██████████| 20/20 [00:36<00:00,  3.06s/it, est. speed input: 1037.06 toks/s, output: 129.31 toks/s]Processed prompts: 100%|██████████| 20/20 [00:36<00:00,  1.83s/it, est. speed input: 1037.06 toks/s, output: 129.31 toks/s]
+2026-03-25 19:59:21  INFO      QA accuracy: 80.0%  (correct=16/20, parse_errors=0)
+2026-03-25 19:59:21  INFO      === Iteration 35/100  run=first_day_gcs  best_qa=80.0% ===
+2026-03-25 19:59:54  INFO      Exec block 1/1 …
+2026-03-25 19:59:54  INFO      Output:      stay_id           charttime  eye  verbal  motor  gcs_total              intime       time_diff
+0   39331559 2147-05-01 23:07:00  2.0     1.0    1.0        4.0 2147-05-01 20:37:28 0 days 02:29:32
+1   39331559 2147-05-02 02:00:00  2.0     1.0    1.0        4.0 2147-05-01 20:37:28 0 days 05:22:32
+2   39331559 2147-05-02 05:00:00  2.0     1.0    1.0        4.0 2147-05-01 20:37:28 0 days 08:22:32
+3   39331559 2147-05-02 08:34:00  1.0     1.0    4.0        6.0 2147-05-01 20:37:28 0 days 11:56:32
+
+2026-03-25 19:59:54  INFO      === Iteration 36/100  run=first_day_gcs  best_qa=80.0% ===
+2026-03-25 20:00:20  INFO      Exec block 1/1 …
+2026-03-25 20:00:20  INFO      Output: Stay 39331559:
+has_severe_impairment_first_day: True
+min_gcs_first_day_all: 3.0
+first_day_end: 2147-05-02 20:37:28
+Records: 6
+            charttime  eye  verbal  motor  gcs_total
+0 2147-05-01 23:07:00  2.0     1.0    1.0        4.0
+1 2147-05-02 02:00:00  2.0     1.0    1.0        4.0
+2 2147-05-02 05:00:00  2.0     1.0    1.0        4.0
+3 2147-05-02 08:34:00  1.0     1.0    4.0        6.0
+4 2147-05-02 12:35:00  3.0     1.0    6.0       10.0
+5 2147-05-02 20:00:00  1.0     1.0    1.0        3.0
+
+2026-03-25 20:00:20  INFO      === Iteration 37/100  run=first_day_gcs  best_qa=80.0% ===
+2026-03-25 20:00:46  INFO      Exec block 1/1 …
+2026-03-25 20:00:46  INFO      Output:     stay_id           charttime  eye  verbal  motor  gcs_total              intime       time_diff
+0  36746030 2196-09-27 18:15:00  1.0     1.0    1.0        3.0 2196-09-27 08:13:28 0 days 10:01:32
+1  36746030 2196-09-27 20:41:00  4.0     5.0    6.0       15.0 2196-09-27 08:13:28 0 days 12:27:32
+2  36746030 2196-09-28 00:01:00  4.0     5.0    6.0       15.0 2196-09-27 08:13:28 0 days 15:47:32
+3  36746030 2196-09-28 04:00:00  4.0     5.0    6.0       15.0 2196-09-27 08:13:28 0 days 19:46:32
+4  36
+2026-03-25 20:00:46  INFO      === Iteration 38/100  run=first_day_gcs  best_qa=80.0% ===
+2026-03-25 20:01:18  INFO      Exec block 1/1 …
+2026-03-25 20:01:18  INFO      Output: Stay 36746030:
+has_severe_impairment_first_day: True
+min_gcs_first_day: 15.0
+min_gcs_first_day_all: 3.0
+Records: 5
+            charttime  eye  verbal  motor  gcs_total
+0 2196-09-27 18:15:00  1.0     1.0    1.0        3.0
+1 2196-09-27 20:41:00  4.0     5.0    6.0       15.0
+2 2196-09-28 00:01:00  4.0     5.0    6.0       15.0
+3 2196-09-28 04:00:00  4.0     5.0    6.0       15.0
+4 2196-09-28 08:00:00  4.0     5.0    6.0       15.0
+
+2026-03-25 20:01:18  INFO      === Iteration 39/100  run=first_day_gcs  best_qa=80.0% ===
+2026-03-25 20:01:49  INFO      Exec block 1/1 …
+2026-03-25 20:01:49  INFO      Output:      stay_id           charttime  eye  verbal  motor  gcs_total              intime       time_diff
+0   36713654 2156-12-21 20:01:00  1.0     1.0    1.0        3.0 2156-12-21 11:17:39 0 days 08:43:21
+1   36713654 2156-12-22 00:00:00  1.0     1.0    1.0        3.0 2156-12-21 11:17:39 0 days 12:42:21
+2   36713654 2156-12-22 08:00:00  1.0     1.0    1.0        3.0 2156-12-21 11:17:39 0 days 20:42:21
+3   36713654 2156-12-22 09:00:00  3.0     1.0    6.0       10.0 2156-12-21 11:17:39 0 days 21:42:21
+
+2026-03-25 20:01:49  INFO      === Iteration 40/100  run=first_day_gcs  best_qa=80.0% ===
+2026-03-25 20:02:43  INFO      Exec block 1/1 …
+2026-03-25 20:02:43  INFO      Output:      stay_id           charttime  eye  verbal  motor  gcs_total              intime       time_diff
+0   36707061 2184-12-14 08:16:00  1.0     1.0    5.0        7.0 2184-12-14 06:24:00 0 days 01:52:00
+1   36707061 2184-12-14 12:06:00  1.0     1.0    5.0        7.0 2184-12-14 06:24:00 0 days 05:42:00
+2   36707061 2184-12-14 16:39:00  1.0     1.0    5.0        7.0 2184-12-14 06:24:00 0 days 10:15:00
+3   36707061 2184-12-14 19:28:00  1.0     1.0    1.0        3.0 2184-12-14 06:24:00 0 days 13:04:00
+
+2026-03-25 20:02:43  INFO      === Iteration 41/100  run=first_day_gcs  best_qa=80.0% ===
+2026-03-25 20:02:43  INFO      Context approaching limit (20089 tokens, limit=25000) — forcing summarize + compress
+2026-03-25 20:05:13  INFO      Context compressed: 83 messages -> 2 messages
+2026-03-25 20:05:38  INFO      Exec block 1/1 …
+2026-03-25 20:05:38  INFO      Output: Test 1 - Severe impairment (stay_id=37989934):
+  has_severe_impairment_first_day: True
+  min_gcs_first_day_all: 3.0
+  min_gcs_first_day: None
+  total_gcs_assessments_first_day: 23
+
+Test 2 - Normal GCS (stay_id=39553978):
+  has_severe_impairment_first_day: False
+  min_gcs_first_day_all: 14.0
+  max_gcs_first_day: 15.0
+
+Test 3 - No GCS data (stay_id=37743005):
+  has_severe_impairment_first_day: False
+  min_gcs_first_day_all: None
+  total_gcs_assessments_first_day: 0
+
+2026-03-25 20:05:38  INFO      === Iteration 42/100  run=first_day_gcs  best_qa=80.0% ===
+2026-03-25 20:07:06  INFO      Exec block 1/1 …
+2026-03-25 20:07:06  INFO      Output: Code executed successfully (no output).
+2026-03-25 20:07:06  INFO      Debug conversations will be saved to debug_logs
+2026-03-25 20:07:06  INFO      Using question from dataset column: Does this patient have a Glasgow Coma Scale score of 8 or less (severe impairment) on their first ICU day?
+2026-03-25 20:07:06  INFO      Answer type for 'first_day_gcs': numerical (per_row=True)
+2026-03-25 20:07:06  INFO      ReACT iteration 1/5 — 20 active patients
+Rendering conversations:   0%|          | 0/20 [00:00<?, ?it/s]Rendering conversations: 100%|██████████| 20/20 [00:00<00:00, 400.71it/s]
+Processed prompts:   0%|          | 0/20 [00:00<?, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s]Processed prompts:   5%|▌         | 1/20 [00:27<08:42, 27.48s/it, est. speed input: 41.23 toks/s, output: 16.92 toks/s]Processed prompts:  10%|█         | 2/20 [00:28<03:31, 11.72s/it, est. speed input: 80.43 toks/s, output: 33.54 toks/s]Processed prompts:  20%|██        | 4/20 [00:28<01:10,  4.42s/it, est. speed input: 160.07 toks/s, output: 67.39 toks/s]Processed prompts:  30%|███       | 6/20 [00:28<00:33,  2.37s/it, est. speed input: 238.63 toks/s, output: 100.99 toks/s]Processed prompts:  40%|████      | 8/20 [00:28<00:17,  1.49s/it, est. speed input: 313.95 toks/s, output: 133.70 toks/s]Processed prompts:  45%|████▌     | 9/20 [00:29<00:13,  1.20s/it, est. speed input: 351.14 toks/s, output: 150.07 toks/s]Processed prompts:  55%|█████▌    | 11/20 [00:29<00:07,  1.18it/s, est. speed input: 420.70 toks/s, output: 181.34 toks/s]Processed prompts:  60%|██████    | 12/20 [00:30<00:06,  1.23it/s, est. speed input: 448.35 toks/s, output: 194.66 toks/s]Processed prompts:  70%|███████   | 14/20 [00:30<00:03,  1.60it/s, est. speed input: 511.75 toks/s, output: 225.41 toks/s]Processed prompts:  75%|███████▌  | 15/20 [00:31<00:02,  1.85it/s, est. speed input: 544.14 toks/s, output: 241.34 toks/s]Processed prompts:  80%|████████  | 16/20 [00:31<00:01,  2.26it/s, est. speed input: 578.26 toks/s, output: 258.21 toks/s]Processed prompts:  85%|████████▌ | 17/20 [00:32<00:01,  1.95it/s, est. speed input: 599.99 toks/s, output: 270.28 toks/s]Processed prompts:  95%|█████████▌| 19/20 [00:32<00:00,  2.31it/s, est. speed input: 656.73 toks/s, output: 300.72 toks/s]Processed prompts: 100%|██████████| 20/20 [00:35<00:00,  1.04it/s, est. speed input: 637.43 toks/s, output: 296.23 toks/s]Processed prompts: 100%|██████████| 20/20 [00:35<00:00,  1.04it/s, est. speed input: 637.43 toks/s, output: 296.23 toks/s]Processed prompts: 100%|██████████| 20/20 [00:35<00:00,  1.77s/it, est. speed input: 637.43 toks/s, output: 296.23 toks/s]
+2026-03-25 20:07:42  INFO      ReACT iteration 2/5 — 20 active patients
+Rendering conversations:   0%|          | 0/20 [00:00<?, ?it/s]Rendering conversations: 100%|██████████| 20/20 [00:00<00:00, 268.95it/s]
+Processed prompts:   0%|          | 0/20 [00:00<?, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s]Processed prompts:   5%|▌         | 1/20 [00:15<04:56, 15.63s/it, est. speed input: 130.03 toks/s, output: 7.49 toks/s]Processed prompts:  10%|█         | 2/20 [00:16<02:00,  6.68s/it, est. speed input: 250.39 toks/s, output: 15.33 toks/s]Processed prompts:  15%|█▌        | 3/20 [00:16<01:03,  3.76s/it, est. speed input: 356.85 toks/s, output: 23.34 toks/s]Processed prompts:  20%|██        | 4/20 [00:16<00:37,  2.35s/it, est. speed input: 474.10 toks/s, output: 31.43 toks/s]Processed prompts:  35%|███▌      | 7/20 [00:17<00:12,  1.02it/s, est. speed input: 816.07 toks/s, output: 55.20 toks/s]Processed prompts:  40%|████      | 8/20 [00:17<00:09,  1.26it/s, est. speed input: 928.46 toks/s, output: 63.60 toks/s]Processed prompts:  45%|████▌     | 9/20 [00:17<00:07,  1.49it/s, est. speed input: 1021.62 toks/s, output: 71.67 toks/s]Processed prompts:  50%|█████     | 10/20 [00:17<00:05,  1.71it/s, est. speed input: 1106.10 toks/s, output: 79.67 toks/s]Processed prompts:  55%|█████▌    | 11/20 [00:18<00:04,  2.12it/s, est. speed input: 1198.52 toks/s, output: 88.48 toks/s]Processed prompts:  65%|██████▌   | 13/20 [00:18<00:02,  3.32it/s, est. speed input: 1397.10 toks/s, output: 107.17 toks/s]Processed prompts:  70%|███████   | 14/20 [00:18<00:02,  2.99it/s, est. speed input: 1458.81 toks/s, output: 114.62 toks/s]Processed prompts:  75%|███████▌  | 15/20 [00:18<00:01,  3.22it/s, est. speed input: 1540.61 toks/s, output: 123.30 toks/s]Processed prompts:  80%|████████  | 16/20 [00:20<00:03,  1.27it/s, est. speed input: 1485.21 toks/s, output: 122.87 toks/s]Processed prompts:  85%|████████▌ | 17/20 [00:24<00:04,  1.44s/it, est. speed input: 1374.52 toks/s, output: 120.26 toks/s]Processed prompts:  90%|█████████ | 18/20 [00:25<00:02,  1.41s/it, est. speed input: 1375.26 toks/s, output: 128.31 toks/s]Processed prompts:  95%|█████████▌| 19/20 [00:28<00:01,  1.95s/it, est. speed input: 1280.67 toks/s, output: 129.32 toks/s]Processed prompts: 100%|██████████| 20/20 [00:36<00:00,  3.54s/it, est. speed input: 1069.21 toks/s, output: 120.83 toks/s]Processed prompts: 100%|██████████| 20/20 [00:36<00:00,  3.54s/it, est. speed input: 1069.21 toks/s, output: 120.83 toks/s]Processed prompts: 100%|██████████| 20/20 [00:36<00:00,  1.81s/it, est. speed input: 1069.21 toks/s, output: 120.83 toks/s]
+2026-03-25 20:08:19  INFO      QA accuracy: 80.0%  (correct=16/20, parse_errors=0)
+2026-03-25 20:08:19  INFO      === Iteration 43/100  run=first_day_gcs  best_qa=80.0% ===
+2026-03-25 20:09:01  INFO      Exec block 1/1 …
+2026-03-25 20:09:01  INFO      Output: stay_id=39331559:
+  has_severe_impairment_first_day: True
+  min_gcs_first_day_all: 3.0
+  total_gcs_assessments_first_day: 6
+  Records:
+            charttime  eye  verbal  motor  gcs_total
+0 2147-05-01 23:07:00  2.0     1.0    1.0        4.0
+1 2147-05-02 02:00:00  2.0     1.0    1.0        4.0
+2 2147-05-02 05:00:00  2.0     1.0    1.0        4.0
+3 2147-05-02 08:34:00  1.0     1.0    4.0        6.0
+4 2147-05-02 12:35:00  3.0     1.0    6.0       10.0
+5 2147-05-02 20:00:00  1.0     1.0    1.0      
+2026-03-25 20:09:01  INFO      === Iteration 44/100  run=first_day_gcs  best_qa=80.0% ===
+2026-03-25 20:09:24  INFO      Exec block 1/1 …
+2026-03-25 20:09:24  INFO      Output: ICU Stay Information:
+    stay_id  subject_id   hadm_id              intime             outtime
+0  36707061    11477669  21242036 2184-12-14 06:24:00 2184-12-16 17:27:54
+1  36713654    11622280  28516474 2156-12-21 11:17:39 2156-12-27 17:13:14
+2  39331559    16365207  20942115 2147-05-01 20:37:28 2147-05-10 06:46:19
+3  36746030    17866064  28315320 2196-09-27 08:13:28 2196-09-30 12:37:48
+
+Raw GCS data for stay_id=36746030:
+             charttime  itemid  valuenum
+0  2196-09-27 18:15:00  223900 
+2026-03-25 20:09:24  INFO      === Iteration 45/100  run=first_day_gcs  best_qa=80.0% ===
+2026-03-25 20:09:55  INFO      Exec block 1/1 …
+2026-03-25 20:09:55  INFO      Output: stay_id=36713654:
+  has_severe_impairment_first_day: True
+  min_gcs_first_day_all: 3.0
+  min_gcs_first_day (non-intubated): None
+  total_gcs_assessments_first_day: 4
+  Records:
+            charttime  eye  verbal  motor  gcs_total
+0 2156-12-21 20:01:00  1.0     1.0    1.0        3.0
+1 2156-12-22 00:00:00  1.0     1.0    1.0        3.0
+2 2156-12-22 08:00:00  1.0     1.0    1.0        3.0
+3 2156-12-22 09:00:00  3.0     1.0    6.0       10.0
+
+stay_id=36707061:
+  has_severe_impairment_first_day: True
+2026-03-25 20:09:55  INFO      === Iteration 46/100  run=first_day_gcs  best_qa=80.0% ===
+2026-03-25 20:11:40  INFO      Exec block 1/1 …
+2026-03-25 20:11:40  INFO      Output: stay_id=36746030: min_gcs_first_day=15.0, min_gcs_first_day_all=3.0
+stay_id=36707061: min_gcs_first_day=None, min_gcs_first_day_all=3.0
+stay_id=39331559: min_gcs_first_day=None, min_gcs_first_day_all=3.0
+stay_id=36713654: min_gcs_first_day=None, min_gcs_first_day_all=3.0
+
+2026-03-25 20:11:40  INFO      === Iteration 47/100  run=first_day_gcs  best_qa=80.0% ===
+2026-03-25 20:12:39  INFO      Exec block 1/1 …
+2026-03-25 20:12:39  INFO      Output: Raw GCS data for stay_id=39331559:
+              charttime  itemid  valuenum
+0   2147-05-01 23:07:00  223901       1.0
+1   2147-05-01 23:07:00  223900       1.0
+2   2147-05-01 23:07:00  220739       2.0
+3   2147-05-02 02:00:00  220739       2.0
+4   2147-05-02 02:00:00  223900       1.0
+..                  ...     ...       ...
+139 2147-05-10 00:00:00  223900       5.0
+140 2147-05-10 00:00:00  223901       6.0
+141 2147-05-10 04:00:00  220739       4.0
+142 2147-05-10 04:00:00  223900       5.0
+143
+2026-03-25 20:12:39  INFO      === Iteration 48/100  run=first_day_gcs  best_qa=80.0% ===
+2026-03-25 20:15:05  INFO      Exec block 1/1 …
+2026-03-25 20:15:05  INFO      Output: stay_id=36707061 (expected NO):
+             charttime  eye  verbal  motor
+0  2184-12-14 08:16:00  1.0     1.0    5.0
+1  2184-12-14 12:06:00  1.0     1.0    5.0
+2  2184-12-14 16:39:00  1.0     1.0    5.0
+3  2184-12-14 19:28:00  1.0     1.0    1.0
+4  2184-12-15 00:04:00  2.0     1.0    4.0
+5  2184-12-15 04:25:00  2.0     1.0    4.0
+6  2184-12-15 08:00:00  3.0     1.0    6.0
+7  2184-12-15 09:00:00  4.0     5.0    6.0
+8  2184-12-15 12:00:00  4.0     5.0    6.0
+9  2184-12-15 16:00:00  4.0     5.0   
+2026-03-25 20:15:05  INFO      === Iteration 49/100  run=first_day_gcs  best_qa=80.0% ===
+2026-03-25 20:15:37  INFO      Exec block 1/1 …
+2026-03-25 20:15:37  INFO      Output: stay_id=36746030 (expected NO):
+            charttime  eye  verbal  motor
+0 2196-09-27 18:15:00  1.0     1.0    1.0
+1 2196-09-27 20:41:00  4.0     5.0    6.0
+2 2196-09-28 00:01:00  4.0     5.0    6.0
+3 2196-09-28 04:00:00  4.0     5.0    6.0
+4 2196-09-28 08:00:00  4.0     5.0    6.0
+5 2196-09-28 20:20:00  4.0     5.0    6.0
+6 2196-09-29 08:00:00  4.0     5.0    6.0
+7 2196-09-29 12:00:00  NaN     5.0    NaN
+8 2196-09-29 16:00:00  NaN     5.0    NaN
+9 2196-09-29 20:00:00  4.0     5.0    6.0
+Motor 
+2026-03-25 20:15:37  INFO      === Iteration 50/100  run=first_day_gcs  best_qa=80.0% ===
+2026-03-25 20:17:58  INFO      Exec block 1/1 …
+2026-03-25 20:17:58  INFO      Output: stay_id=36746030 (expected NO):
+  Intubated motor scores: [1.0]
+  Mode motor: 1.0
+
+stay_id=36707061 (expected NO):
+  Intubated motor scores: [5.0, 5.0, 5.0, 1.0, 4.0, 4.0, 6.0]
+  Mode motor: 5.0
+
+stay_id=39331559 (expected YES):
+  Intubated motor scores: [1.0, 1.0, 1.0, 4.0, 6.0, 1.0, 1.0, 5.0, 4.0, 4.0, 4.0, 4.0, 4.0, 4.0, 5.0, 5.0, 5.0, 5.0, 6.0, 6.0, 6.0, 6.0, 6.0, 6.0, 6.0, 6.0, 6.0, 1.0, 1.0, 1.0, 4.0, 6.0, 6.0, 6.0, 1.0, 1.0, 6.0, 6.0, 1.0, 1.0, 1.0, 1.0, 1.0, 6.0]
+  Mode motor: 6.0
+
+stay_
+2026-03-25 20:17:58  INFO      === Iteration 51/100  run=first_day_gcs  best_qa=80.0% ===
+2026-03-25 20:23:18  INFO      === Iteration 52/100  run=first_day_gcs  best_qa=80.0% ===
+2026-03-25 20:28:43  INFO      === Iteration 53/100  run=first_day_gcs  best_qa=80.0% ===
+2026-03-25 20:28:43  INFO      Context approaching limit (23204 tokens, limit=25000) — forcing summarize + compress
+2026-03-25 20:31:14  INFO      Context compressed: 27 messages -> 2 messages
+2026-03-25 20:32:30  INFO      Exec block 1/1 …
+2026-03-25 20:32:30  INFO      Output: 
+=== stay_id: 36746030 ===
+intime: 2196-09-27 08:13:28
+Number of GCS records: 5
+            charttime  eye  verbal  motor  gcs_total
+0 2196-09-27 18:15:00  1.0     1.0    1.0        3.0
+1 2196-09-27 20:41:00  4.0     5.0    6.0       15.0
+2 2196-09-28 00:01:00  4.0     5.0    6.0       15.0
+3 2196-09-28 04:00:00  4.0     5.0    6.0       15.0
+4 2196-09-28 08:00:00  4.0     5.0    6.0       15.0
+
+Non-intubated records: 4
+Intubated records: 1
+Min GCS non-intubated: 15.0
+Min GCS intubated: 3.0
+Moto
+2026-03-25 20:32:30  INFO      === Iteration 54/100  run=first_day_gcs  best_qa=80.0% ===
+2026-03-25 20:33:40  INFO      Exec block 1/1 …
+2026-03-25 20:33:41  INFO      Output: 
+=== stay_id: 36746030 (Expected: False) ===
+Non-intubated: 4, Intubated: 1
+Min GCS non-intubated: 15.0, Has severe: False
+
+=== stay_id: 36707061 (Expected: False) ===
+Non-intubated: 0, Intubated: 6
+Motor scores when intubated: [5.0, 5.0, 5.0, 1.0, 4.0, 4.0]
+Motor=1 count: 1, ratio: 0.17
+Has severe (motor=1 majority): False
+
+=== stay_id: 39331559 (Expected: True) ===
+Non-intubated: 0, Intubated: 6
+Motor scores when intubated: [1.0, 1.0, 1.0, 4.0, 6.0, 1.0]
+Motor=1 count: 4, ratio: 0.67
+Has sever
+2026-03-25 20:33:41  INFO      === Iteration 55/100  run=first_day_gcs  best_qa=80.0% ===
+2026-03-25 20:34:28  INFO      Exec block 1/1 …
+2026-03-25 20:34:28  INFO      Output: Testing new logic on original test cases:
+------------------------------------------------------------
+stay_id=37989934: Expected=True, Got=True [PASS]
+stay_id=39553978: Expected=False, Got=False [PASS]
+stay_id=37081114: Expected=False, Got=False [PASS]
+stay_id=37743005: Expected=False, Got=False [PASS]
+stay_id=999999999: Expected=False, Got=False [PASS]
+stay_id=37971050: Expected=False, Got=False [PASS]
+stay_id=39331559: Expected=True, Got=True [PASS]
+stay_id=36746030: Expected=False, Got=False
+2026-03-25 20:34:28  INFO      === Iteration 56/100  run=first_day_gcs  best_qa=80.0% ===
+2026-03-25 20:36:24  INFO      Exec block 1/1 …
+2026-03-25 20:36:24  INFO      Output: Testing updated first_day_gcs function:
+------------------------------------------------------------
+stay_id=37989934: Expected=True, Got=True [PASS]
+stay_id=39553978: Expected=False, Got=False [PASS]
+stay_id=37081114: Expected=False, Got=False [PASS]
+stay_id=37743005: Expected=False, Got=False [PASS]
+stay_id=999999999: Expected=False, Got=False [PASS]
+stay_id=37971050: Expected=False, Got=False [PASS]
+stay_id=39331559: Expected=True, Got=True [PASS]
+stay_id=36746030: Expected=False, Got=False [
+2026-03-25 20:36:24  INFO      === Iteration 57/100  run=first_day_gcs  best_qa=80.0% ===
+2026-03-25 20:38:04  INFO      Exec block 1/1 …
+2026-03-25 20:38:04  INFO      Output: Code executed successfully (no output).
+2026-03-25 20:38:04  INFO      Debug conversations will be saved to debug_logs
+2026-03-25 20:38:04  INFO      Using question from dataset column: Does this patient have a Glasgow Coma Scale score of 8 or less (severe impairment) on their first ICU day?
+2026-03-25 20:38:04  INFO      Answer type for 'first_day_gcs': numerical (per_row=True)
+2026-03-25 20:38:04  INFO      ReACT iteration 1/5 — 20 active patients
+Rendering conversations:   0%|          | 0/20 [00:00<?, ?it/s]Rendering conversations: 100%|██████████| 20/20 [00:00<00:00, 376.47it/s]
+Processed prompts:   0%|          | 0/20 [00:00<?, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s]Processed prompts:   5%|▌         | 1/20 [00:13<04:11, 13.23s/it, est. speed input: 89.97 toks/s, output: 10.96 toks/s]Processed prompts:  10%|█         | 2/20 [00:16<02:16,  7.58s/it, est. speed input: 141.16 toks/s, output: 21.94 toks/s]Processed prompts:  20%|██        | 4/20 [00:17<00:47,  2.94s/it, est. speed input: 275.46 toks/s, output: 48.13 toks/s]Processed prompts:  25%|██▌       | 5/20 [00:19<00:42,  2.82s/it, est. speed input: 300.30 toks/s, output: 56.67 toks/s]Processed prompts:  30%|███       | 6/20 [00:24<00:47,  3.40s/it, est. speed input: 291.18 toks/s, output: 62.20 toks/s]Processed prompts:  35%|███▌      | 7/20 [00:25<00:34,  2.64s/it, est. speed input: 327.79 toks/s, output: 76.72 toks/s]Processed prompts:  40%|████      | 8/20 [00:26<00:24,  2.08s/it, est. speed input: 363.16 toks/s, output: 91.24 toks/s]Processed prompts:  45%|████▌     | 9/20 [00:26<00:16,  1.52s/it, est. speed input: 405.36 toks/s, output: 107.45 toks/s]Processed prompts:  50%|█████     | 10/20 [00:26<00:11,  1.11s/it, est. speed input: 447.05 toks/s, output: 123.79 toks/s]Processed prompts:  55%|█████▌    | 11/20 [00:26<00:07,  1.19it/s, est. speed input: 488.03 toks/s, output: 139.87 toks/s]Processed prompts:  65%|██████▌   | 13/20 [00:26<00:03,  2.05it/s, est. speed input: 572.91 toks/s, output: 173.12 toks/s]Processed prompts:  70%|███████   | 14/20 [00:27<00:02,  2.10it/s, est. speed input: 607.17 toks/s, output: 187.61 toks/s]Processed prompts:  75%|███████▌  | 15/20 [00:27<00:02,  2.35it/s, est. speed input: 644.09 toks/s, output: 202.98 toks/s]Processed prompts:  80%|████████  | 16/20 [00:28<00:01,  2.23it/s, est. speed input: 674.67 toks/s, output: 216.70 toks/s]Processed prompts:  85%|████████▌ | 17/20 [00:28<00:01,  2.45it/s, est. speed input: 709.21 toks/s, output: 231.86 toks/s]Processed prompts:  90%|█████████ | 18/20 [00:29<00:01,  1.89it/s, est. speed input: 729.14 toks/s, output: 243.08 toks/s]Processed prompts:  95%|█████████▌| 19/20 [00:31<00:00,  1.13it/s, est. speed input: 726.22 toks/s, output: 247.62 toks/s]Processed prompts: 100%|██████████| 20/20 [00:31<00:00,  1.27it/s, est. speed input: 750.63 toks/s, output: 261.75 toks/s]Processed prompts: 100%|██████████| 20/20 [00:31<00:00,  1.27it/s, est. speed input: 750.63 toks/s, output: 261.75 toks/s]Processed prompts: 100%|██████████| 20/20 [00:31<00:00,  1.58s/it, est. speed input: 750.63 toks/s, output: 261.75 toks/s]
+2026-03-25 20:38:36  INFO      ReACT iteration 2/5 — 20 active patients
+Rendering conversations:   0%|          | 0/20 [00:00<?, ?it/s]Rendering conversations: 100%|██████████| 20/20 [00:00<00:00, 267.79it/s]
+Processed prompts:   0%|          | 0/20 [00:00<?, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s]Processed prompts:   5%|▌         | 1/20 [00:14<04:41, 14.79s/it, est. speed input: 126.80 toks/s, output: 6.76 toks/s]Processed prompts:  10%|█         | 2/20 [00:15<01:57,  6.50s/it, est. speed input: 241.75 toks/s, output: 13.88 toks/s]Processed prompts:  15%|█▌        | 3/20 [00:16<01:07,  3.98s/it, est. speed input: 339.64 toks/s, output: 21.43 toks/s]Processed prompts:  25%|██▌       | 5/20 [00:16<00:26,  1.79s/it, est. speed input: 577.87 toks/s, output: 38.03 toks/s]Processed prompts:  30%|███       | 6/20 [00:16<00:18,  1.31s/it, est. speed input: 693.77 toks/s, output: 46.30 toks/s]Processed prompts:  45%|████▌     | 9/20 [00:17<00:06,  1.58it/s, est. speed input: 1017.82 toks/s, output: 71.48 toks/s]Processed prompts:  50%|█████     | 10/20 [00:17<00:05,  1.89it/s, est. speed input: 1115.58 toks/s, output: 79.90 toks/s]Processed prompts:  55%|█████▌    | 11/20 [00:18<00:05,  1.64it/s, est. speed input: 1163.97 toks/s, output: 85.58 toks/s]Processed prompts:  60%|██████    | 12/20 [00:19<00:05,  1.36it/s, est. speed input: 1184.11 toks/s, output: 91.17 toks/s]Processed prompts:  65%|██████▌   | 13/20 [00:21<00:07,  1.02s/it, est. speed input: 1183.95 toks/s, output: 94.89 toks/s]Processed prompts:  70%|███████   | 14/20 [00:23<00:08,  1.48s/it, est. speed input: 1138.45 toks/s, output: 97.13 toks/s]Processed prompts:  75%|███████▌  | 15/20 [00:28<00:12,  2.53s/it, est. speed input: 997.85 toks/s, output: 95.01 toks/s] Processed prompts:  80%|████████  | 16/20 [00:29<00:07,  1.97s/it, est. speed input: 1045.33 toks/s, output: 108.81 toks/s]Processed prompts:  85%|████████▌ | 17/20 [00:30<00:04,  1.59s/it, est. speed input: 1083.70 toks/s, output: 122.18 toks/s]Processed prompts:  90%|█████████ | 18/20 [00:35<00:05,  2.59s/it, est. speed input: 984.98 toks/s, output: 122.09 toks/s] Processed prompts:  95%|█████████▌| 19/20 [00:36<00:02,  2.19s/it, est. speed input: 1000.96 toks/s, output: 135.48 toks/s]Processed prompts: 100%|██████████| 20/20 [00:41<00:00,  2.96s/it, est. speed input: 931.84 toks/s, output: 138.39 toks/s] Processed prompts: 100%|██████████| 20/20 [00:41<00:00,  2.96s/it, est. speed input: 931.84 toks/s, output: 138.39 toks/s]Processed prompts: 100%|██████████| 20/20 [00:41<00:00,  2.06s/it, est. speed input: 931.84 toks/s, output: 138.39 toks/s]
+2026-03-25 20:39:17  INFO      QA accuracy: 80.0%  (correct=16/20, parse_errors=0)
+2026-03-25 20:39:17  INFO      === Iteration 58/100  run=first_day_gcs  best_qa=80.0% ===
+2026-03-25 20:40:07  INFO      Exec block 1/1 …
+2026-03-25 20:40:07  INFO      Output: 
+=== stay_id: 39331559 ===
+intime: 2147-05-01 20:37:28
+Number of GCS records: 6
+            charttime  eye  verbal  motor  gcs_total
+0 2147-05-01 23:07:00  2.0     1.0    1.0        4.0
+1 2147-05-02 02:00:00  2.0     1.0    1.0        4.0
+2 2147-05-02 05:00:00  2.0     1.0    1.0        4.0
+3 2147-05-02 08:34:00  1.0     1.0    4.0        6.0
+4 2147-05-02 12:35:00  3.0     1.0    6.0       10.0
+5 2147-05-02 20:00:00  1.0     1.0    1.0        3.0
+
+Non-intubated records: 0
+Intubated records: 6
+Mo
+2026-03-25 20:40:07  INFO      === Iteration 59/100  run=first_day_gcs  best_qa=80.0% ===
+2026-03-25 20:45:27  INFO      === Iteration 60/100  run=first_day_gcs  best_qa=80.0% ===
+2026-03-25 20:45:27  INFO      Context approaching limit (21928 tokens, limit=25000) — forcing summarize + compress
+2026-03-25 20:48:04  INFO      Context compressed: 17 messages -> 2 messages
+2026-03-25 20:48:20  INFO      Exec block 1/1 …
+2026-03-25 20:48:20  INFO      Output: Stay ID: 37989934
+  Subject ID: 11051867
+  Has severe impairment: True
+  Min GCS (non-intubated): None
+  Min GCS (all): 3.0
+  Total assessments: 23
+
+Stay ID: 39553978
+  Subject ID: 10000032
+  Has severe impairment: False
+  Min GCS (non-intubated): 14.0
+  Min GCS (all): 14.0
+  Total assessments: 3
+
+Stay ID: 37081114
+  Subject ID: 10000690
+  Has severe impairment: False
+  Min GCS (non-intubated): 12.0
+  Min GCS (all): 12.0
+  Total assessments: 6
+
+Stay ID: 37743005
+  Subject ID: 10050755
+  Has seve
+2026-03-25 20:48:20  INFO      === Iteration 61/100  run=first_day_gcs  best_qa=80.0% ===
+2026-03-25 20:48:35  INFO      Exec block 1/1 …
+2026-03-25 20:48:35  INFO      Output: Stay ID: 39331559
+  Has severe impairment: True
+  Min GCS (non-intubated): None
+  Min GCS (all): 3.0
+  Has verbal unresponsive: True
+  Total assessments: 6
+  Non-intubated: 0, Intubated: 6
+
+Stay ID: 36713654
+  Has severe impairment: True
+  Min GCS (non-intubated): None
+  Min GCS (all): 3.0
+  Has verbal unresponsive: True
+  Total assessments: 4
+  Non-intubated: 0, Intubated: 4
+
+Stay ID: 36707061
+  Has severe impairment: False
+  Min GCS (non-intubated): None
+  Min GCS (all): 3.0
+  Has verbal unres
+2026-03-25 20:48:35  INFO      === Iteration 62/100  run=first_day_gcs  best_qa=80.0% ===
+2026-03-25 20:50:25  INFO      Exec block 1/1 …
+2026-03-25 20:50:25  INFO      Output: Code executed successfully (no output).
+2026-03-25 20:50:25  INFO      Debug conversations will be saved to debug_logs
+2026-03-25 20:50:25  INFO      Using question from dataset column: Does this patient have a Glasgow Coma Scale score of 8 or less (severe impairment) on their first ICU day?
+2026-03-25 20:50:25  INFO      Answer type for 'first_day_gcs': numerical (per_row=True)
+2026-03-25 20:50:25  INFO      ReACT iteration 1/5 — 20 active patients
+Rendering conversations:   0%|          | 0/20 [00:00<?, ?it/s]Rendering conversations: 100%|██████████| 20/20 [00:00<00:00, 369.03it/s]
+Processed prompts:   0%|          | 0/20 [00:00<?, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s]Processed prompts:   5%|▌         | 1/20 [00:15<05:01, 15.87s/it, est. speed input: 74.97 toks/s, output: 12.66 toks/s]Processed prompts:  10%|█         | 2/20 [00:18<02:23,  7.97s/it, est. speed input: 129.14 toks/s, output: 24.90 toks/s]Processed prompts:  15%|█▌        | 3/20 [00:20<01:29,  5.25s/it, est. speed input: 174.11 toks/s, output: 37.13 toks/s]Processed prompts:  20%|██        | 4/20 [00:21<00:58,  3.68s/it, est. speed input: 218.17 toks/s, output: 50.07 toks/s]Processed prompts:  25%|██▌       | 5/20 [00:25<00:56,  3.75s/it, est. speed input: 231.65 toks/s, output: 58.73 toks/s]Processed prompts:  30%|███       | 6/20 [00:27<00:42,  3.05s/it, est. speed input: 261.20 toks/s, output: 71.83 toks/s]Processed prompts:  40%|████      | 8/20 [00:27<00:20,  1.71s/it, est. speed input: 340.30 toks/s, output: 103.33 toks/s]Processed prompts:  45%|████▌     | 9/20 [00:28<00:14,  1.31s/it, est. speed input: 380.19 toks/s, output: 119.66 toks/s]Processed prompts:  50%|█████     | 10/20 [00:30<00:15,  1.57s/it, est. speed input: 391.00 toks/s, output: 128.20 toks/s]Processed prompts:  55%|█████▌    | 11/20 [00:30<00:11,  1.25s/it, est. speed input: 424.46 toks/s, output: 143.98 toks/s]Processed prompts:  60%|██████    | 12/20 [00:30<00:07,  1.04it/s, est. speed input: 459.52 toks/s, output: 160.51 toks/s]Processed prompts:  70%|███████   | 14/20 [00:31<00:03,  1.79it/s, est. speed input: 534.32 toks/s, output: 195.12 toks/s]Processed prompts:  80%|████████  | 16/20 [00:31<00:01,  2.49it/s, est. speed input: 604.78 toks/s, output: 228.31 toks/s]Processed prompts:  85%|████████▌ | 17/20 [00:31<00:01,  2.95it/s, est. speed input: 639.85 toks/s, output: 245.24 toks/s]Processed prompts:  90%|█████████ | 18/20 [00:31<00:00,  3.50it/s, est. speed input: 675.19 toks/s, output: 262.14 toks/s]Processed prompts:  95%|█████████▌| 19/20 [00:32<00:00,  3.15it/s, est. speed input: 703.67 toks/s, output: 276.66 toks/s]Processed prompts: 100%|██████████| 20/20 [00:33<00:00,  1.67it/s, est. speed input: 710.36 toks/s, output: 283.58 toks/s]Processed prompts: 100%|██████████| 20/20 [00:33<00:00,  1.67it/s, est. speed input: 710.36 toks/s, output: 283.58 toks/s]Processed prompts: 100%|██████████| 20/20 [00:33<00:00,  1.67s/it, est. speed input: 710.36 toks/s, output: 283.58 toks/s]
+2026-03-25 20:50:59  INFO      ReACT iteration 2/5 — 20 active patients
+Rendering conversations:   0%|          | 0/20 [00:00<?, ?it/s]Rendering conversations: 100%|██████████| 20/20 [00:00<00:00, 258.01it/s]
+Processed prompts:   0%|          | 0/20 [00:00<?, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s]Processed prompts:   5%|▌         | 1/20 [00:15<05:00, 15.84s/it, est. speed input: 128.96 toks/s, output: 7.20 toks/s]Processed prompts:  10%|█         | 2/20 [00:16<02:04,  6.94s/it, est. speed input: 252.18 toks/s, output: 14.63 toks/s]Processed prompts:  15%|█▌        | 3/20 [00:17<01:10,  4.13s/it, est. speed input: 357.29 toks/s, output: 22.27 toks/s]Processed prompts:  20%|██        | 4/20 [00:18<00:46,  2.88s/it, est. speed input: 439.19 toks/s, output: 30.16 toks/s]Processed prompts:  25%|██▌       | 5/20 [00:18<00:28,  1.89s/it, est. speed input: 540.42 toks/s, output: 39.05 toks/s]Processed prompts:  30%|███       | 6/20 [00:18<00:18,  1.32s/it, est. speed input: 643.67 toks/s, output: 47.87 toks/s]Processed prompts:  35%|███▌      | 7/20 [00:19<00:13,  1.02s/it, est. speed input: 753.01 toks/s, output: 56.35 toks/s]Processed prompts:  40%|████      | 8/20 [00:19<00:10,  1.10it/s, est. speed input: 818.35 toks/s, output: 64.54 toks/s]Processed prompts:  50%|█████     | 10/20 [00:20<00:05,  1.83it/s, est. speed input: 994.37 toks/s, output: 83.76 toks/s]Processed prompts:  60%|██████    | 12/20 [00:20<00:04,  1.99it/s, est. speed input: 1143.03 toks/s, output: 100.85 toks/s]Processed prompts:  65%|██████▌   | 13/20 [00:21<00:02,  2.35it/s, est. speed input: 1224.59 toks/s, output: 111.09 toks/s]Processed prompts:  70%|███████   | 14/20 [00:31<00:17,  2.86s/it, est. speed input: 881.66 toks/s, output: 89.73 toks/s]  Processed prompts:  75%|███████▌  | 15/20 [00:31<00:10,  2.19s/it, est. speed input: 931.91 toks/s, output: 104.52 toks/s]Processed prompts:  85%|████████▌ | 17/20 [00:32<00:03,  1.33s/it, est. speed input: 1053.21 toks/s, output: 134.71 toks/s]Processed prompts:  90%|█████████ | 18/20 [00:35<00:03,  1.77s/it, est. speed input: 1005.51 toks/s, output: 139.07 toks/s]Processed prompts:  95%|█████████▌| 19/20 [00:37<00:01,  1.98s/it, est. speed input: 989.74 toks/s, output: 146.81 toks/s] Processed prompts: 100%|██████████| 20/20 [00:38<00:00,  1.67s/it, est. speed input: 1024.53 toks/s, output: 161.50 toks/s]Processed prompts: 100%|██████████| 20/20 [00:38<00:00,  1.67s/it, est. speed input: 1024.53 toks/s, output: 161.50 toks/s]Processed prompts: 100%|██████████| 20/20 [00:38<00:00,  1.94s/it, est. speed input: 1024.53 toks/s, output: 161.50 toks/s]
+2026-03-25 20:51:37  INFO      QA accuracy: 80.0%  (correct=16/20, parse_errors=0)
+2026-03-25 20:51:37  INFO      === Iteration 63/100  run=first_day_gcs  best_qa=80.0% ===
+2026-03-25 20:52:09  INFO      Exec block 1/1 …
+2026-03-25 20:52:09  INFO      Output: Stay ID: 39331559
+  Has severe impairment: True
+  Min GCS (non-intubated): None
+  Min GCS (all): 3.0
+  Max GCS: 10.0
+  Has verbal unresponsive: True
+  Total assessments: 6
+  Non-intubated: 0, Intubated: 6
+  Motor=1 count: 4, Ratio: 0.67
+
+Stay ID: 38685632
+  Has severe impairment: False
+  Min GCS (non-intubated): 15.0
+  Min GCS (all): 3.0
+  Max GCS: 15.0
+  Has verbal unresponsive: True
+  Total assessments: 4
+  Non-intubated: 3, Intubated: 1
+  Motor=1 count: 1, Ratio: 1.00
+  Non-intubated GCS valu
+2026-03-25 20:52:09  INFO      === Iteration 64/100  run=first_day_gcs  best_qa=80.0% ===
+2026-03-25 20:54:15  INFO      Exec block 1/1 …
+2026-03-25 20:54:15  INFO      Output: Stay ID: 39331559
+    stay_id           charttime  eye  verbal  motor  gcs_total
+0  39331559 2147-05-01 23:07:00  2.0     1.0    1.0        4.0
+1  39331559 2147-05-02 02:00:00  2.0     1.0    1.0        4.0
+2  39331559 2147-05-02 05:00:00  2.0     1.0    1.0        4.0
+3  39331559 2147-05-02 08:34:00  1.0     1.0    4.0        6.0
+4  39331559 2147-05-02 12:35:00  3.0     1.0    6.0       10.0
+5  39331559 2147-05-02 20:00:00  1.0     1.0    1.0        3.0
+
+Stay ID: 38685632
+    stay_id           
+2026-03-25 20:54:15  INFO      === Iteration 65/100  run=first_day_gcs  best_qa=80.0% ===
+2026-03-25 20:56:07  INFO      Exec block 1/1 …
+2026-03-25 20:56:07  INFO      Output: Stay ID: 39331559
+  Has severe impairment: True
+  Min GCS (all): 3.0
+
+Stay ID: 38685632
+  Has severe impairment: True
+  Min GCS (all): 3.0
+
+Stay ID: 33700270
+  Has severe impairment: True
+  Min GCS (all): 3.0
+
+Stay ID: 36713654
+  Has severe impairment: True
+  Min GCS (all): 3.0
+
+
+2026-03-25 20:56:07  INFO      === Iteration 66/100  run=first_day_gcs  best_qa=80.0% ===
+2026-03-25 20:56:24  INFO      Exec block 1/1 …
+2026-03-25 20:56:24  INFO      Output: Testing revised function on all original test cases:
+============================================================
+Stay ID: 37989934
+  Has severe impairment: True
+  Min GCS (non-intubated): None
+  Min GCS (all): 3.0
+  Max GCS: 3.0
+  Total assessments: 23
+
+Stay ID: 39553978
+  Has severe impairment: False
+  Min GCS (non-intubated): 14.0
+  Min GCS (all): 14.0
+  Max GCS: 15.0
+  Total assessments: 3
+
+Stay ID: 37081114
+  Has severe impairment: False
+  Min GCS (non-intubated): 12.0
+  Min GCS (all): 12.0
+2026-03-25 20:56:24  INFO      === Iteration 67/100  run=first_day_gcs  best_qa=80.0% ===
+2026-03-25 20:57:17  INFO      Exec block 1/1 …
+2026-03-25 20:57:17  INFO      Output: Stay ID: 37971050
+    stay_id           charttime  eye  verbal  motor  gcs_total
+0  37971050 2162-03-20 17:54:00  4.0     5.0    6.0       15.0
+1  37971050 2162-03-20 20:32:00  4.0     1.0    4.0        9.0
+2  37971050 2162-03-21 00:22:00  4.0     1.0    4.0        9.0
+3  37971050 2162-03-21 04:32:00  4.0     1.0    4.0        9.0
+4  37971050 2162-03-21 08:00:00  4.0     1.0    5.0       10.0
+5  37971050 2162-03-21 12:00:00  4.0     1.0    5.0       10.0
+6  37971050 2162-03-21 16:00:00  4.0     
+2026-03-25 20:57:17  INFO      === Iteration 68/100  run=first_day_gcs  best_qa=80.0% ===
+2026-03-25 21:01:35  INFO      Exec block 1/1 …
+2026-03-25 21:01:35  INFO      Output: Code executed successfully (no output).
+2026-03-25 21:01:35  INFO      Debug conversations will be saved to debug_logs
+2026-03-25 21:01:35  INFO      Using question from dataset column: Does this patient have a Glasgow Coma Scale score of 8 or less (severe impairment) on their first ICU day?
+2026-03-25 21:01:35  INFO      Answer type for 'first_day_gcs': numerical (per_row=True)
+2026-03-25 21:01:36  INFO      ReACT iteration 1/5 — 20 active patients
+Rendering conversations:   0%|          | 0/20 [00:00<?, ?it/s]Rendering conversations: 100%|██████████| 20/20 [00:00<00:00, 532.58it/s]
+Processed prompts:   0%|          | 0/20 [00:00<?, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s]Processed prompts:   5%|▌         | 1/20 [00:09<03:04,  9.69s/it, est. speed input: 71.03 toks/s, output: 13.01 toks/s]Processed prompts:  15%|█▌        | 3/20 [00:18<01:39,  5.84s/it, est. speed input: 110.54 toks/s, output: 30.79 toks/s]Processed prompts:  25%|██▌       | 5/20 [00:19<00:45,  3.00s/it, est. speed input: 178.88 toks/s, output: 64.10 toks/s]Processed prompts:  30%|███       | 6/20 [00:21<00:40,  2.89s/it, est. speed input: 189.81 toks/s, output: 74.82 toks/s]Processed prompts:  45%|████▌     | 9/20 [00:22<00:15,  1.37s/it, est. speed input: 284.43 toks/s, output: 129.08 toks/s]Processed prompts:  65%|██████▌   | 13/20 [00:24<00:06,  1.02it/s, est. speed input: 370.84 toks/s, output: 184.81 toks/s]Processed prompts:  70%|███████   | 14/20 [00:24<00:05,  1.16it/s, est. speed input: 396.37 toks/s, output: 202.30 toks/s]Processed prompts:  75%|███████▌  | 15/20 [00:24<00:03,  1.37it/s, est. speed input: 422.86 toks/s, output: 220.31 toks/s]Processed prompts:  85%|████████▌ | 17/20 [00:24<00:01,  1.97it/s, est. speed input: 476.64 toks/s, output: 256.94 toks/s]Processed prompts:  95%|█████████▌| 19/20 [00:25<00:00,  2.72it/s, est. speed input: 529.87 toks/s, output: 293.50 toks/s]Processed prompts: 100%|██████████| 20/20 [00:25<00:00,  2.72it/s, est. speed input: 541.14 toks/s, output: 304.02 toks/s]Processed prompts: 100%|██████████| 20/20 [00:25<00:00,  1.29s/it, est. speed input: 541.14 toks/s, output: 304.02 toks/s]
+2026-03-25 21:02:02  INFO      ReACT iteration 2/5 — 20 active patients
+Rendering conversations:   0%|          | 0/20 [00:00<?, ?it/s]Rendering conversations: 100%|██████████| 20/20 [00:00<00:00, 339.89it/s]
+Processed prompts:   0%|          | 0/20 [00:00<?, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s]Processed prompts:   5%|▌         | 1/20 [00:11<03:44, 11.81s/it, est. speed input: 119.13 toks/s, output: 7.79 toks/s]Processed prompts:  10%|█         | 2/20 [00:12<01:38,  5.49s/it, est. speed input: 250.57 toks/s, output: 16.00 toks/s]Processed prompts:  15%|█▌        | 3/20 [00:13<00:54,  3.23s/it, est. speed input: 330.92 toks/s, output: 24.95 toks/s]Processed prompts:  30%|███       | 6/20 [00:13<00:16,  1.18s/it, est. speed input: 621.25 toks/s, output: 53.04 toks/s]Processed prompts:  40%|████      | 8/20 [00:13<00:08,  1.33it/s, est. speed input: 811.61 toks/s, output: 72.55 toks/s]Processed prompts:  45%|████▌     | 9/20 [00:14<00:07,  1.54it/s, est. speed input: 890.55 toks/s, output: 81.30 toks/s]Processed prompts:  50%|█████     | 10/20 [00:14<00:06,  1.60it/s, est. speed input: 956.11 toks/s, output: 89.13 toks/s]Processed prompts:  55%|█████▌    | 11/20 [00:14<00:04,  1.92it/s, est. speed input: 1022.04 toks/s, output: 98.96 toks/s]Processed prompts:  60%|██████    | 12/20 [00:15<00:03,  2.41it/s, est. speed input: 1112.24 toks/s, output: 109.25 toks/s]Processed prompts:  65%|██████▌   | 13/20 [00:15<00:02,  2.99it/s, est. speed input: 1201.18 toks/s, output: 119.60 toks/s]Processed prompts:  70%|███████   | 14/20 [00:19<00:08,  1.41s/it, est. speed input: 1017.04 toks/s, output: 108.15 toks/s]Processed prompts:  75%|███████▌  | 15/20 [00:25<00:13,  2.67s/it, est. speed input: 845.91 toks/s, output: 99.94 toks/s]  Processed prompts:  80%|████████  | 16/20 [00:25<00:08,  2.12s/it, est. speed input: 875.66 toks/s, output: 113.95 toks/s]Processed prompts:  85%|████████▌ | 17/20 [00:32<00:10,  3.36s/it, est. speed input: 746.41 toks/s, output: 110.38 toks/s]Processed prompts:  90%|█████████ | 18/20 [00:35<00:06,  3.27s/it, est. speed input: 722.14 toks/s, output: 120.19 toks/s]Processed prompts:  95%|█████████▌| 19/20 [00:38<00:03,  3.21s/it, est. speed input: 702.28 toks/s, output: 130.54 toks/s]Processed prompts: 100%|██████████| 20/20 [00:42<00:00,  3.58s/it, est. speed input: 657.98 toks/s, output: 137.69 toks/s]Processed prompts: 100%|██████████| 20/20 [00:42<00:00,  3.58s/it, est. speed input: 657.98 toks/s, output: 137.69 toks/s]Processed prompts: 100%|██████████| 20/20 [00:42<00:00,  2.15s/it, est. speed input: 657.98 toks/s, output: 137.69 toks/s]
+2026-03-25 21:02:45  INFO      QA accuracy: 75.0%  (correct=15/20, parse_errors=0)
+2026-03-25 21:02:45  INFO      === Iteration 69/100  run=first_day_gcs  best_qa=80.0% ===
+2026-03-25 21:03:22  INFO      Exec block 1/1 …
+2026-03-25 21:03:22  INFO      Output: Stay ID: 35892640
+    stay_id           charttime  eye  verbal  motor  gcs_total
+0  35892640 2146-01-30 04:52:00  1.0     1.0    5.0        7.0
+1  35892640 2146-01-30 08:08:00  1.0     1.0    5.0        7.0
+2  35892640 2146-01-30 11:55:00  4.0     1.0    5.0       10.0
+3  35892640 2146-01-30 16:08:00  4.0     5.0    6.0       15.0
+
+Non-intubated count: 1
+Intubated count: 3
+Non-intubated GCS values: [15.0]
+Min non-intubated GCS: 15.0
+
+2026-03-25 21:03:22  INFO      === Iteration 70/100  run=first_day_gcs  best_qa=80.0% ===
+2026-03-25 21:05:09  INFO      Exec block 1/1 …
+2026-03-25 21:05:10  INFO      Output: Stay ID: 39331559
+  has_severe: True, min_gcs: None, min_gcs_all: 3.0
+Stay ID: 38685632
+  has_severe: False, min_gcs: 15.0, min_gcs_all: 3.0
+Stay ID: 33700270
+  has_severe: False, min_gcs: 14.0, min_gcs_all: 3.0
+Stay ID: 36707061
+  has_severe: True, min_gcs: None, min_gcs_all: 3.0
+Stay ID: 35892640
+  has_severe: False, min_gcs: 15.0, min_gcs_all: 7.0
+
+2026-03-25 21:05:10  INFO      === Iteration 71/100  run=first_day_gcs  best_qa=80.0% ===
+2026-03-25 21:10:30  INFO      === Iteration 72/100  run=first_day_gcs  best_qa=80.0% ===
+2026-03-25 21:10:30  INFO      Context approaching limit (22671 tokens, limit=25000) — forcing summarize + compress
+2026-03-25 21:13:06  INFO      Context compressed: 28 messages -> 2 messages
+2026-03-25 21:14:32  INFO      Exec block 1/1 …
+2026-03-25 21:14:32  INFO      Output: Testing first_day_gcs function:
+================================================================================
+
+Stay ID: 37989934 - Severe impairment (GCS=3)
+  has_severe_impairment_first_day: True
+  min_gcs_first_day: None
+  min_gcs_first_day_all: 3.0
+  max_gcs_first_day: 3.0
+  total_gcs_assessments_first_day: 23
+  GCS records:
+             charttime  eye  verbal  motor  gcs_total
+0  2136-11-16 02:00:00  1.0     1.0    1.0        3.0
+1  2136-11-16 03:00:00  1.0     1.0    1.0        3.0
+2  21
+2026-03-25 21:14:32  INFO      === Iteration 73/100  run=first_day_gcs  best_qa=80.0% ===
+2026-03-25 21:16:13  INFO      Exec block 1/1 …
+2026-03-25 21:16:13  INFO      Output: Code executed successfully (no output).
+2026-03-25 21:16:14  INFO      Debug conversations will be saved to debug_logs
+2026-03-25 21:16:14  INFO      Using question from dataset column: Does this patient have a Glasgow Coma Scale score of 8 or less (severe impairment) on their first ICU day?
+2026-03-25 21:16:14  INFO      Answer type for 'first_day_gcs': numerical (per_row=True)
+2026-03-25 21:16:14  INFO      ReACT iteration 1/5 — 20 active patients
+Rendering conversations:   0%|          | 0/20 [00:00<?, ?it/s]Rendering conversations: 100%|██████████| 20/20 [00:00<00:00, 614.78it/s]
+Processed prompts:   0%|          | 0/20 [00:00<?, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s]Processed prompts:   5%|▌         | 1/20 [00:08<02:41,  8.52s/it, est. speed input: 80.72 toks/s, output: 12.79 toks/s]Processed prompts:  10%|█         | 2/20 [00:11<01:30,  5.04s/it, est. speed input: 125.12 toks/s, output: 24.83 toks/s]Processed prompts:  15%|█▌        | 3/20 [00:18<01:41,  5.95s/it, est. speed input: 114.52 toks/s, output: 32.89 toks/s]Processed prompts:  30%|███       | 6/20 [00:21<00:37,  2.66s/it, est. speed input: 197.17 toks/s, output: 77.29 toks/s]Processed prompts:  35%|███▌      | 7/20 [00:21<00:27,  2.09s/it, est. speed input: 226.61 toks/s, output: 94.79 toks/s]Processed prompts:  40%|████      | 8/20 [00:21<00:19,  1.62s/it, est. speed input: 256.45 toks/s, output: 112.31 toks/s]Processed prompts:  65%|██████▌   | 13/20 [00:23<00:05,  1.18it/s, est. speed input: 381.42 toks/s, output: 189.24 toks/s]Processed prompts:  70%|███████   | 14/20 [00:24<00:04,  1.23it/s, est. speed input: 400.89 toks/s, output: 203.91 toks/s]Processed prompts:  75%|███████▌  | 15/20 [00:24<00:03,  1.43it/s, est. speed input: 426.28 toks/s, output: 221.65 toks/s]Processed prompts:  85%|████████▌ | 17/20 [00:25<00:01,  1.67it/s, est. speed input: 468.22 toks/s, output: 252.96 toks/s]Processed prompts:  90%|█████████ | 18/20 [00:25<00:01,  1.99it/s, est. speed input: 493.72 toks/s, output: 271.45 toks/s]Processed prompts: 100%|██████████| 20/20 [00:25<00:00,  2.92it/s, est. speed input: 546.50 toks/s, output: 309.46 toks/s]Processed prompts: 100%|██████████| 20/20 [00:25<00:00,  2.92it/s, est. speed input: 546.50 toks/s, output: 309.46 toks/s]Processed prompts: 100%|██████████| 20/20 [00:25<00:00,  1.28s/it, est. speed input: 546.50 toks/s, output: 309.46 toks/s]
+2026-03-25 21:16:40  INFO      ReACT iteration 2/5 — 20 active patients
+Rendering conversations:   0%|          | 0/20 [00:00<?, ?it/s]Rendering conversations: 100%|██████████| 20/20 [00:00<00:00, 357.18it/s]
+Processed prompts:   0%|          | 0/20 [00:00<?, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s]Processed prompts:   5%|▌         | 1/20 [00:13<04:12, 13.31s/it, est. speed input: 105.97 toks/s, output: 9.31 toks/s]Processed prompts:  15%|█▌        | 3/20 [00:13<00:59,  3.52s/it, est. speed input: 342.34 toks/s, output: 28.00 toks/s]Processed prompts:  30%|███       | 6/20 [00:13<00:19,  1.41s/it, est. speed input: 633.51 toks/s, output: 56.10 toks/s]Processed prompts:  40%|████      | 8/20 [00:13<00:11,  1.07it/s, est. speed input: 819.17 toks/s, output: 75.28 toks/s]Processed prompts:  50%|█████     | 10/20 [00:14<00:07,  1.35it/s, est. speed input: 956.39 toks/s, output: 92.45 toks/s]Processed prompts:  55%|█████▌    | 11/20 [00:15<00:06,  1.46it/s, est. speed input: 1021.03 toks/s, output: 100.85 toks/s]Processed prompts:  65%|██████▌   | 13/20 [00:15<00:03,  2.14it/s, est. speed input: 1204.50 toks/s, output: 122.06 toks/s]Processed prompts:  70%|███████   | 14/20 [00:20<00:08,  1.49s/it, est. speed input: 952.56 toks/s, output: 104.89 toks/s] Processed prompts:  75%|███████▌  | 15/20 [00:23<00:09,  1.83s/it, est. speed input: 892.29 toks/s, output: 107.77 toks/s]Processed prompts:  80%|████████  | 16/20 [00:26<00:08,  2.05s/it, est. speed input: 850.41 toks/s, output: 113.92 toks/s]Processed prompts:  85%|████████▌ | 17/20 [00:26<00:04,  1.60s/it, est. speed input: 895.89 toks/s, output: 129.83 toks/s]Processed prompts:  90%|█████████ | 18/20 [00:30<00:04,  2.26s/it, est. speed input: 832.34 toks/s, output: 131.25 toks/s]Processed prompts:  95%|█████████▌| 19/20 [00:31<00:01,  1.72s/it, est. speed input: 866.93 toks/s, output: 148.28 toks/s]Processed prompts: 100%|██████████| 20/20 [00:35<00:00,  2.40s/it, est. speed input: 806.93 toks/s, output: 150.41 toks/s]Processed prompts: 100%|██████████| 20/20 [00:35<00:00,  2.40s/it, est. speed input: 806.93 toks/s, output: 150.41 toks/s]Processed prompts: 100%|██████████| 20/20 [00:35<00:00,  1.77s/it, est. speed input: 806.93 toks/s, output: 150.41 toks/s]
+2026-03-25 21:17:16  INFO      QA accuracy: 70.0%  (correct=14/20, parse_errors=0)
+2026-03-25 21:17:16  INFO      === Iteration 74/100  run=first_day_gcs  best_qa=80.0% ===
+2026-03-25 21:18:51  INFO      Exec block 1/1 …
+2026-03-25 21:18:51  INFO      Output: 
+============================================================
+Stay ID: 39331559
+Total records: 6
+Min GCS (all): 3.0
+Max GCS: 10.0
+Non-intubated count: 0
+Intubated count: 6
+Min GCS (intubated): 3.0
+Motor=1 count: 4/6
+
+GCS Records:
+            charttime  eye  verbal  motor  gcs_total
+0 2147-05-01 23:07:00  2.0     1.0    1.0        4.0
+1 2147-05-02 02:00:00  2.0     1.0    1.0        4.0
+2 2147-05-02 05:00:00  2.0     1.0    1.0        4.0
+3 2147-05-02 08:34:00  1.0     1.0    4.0        6.0
+4 214
+2026-03-25 21:18:51  INFO      === Iteration 75/100  run=first_day_gcs  best_qa=80.0% ===
+2026-03-25 21:20:57  INFO      Exec block 1/1 …
+2026-03-25 21:20:57  INFO      Output: Code executed successfully (no output).
+2026-03-25 21:20:57  INFO      Debug conversations will be saved to debug_logs
+2026-03-25 21:20:57  INFO      Using question from dataset column: Does this patient have a Glasgow Coma Scale score of 8 or less (severe impairment) on their first ICU day?
+2026-03-25 21:20:57  INFO      Answer type for 'first_day_gcs': numerical (per_row=True)
+2026-03-25 21:20:57  INFO      ReACT iteration 1/5 — 20 active patients
+Rendering conversations:   0%|          | 0/20 [00:00<?, ?it/s]Rendering conversations: 100%|██████████| 20/20 [00:00<00:00, 607.47it/s]
+Processed prompts:   0%|          | 0/20 [00:00<?, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s]Processed prompts:   5%|▌         | 1/20 [00:11<03:38, 11.51s/it, est. speed input: 61.97 toks/s, output: 13.99 toks/s]Processed prompts:  10%|█         | 2/20 [00:12<01:40,  5.57s/it, est. speed input: 109.23 toks/s, output: 27.25 toks/s]Processed prompts:  15%|█▌        | 3/20 [00:13<00:54,  3.21s/it, est. speed input: 158.25 toks/s, output: 41.50 toks/s]Processed prompts:  20%|██        | 4/20 [00:18<01:05,  4.07s/it, est. speed input: 150.06 toks/s, output: 46.67 toks/s]Processed prompts:  30%|███       | 6/20 [00:18<00:27,  1.96s/it, est. speed input: 222.63 toks/s, output: 80.41 toks/s]Processed prompts:  35%|███▌      | 7/20 [00:19<00:19,  1.54s/it, est. speed input: 254.68 toks/s, output: 95.89 toks/s]Processed prompts:  40%|████      | 8/20 [00:22<00:23,  1.92s/it, est. speed input: 253.46 toks/s, output: 101.49 toks/s]Processed prompts:  50%|█████     | 10/20 [00:22<00:11,  1.12s/it, est. speed input: 314.13 toks/s, output: 136.56 toks/s]Processed prompts:  65%|██████▌   | 13/20 [00:24<00:06,  1.04it/s, est. speed input: 370.31 toks/s, output: 175.41 toks/s]Processed prompts:  85%|████████▌ | 17/20 [00:25<00:01,  1.74it/s, est. speed input: 472.78 toks/s, output: 245.06 toks/s]Processed prompts:  90%|█████████ | 18/20 [00:26<00:01,  1.63it/s, est. speed input: 484.90 toks/s, output: 256.53 toks/s]Processed prompts:  95%|█████████▌| 19/20 [00:26<00:00,  1.83it/s, est. speed input: 507.67 toks/s, output: 273.69 toks/s]Processed prompts: 100%|██████████| 20/20 [00:26<00:00,  2.05it/s, est. speed input: 529.35 toks/s, output: 290.44 toks/s]Processed prompts: 100%|██████████| 20/20 [00:26<00:00,  2.05it/s, est. speed input: 529.35 toks/s, output: 290.44 toks/s]Processed prompts: 100%|██████████| 20/20 [00:26<00:00,  1.34s/it, est. speed input: 529.35 toks/s, output: 290.44 toks/s]
+2026-03-25 21:21:24  INFO      ReACT iteration 2/5 — 20 active patients
+Rendering conversations:   0%|          | 0/20 [00:00<?, ?it/s]Rendering conversations: 100%|██████████| 20/20 [00:00<00:00, 356.72it/s]
+Processed prompts:   0%|          | 0/20 [00:00<?, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s]Processed prompts:   5%|▌         | 1/20 [00:11<03:31, 11.15s/it, est. speed input: 111.84 toks/s, output: 6.91 toks/s]Processed prompts:  10%|█         | 2/20 [00:13<01:47,  5.98s/it, est. speed input: 226.45 toks/s, output: 14.95 toks/s]Processed prompts:  20%|██        | 4/20 [00:13<00:36,  2.27s/it, est. speed input: 429.71 toks/s, output: 33.85 toks/s]Processed prompts:  30%|███       | 6/20 [00:13<00:17,  1.24s/it, est. speed input: 606.56 toks/s, output: 52.46 toks/s]Processed prompts:  40%|████      | 8/20 [00:14<00:09,  1.25it/s, est. speed input: 806.29 toks/s, output: 70.90 toks/s]Processed prompts:  45%|████▌     | 9/20 [00:14<00:08,  1.36it/s, est. speed input: 876.49 toks/s, output: 78.84 toks/s]Processed prompts:  50%|█████     | 10/20 [00:15<00:06,  1.52it/s, est. speed input: 944.26 toks/s, output: 87.47 toks/s]Processed prompts:  60%|██████    | 12/20 [00:15<00:03,  2.15it/s, est. speed input: 1111.69 toks/s, output: 107.23 toks/s]Processed prompts:  70%|███████   | 14/20 [00:15<00:02,  2.83it/s, est. speed input: 1272.03 toks/s, output: 127.46 toks/s]Processed prompts:  75%|███████▌  | 15/20 [00:15<00:01,  3.28it/s, est. speed input: 1353.81 toks/s, output: 138.04 toks/s]Processed prompts:  80%|████████  | 16/20 [00:19<00:04,  1.02s/it, est. speed input: 1176.07 toks/s, output: 127.64 toks/s]Processed prompts:  85%|████████▌ | 17/20 [00:21<00:04,  1.34s/it, est. speed input: 1125.65 toks/s, output: 129.11 toks/s]Processed prompts:  90%|█████████ | 18/20 [00:24<00:03,  1.72s/it, est. speed input: 1057.94 toks/s, output: 131.09 toks/s]Processed prompts:  95%|█████████▌| 19/20 [00:27<00:02,  2.21s/it, est. speed input: 967.92 toks/s, output: 132.28 toks/s] Processed prompts: 100%|██████████| 20/20 [00:37<00:00,  4.29s/it, est. speed input: 755.79 toks/s, output: 118.48 toks/s]Processed prompts: 100%|██████████| 20/20 [00:37<00:00,  4.29s/it, est. speed input: 755.79 toks/s, output: 118.48 toks/s]Processed prompts: 100%|██████████| 20/20 [00:37<00:00,  1.88s/it, est. speed input: 755.79 toks/s, output: 118.48 toks/s]
+2026-03-25 21:22:02  INFO      QA accuracy: 75.0%  (correct=15/20, parse_errors=0)
+2026-03-25 21:22:02  INFO      === Iteration 76/100  run=first_day_gcs  best_qa=80.0% ===
+2026-03-25 21:22:57  INFO      Exec block 1/1 …
+2026-03-25 21:22:57  INFO      Output: 
+============================================================
+Stay ID: 39331559
+Total records: 6
+Min GCS (all): 3.0
+Any GCS <= 8: True
+Non-intubated count: 0
+Intubated count: 6
+Min GCS (intubated): 3.0
+Motor=1 count: 4/6 = 0.67
+
+GCS Records:
+            charttime  eye  verbal  motor  gcs_total
+0 2147-05-01 23:07:00  2.0     1.0    1.0        4.0
+1 2147-05-02 02:00:00  2.0     1.0    1.0        4.0
+2 2147-05-02 05:00:00  2.0     1.0    1.0        4.0
+3 2147-05-02 08:34:00  1.0     1.0    4.0     
+2026-03-25 21:22:57  INFO      === Iteration 77/100  run=first_day_gcs  best_qa=80.0% ===
+2026-03-25 21:24:53  INFO      Exec block 1/1 …
+2026-03-25 21:24:53  INFO      Output: Code executed successfully (no output).
+2026-03-25 21:24:53  INFO      Debug conversations will be saved to debug_logs
+2026-03-25 21:24:53  INFO      Using question from dataset column: Does this patient have a Glasgow Coma Scale score of 8 or less (severe impairment) on their first ICU day?
+2026-03-25 21:24:53  INFO      Answer type for 'first_day_gcs': numerical (per_row=True)
+2026-03-25 21:24:53  INFO      ReACT iteration 1/5 — 20 active patients
+Rendering conversations:   0%|          | 0/20 [00:00<?, ?it/s]Rendering conversations: 100%|██████████| 20/20 [00:00<00:00, 662.51it/s]
+Processed prompts:   0%|          | 0/20 [00:00<?, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s]Processed prompts:   5%|▌         | 1/20 [00:09<03:04,  9.70s/it, est. speed input: 74.31 toks/s, output: 12.57 toks/s]Processed prompts:  10%|█         | 2/20 [00:15<02:11,  7.29s/it, est. speed input: 95.16 toks/s, output: 23.90 toks/s]Processed prompts:  15%|█▌        | 3/20 [00:18<01:34,  5.56s/it, est. speed input: 115.78 toks/s, output: 36.57 toks/s]Processed prompts:  30%|███       | 6/20 [00:22<00:37,  2.65s/it, est. speed input: 195.34 toks/s, output: 77.80 toks/s]Processed prompts:  35%|███▌      | 7/20 [00:23<00:28,  2.23s/it, est. speed input: 219.58 toks/s, output: 93.19 toks/s]Processed prompts:  50%|█████     | 10/20 [00:24<00:13,  1.30s/it, est. speed input: 298.58 toks/s, output: 142.05 toks/s]Processed prompts:  55%|█████▌    | 11/20 [00:24<00:09,  1.10s/it, est. speed input: 325.42 toks/s, output: 159.28 toks/s]Processed prompts:  60%|██████    | 12/20 [00:25<00:07,  1.04it/s, est. speed input: 348.90 toks/s, output: 175.19 toks/s]Processed prompts:  70%|███████   | 14/20 [00:25<00:03,  1.61it/s, est. speed input: 404.94 toks/s, output: 211.52 toks/s]Processed prompts:  75%|███████▌  | 15/20 [00:25<00:02,  1.88it/s, est. speed input: 430.70 toks/s, output: 228.69 toks/s]Processed prompts:  80%|████████  | 16/20 [00:25<00:01,  2.26it/s, est. speed input: 456.80 toks/s, output: 246.14 toks/s]Processed prompts:  95%|█████████▌| 19/20 [00:26<00:00,  2.65it/s, est. speed input: 523.87 toks/s, output: 293.18 toks/s]Processed prompts: 100%|██████████| 20/20 [00:26<00:00,  2.82it/s, est. speed input: 546.25 toks/s, output: 309.59 toks/s]Processed prompts: 100%|██████████| 20/20 [00:26<00:00,  2.82it/s, est. speed input: 546.25 toks/s, output: 309.59 toks/s]Processed prompts: 100%|██████████| 20/20 [00:26<00:00,  1.34s/it, est. speed input: 546.25 toks/s, output: 309.59 toks/s]
+2026-03-25 21:25:21  INFO      ReACT iteration 2/5 — 20 active patients
+Rendering conversations:   0%|          | 0/20 [00:00<?, ?it/s]Rendering conversations: 100%|██████████| 20/20 [00:00<00:00, 363.42it/s]
+Processed prompts:   0%|          | 0/20 [00:00<?, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s]Processed prompts:   5%|▌         | 1/20 [00:13<04:16, 13.50s/it, est. speed input: 109.31 toks/s, output: 9.18 toks/s]Processed prompts:  15%|█▌        | 3/20 [00:13<01:00,  3.59s/it, est. speed input: 312.59 toks/s, output: 27.67 toks/s]Processed prompts:  35%|███▌      | 7/20 [00:13<00:15,  1.18s/it, est. speed input: 748.26 toks/s, output: 65.14 toks/s]Processed prompts:  45%|████▌     | 9/20 [00:14<00:09,  1.14it/s, est. speed input: 922.37 toks/s, output: 82.41 toks/s]Processed prompts:  55%|█████▌    | 11/20 [00:14<00:05,  1.53it/s, est. speed input: 1092.48 toks/s, output: 101.09 toks/s]Processed prompts:  60%|██████    | 12/20 [00:15<00:05,  1.48it/s, est. speed input: 1116.04 toks/s, output: 107.20 toks/s]Processed prompts:  65%|██████▌   | 13/20 [00:16<00:05,  1.30it/s, est. speed input: 1132.10 toks/s, output: 112.01 toks/s]Processed prompts:  70%|███████   | 14/20 [00:20<00:08,  1.40s/it, est. speed input: 1003.94 toks/s, output: 106.75 toks/s]Processed prompts:  75%|███████▌  | 15/20 [00:20<00:05,  1.11s/it, est. speed input: 1063.74 toks/s, output: 120.08 toks/s]Processed prompts:  80%|████████  | 16/20 [00:21<00:04,  1.06s/it, est. speed input: 1092.36 toks/s, output: 129.63 toks/s]Processed prompts:  85%|████████▌ | 17/20 [00:27<00:07,  2.44s/it, est. speed input: 898.42 toks/s, output: 118.06 toks/s] Processed prompts:  90%|█████████ | 18/20 [00:30<00:05,  2.50s/it, est. speed input: 868.57 toks/s, output: 125.89 toks/s]Processed prompts: 100%|██████████| 20/20 [00:31<00:00,  1.75s/it, est. speed input: 917.23 toks/s, output: 155.25 toks/s]Processed prompts: 100%|██████████| 20/20 [00:31<00:00,  1.75s/it, est. speed input: 917.23 toks/s, output: 155.25 toks/s]Processed prompts: 100%|██████████| 20/20 [00:31<00:00,  1.59s/it, est. speed input: 917.23 toks/s, output: 155.25 toks/s]
+2026-03-25 21:25:53  INFO      QA accuracy: 70.0%  (correct=14/20, parse_errors=0)
+2026-03-25 21:25:53  INFO      === Iteration 78/100  run=first_day_gcs  best_qa=80.0% ===
+2026-03-25 21:26:51  INFO      Exec block 1/1 …
+2026-03-25 21:26:51  INFO      Output: GCS Records:
+    stay_id           charttime  eye  verbal  motor  gcs_total              intime       first_day_end
+0  35892640 2146-01-30 04:52:00  1.0     1.0    5.0        7.0 2146-01-30 04:01:00 2146-01-31 04:01:00
+1  35892640 2146-01-30 08:08:00  1.0     1.0    5.0        7.0 2146-01-30 04:01:00 2146-01-31 04:01:00
+2  35892640 2146-01-30 11:55:00  4.0     1.0    5.0       10.0 2146-01-30 04:01:00 2146-01-31 04:01:00
+3  35892640 2146-01-30 16:08:00  4.0     5.0    6.0       15.0 2146-01-30 0
+2026-03-25 21:26:51  INFO      === Iteration 79/100  run=first_day_gcs  best_qa=80.0% ===
+2026-03-25 21:28:25  INFO      Exec block 1/1 …
+2026-03-25 21:28:25  INFO      Output: DEBUG: stay_id=35892640
+DEBUG: total records=4
+DEBUG: non_intubated count=1
+DEBUG: intubated count=3
+DEBUG: min_gcs from non_intubated=15.0
+DEBUG: has_severe=False (based on non-intubated min_gcs=15.0)
+
+Result min_gcs_first_day: 15.0
+Result has_severe_impairment_first_day: False
+
+2026-03-25 21:28:25  INFO      === Iteration 80/100  run=first_day_gcs  best_qa=80.0% ===
+2026-03-25 21:30:10  INFO      Exec block 1/1 …
+2026-03-25 21:30:10  INFO      Output: Testing function directly:
+
+Stay ID: 39331559
+  min_gcs_first_day: None
+  has_severe_impairment_first_day: True
+
+Stay ID: 38685632
+  min_gcs_first_day: 15.0
+  has_severe_impairment_first_day: False
+
+Stay ID: 35892640
+  min_gcs_first_day: 15.0
+  has_severe_impairment_first_day: False
+
+Stay ID: 33700270
+  min_gcs_first_day: 14.0
+  has_severe_impairment_first_day: False
+
+Stay ID: 36713654
+  min_gcs_first_day: None
+  has_severe_impairment_first_day: True
+
+Stay ID: 36707061
+  min_gcs_first_day: None
+
+2026-03-25 21:30:10  INFO      === Iteration 81/100  run=first_day_gcs  best_qa=80.0% ===
+2026-03-25 21:30:10  INFO      Context approaching limit (21143 tokens, limit=25000) — forcing summarize + compress
+2026-03-25 21:32:23  INFO      Context compressed: 23 messages -> 2 messages
+2026-03-25 21:34:04  INFO      Exec block 1/1 …
+2026-03-25 21:34:04  INFO      Output: Stay 39331559:
+  Subject: 16365207, Hadm: 20942115
+  Min GCS (non-intubated): None
+  Min GCS (all): 3.0
+  Max GCS: 10.0
+  Severe impairment: True
+  Mild/Normal: True
+  Total assessments: 6
+  Verbal unresponsive: True
+
+Stay 38685632:
+  Subject: 19846489, Hadm: 23403243
+  Min GCS (non-intubated): 15.0
+  Min GCS (all): 3.0
+  Max GCS: 15.0
+  Severe impairment: False
+  Mild/Normal: True
+  Total assessments: 4
+  Verbal unresponsive: True
+
+Stay 35892640:
+  Subject: 19733804, Hadm: 21557400
+  Min GCS (n
+2026-03-25 21:34:04  INFO      === Iteration 82/100  run=first_day_gcs  best_qa=80.0% ===
+2026-03-25 21:35:43  INFO      Exec block 1/1 …
+2026-03-25 21:35:43  INFO      Output: Code executed successfully (no output).
+2026-03-25 21:35:43  INFO      Debug conversations will be saved to debug_logs
+2026-03-25 21:35:43  INFO      Using question from dataset column: Does this patient have a Glasgow Coma Scale score of 8 or less (severe impairment) on their first ICU day?
+2026-03-25 21:35:43  INFO      Answer type for 'first_day_gcs': numerical (per_row=True)
+2026-03-25 21:35:43  INFO      ReACT iteration 1/5 — 20 active patients
+Rendering conversations:   0%|          | 0/20 [00:00<?, ?it/s]Rendering conversations: 100%|██████████| 20/20 [00:00<00:00, 613.07it/s]
+Processed prompts:   0%|          | 0/20 [00:00<?, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s]Processed prompts:   5%|▌         | 1/20 [00:09<03:06,  9.80s/it, est. speed input: 73.58 toks/s, output: 12.76 toks/s]Processed prompts:  10%|█         | 2/20 [00:18<02:47,  9.30s/it, est. speed input: 76.94 toks/s, output: 23.80 toks/s]Processed prompts:  25%|██▌       | 5/20 [00:21<00:49,  3.32s/it, est. speed input: 166.81 toks/s, output: 68.39 toks/s]Processed prompts:  30%|███       | 6/20 [00:22<00:39,  2.79s/it, est. speed input: 190.03 toks/s, output: 82.91 toks/s]Processed prompts:  35%|███▌      | 7/20 [00:23<00:27,  2.14s/it, est. speed input: 218.99 toks/s, output: 100.07 toks/s]Processed prompts:  55%|█████▌    | 11/20 [00:23<00:07,  1.14it/s, est. speed input: 342.88 toks/s, output: 172.15 toks/s]Processed prompts:  60%|██████    | 12/20 [00:25<00:08,  1.01s/it, est. speed input: 349.84 toks/s, output: 179.65 toks/s]Processed prompts:  85%|████████▌ | 17/20 [00:25<00:01,  2.04it/s, est. speed input: 489.31 toks/s, output: 269.85 toks/s]Processed prompts:  90%|█████████ | 18/20 [00:25<00:00,  2.28it/s, est. speed input: 515.95 toks/s, output: 287.53 toks/s]Processed prompts:  95%|█████████▌| 19/20 [00:26<00:00,  2.18it/s, est. speed input: 533.09 toks/s, output: 300.40 toks/s]Processed prompts: 100%|██████████| 20/20 [00:26<00:00,  2.46it/s, est. speed input: 557.34 toks/s, output: 317.39 toks/s]Processed prompts: 100%|██████████| 20/20 [00:26<00:00,  2.46it/s, est. speed input: 557.34 toks/s, output: 317.39 toks/s]Processed prompts: 100%|██████████| 20/20 [00:26<00:00,  1.31s/it, est. speed input: 557.34 toks/s, output: 317.39 toks/s]
+2026-03-25 21:36:09  INFO      ReACT iteration 2/5 — 20 active patients
+Rendering conversations:   0%|          | 0/20 [00:00<?, ?it/s]Rendering conversations: 100%|██████████| 20/20 [00:00<00:00, 359.72it/s]
+Processed prompts:   0%|          | 0/20 [00:00<?, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s]Processed prompts:   5%|▌         | 1/20 [00:12<04:00, 12.64s/it, est. speed input: 114.39 toks/s, output: 8.54 toks/s]Processed prompts:  10%|█         | 2/20 [00:13<01:39,  5.51s/it, est. speed input: 223.03 toks/s, output: 17.41 toks/s]Processed prompts:  20%|██        | 4/20 [00:13<00:34,  2.17s/it, est. speed input: 457.39 toks/s, output: 35.36 toks/s]Processed prompts:  25%|██▌       | 5/20 [00:13<00:24,  1.62s/it, est. speed input: 539.50 toks/s, output: 44.14 toks/s]Processed prompts:  35%|███▌      | 7/20 [00:14<00:11,  1.10it/s, est. speed input: 739.35 toks/s, output: 63.23 toks/s]Processed prompts:  40%|████      | 8/20 [00:14<00:09,  1.24it/s, est. speed input: 809.87 toks/s, output: 71.56 toks/s]Processed prompts:  45%|████▌     | 9/20 [00:15<00:07,  1.44it/s, est. speed input: 870.66 toks/s, output: 80.67 toks/s]Processed prompts:  55%|█████▌    | 11/20 [00:15<00:04,  2.13it/s, est. speed input: 1043.15 toks/s, output: 100.87 toks/s]Processed prompts:  60%|██████    | 12/20 [00:15<00:03,  2.11it/s, est. speed input: 1106.80 toks/s, output: 109.28 toks/s]Processed prompts:  65%|██████▌   | 13/20 [00:15<00:02,  2.59it/s, est. speed input: 1183.51 toks/s, output: 120.16 toks/s]Processed prompts:  70%|███████   | 14/20 [00:18<00:06,  1.07s/it, est. speed input: 1072.36 toks/s, output: 115.07 toks/s]Processed prompts:  75%|███████▌  | 15/20 [00:21<00:07,  1.41s/it, est. speed input: 1024.27 toks/s, output: 117.57 toks/s]Processed prompts:  80%|████████  | 16/20 [00:27<00:10,  2.70s/it, est. speed input: 847.67 toks/s, output: 108.83 toks/s] Processed prompts:  85%|████████▌ | 17/20 [00:27<00:05,  1.96s/it, est. speed input: 895.47 toks/s, output: 125.65 toks/s]Processed prompts:  90%|█████████ | 18/20 [00:28<00:03,  1.83s/it, est. speed input: 904.26 toks/s, output: 136.80 toks/s]Processed prompts:  95%|█████████▌| 19/20 [00:38<00:04,  4.14s/it, est. speed input: 715.88 toks/s, output: 122.54 toks/s]Processed prompts: 100%|██████████| 20/20 [01:04<00:00, 10.70s/it, est. speed input: 448.53 toks/s, output: 95.60 toks/s] Processed prompts: 100%|██████████| 20/20 [01:04<00:00, 10.70s/it, est. speed input: 448.53 toks/s, output: 95.60 toks/s]Processed prompts: 100%|██████████| 20/20 [01:04<00:00,  3.25s/it, est. speed input: 448.53 toks/s, output: 95.60 toks/s]
+2026-03-25 21:37:14  INFO      QA accuracy: 85.0%  (correct=17/20, parse_errors=0)
+2026-03-25 21:37:14  INFO      === Iteration 83/100  run=first_day_gcs  best_qa=85.0% ===
+2026-03-25 21:41:55  INFO      Exec block 1/1 …
+2026-03-25 21:41:55  INFO      Output: Code executed successfully (no output).
+2026-03-25 21:41:55  INFO      Debug conversations will be saved to debug_logs
+2026-03-25 21:41:55  INFO      Using question from dataset column: Does this patient have a Glasgow Coma Scale score of 8 or less (severe impairment) on their first ICU day?
+2026-03-25 21:41:55  INFO      Answer type for 'first_day_gcs': numerical (per_row=True)
+2026-03-25 21:41:55  INFO      ReACT iteration 1/5 — 20 active patients
+Rendering conversations:   0%|          | 0/20 [00:00<?, ?it/s]Rendering conversations: 100%|██████████| 20/20 [00:00<00:00, 667.95it/s]
+Processed prompts:   0%|          | 0/20 [00:00<?, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s]Processed prompts:   5%|▌         | 1/20 [00:14<04:42, 14.87s/it, est. speed input: 46.26 toks/s, output: 16.00 toks/s]Processed prompts:  10%|█         | 2/20 [00:16<02:10,  7.22s/it, est. speed input: 82.18 toks/s, output: 30.94 toks/s]Processed prompts:  15%|█▌        | 3/20 [00:17<01:12,  4.24s/it, est. speed input: 118.45 toks/s, output: 46.66 toks/s]Processed prompts:  20%|██        | 4/20 [00:19<00:53,  3.37s/it, est. speed input: 142.18 toks/s, output: 59.19 toks/s]Processed prompts:  25%|██▌       | 5/20 [00:20<00:36,  2.46s/it, est. speed input: 170.78 toks/s, output: 74.37 toks/s]Processed prompts:  30%|███       | 6/20 [00:20<00:23,  1.70s/it, est. speed input: 203.26 toks/s, output: 91.38 toks/s]Processed prompts:  35%|███▌      | 7/20 [00:21<00:17,  1.31s/it, est. speed input: 231.05 toks/s, output: 107.09 toks/s]Processed prompts:  40%|████      | 8/20 [00:21<00:11,  1.01it/s, est. speed input: 260.81 toks/s, output: 123.65 toks/s]Processed prompts:  50%|█████     | 10/20 [00:21<00:05,  1.77it/s, est. speed input: 323.54 toks/s, output: 158.38 toks/s]Processed prompts:  55%|█████▌    | 11/20 [00:22<00:06,  1.46it/s, est. speed input: 339.86 toks/s, output: 169.46 toks/s]Processed prompts:  80%|████████  | 16/20 [00:22<00:01,  3.86it/s, est. speed input: 492.88 toks/s, output: 260.01 toks/s]Processed prompts:  90%|█████████ | 18/20 [00:23<00:00,  3.25it/s, est. speed input: 534.14 toks/s, output: 287.60 toks/s]Processed prompts: 100%|██████████| 20/20 [00:24<00:00,  3.07it/s, est. speed input: 575.05 toks/s, output: 315.88 toks/s]Processed prompts: 100%|██████████| 20/20 [00:24<00:00,  3.07it/s, est. speed input: 575.05 toks/s, output: 315.88 toks/s]Processed prompts: 100%|██████████| 20/20 [00:24<00:00,  1.22s/it, est. speed input: 575.05 toks/s, output: 315.88 toks/s]
+2026-03-25 21:42:20  INFO      ReACT iteration 2/5 — 20 active patients
+Rendering conversations:   0%|          | 0/20 [00:00<?, ?it/s]Rendering conversations: 100%|██████████| 20/20 [00:00<00:00, 375.05it/s]
+Processed prompts:   0%|          | 0/20 [00:00<?, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s]Processed prompts:   5%|▌         | 1/20 [00:11<03:37, 11.47s/it, est. speed input: 117.38 toks/s, output: 7.59 toks/s]Processed prompts:  10%|█         | 2/20 [00:12<01:34,  5.24s/it, est. speed input: 226.81 toks/s, output: 15.88 toks/s]Processed prompts:  15%|█▌        | 3/20 [00:13<00:54,  3.22s/it, est. speed input: 325.92 toks/s, output: 24.37 toks/s]Processed prompts:  25%|██▌       | 5/20 [00:13<00:22,  1.51s/it, est. speed input: 513.16 toks/s, output: 42.83 toks/s]Processed prompts:  30%|███       | 6/20 [00:13<00:15,  1.11s/it, est. speed input: 640.22 toks/s, output: 52.29 toks/s]Processed prompts:  35%|███▌      | 7/20 [00:14<00:11,  1.13it/s, est. speed input: 723.92 toks/s, output: 61.35 toks/s]Processed prompts:  40%|████      | 8/20 [00:14<00:08,  1.40it/s, est. speed input: 805.12 toks/s, output: 70.68 toks/s]Processed prompts:  50%|█████     | 10/20 [00:14<00:04,  2.24it/s, est. speed input: 978.47 toks/s, output: 90.51 toks/s]Processed prompts:  55%|█████▌    | 11/20 [00:15<00:04,  1.92it/s, est. speed input: 1016.63 toks/s, output: 97.64 toks/s]Processed prompts:  60%|██████    | 12/20 [00:15<00:03,  2.34it/s, est. speed input: 1097.56 toks/s, output: 108.28 toks/s]Processed prompts:  70%|███████   | 14/20 [00:16<00:02,  2.62it/s, est. speed input: 1215.17 toks/s, output: 127.34 toks/s]Processed prompts:  75%|███████▌  | 15/20 [00:16<00:01,  3.12it/s, est. speed input: 1303.95 toks/s, output: 138.58 toks/s]Processed prompts:  80%|████████  | 16/20 [00:16<00:01,  3.70it/s, est. speed input: 1385.59 toks/s, output: 149.92 toks/s]Processed prompts:  85%|████████▌ | 17/20 [00:16<00:00,  3.33it/s, est. speed input: 1436.27 toks/s, output: 159.13 toks/s]Processed prompts:  90%|█████████ | 18/20 [00:17<00:00,  2.54it/s, est. speed input: 1453.80 toks/s, output: 166.46 toks/s]Processed prompts:  95%|█████████▌| 19/20 [00:19<00:00,  1.21it/s, est. speed input: 1371.49 toks/s, output: 164.25 toks/s]Processed prompts: 100%|██████████| 20/20 [00:21<00:00,  1.30s/it, est. speed input: 1284.38 toks/s, output: 161.54 toks/s]Processed prompts: 100%|██████████| 20/20 [00:21<00:00,  1.30s/it, est. speed input: 1284.38 toks/s, output: 161.54 toks/s]Processed prompts: 100%|██████████| 20/20 [00:21<00:00,  1.09s/it, est. speed input: 1284.38 toks/s, output: 161.54 toks/s]
+2026-03-25 21:42:42  INFO      QA accuracy: 75.0%  (correct=15/20, parse_errors=0)
+2026-03-25 21:42:42  INFO      === Iteration 84/100  run=first_day_gcs  best_qa=85.0% ===
+2026-03-25 21:44:17  INFO      Exec block 1/1 …
+2026-03-25 21:44:17  INFO      Output: Stay 39331559: min_gcs=None, severe=True, mild=False
+  Non-intubated: 0, Intubated: 6
+  GCS values: [4.0, 4.0, 4.0, 6.0, 10.0, 3.0]
+
+Stay 38685632: min_gcs=15.0, severe=True, mild=True
+  Non-intubated: 3, Intubated: 1
+  GCS values: [3.0, 15.0, 15.0, 15.0]
+
+Stay 35892640: min_gcs=15.0, severe=True, mild=True
+  Non-intubated: 1, Intubated: 3
+  GCS values: [7.0, 7.0, 10.0, 15.0]
+
+Stay 33700270: min_gcs=14.0, severe=True, mild=True
+  Non-intubated: 2, Intubated: 7
+  GCS values: [14.0, 14.0, 3.0, 3.0
+2026-03-25 21:44:17  INFO      === Iteration 85/100  run=first_day_gcs  best_qa=85.0% ===
+2026-03-25 21:45:16  INFO      Exec block 1/1 …
+2026-03-25 21:45:17  INFO      Output: Stay 39331559:
+  Non-intubated count: 0
+  Intubated count: 6
+  Intubated motor scores: [1.0, 1.0, 1.0, 4.0, 6.0, 1.0]
+  Motor=1 count: 4/6 = 0.67
+
+Stay 38685632:
+  Non-intubated count: 3
+  Intubated count: 1
+  Non-intubated GCS: [15.0, 15.0, 15.0]
+  Max non-intubated GCS: 15.0
+  Intubated motor scores: [1.0]
+  Motor=1 count: 1/1 = 1.00
+
+Stay 35892640:
+  Non-intubated count: 1
+  Intubated count: 3
+  Non-intubated GCS: [15.0]
+  Max non-intubated GCS: 15.0
+  Intubated motor scores: [5.0, 5.0, 5.0]
+
+2026-03-25 21:45:17  INFO      === Iteration 86/100  run=first_day_gcs  best_qa=85.0% ===
+2026-03-25 21:47:20  INFO      Exec block 1/1 …
+2026-03-25 21:47:20  INFO      Output: Stay 39331559: min_gcs=None, severe=True, mild=True
+  Min non-intubated: None, Max non-intubated: None
+
+Stay 38685632: min_gcs=15.0, severe=False, mild=True
+  Min non-intubated: 15.0, Max non-intubated: 15.0
+
+Stay 35892640: min_gcs=15.0, severe=False, mild=True
+  Min non-intubated: 15.0, Max non-intubated: 15.0
+
+Stay 33700270: min_gcs=14.0, severe=False, mild=True
+  Min non-intubated: 14.0, Max non-intubated: 14.0
+
+Stay 36713654: min_gcs=None, severe=True, mild=True
+  Min non-intubated: None, Ma
+2026-03-25 21:47:20  INFO      === Iteration 87/100  run=first_day_gcs  best_qa=85.0% ===
+2026-03-25 21:49:47  INFO      Exec block 1/1 …
+2026-03-25 21:49:47  INFO      Output: Code executed successfully (no output).
+2026-03-25 21:49:47  INFO      Debug conversations will be saved to debug_logs
+2026-03-25 21:49:47  INFO      Using question from dataset column: Does this patient have a Glasgow Coma Scale score of 8 or less (severe impairment) on their first ICU day?
+2026-03-25 21:49:47  INFO      Answer type for 'first_day_gcs': numerical (per_row=True)
+2026-03-25 21:49:47  INFO      ReACT iteration 1/5 — 20 active patients
+Rendering conversations:   0%|          | 0/20 [00:00<?, ?it/s]Rendering conversations: 100%|██████████| 20/20 [00:00<00:00, 647.36it/s]
+Processed prompts:   0%|          | 0/20 [00:00<?, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s]Processed prompts:   5%|▌         | 1/20 [00:09<03:06,  9.81s/it, est. speed input: 73.84 toks/s, output: 12.65 toks/s]Processed prompts:  10%|█         | 2/20 [00:10<01:17,  4.31s/it, est. speed input: 141.13 toks/s, output: 25.15 toks/s]Processed prompts:  15%|█▌        | 3/20 [00:19<01:54,  6.74s/it, est. speed input: 109.20 toks/s, output: 30.32 toks/s]Processed prompts:  20%|██        | 4/20 [00:20<01:10,  4.38s/it, est. speed input: 140.17 toks/s, output: 46.75 toks/s]Processed prompts:  25%|██▌       | 5/20 [00:21<00:47,  3.16s/it, est. speed input: 167.93 toks/s, output: 62.46 toks/s]Processed prompts:  30%|███       | 6/20 [00:21<00:30,  2.18s/it, est. speed input: 199.33 toks/s, output: 79.48 toks/s]Processed prompts:  40%|████      | 8/20 [00:22<00:13,  1.16s/it, est. speed input: 264.14 toks/s, output: 114.51 toks/s]Processed prompts:  50%|█████     | 10/20 [00:22<00:07,  1.41it/s, est. speed input: 328.99 toks/s, output: 149.64 toks/s]Processed prompts:  55%|█████▌    | 11/20 [00:24<00:09,  1.06s/it, est. speed input: 328.59 toks/s, output: 154.30 toks/s]Processed prompts:  75%|███████▌  | 15/20 [00:25<00:02,  1.79it/s, est. speed input: 436.96 toks/s, output: 223.21 toks/s]Processed prompts:  80%|████████  | 16/20 [00:25<00:02,  1.99it/s, est. speed input: 461.96 toks/s, output: 239.97 toks/s]Processed prompts: 100%|██████████| 20/20 [00:26<00:00,  2.73it/s, est. speed input: 557.91 toks/s, output: 305.46 toks/s]Processed prompts: 100%|██████████| 20/20 [00:26<00:00,  2.73it/s, est. speed input: 557.91 toks/s, output: 305.46 toks/s]Processed prompts: 100%|██████████| 20/20 [00:26<00:00,  1.32s/it, est. speed input: 557.91 toks/s, output: 305.46 toks/s]
+2026-03-25 21:50:14  INFO      ReACT iteration 2/5 — 20 active patients
+Rendering conversations:   0%|          | 0/20 [00:00<?, ?it/s]Rendering conversations: 100%|██████████| 20/20 [00:00<00:00, 376.33it/s]
+Processed prompts:   0%|          | 0/20 [00:00<?, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s]Processed prompts:   5%|▌         | 1/20 [00:13<04:16, 13.48s/it, est. speed input: 95.25 toks/s, output: 9.35 toks/s]Processed prompts:  10%|█         | 2/20 [00:13<01:44,  5.80s/it, est. speed input: 197.66 toks/s, output: 18.85 toks/s]Processed prompts:  20%|██        | 4/20 [00:14<00:38,  2.42s/it, est. speed input: 406.99 toks/s, output: 37.49 toks/s]Processed prompts:  25%|██▌       | 5/20 [00:15<00:26,  1.79s/it, est. speed input: 486.67 toks/s, output: 47.38 toks/s]Processed prompts:  30%|███       | 6/20 [00:15<00:19,  1.39s/it, est. speed input: 563.53 toks/s, output: 57.05 toks/s]Processed prompts:  35%|███▌      | 7/20 [00:15<00:13,  1.02s/it, est. speed input: 646.70 toks/s, output: 67.66 toks/s]Processed prompts:  40%|████      | 8/20 [00:16<00:10,  1.14it/s, est. speed input: 720.43 toks/s, output: 77.08 toks/s]Processed prompts:  50%|█████     | 10/20 [00:16<00:05,  1.68it/s, est. speed input: 868.58 toks/s, output: 98.20 toks/s]Processed prompts:  60%|██████    | 12/20 [00:17<00:03,  2.11it/s, est. speed input: 988.95 toks/s, output: 119.34 toks/s]Processed prompts:  65%|██████▌   | 13/20 [00:18<00:03,  1.92it/s, est. speed input: 1026.88 toks/s, output: 127.85 toks/s]Processed prompts:  70%|███████   | 14/20 [00:21<00:06,  1.10s/it, est. speed input: 951.06 toks/s, output: 124.71 toks/s] Processed prompts:  75%|███████▌  | 15/20 [00:22<00:06,  1.21s/it, est. speed input: 951.54 toks/s, output: 131.52 toks/s]Processed prompts:  80%|████████  | 16/20 [00:22<00:03,  1.05it/s, est. speed input: 997.06 toks/s, output: 145.58 toks/s]Processed prompts:  85%|████████▌ | 17/20 [00:28<00:06,  2.13s/it, est. speed input: 860.25 toks/s, output: 135.93 toks/s]Processed prompts:  90%|█████████ | 18/20 [00:31<00:04,  2.50s/it, est. speed input: 812.48 toks/s, output: 139.61 toks/s]Processed prompts:  95%|█████████▌| 19/20 [00:32<00:01,  1.96s/it, est. speed input: 847.78 toks/s, output: 155.39 toks/s]Processed prompts: 100%|██████████| 20/20 [00:35<00:00,  2.28s/it, est. speed input: 817.53 toks/s, output: 161.17 toks/s]Processed prompts: 100%|██████████| 20/20 [00:35<00:00,  2.28s/it, est. speed input: 817.53 toks/s, output: 161.17 toks/s]Processed prompts: 100%|██████████| 20/20 [00:35<00:00,  1.76s/it, est. speed input: 817.53 toks/s, output: 161.17 toks/s]
+2026-03-25 21:50:49  INFO      QA accuracy: 70.0%  (correct=14/20, parse_errors=0)
+2026-03-25 21:50:49  INFO      === Iteration 88/100  run=first_day_gcs  best_qa=85.0% ===
+2026-03-25 21:52:15  INFO      Exec block 1/1 …
+2026-03-25 21:52:15  INFO      Output: Stay 39331559:
+  Non-intubated count: 0
+  Intubated count: 6
+  Intubated motor scores: [1.0, 1.0, 1.0, 4.0, 6.0, 1.0]
+  Motor=1 ratio: 4/6 = 0.67
+  min_gcs_first_day (max non-intubated): None
+  has_severe_impairment: True
+
+Stay 38685632:
+  Non-intubated count: 3
+  Intubated count: 1
+  Non-intubated GCS values: [15.0, 15.0, 15.0]
+  Min non-intubated: 15.0
+  Max non-intubated: 15.0
+  Intubated motor scores: [1.0]
+  Motor=1 ratio: 1/1 = 1.00
+  min_gcs_first_day (max non-intubated): 15.0
+  has_sever
+2026-03-25 21:52:15  INFO      === Iteration 89/100  run=first_day_gcs  best_qa=85.0% ===
+2026-03-25 21:57:37  INFO      === Iteration 90/100  run=first_day_gcs  best_qa=85.0% ===
+2026-03-25 21:57:37  INFO      Context approaching limit (26800 tokens, limit=25000) — forcing summarize + compress
+2026-03-25 21:59:52  INFO      Context compressed: 23 messages -> 2 messages
+2026-03-25 22:01:46  INFO      Exec block 1/1 …
+2026-03-25 22:01:46  INFO      Output: 
+Stay ID: 39331559
+  Subject ID: 16365207
+  Total GCS assessments: 6
+  min_gcs_first_day (max non-intubated): None
+  min_gcs_first_day_all: 3.0
+  max_gcs_first_day: 10.0
+  has_severe_impairment_first_day: True
+  has_mild_or_normal_first_day: True
+  has_verbal_unresponsive_first_day: True
+  GCS records:
+            charttime  eye  verbal  motor  gcs_total
+0 2147-05-01 23:07:00  2.0     1.0    1.0        4.0
+1 2147-05-02 02:00:00  2.0     1.0    1.0        4.0
+2 2147-05-02 05:00:00  2.0     1.0   
+2026-03-25 22:01:46  INFO      === Iteration 91/100  run=first_day_gcs  best_qa=85.0% ===
+2026-03-25 22:03:32  INFO      Exec block 1/1 …
+2026-03-25 22:03:32  INFO      Output: Code executed successfully (no output).
+2026-03-25 22:03:32  INFO      Debug conversations will be saved to debug_logs
+2026-03-25 22:03:32  INFO      Using question from dataset column: Does this patient have a Glasgow Coma Scale score of 8 or less (severe impairment) on their first ICU day?
+2026-03-25 22:03:32  INFO      Answer type for 'first_day_gcs': numerical (per_row=True)
+2026-03-25 22:03:32  INFO      ReACT iteration 1/5 — 20 active patients
+Rendering conversations:   0%|          | 0/20 [00:00<?, ?it/s]Rendering conversations: 100%|██████████| 20/20 [00:00<00:00, 615.72it/s]
+Processed prompts:   0%|          | 0/20 [00:00<?, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s]Processed prompts:   5%|▌         | 1/20 [00:17<05:35, 17.68s/it, est. speed input: 40.96 toks/s, output: 16.75 toks/s]Processed prompts:  15%|█▌        | 3/20 [00:17<01:19,  4.70s/it, est. speed input: 120.70 toks/s, output: 49.74 toks/s]Processed prompts:  20%|██        | 4/20 [00:21<01:08,  4.31s/it, est. speed input: 134.94 toks/s, output: 59.24 toks/s]Processed prompts:  25%|██▌       | 5/20 [00:22<00:45,  3.04s/it, est. speed input: 165.56 toks/s, output: 75.75 toks/s]Processed prompts:  30%|███       | 6/20 [00:22<00:29,  2.13s/it, est. speed input: 197.18 toks/s, output: 92.91 toks/s]Processed prompts:  40%|████      | 8/20 [00:22<00:14,  1.18s/it, est. speed input: 260.13 toks/s, output: 127.25 toks/s]Processed prompts:  45%|████▌     | 9/20 [00:22<00:10,  1.07it/s, est. speed input: 290.20 toks/s, output: 144.05 toks/s]Processed prompts:  50%|█████     | 10/20 [00:24<00:10,  1.09s/it, est. speed input: 302.73 toks/s, output: 153.53 toks/s]Processed prompts:  55%|█████▌    | 11/20 [00:24<00:08,  1.12it/s, est. speed input: 328.15 toks/s, output: 169.67 toks/s]Processed prompts:  70%|███████   | 14/20 [00:25<00:03,  1.81it/s, est. speed input: 404.96 toks/s, output: 218.93 toks/s]Processed prompts:  80%|████████  | 16/20 [00:25<00:01,  2.56it/s, est. speed input: 460.21 toks/s, output: 254.85 toks/s]Processed prompts:  95%|█████████▌| 19/20 [00:25<00:00,  3.58it/s, est. speed input: 538.34 toks/s, output: 306.88 toks/s]Processed prompts: 100%|██████████| 20/20 [00:28<00:00,  1.56it/s, est. speed input: 517.53 toks/s, output: 300.03 toks/s]Processed prompts: 100%|██████████| 20/20 [00:28<00:00,  1.56it/s, est. speed input: 517.53 toks/s, output: 300.03 toks/s]Processed prompts: 100%|██████████| 20/20 [00:28<00:00,  1.42s/it, est. speed input: 517.53 toks/s, output: 300.03 toks/s]
+2026-03-25 22:04:01  INFO      ReACT iteration 2/5 — 20 active patients
+Rendering conversations:   0%|          | 0/20 [00:00<?, ?it/s]Rendering conversations: 100%|██████████| 20/20 [00:00<00:00, 363.55it/s]
+Processed prompts:   0%|          | 0/20 [00:00<?, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s]Processed prompts:   5%|▌         | 1/20 [00:13<04:10, 13.20s/it, est. speed input: 115.33 toks/s, output: 9.02 toks/s]Processed prompts:  10%|█         | 2/20 [00:13<01:40,  5.57s/it, est. speed input: 252.45 toks/s, output: 17.95 toks/s]Processed prompts:  20%|██        | 4/20 [00:14<00:36,  2.31s/it, est. speed input: 429.61 toks/s, output: 35.59 toks/s]Processed prompts:  25%|██▌       | 5/20 [00:14<00:25,  1.69s/it, est. speed input: 516.31 toks/s, output: 44.93 toks/s]Processed prompts:  30%|███       | 6/20 [00:14<00:18,  1.33s/it, est. speed input: 602.66 toks/s, output: 54.00 toks/s]Processed prompts:  40%|████      | 8/20 [00:15<00:09,  1.29it/s, est. speed input: 772.44 toks/s, output: 74.29 toks/s]Processed prompts:  45%|████▌     | 9/20 [00:15<00:07,  1.52it/s, est. speed input: 843.41 toks/s, output: 84.05 toks/s]Processed prompts:  50%|█████     | 10/20 [00:16<00:06,  1.49it/s, est. speed input: 898.30 toks/s, output: 92.04 toks/s]Processed prompts:  55%|█████▌    | 11/20 [00:16<00:05,  1.54it/s, est. speed input: 949.97 toks/s, output: 101.01 toks/s]Processed prompts:  60%|██████    | 12/20 [00:17<00:04,  1.79it/s, est. speed input: 1010.36 toks/s, output: 111.46 toks/s]Processed prompts:  65%|██████▌   | 13/20 [00:17<00:03,  1.82it/s, est. speed input: 1062.59 toks/s, output: 120.86 toks/s]Processed prompts:  70%|███████   | 14/20 [00:18<00:03,  1.93it/s, est. speed input: 1114.38 toks/s, output: 130.92 toks/s]Processed prompts:  75%|███████▌  | 15/20 [00:22<00:07,  1.51s/it, est. speed input: 979.81 toks/s, output: 123.02 toks/s] Processed prompts:  80%|████████  | 16/20 [00:26<00:09,  2.34s/it, est. speed input: 871.20 toks/s, output: 119.64 toks/s]Processed prompts:  85%|████████▌ | 17/20 [00:26<00:05,  1.79s/it, est. speed input: 916.41 toks/s, output: 134.38 toks/s]Processed prompts:  90%|█████████ | 18/20 [00:29<00:04,  2.05s/it, est. speed input: 876.63 toks/s, output: 140.09 toks/s]Processed prompts:  95%|█████████▌| 19/20 [00:30<00:01,  1.74s/it, est. speed input: 894.78 toks/s, output: 153.65 toks/s]Processed prompts: 100%|██████████| 20/20 [00:30<00:00,  1.26s/it, est. speed input: 938.84 toks/s, output: 171.02 toks/s]Processed prompts: 100%|██████████| 20/20 [00:30<00:00,  1.26s/it, est. speed input: 938.84 toks/s, output: 171.02 toks/s]Processed prompts: 100%|██████████| 20/20 [00:30<00:00,  1.53s/it, est. speed input: 938.84 toks/s, output: 171.02 toks/s]
+2026-03-25 22:04:32  INFO      QA accuracy: 70.0%  (correct=14/20, parse_errors=0)
+2026-03-25 22:04:32  INFO      === Iteration 92/100  run=first_day_gcs  best_qa=85.0% ===
+2026-03-25 22:09:32  INFO      Exec block 1/1 …
+2026-03-25 22:09:32  INFO      Output: Testing revised logic:
+
+Stay ID: 39331559
+  min_gcs_first_day (max non-intubated): None
+  min_gcs_first_day_all: 3.0
+  has_severe_impairment_first_day: True
+  has_mild_or_normal_first_day: True
+
+Stay ID: 38685632
+  min_gcs_first_day (max non-intubated): 15.0
+  min_gcs_first_day_all: 3.0
+  has_severe_impairment_first_day: True
+  has_mild_or_normal_first_day: True
+
+Stay ID: 35892640
+  min_gcs_first_day (max non-intubated): 15.0
+  min_gcs_first_day_all: 7.0
+  has_severe_impairment_first_day: True
+ 
+2026-03-25 22:09:32  INFO      === Iteration 93/100  run=first_day_gcs  best_qa=85.0% ===
+2026-03-25 22:14:49  INFO      === Iteration 94/100  run=first_day_gcs  best_qa=85.0% ===
+2026-03-25 22:14:49  INFO      Context approaching limit (20830 tokens, limit=25000) — forcing summarize + compress
+2026-03-25 22:16:53  INFO      Context compressed: 11 messages -> 2 messages
+2026-03-25 22:17:23  INFO      Exec block 1/1 …
+2026-03-25 22:17:23  INFO      Output: Stay 39331559:
+  subject_id: 16365207, hadm_id: 20942115
+  min_gcs_first_day (max non-intubated): None
+  min_gcs_first_day_all: 3.0
+  max_gcs_first_day: 10.0
+  has_severe_impairment_first_day: True
+  has_mild_or_normal_first_day: True
+  total_gcs_assessments_first_day: 6
+  has_verbal_unresponsive_first_day: True
+  GCS records:
+            charttime  eye  verbal  motor  gcs_total
+0 2147-05-01 23:07:00  2.0     1.0    1.0        4.0
+1 2147-05-02 02:00:00  2.0     1.0    1.0        4.0
+2 2147-05-02
+2026-03-25 22:17:23  INFO      === Iteration 95/100  run=first_day_gcs  best_qa=85.0% ===
+2026-03-25 22:17:39  INFO      Exec block 1/1 …
+2026-03-25 22:17:39  INFO      Output: Non-existent stay: {'stay_id': 999999999, 'subject_id': None, 'hadm_id': None, 'intime': None, 'first_day_end': None, 'first_day_gcs_records': Empty DataFrame
+Columns: []
+Index: [], 'min_gcs_first_day': None, 'min_gcs_first_day_all': None, 'max_gcs_first_day': None, 'has_severe_impairment_first_day': False, 'has_mild_or_normal_first_day': False, 'first_gcs_time_first_day': None, 'last_gcs_time_first_day': None, 'total_gcs_assessments_first_day': 0, 'has_verbal_unresponsive_first_day': False}
+
+2026-03-25 22:17:39  INFO      === Iteration 96/100  run=first_day_gcs  best_qa=85.0% ===
+2026-03-25 22:18:54  INFO      Exec block 1/1 …
+2026-03-25 22:18:54  INFO      Output: Code executed successfully (no output).
+2026-03-25 22:18:54  INFO      Debug conversations will be saved to debug_logs
+2026-03-25 22:18:54  INFO      Using question from dataset column: Does this patient have a Glasgow Coma Scale score of 8 or less (severe impairment) on their first ICU day?
+2026-03-25 22:18:54  INFO      Answer type for 'first_day_gcs': numerical (per_row=True)
+2026-03-25 22:18:54  INFO      ReACT iteration 1/5 — 20 active patients
+Rendering conversations:   0%|          | 0/20 [00:00<?, ?it/s]Rendering conversations: 100%|██████████| 20/20 [00:00<00:00, 620.63it/s]
+Processed prompts:   0%|          | 0/20 [00:00<?, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s]Processed prompts:   5%|▌         | 1/20 [00:09<03:00,  9.53s/it, est. speed input: 74.33 toks/s, output: 12.60 toks/s]Processed prompts:  15%|█▌        | 3/20 [00:17<01:32,  5.43s/it, est. speed input: 121.30 toks/s, output: 30.67 toks/s]Processed prompts:  20%|██        | 4/20 [00:20<01:13,  4.57s/it, est. speed input: 138.47 toks/s, output: 43.91 toks/s]Processed prompts:  25%|██▌       | 5/20 [00:22<00:56,  3.75s/it, est. speed input: 157.65 toks/s, output: 57.96 toks/s]Processed prompts:  35%|███▌      | 7/20 [00:23<00:26,  2.05s/it, est. speed input: 216.88 toks/s, output: 92.85 toks/s]Processed prompts:  40%|████      | 8/20 [00:23<00:18,  1.58s/it, est. speed input: 245.99 toks/s, output: 110.36 toks/s]Processed prompts:  45%|████▌     | 9/20 [00:23<00:14,  1.29s/it, est. speed input: 271.20 toks/s, output: 126.45 toks/s]Processed prompts:  50%|█████     | 10/20 [00:24<00:10,  1.01s/it, est. speed input: 297.95 toks/s, output: 143.45 toks/s]Processed prompts:  70%|███████   | 14/20 [00:24<00:02,  2.44it/s, est. speed input: 415.98 toks/s, output: 216.84 toks/s]Processed prompts:  90%|█████████ | 18/20 [00:24<00:00,  4.23it/s, est. speed input: 532.16 toks/s, output: 289.29 toks/s]Processed prompts: 100%|██████████| 20/20 [00:27<00:00,  1.92it/s, est. speed input: 531.12 toks/s, output: 296.44 toks/s]Processed prompts: 100%|██████████| 20/20 [00:27<00:00,  1.92it/s, est. speed input: 531.12 toks/s, output: 296.44 toks/s]Processed prompts: 100%|██████████| 20/20 [00:27<00:00,  1.35s/it, est. speed input: 531.12 toks/s, output: 296.44 toks/s]
+2026-03-25 22:19:22  INFO      ReACT iteration 2/5 — 20 active patients
+Rendering conversations:   0%|          | 0/20 [00:00<?, ?it/s]Rendering conversations: 100%|██████████| 20/20 [00:00<00:00, 370.79it/s]
+Processed prompts:   0%|          | 0/20 [00:00<?, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s]Processed prompts:   5%|▌         | 1/20 [00:12<04:03, 12.83s/it, est. speed input: 114.85 toks/s, output: 8.42 toks/s]Processed prompts:  10%|█         | 2/20 [00:13<01:37,  5.39s/it, est. speed input: 256.08 toks/s, output: 16.82 toks/s]Processed prompts:  15%|█▌        | 3/20 [00:13<00:50,  2.99s/it, est. speed input: 370.04 toks/s, output: 25.46 toks/s]Processed prompts:  25%|██▌       | 5/20 [00:13<00:20,  1.35s/it, est. speed input: 573.38 toks/s, output: 42.68 toks/s]Processed prompts:  30%|███       | 6/20 [00:13<00:14,  1.06s/it, est. speed input: 672.43 toks/s, output: 50.97 toks/s]Processed prompts:  45%|████▌     | 9/20 [00:13<00:05,  2.01it/s, est. speed input: 986.06 toks/s, output: 78.75 toks/s]Processed prompts:  55%|█████▌    | 11/20 [00:14<00:04,  1.90it/s, est. speed input: 1100.90 toks/s, output: 92.05 toks/s]Processed prompts:  60%|██████    | 12/20 [00:15<00:03,  2.02it/s, est. speed input: 1170.74 toks/s, output: 100.84 toks/s]Processed prompts:  65%|██████▌   | 13/20 [00:15<00:03,  2.10it/s, est. speed input: 1233.00 toks/s, output: 109.63 toks/s]Processed prompts:  70%|███████   | 14/20 [00:16<00:03,  1.61it/s, est. speed input: 1251.40 toks/s, output: 114.71 toks/s]Processed prompts:  75%|███████▌  | 15/20 [00:16<00:02,  2.03it/s, est. speed input: 1323.94 toks/s, output: 126.24 toks/s]Processed prompts:  80%|████████  | 16/20 [00:17<00:02,  1.82it/s, est. speed input: 1339.19 toks/s, output: 134.03 toks/s]Processed prompts:  85%|████████▌ | 17/20 [00:17<00:01,  2.32it/s, est. speed input: 1400.66 toks/s, output: 146.00 toks/s]Processed prompts:  90%|█████████ | 18/20 [00:19<00:01,  1.21it/s, est. speed input: 1334.86 toks/s, output: 146.61 toks/s]Processed prompts:  95%|█████████▌| 19/20 [00:27<00:02,  2.85s/it, est. speed input: 1002.04 toks/s, output: 122.27 toks/s]Processed prompts: 100%|██████████| 20/20 [00:29<00:00,  2.51s/it, est. speed input: 994.72 toks/s, output: 133.62 toks/s] Processed prompts: 100%|██████████| 20/20 [00:29<00:00,  2.51s/it, est. speed input: 994.72 toks/s, output: 133.62 toks/s]Processed prompts: 100%|██████████| 20/20 [00:29<00:00,  1.46s/it, est. speed input: 994.72 toks/s, output: 133.62 toks/s]
+2026-03-25 22:19:51  INFO      QA accuracy: 75.0%  (correct=15/20, parse_errors=0)
+2026-03-25 22:19:51  INFO      === Iteration 97/100  run=first_day_gcs  best_qa=85.0% ===
+2026-03-25 22:20:41  INFO      Exec block 1/1 …
+2026-03-25 22:20:41  INFO      Output: 
+=== Stay 39331559 ===
+     stay_id           charttime  eye  ...  motor  gcs_total              intime
+0   39331559 2147-05-01 23:07:00  2.0  ...    1.0        4.0 2147-05-01 20:37:28
+1   39331559 2147-05-02 02:00:00  2.0  ...    1.0        4.0 2147-05-01 20:37:28
+2   39331559 2147-05-02 05:00:00  2.0  ...    1.0        4.0 2147-05-01 20:37:28
+3   39331559 2147-05-02 08:34:00  1.0  ...    4.0        6.0 2147-05-01 20:37:28
+4   39331559 2147-05-02 12:35:00  3.0  ...    6.0       10.0 2147-05-01 
+2026-03-25 22:20:41  INFO      === Iteration 98/100  run=first_day_gcs  best_qa=85.0% ===
+2026-03-25 22:25:58  INFO      === Iteration 99/100  run=first_day_gcs  best_qa=85.0% ===
+2026-03-25 22:26:26  INFO      Exec block 1/1 …
+2026-03-25 22:26:26  INFO      Output:     stay_id           charttime  ...       first_day_end  is_first_day
+0  36707061 2184-12-14 08:16:00  ... 2184-12-15 06:24:00             1
+1  36707061 2184-12-14 12:06:00  ... 2184-12-15 06:24:00             1
+2  36707061 2184-12-14 16:39:00  ... 2184-12-15 06:24:00             1
+3  36707061 2184-12-14 19:28:00  ... 2184-12-15 06:24:00             1
+4  36707061 2184-12-15 00:04:00  ... 2184-12-15 06:24:00             1
+5  36707061 2184-12-15 04:25:00  ... 2184-12-15 06:24:00             1
+6  
+2026-03-25 22:26:26  INFO      === Iteration 100/100  run=first_day_gcs  best_qa=85.0% ===
+2026-03-25 22:31:50  INFO      Exec block 1/1 …
+2026-03-25 22:31:50  INFO      Output: Code executed successfully (no output).
+2026-03-25 22:31:50  INFO      Debug conversations will be saved to debug_logs
+2026-03-25 22:31:50  INFO      Using question from dataset column: Does this patient have a Glasgow Coma Scale score of 8 or less (severe impairment) on their first ICU day?
+2026-03-25 22:31:50  INFO      Answer type for 'first_day_gcs': numerical (per_row=True)
+2026-03-25 22:31:50  INFO      ReACT iteration 1/5 — 20 active patients
+Rendering conversations:   0%|          | 0/20 [00:00<?, ?it/s]Rendering conversations: 100%|██████████| 20/20 [00:00<00:00, 712.84it/s]
+Processed prompts:   0%|          | 0/20 [00:00<?, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s]Processed prompts:   5%|▌         | 1/20 [00:09<02:55,  9.21s/it, est. speed input: 73.69 toks/s, output: 12.91 toks/s]Processed prompts:  15%|█▌        | 3/20 [00:09<00:41,  2.44s/it, est. speed input: 217.83 toks/s, output: 38.39 toks/s]Processed prompts:  25%|██▌       | 5/20 [00:09<00:18,  1.24s/it, est. speed input: 351.64 toks/s, output: 63.43 toks/s]Processed prompts:  40%|████      | 8/20 [00:13<00:15,  1.31s/it, est. speed input: 392.61 toks/s, output: 79.08 toks/s]Processed prompts:  45%|████▌     | 9/20 [00:14<00:12,  1.14s/it, est. speed input: 426.81 toks/s, output: 93.13 toks/s]Processed prompts:  50%|█████     | 10/20 [00:19<00:19,  1.97s/it, est. speed input: 353.42 toks/s, output: 87.84 toks/s]Processed prompts:  55%|█████▌    | 11/20 [00:19<00:14,  1.63s/it, est. speed input: 377.65 toks/s, output: 103.89 toks/s]Processed prompts:  60%|██████    | 12/20 [00:21<00:13,  1.73s/it, est. speed input: 374.00 toks/s, output: 113.41 toks/s]Processed prompts:  70%|███████   | 14/20 [00:22<00:07,  1.21s/it, est. speed input: 417.61 toks/s, output: 146.17 toks/s]Processed prompts:  75%|███████▌  | 15/20 [00:23<00:06,  1.23s/it, est. speed input: 423.25 toks/s, output: 157.95 toks/s]Processed prompts:  85%|████████▌ | 17/20 [00:24<00:02,  1.28it/s, est. speed input: 476.23 toks/s, output: 196.25 toks/s]Processed prompts:  90%|█████████ | 18/20 [00:24<00:01,  1.26it/s, est. speed input: 487.54 toks/s, output: 209.76 toks/s]Processed prompts: 100%|██████████| 20/20 [00:25<00:00,  1.98it/s, est. speed input: 539.64 toks/s, output: 248.90 toks/s]Processed prompts: 100%|██████████| 20/20 [00:25<00:00,  1.98it/s, est. speed input: 539.64 toks/s, output: 248.90 toks/s]Processed prompts: 100%|██████████| 20/20 [00:25<00:00,  1.25s/it, est. speed input: 539.64 toks/s, output: 248.90 toks/s]
+2026-03-25 22:32:15  INFO      ReACT iteration 2/5 — 20 active patients
+Rendering conversations:   0%|          | 0/20 [00:00<?, ?it/s]Rendering conversations: 100%|██████████| 20/20 [00:00<00:00, 388.22it/s]
+Processed prompts:   0%|          | 0/20 [00:00<?, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s]Processed prompts:   5%|▌         | 1/20 [00:12<04:02, 12.77s/it, est. speed input: 111.01 toks/s, output: 9.39 toks/s]Processed prompts:  10%|█         | 2/20 [00:12<01:36,  5.34s/it, est. speed input: 232.88 toks/s, output: 18.74 toks/s]Processed prompts:  15%|█▌        | 3/20 [00:13<00:51,  3.03s/it, est. speed input: 352.21 toks/s, output: 28.06 toks/s]Processed prompts:  20%|██        | 4/20 [00:14<00:36,  2.30s/it, est. speed input: 419.36 toks/s, output: 36.52 toks/s]Processed prompts:  35%|███▌      | 7/20 [00:15<00:15,  1.18s/it, est. speed input: 645.28 toks/s, output: 64.67 toks/s]Processed prompts:  40%|████      | 8/20 [00:16<00:12,  1.02s/it, est. speed input: 701.80 toks/s, output: 74.97 toks/s]Processed prompts:  45%|████▌     | 9/20 [00:16<00:09,  1.22it/s, est. speed input: 766.09 toks/s, output: 86.59 toks/s]Processed prompts:  50%|█████     | 10/20 [00:17<00:07,  1.40it/s, est. speed input: 822.03 toks/s, output: 97.19 toks/s]Processed prompts:  55%|█████▌    | 11/20 [00:17<00:06,  1.32it/s, est. speed input: 854.11 toks/s, output: 105.84 toks/s]Processed prompts:  60%|██████    | 12/20 [00:19<00:07,  1.00it/s, est. speed input: 845.80 toks/s, output: 111.44 toks/s]Processed prompts:  65%|██████▌   | 13/20 [00:20<00:06,  1.05it/s, est. speed input: 876.17 toks/s, output: 121.44 toks/s]Processed prompts:  70%|███████   | 14/20 [00:20<00:04,  1.30it/s, est. speed input: 927.16 toks/s, output: 134.45 toks/s]Processed prompts:  75%|███████▌  | 15/20 [00:21<00:03,  1.54it/s, est. speed input: 966.72 toks/s, output: 147.22 toks/s]Processed prompts:  80%|████████  | 16/20 [00:23<00:05,  1.29s/it, est. speed input: 902.57 toks/s, output: 145.98 toks/s]Processed prompts:  85%|████████▌ | 17/20 [00:27<00:05,  1.99s/it, est. speed input: 833.59 toks/s, output: 144.22 toks/s]Processed prompts:  90%|█████████ | 18/20 [00:29<00:04,  2.07s/it, est. speed input: 818.70 toks/s, output: 151.34 toks/s]Processed prompts:  95%|█████████▌| 19/20 [00:30<00:01,  1.62s/it, est. speed input: 846.14 toks/s, output: 166.99 toks/s]Processed prompts: 100%|██████████| 20/20 [00:34<00:00,  2.28s/it, est. speed input: 793.75 toks/s, output: 167.68 toks/s]Processed prompts: 100%|██████████| 20/20 [00:34<00:00,  2.28s/it, est. speed input: 793.75 toks/s, output: 167.68 toks/s]Processed prompts: 100%|██████████| 20/20 [00:34<00:00,  1.71s/it, est. speed input: 793.75 toks/s, output: 167.68 toks/s]
+2026-03-25 22:32:49  INFO      QA accuracy: 70.0%  (correct=14/20, parse_errors=0)
+2026-03-25 22:32:49  INFO      Function code saved to autoformalized_library/functions/first_day_gcs.py
+2026-03-25 22:32:49  INFO      Summary saved to autoformalized_library/summary.json
+[rank0]:[W325 22:32:49.287479585 ProcessGroupNCCL.cpp:1553] Warning: WARNING: destroy_process_group() was not called before program exit, which can leak resources. For more info, please see https://pytorch.org/docs/stable/distributed.html#shutdown (function operator())
+
+======================================================================
+AUTOFORMALIZATION COMPLETE
+======================================================================
+  Output dir      : autoformalized_library
+  Model           : Qwen/Qwen3.5-27B
+  Dataset         : /home/v-tiossowski/HealthcareAgent/mimic-code/data/MIMICIV_first_day_gcs_dataset/first_day_gcs.csv
+  Run name        : first_day_gcs
+  Status          : FAILED (below threshold)
+  QA accuracy     : 85.0%
+  Iterations      : 100
+  Total tokens    : 58,320  (prompt 43,772 / completion 14,548)
+  LLM calls       : 147
+  SQL queries     : 403
+  Function saved  : autoformalized_library/functions/first_day_gcs.py
+======================================================================

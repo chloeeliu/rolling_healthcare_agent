@@ -1,0 +1,217 @@
+{
+  "pipeline": "autoformalize_qa_eval",
+  "status": "complete",
+  "started": "2026-03-25T09:49:20Z",
+  "completed": "2026-03-26T14:33:27Z",
+  "wall_time_sec": 103447,
+  "datasets": [
+    "code_status",
+    "crrt",
+    "invasive_line",
+    "rrt",
+    "charlson",
+    "icustay_hourly",
+    "creatinine_baseline",
+    "urine_output_rate",
+    "ventilation",
+    "vasoactive_agent",
+    "kdigo_uo",
+    "first_day_bg",
+    "first_day_bg_art",
+    "first_day_gcs",
+    "first_day_height",
+    "first_day_lab",
+    "first_day_rrt",
+    "first_day_urine_output",
+    "first_day_vitalsign",
+    "first_day_weight",
+    "suspicion_of_infection",
+    "adk",
+    "arf",
+    "hypoglycemia",
+    "norepinephrine_equivalent_dose",
+    "aki",
+    "kdigo_stages",
+    "first_day_sofa",
+    "sirs",
+    "sofa",
+    "apsiii",
+    "lods",
+    "oasis",
+    "sapsii",
+    "meld",
+    "sepsis3"
+  ],
+  "model": "Qwen/Qwen3.5-27B",
+  "db_path": "/home/v-tiossowski/MIMIC-IV/mimic4.db",
+  "match_threshold": 0.9,
+  "max_iterations": 100,
+  "max_qa_patients": 1000,
+  "output_dir": "autoformalized_library",
+  "functions_dir": "autoformalized_library/functions",
+  "aggregate": {
+    "total_datasets": 36,
+    "completed_datasets": 36,
+    "failed_datasets": 3,
+    "failed_names": [
+      "icustay_hourly",
+      "adk",
+      "arf"
+    ],
+    "autoform_success_rate": 0.0,
+    "avg_autoform_iterations": 0.0,
+    "total_autoform_iterations": 2513,
+    "avg_test_qa_accuracy": 0.0,
+    "avg_test_precision": 0.0,
+    "avg_test_recall": 0.0
+  },
+  "results": [
+    {
+      "concept": "code_status",
+      "status": "missing"
+    },
+    {
+      "concept": "crrt",
+      "status": "missing"
+    },
+    {
+      "concept": "invasive_line",
+      "status": "missing"
+    },
+    {
+      "concept": "rrt",
+      "status": "missing"
+    },
+    {
+      "concept": "charlson",
+      "status": "missing"
+    },
+    {
+      "concept": "icustay_hourly",
+      "status": "error",
+      "error": "dataset CSV not found"
+    },
+    {
+      "concept": "creatinine_baseline",
+      "status": "missing"
+    },
+    {
+      "concept": "urine_output_rate",
+      "status": "missing"
+    },
+    {
+      "concept": "ventilation",
+      "status": "missing"
+    },
+    {
+      "concept": "vasoactive_agent",
+      "status": "missing"
+    },
+    {
+      "concept": "kdigo_uo",
+      "status": "missing"
+    },
+    {
+      "concept": "first_day_bg",
+      "status": "missing"
+    },
+    {
+      "concept": "first_day_bg_art",
+      "status": "missing"
+    },
+    {
+      "concept": "first_day_gcs",
+      "status": "missing"
+    },
+    {
+      "concept": "first_day_height",
+      "status": "missing"
+    },
+    {
+      "concept": "first_day_lab",
+      "status": "missing"
+    },
+    {
+      "concept": "first_day_rrt",
+      "status": "missing"
+    },
+    {
+      "concept": "first_day_urine_output",
+      "status": "missing"
+    },
+    {
+      "concept": "first_day_vitalsign",
+      "status": "missing"
+    },
+    {
+      "concept": "first_day_weight",
+      "status": "missing"
+    },
+    {
+      "concept": "suspicion_of_infection",
+      "status": "missing"
+    },
+    {
+      "concept": "adk",
+      "status": "error",
+      "error": "dataset CSV not found"
+    },
+    {
+      "concept": "arf",
+      "status": "error",
+      "error": "dataset CSV not found"
+    },
+    {
+      "concept": "hypoglycemia",
+      "status": "missing"
+    },
+    {
+      "concept": "norepinephrine_equivalent_dose",
+      "status": "missing"
+    },
+    {
+      "concept": "aki",
+      "status": "missing"
+    },
+    {
+      "concept": "kdigo_stages",
+      "status": "missing"
+    },
+    {
+      "concept": "first_day_sofa",
+      "status": "missing"
+    },
+    {
+      "concept": "sirs",
+      "status": "missing"
+    },
+    {
+      "concept": "sofa",
+      "status": "missing"
+    },
+    {
+      "concept": "apsiii",
+      "status": "missing"
+    },
+    {
+      "concept": "lods",
+      "status": "missing"
+    },
+    {
+      "concept": "oasis",
+      "status": "missing"
+    },
+    {
+      "concept": "sapsii",
+      "status": "missing"
+    },
+    {
+      "concept": "meld",
+      "status": "missing"
+    },
+    {
+      "concept": "sepsis3",
+      "status": "missing"
+    }
+  ]
+}

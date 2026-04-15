@@ -1,0 +1,506 @@
+2026-03-25 10:36:04  INFO      Using database: /home/v-tiossowski/MIMIC-IV/mimic4.db
+2026-03-25 10:36:04  INFO      No --model_url provided; loading vLLM in-process …
+INFO 03-25 10:36:09 [utils.py:238] non-default args: {'trust_remote_code': True, 'max_model_len': 40000, 'disable_log_stats': True, 'model': 'Qwen/Qwen3.5-27B'}
+The argument `trust_remote_code` is to be used with Auto classes. It has no effect here and is ignored.
+The argument `trust_remote_code` is to be used with Auto classes. It has no effect here and is ignored.
+The argument `trust_remote_code` is to be used with Auto classes. It has no effect here and is ignored.
+INFO 03-25 10:36:10 [model.py:531] Resolved architecture: Qwen3_5ForConditionalGeneration
+INFO 03-25 10:36:10 [model.py:1554] Using max model len 40000
+INFO 03-25 10:36:10 [scheduler.py:231] Chunked prefill is enabled with max_num_batched_tokens=8192.
+INFO 03-25 10:36:11 [config.py:544] Setting attention block size to 784 tokens to ensure that attention page size is >= mamba page size.
+INFO 03-25 10:36:11 [config.py:575] Padding mamba page size by 0.13% to ensure that mamba page size and attention page size are exactly equal.
+INFO 03-25 10:36:11 [vllm.py:747] Asynchronous scheduling is enabled.
+WARNING 03-25 10:36:18 [system_utils.py:152] We must use the `spawn` multiprocessing start method. Overriding VLLM_WORKER_MULTIPROC_METHOD to 'spawn'. See https://docs.vllm.ai/en/latest/usage/troubleshooting.html#python-multiprocessing for more information. Reasons: CUDA is initialized
+(EngineCore_DP0 pid=4096764) INFO 03-25 10:36:23 [core.py:101] Initializing a V1 LLM engine (v0.17.1) with config: model='Qwen/Qwen3.5-27B', speculative_config=None, tokenizer='Qwen/Qwen3.5-27B', skip_tokenizer_init=False, tokenizer_mode=auto, revision=None, tokenizer_revision=None, trust_remote_code=True, dtype=torch.bfloat16, max_seq_len=40000, download_dir=None, load_format=auto, tensor_parallel_size=1, pipeline_parallel_size=1, data_parallel_size=1, disable_custom_all_reduce=False, quantization=None, enforce_eager=False, enable_return_routed_experts=False, kv_cache_dtype=auto, device_config=cuda, structured_outputs_config=StructuredOutputsConfig(backend='auto', disable_fallback=False, disable_any_whitespace=False, disable_additional_properties=False, reasoning_parser='', reasoning_parser_plugin='', enable_in_reasoning=False), observability_config=ObservabilityConfig(show_hidden_metrics_for_version=None, otlp_traces_endpoint=None, collect_detailed_traces=None, kv_cache_metrics=False, kv_cache_metrics_sample=0.01, cudagraph_metrics=False, enable_layerwise_nvtx_tracing=False, enable_mfu_metrics=False, enable_mm_processor_stats=False, enable_logging_iteration_details=False), seed=0, served_model_name=Qwen/Qwen3.5-27B, enable_prefix_caching=False, enable_chunked_prefill=True, pooler_config=None, compilation_config={'level': None, 'mode': <CompilationMode.VLLM_COMPILE: 3>, 'debug_dump_path': None, 'cache_dir': '', 'compile_cache_save_format': 'binary', 'backend': 'inductor', 'custom_ops': ['none'], 'splitting_ops': ['vllm::unified_attention', 'vllm::unified_attention_with_output', 'vllm::unified_mla_attention', 'vllm::unified_mla_attention_with_output', 'vllm::mamba_mixer2', 'vllm::mamba_mixer', 'vllm::short_conv', 'vllm::linear_attention', 'vllm::plamo2_mamba_mixer', 'vllm::gdn_attention_core', 'vllm::kda_attention', 'vllm::sparse_attn_indexer', 'vllm::rocm_aiter_sparse_attn_indexer', 'vllm::unified_kv_cache_update', 'vllm::unified_mla_kv_cache_update'], 'compile_mm_encoder': False, 'compile_sizes': [], 'compile_ranges_split_points': [8192], 'inductor_compile_config': {'enable_auto_functionalized_v2': False, 'combo_kernels': True, 'benchmark_combo_kernel': True}, 'inductor_passes': {}, 'cudagraph_mode': <CUDAGraphMode.FULL_AND_PIECEWISE: (2, 1)>, 'cudagraph_num_of_warmups': 1, 'cudagraph_capture_sizes': [1, 2, 4, 8, 16, 24, 32, 40, 48, 56, 64, 72, 80, 88, 96, 104, 112, 120, 128, 136, 144, 152, 160, 168, 176, 184, 192, 200, 208, 216, 224, 232, 240, 248, 256, 272, 288, 304, 320, 336, 352, 368, 384, 400, 416, 432, 448, 464, 480, 496, 512], 'cudagraph_copy_inputs': False, 'cudagraph_specialize_lora': True, 'use_inductor_graph_partition': False, 'pass_config': {'fuse_norm_quant': False, 'fuse_act_quant': False, 'fuse_attn_quant': False, 'enable_sp': False, 'fuse_gemm_comms': False, 'fuse_allreduce_rms': False}, 'max_cudagraph_capture_size': 512, 'dynamic_shapes_config': {'type': <DynamicShapesType.BACKED: 'backed'>, 'evaluate_guards': False, 'assume_32_bit_indexing': False}, 'local_cache_dir': None, 'fast_moe_cold_start': True, 'static_all_moe_layers': []}
+(EngineCore_DP0 pid=4096764) INFO 03-25 10:36:26 [parallel_state.py:1393] world_size=1 rank=0 local_rank=0 distributed_init_method=tcp://10.8.144.167:35695 backend=nccl
+(EngineCore_DP0 pid=4096764) INFO 03-25 10:36:26 [parallel_state.py:1715] rank 0 in world size 1 is assigned as DP rank 0, PP rank 0, PCP rank 0, TP rank 0, EP rank N/A, EPLB rank N/A
+(EngineCore_DP0 pid=4096764) INFO 03-25 10:36:32 [base.py:106] Offloader set to NoopOffloader
+(EngineCore_DP0 pid=4096764) INFO 03-25 10:36:32 [gpu_model_runner.py:4281] Starting to load model Qwen/Qwen3.5-27B...
+(EngineCore_DP0 pid=4096764) INFO 03-25 10:36:33 [cuda.py:453] Using backend AttentionBackendEnum.FLASH_ATTN for vit attention
+(EngineCore_DP0 pid=4096764) INFO 03-25 10:36:33 [mm_encoder_attention.py:215] Using AttentionBackendEnum.FLASH_ATTN for MMEncoderAttention.
+(EngineCore_DP0 pid=4096764) INFO 03-25 10:36:33 [cuda.py:405] Using FLASH_ATTN attention backend out of potential backends: ['FLASH_ATTN', 'FLASHINFER', 'TRITON_ATTN', 'FLEX_ATTENTION'].
+(EngineCore_DP0 pid=4096764) INFO 03-25 10:36:33 [flash_attn.py:587] Using FlashAttention version 2
+(EngineCore_DP0 pid=4096764) <frozen importlib._bootstrap_external>:1301: FutureWarning: The cuda.cudart module is deprecated and will be removed in a future release, please switch to use the cuda.bindings.runtime module instead.
+(EngineCore_DP0 pid=4096764) <frozen importlib._bootstrap_external>:1301: FutureWarning: The cuda.nvrtc module is deprecated and will be removed in a future release, please switch to use the cuda.bindings.nvrtc module instead.
+(EngineCore_DP0 pid=4096764) Loading safetensors checkpoint shards:   0% Completed | 0/11 [00:00<?, ?it/s]
+(EngineCore_DP0 pid=4096764) Loading safetensors checkpoint shards:   9% Completed | 1/11 [00:00<00:05,  1.91it/s]
+(EngineCore_DP0 pid=4096764) Loading safetensors checkpoint shards:  18% Completed | 2/11 [00:01<00:05,  1.69it/s]
+(EngineCore_DP0 pid=4096764) Loading safetensors checkpoint shards:  27% Completed | 3/11 [00:01<00:05,  1.58it/s]
+(EngineCore_DP0 pid=4096764) Loading safetensors checkpoint shards:  36% Completed | 4/11 [00:02<00:04,  1.52it/s]
+(EngineCore_DP0 pid=4096764) Loading safetensors checkpoint shards:  45% Completed | 5/11 [00:03<00:04,  1.48it/s]
+(EngineCore_DP0 pid=4096764) Loading safetensors checkpoint shards:  55% Completed | 6/11 [00:03<00:03,  1.47it/s]
+(EngineCore_DP0 pid=4096764) Loading safetensors checkpoint shards:  64% Completed | 7/11 [00:04<00:02,  1.45it/s]
+(EngineCore_DP0 pid=4096764) Loading safetensors checkpoint shards:  73% Completed | 8/11 [00:05<00:02,  1.46it/s]
+(EngineCore_DP0 pid=4096764) Loading safetensors checkpoint shards:  82% Completed | 9/11 [00:06<00:01,  1.46it/s]
+(EngineCore_DP0 pid=4096764) Loading safetensors checkpoint shards:  91% Completed | 10/11 [00:06<00:00,  1.45it/s]
+(EngineCore_DP0 pid=4096764) Loading safetensors checkpoint shards: 100% Completed | 11/11 [00:07<00:00,  1.62it/s]
+(EngineCore_DP0 pid=4096764) Loading safetensors checkpoint shards: 100% Completed | 11/11 [00:07<00:00,  1.54it/s]
+(EngineCore_DP0 pid=4096764) 
+(EngineCore_DP0 pid=4096764) INFO 03-25 10:36:41 [default_loader.py:293] Loading weights took 7.22 seconds
+(EngineCore_DP0 pid=4096764) INFO 03-25 10:36:42 [gpu_model_runner.py:4364] Model loading took 51.1 GiB memory and 8.538004 seconds
+(EngineCore_DP0 pid=4096764) INFO 03-25 10:36:42 [gpu_model_runner.py:5280] Encoder cache will be initialized with a budget of 16384 tokens, and profiled with 1 image items of the maximum feature size.
+(EngineCore_DP0 pid=4096764) INFO 03-25 10:36:50 [decorators.py:465] Directly load AOT compilation from path /home/v-tiossowski/.cache/vllm/torch_compile_cache/torch_aot_compile/0232891e22bd4d7db98ac2f43c441f0f81d0a431216053ca49fadeaff23e2af3/rank_0_0/model
+(EngineCore_DP0 pid=4096764) INFO 03-25 10:36:50 [backends.py:916] Using cache directory: /home/v-tiossowski/.cache/vllm/torch_compile_cache/feaf61af16/rank_0_0/backbone for vLLM's torch.compile
+(EngineCore_DP0 pid=4096764) INFO 03-25 10:36:50 [backends.py:976] Dynamo bytecode transform time: 3.51 s
+(EngineCore_DP0 pid=4096764) INFO 03-25 10:37:00 [backends.py:266] Directly load the compiled graph(s) for compile range (1, 8192) from the cache, took 9.493 s
+(EngineCore_DP0 pid=4096764) INFO 03-25 10:37:00 [monitor.py:35] torch.compile takes 13.88 s in total
+(EngineCore_DP0 pid=4096764) INFO 03-25 10:37:01 [gpu_worker.py:424] Available KV cache memory: 18.3 GiB
+(EngineCore_DP0 pid=4096764) INFO 03-25 10:37:01 [kv_cache_utils.py:1314] GPU KV cache size: 74,480 tokens
+(EngineCore_DP0 pid=4096764) INFO 03-25 10:37:01 [kv_cache_utils.py:1319] Maximum concurrency for 40,000 tokens per request: 6.95x
+(EngineCore_DP0 pid=4096764) Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):   0%|          | 0/51 [00:00<?, ?it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):   2%|▏         | 1/51 [00:00<00:08,  5.78it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):   4%|▍         | 2/51 [00:00<00:08,  5.98it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):   6%|▌         | 3/51 [00:00<00:07,  6.07it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):   8%|▊         | 4/51 [00:00<00:07,  6.07it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  10%|▉         | 5/51 [00:00<00:07,  6.15it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  12%|█▏        | 6/51 [00:00<00:07,  6.18it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  14%|█▎        | 7/51 [00:01<00:07,  6.18it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  16%|█▌        | 8/51 [00:01<00:06,  6.19it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  18%|█▊        | 9/51 [00:01<00:06,  6.47it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  20%|█▉        | 10/51 [00:01<00:06,  6.74it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  22%|██▏       | 11/51 [00:01<00:05,  6.75it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  24%|██▎       | 12/51 [00:01<00:05,  6.93it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  25%|██▌       | 13/51 [00:01<00:05,  7.08it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  27%|██▋       | 14/51 [00:02<00:05,  7.19it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  29%|██▉       | 15/51 [00:02<00:04,  7.28it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  31%|███▏      | 16/51 [00:02<00:04,  7.29it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  33%|███▎      | 17/51 [00:02<00:04,  7.62it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  35%|███▌      | 18/51 [00:02<00:04,  7.89it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  37%|███▋      | 19/51 [00:02<00:03,  8.10it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  39%|███▉      | 20/51 [00:02<00:03,  8.24it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  41%|████      | 21/51 [00:02<00:03,  8.37it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  43%|████▎     | 22/51 [00:03<00:03,  8.44it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  45%|████▌     | 23/51 [00:03<00:03,  8.48it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  47%|████▋     | 24/51 [00:03<00:03,  8.51it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  49%|████▉     | 25/51 [00:03<00:03,  8.52it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  51%|█████     | 26/51 [00:03<00:02,  8.55it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  53%|█████▎    | 27/51 [00:03<00:02,  8.60it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  55%|█████▍    | 28/51 [00:03<00:02,  8.57it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  57%|█████▋    | 29/51 [00:03<00:02,  8.59it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  59%|█████▉    | 30/51 [00:04<00:02,  8.61it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  61%|██████    | 31/51 [00:04<00:02,  8.64it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  63%|██████▎   | 32/51 [00:04<00:02,  8.63it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  65%|██████▍   | 33/51 [00:04<00:02,  8.96it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  67%|██████▋   | 34/51 [00:04<00:01,  9.23it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  71%|███████   | 36/51 [00:04<00:01,  9.50it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  73%|███████▎  | 37/51 [00:04<00:01,  9.58it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  76%|███████▋  | 39/51 [00:04<00:01,  9.74it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  78%|███████▊  | 40/51 [00:05<00:01,  9.78it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  80%|████████  | 41/51 [00:05<00:01,  9.79it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  84%|████████▍ | 43/51 [00:05<00:00, 10.02it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  88%|████████▊ | 45/51 [00:05<00:00, 10.18it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  92%|█████████▏| 47/51 [00:05<00:00, 10.32it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  96%|█████████▌| 49/51 [00:05<00:00, 10.58it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE): 100%|██████████| 51/51 [00:06<00:00, 10.64it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE): 100%|██████████| 51/51 [00:06<00:00,  8.35it/s]
+(EngineCore_DP0 pid=4096764) Capturing CUDA graphs (decode, FULL):   0%|          | 0/35 [00:00<?, ?it/s]Capturing CUDA graphs (decode, FULL):   3%|▎         | 1/35 [00:00<00:05,  5.71it/s]Capturing CUDA graphs (decode, FULL):   6%|▌         | 2/35 [00:00<00:05,  6.17it/s]Capturing CUDA graphs (decode, FULL):   9%|▊         | 3/35 [00:00<00:04,  6.40it/s]Capturing CUDA graphs (decode, FULL):  11%|█▏        | 4/35 [00:00<00:04,  6.53it/s]Capturing CUDA graphs (decode, FULL):  14%|█▍        | 5/35 [00:00<00:04,  6.59it/s]Capturing CUDA graphs (decode, FULL):  17%|█▋        | 6/35 [00:00<00:04,  6.68it/s]Capturing CUDA graphs (decode, FULL):  20%|██        | 7/35 [00:01<00:04,  6.70it/s]Capturing CUDA graphs (decode, FULL):  23%|██▎       | 8/35 [00:01<00:03,  6.78it/s]Capturing CUDA graphs (decode, FULL):  26%|██▌       | 9/35 [00:01<00:03,  6.83it/s]Capturing CUDA graphs (decode, FULL):  29%|██▊       | 10/35 [00:01<00:03,  6.90it/s]Capturing CUDA graphs (decode, FULL):  31%|███▏      | 11/35 [00:01<00:03,  6.83it/s]Capturing CUDA graphs (decode, FULL):  34%|███▍      | 12/35 [00:01<00:03,  6.83it/s]Capturing CUDA graphs (decode, FULL):  37%|███▋      | 13/35 [00:01<00:03,  6.93it/s]Capturing CUDA graphs (decode, FULL):  40%|████      | 14/35 [00:02<00:02,  7.01it/s]Capturing CUDA graphs (decode, FULL):  43%|████▎     | 15/35 [00:02<00:02,  7.06it/s]Capturing CUDA graphs (decode, FULL):  46%|████▌     | 16/35 [00:02<00:02,  7.12it/s]Capturing CUDA graphs (decode, FULL):  49%|████▊     | 17/35 [00:02<00:02,  7.41it/s]Capturing CUDA graphs (decode, FULL):  51%|█████▏    | 18/35 [00:02<00:02,  7.68it/s]Capturing CUDA graphs (decode, FULL):  54%|█████▍    | 19/35 [00:02<00:02,  7.91it/s]Capturing CUDA graphs (decode, FULL):  57%|█████▋    | 20/35 [00:02<00:01,  8.08it/s]Capturing CUDA graphs (decode, FULL):  60%|██████    | 21/35 [00:02<00:01,  8.22it/s]Capturing CUDA graphs (decode, FULL):  63%|██████▎   | 22/35 [00:03<00:01,  8.30it/s]Capturing CUDA graphs (decode, FULL):  66%|██████▌   | 23/35 [00:03<00:01,  8.31it/s]Capturing CUDA graphs (decode, FULL):  69%|██████▊   | 24/35 [00:03<00:01,  8.40it/s]Capturing CUDA graphs (decode, FULL):  71%|███████▏  | 25/35 [00:03<00:01,  8.56it/s]Capturing CUDA graphs (decode, FULL):  74%|███████▍  | 26/35 [00:03<00:01,  8.57it/s]Capturing CUDA graphs (decode, FULL):  77%|███████▋  | 27/35 [00:03<00:00,  8.67it/s]Capturing CUDA graphs (decode, FULL):  80%|████████  | 28/35 [00:03<00:00,  8.66it/s]Capturing CUDA graphs (decode, FULL):  83%|████████▎ | 29/35 [00:03<00:00,  8.72it/s]Capturing CUDA graphs (decode, FULL):  86%|████████▌ | 30/35 [00:03<00:00,  8.56it/s]Capturing CUDA graphs (decode, FULL):  89%|████████▊ | 31/35 [00:04<00:00,  8.68it/s]Capturing CUDA graphs (decode, FULL):  91%|█████████▏| 32/35 [00:04<00:00,  8.76it/s]Capturing CUDA graphs (decode, FULL):  94%|█████████▍| 33/35 [00:04<00:00,  8.88it/s]Capturing CUDA graphs (decode, FULL):  97%|█████████▋| 34/35 [00:04<00:00,  8.91it/s]Capturing CUDA graphs (decode, FULL): 100%|██████████| 35/35 [00:04<00:00,  8.84it/s]Capturing CUDA graphs (decode, FULL): 100%|██████████| 35/35 [00:04<00:00,  7.70it/s]
+(EngineCore_DP0 pid=4096764) INFO 03-25 10:37:13 [gpu_model_runner.py:5386] Graph capturing finished in 11 secs, took 1.13 GiB
+(EngineCore_DP0 pid=4096764) INFO 03-25 10:37:13 [core.py:282] init engine (profile, create kv cache, warmup model) took 31.31 seconds
+(EngineCore_DP0 pid=4096764) INFO 03-25 10:37:13 [vllm.py:747] Asynchronous scheduling is enabled.
+INFO 03-25 10:37:13 [llm.py:388] Supported tasks: ['generate']
+2026-03-25 10:37:13  INFO      Loading QA dataset from /home/v-tiossowski/HealthcareAgent/mimic-code/data/MIMICIV_invasive_line_dataset/invasive_line.csv
+2026-03-25 10:37:14  INFO      Dataset: 1000 rows, columns: ['subject_id', 'hadm_id', 'stay_id', 'intime', 'outtime', 'first_careunit', 'last_careunit', 'gt_label', 'question', 'gt_answer_type', 'split', 'arterial_line', 'central_line', 'pa_catheter', 'any_invasive_line']
+2026-03-25 10:37:14  INFO      Filtered to train split: 100 rows
+2026-03-25 10:37:14  INFO      Auto-discovered ground-truth SQL: /home/v-tiossowski/HealthcareAgent/mimic-code/mimic-iv/concepts_duckdb/treatment/invasive_line.sql
+2026-03-25 10:37:14  INFO      === Iteration 1/100  run=invasive_line  best_qa=0.0% ===
+INFO 03-25 10:37:15 [hf.py:318] Detected the chat template content format to be 'string'. You can set `--chat-template-content-format` to override this.
+2026-03-25 10:37:30  INFO      Exec block 1/1 …
+2026-03-25 10:37:30  INFO      Output: []
+
+2026-03-25 10:37:30  INFO      === Iteration 2/100  run=invasive_line  best_qa=0.0% ===
+2026-03-25 10:37:32  INFO      Exec block 1/1 …
+2026-03-25 10:37:32  INFO      Output: []
+
+2026-03-25 10:37:32  INFO      === Iteration 3/100  run=invasive_line  best_qa=0.0% ===
+2026-03-25 10:37:34  INFO      Exec block 1/1 …
+2026-03-25 10:37:34  INFO      Output: ['acidosis_guideline', 'acute_decompensated_heart_failure_guideline', 'acute_hepatic_failure_guideline', 'adverse_effect_of_anticoagulants_guideline', 'alcohol_withdrawal_syndrome_guideline', 'anemia_icu_critically_ill_hemoglobin_transfusion_guideline', 'apache_iii_guideline', 'atrial_fibrillation_guideline', 'bradycardia_guideline', 'cerebral_infarction_guideline', 'coma_altered_consciousness_icu_guideline', 'copd_exacerbation_guideline', 'coronary_artery_disease_guideline', 'deep_vein_thrombos
+2026-03-25 10:37:34  INFO      === Iteration 4/100  run=invasive_line  best_qa=0.0% ===
+2026-03-25 10:37:37  INFO      Exec block 1/1 …
+2026-03-25 10:37:37  INFO      Output: ['acei', 'age', 'antibiotic', 'arb', 'bg', 'blood_differential', 'cardiac_marker', 'chemistry', 'coagulation', 'code_status', 'complete_blood_count', 'crrt', 'dobutamine', 'dopamine', 'enzyme', 'epinephrine', 'gcs', 'height', 'icp', 'icustay_detail', '... (12 more; pass a keyword to filter)']
+
+2026-03-25 10:37:37  INFO      === Iteration 5/100  run=invasive_line  best_qa=0.0% ===
+2026-03-25 10:37:39  INFO      Exec block 1/1 …
+2026-03-25 10:37:39  INFO      Output: []
+
+2026-03-25 10:37:39  INFO      === Iteration 6/100  run=invasive_line  best_qa=0.0% ===
+2026-03-25 10:37:44  INFO      Exec block 1/1 …
+2026-03-25 10:37:44  INFO      Output:     table_schema          table_name
+0   mimiciv_hosp          admissions
+1   mimiciv_hosp             d_hcpcs
+2   mimiciv_hosp     d_icd_diagnoses
+3   mimiciv_hosp    d_icd_procedures
+4   mimiciv_hosp          d_labitems
+5   mimiciv_hosp       diagnoses_icd
+6   mimiciv_hosp            drgcodes
+7   mimiciv_hosp                emar
+8   mimiciv_hosp         emar_detail
+9   mimiciv_hosp         hcpcsevents
+10  mimiciv_hosp           labevents
+11  mimiciv_hosp  microbiologyevents
+12  mimiciv_hosp   
+2026-03-25 10:37:44  INFO      === Iteration 7/100  run=invasive_line  best_qa=0.0% ===
+2026-03-25 10:37:51  INFO      Exec block 1/1 …
+2026-03-25 10:37:51  INFO      Output: Error:
+Traceback (most recent call last):
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 643, in execute
+    _run_with_timeout(_do_execute, timeout)
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 174, in _run_with_timeout
+    raise error[0]
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 156, in target
+    result[0] = func(*args, **kwargs)
+                ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/v-tiossowsk
+2026-03-25 10:37:51  INFO      === Iteration 8/100  run=invasive_line  best_qa=0.0% ===
+2026-03-25 10:37:55  INFO      Exec block 1/1 …
+2026-03-25 10:37:55  INFO      Output:        column_name data_type
+0           itemid   INTEGER
+1            label   VARCHAR
+2     abbreviation   VARCHAR
+3          linksto   VARCHAR
+4         category   VARCHAR
+5         unitname   VARCHAR
+6       param_type   VARCHAR
+7   lownormalvalue     FLOAT
+8  highnormalvalue     FLOAT
+
+2026-03-25 10:37:55  INFO      === Iteration 9/100  run=invasive_line  best_qa=0.0% ===
+2026-03-25 10:38:00  INFO      Exec block 1/1 …
+2026-03-25 10:38:00  INFO      Output:     itemid                                                   label                 category                                        abbreviation
+0   225476  Unplanned Line/Catheter Removal (Non-Patient initated)     3-Significant Events  Unplanned Line/Catheter Removal (Non-Patient inita
+1   225821     Unplanned Line/Catheter Removal (Patient Initiated)     3-Significant Events  Unplanned Line/Catheter Removal (Patient Initiated
+2   229580                               Line Placement at Bedside  
+2026-03-25 10:38:00  INFO      === Iteration 10/100  run=invasive_line  best_qa=0.0% ===
+2026-03-25 10:38:06  INFO      Exec block 1/1 …
+2026-03-25 10:38:06  INFO      Output:      itemid                                                   label                 category                                        abbreviation
+0    227719                                                     AVA  Access Lines - Invasive                                                 AVA
+1    227720                                          AVA Cap Change  Access Lines - Invasive                                      AVA Cap Change
+2    227721                               AVA Change over Wire Da
+2026-03-25 10:38:06  INFO      === Iteration 11/100  run=invasive_line  best_qa=0.0% ===
+2026-03-25 10:38:16  INFO      Exec block 1/1 …
+2026-03-25 10:38:16  INFO      Output:     itemid                                                   label                 category                                       abbreviation
+0   227721                               AVA Change over Wire Date  Access Lines - Invasive                          AVA Change over Wire Date
+1   227724                                      AVA Insertion Date  Access Lines - Invasive                                 AVA Insertion Date
+2   227732                   AVA Line Placement Confirmed by X-ray  Acc
+2026-03-25 10:38:16  INFO      === Iteration 12/100  run=invasive_line  best_qa=0.0% ===
+2026-03-25 10:38:32  INFO      Exec block 1/1 …
+2026-03-25 10:38:32  INFO      Output:    itemid              label                 category       abbreviation
+0  230091      CVL ArrowGard  Access Lines - Invasive      CVL ArrowGard
+1  229882       CVL Biopatch  Access Lines - Invasive       CVL Biopatch
+2  230115  CVL SecurePort IV  Access Lines - Invasive  CVL SecurePort IV
+
+2026-03-25 10:38:32  INFO      === Iteration 13/100  run=invasive_line  best_qa=0.0% ===
+2026-03-25 10:38:39  INFO      Exec block 1/1 …
+2026-03-25 10:38:39  INFO      Output:     itemid                                     label                 category                              abbreviation
+0   230091                             CVL ArrowGard  Access Lines - Invasive                             CVL ArrowGard
+1   229882                              CVL Biopatch  Access Lines - Invasive                              CVL Biopatch
+2   230115                         CVL SecurePort IV  Access Lines - Invasive                         CVL SecurePort IV
+3   224263          
+2026-03-25 10:38:39  INFO      === Iteration 14/100  run=invasive_line  best_qa=0.0% ===
+2026-03-25 10:38:49  INFO      Exec block 1/1 …
+2026-03-25 10:38:49  INFO      Output:      column_name  data_type
+0     subject_id    INTEGER
+1        hadm_id    INTEGER
+2        stay_id    INTEGER
+3   caregiver_id    INTEGER
+4      charttime  TIMESTAMP
+5      storetime  TIMESTAMP
+6         itemid    INTEGER
+7          value    VARCHAR
+8       valuenum      FLOAT
+9       valueuom    VARCHAR
+10       warning   SMALLINT
+
+2026-03-25 10:38:49  INFO      === Iteration 15/100  run=invasive_line  best_qa=0.0% ===
+2026-03-25 10:38:59  INFO      Exec block 1/1 …
+2026-03-25 10:38:59  INFO      Output: Empty DataFrame
+Columns: [subject_id, hadm_id, stay_id, charttime, itemid, label, value, valuenum]
+Index: []
+
+2026-03-25 10:38:59  INFO      === Iteration 16/100  run=invasive_line  best_qa=0.0% ===
+2026-03-25 10:39:07  INFO      Exec block 1/1 …
+2026-03-25 10:39:07  INFO      Output:     itemid                                     label                              value  valuenum     cnt
+0   226107  Arterial Line placed in outside facility                                  0       0.0  548780
+1   224289                 Arterial line Site Appear                                WNL       NaN  545846
+2   224291             Arterial line Waveform Appear                              Sharp       NaN  479675
+3   227292          Arterial Line Dressing Occlusive                        
+2026-03-25 10:39:07  INFO      === Iteration 17/100  run=invasive_line  best_qa=0.0% ===
+2026-03-25 10:39:20  INFO      Exec block 1/1 …
+2026-03-25 10:39:20  INFO      Output:     itemid                                     label                              value  valuenum     cnt
+0   224281                   Multi Lumen Site Appear                                WNL       NaN  508723
+1   226113    Multi Lumen placed in outside facility                                  0       0.0  506866
+2   227756  Multi Lumen Placement Confirmed by X-ray                Post line placement       NaN  398296
+3   227293            Multi Lumen Dressing Occlusive                        
+2026-03-25 10:39:20  INFO      === Iteration 18/100  run=invasive_line  best_qa=0.0% ===
+2026-03-25 10:39:34  INFO      Exec block 1/1 …
+2026-03-25 10:39:34  INFO      Output:     itemid                                     label                              value  valuenum    cnt
+0   227351            PA Catheter Dressing Occlusive                                  1       1.0  26732
+1   225355                   PA Catheter Site Appear                                WNL       NaN  25767
+2   225357               PA Catheter Waveform Appear                              Sharp       NaN  25229
+3   226114    PA Catheter placed in outside facility                            
+2026-03-25 10:39:34  INFO      === Iteration 19/100  run=invasive_line  best_qa=0.0% ===
+2026-03-25 10:39:56  INFO      Exec block 1/1 …
+2026-03-25 10:39:56  INFO      Output: Empty DataFrame
+Columns: [itemid, label, value, valuenum, cnt]
+Index: []
+
+2026-03-25 10:39:56  INFO      === Iteration 20/100  run=invasive_line  best_qa=0.0% ===
+2026-03-25 10:40:15  INFO      Exec block 1/1 …
+2026-03-25 10:40:15  INFO      Output: Empty DataFrame
+Columns: [itemid, label, value, valuenum, cnt]
+Index: []
+
+2026-03-25 10:40:15  INFO      === Iteration 21/100  run=invasive_line  best_qa=0.0% ===
+2026-03-25 10:40:25  INFO      Exec block 1/1 …
+2026-03-25 10:40:25  INFO      Output:     itemid                                     label                 category                              abbreviation
+0   225752                             Arterial Line  Access Lines - Invasive                             Arterial Line
+1   225737                Arterial Line Discontinued  Access Lines - Invasive                Arterial Line Discontinued
+2   224287             Arterial Line Dressing Change  Access Lines - Invasive             Arterial Line Dressing Change
+3   227292          
+2026-03-25 10:40:25  INFO      === Iteration 22/100  run=invasive_line  best_qa=0.0% ===
+2026-03-25 10:40:33  INFO      Exec block 1/1 …
+2026-03-25 10:40:33  INFO      Output:    cnt
+0    0
+
+2026-03-25 10:40:33  INFO      === Iteration 23/100  run=invasive_line  best_qa=0.0% ===
+2026-03-25 10:40:51  INFO      Exec block 1/1 …
+2026-03-25 10:40:51  INFO      Output:     itemid                                     label                 category                              abbreviation
+0   224263                               Multi Lumen  Access Lines - Invasive                               Multi Lumen
+1   229534          Multi Lumen - Obturator in place  Access Lines - Invasive          Multi Lumen - Obturator in place
+2   224261                    Multi Lumen Cap Change  Access Lines - Invasive                    Multi Lumen Cap Change
+3   224262         M
+2026-03-25 10:40:51  INFO      === Iteration 24/100  run=invasive_line  best_qa=0.0% ===
+2026-03-25 10:40:59  INFO      Exec block 1/1 …
+2026-03-25 10:40:59  INFO      Output:    cnt
+0    0
+
+2026-03-25 10:40:59  INFO      === Iteration 25/100  run=invasive_line  best_qa=0.0% ===
+2026-03-25 10:41:16  INFO      Exec block 1/1 …
+2026-03-25 10:41:16  INFO      Output:     itemid                                 label                 category                          abbreviation
+0   224269                               CCO PAC  Access Lines - Invasive                               CCO PAC
+1   225221                    CCO PAC Cap Change  Access Lines - Invasive                    CCO PAC Cap Change
+2   225222         CCO PAC Change over Wire Date  Access Lines - Invasive         CCO PAC Change over Wire Date
+3   225738                  CCO PAC Discontinued  Ac
+2026-03-25 10:41:16  INFO      === Iteration 26/100  run=invasive_line  best_qa=0.0% ===
+2026-03-25 10:41:38  INFO      Exec block 1/1 …
+2026-03-25 10:41:38  INFO      Output:     itemid                                                   label                 category                                   abbreviation
+0   227727                     AVA Line placed in outside facility  Access Lines - Invasive            AVA Line placed in outside facility
+1   226107                Arterial Line placed in outside facility  Access Lines - Invasive       Arterial Line placed in outside facility
+2   226108                      CCO PAC placed in outside facility  Access Lines - 
+2026-03-25 10:41:38  INFO      === Iteration 27/100  run=invasive_line  best_qa=0.0% ===
+2026-03-25 10:42:01  INFO      Exec block 1/1 …
+2026-03-25 10:42:01  INFO      Output:       column_name  data_type
+0      subject_id    INTEGER
+1         hadm_id    INTEGER
+2         stay_id    INTEGER
+3  first_careunit    VARCHAR
+4   last_careunit    VARCHAR
+5          intime  TIMESTAMP
+6         outtime  TIMESTAMP
+7             los      FLOAT
+
+2026-03-25 10:42:01  INFO      === Iteration 28/100  run=invasive_line  best_qa=0.0% ===
+2026-03-25 10:42:26  INFO      Exec block 1/1 …
+2026-03-25 10:42:26  INFO      Output: Empty DataFrame
+Columns: [label, itemid]
+Index: []
+
+2026-03-25 10:42:26  INFO      === Iteration 29/100  run=invasive_line  best_qa=0.0% ===
+2026-03-25 10:42:36  INFO      Exec block 1/1 …
+2026-03-25 10:42:36  INFO      Output:      stay_id                                           label  itemid  cnt
+0   36032605                   Dialysis Catheter Site Appear  225323  739
+1   36032605  Dialysis Catheter Placement Confirmed by X-ray  227753  712
+2   36032605                          Dialysis Catheter Type  229536  712
+3   36032605    Dialysis Catheter placed in outside facility  226118  712
+4   36257106                                Impella Position  228173  615
+5   38606468                         Multi Lumen Site Ap
+2026-03-25 10:42:36  INFO      === Iteration 30/100  run=invasive_line  best_qa=0.0% ===
+2026-03-25 10:42:50  INFO      Exec block 1/1 …
+2026-03-25 10:42:50  INFO      Output:              charttime                                           label                 value  valuenum
+0  2115-09-29 15:50:00                         Multi Lumen Site Appear                   WNL       NaN
+1  2115-09-29 15:50:00                     Multi Lumen Waveform Appear          Not assessed       NaN
+2  2115-09-29 15:50:00        Multi Lumen Placement Confirmed by X-ray   Post line placement       NaN
+3  2115-09-29 15:50:00                   Dialysis Catheter Site Appear                  
+2026-03-25 10:42:50  INFO      === Iteration 31/100  run=invasive_line  best_qa=0.0% ===
+2026-03-25 10:43:20  INFO      Exec block 1/1 …
+2026-03-25 10:43:20  INFO      Output:     itemid                                           label                 category                                    abbreviation
+0   225775                 Cordis Introducer Dressing Type  Access Lines - Invasive                 Cordis Introducer Dressing Type
+1   224267                               Cordis/Introducer  Access Lines - Invasive                               Cordis/Introducer
+2   224292                    Cordis/Introducer Cap Change  Access Lines - Invasive                    C
+2026-03-25 10:43:20  INFO      === Iteration 32/100  run=invasive_line  best_qa=0.0% ===
+2026-03-25 10:43:20  INFO      Context approaching limit (20424 tokens, limit=25000) — forcing summarize + compress
+2026-03-25 10:44:42  INFO      Context compressed: 64 messages -> 2 messages
+2026-03-25 10:44:50  INFO      Exec block 1/1 …
+2026-03-25 10:44:50  INFO      Output: Invasive guidelines: []
+Line guidelines: ['acidosis_guideline', 'acute_decompensated_heart_failure_guideline', 'acute_hepatic_failure_guideline', 'adverse_effect_of_anticoagulants_guideline', 'alcohol_withdrawal_syndrome_guideline', 'anemia_icu_critically_ill_hemoglobin_transfusion_guideline', 'apache_iii_guideline', 'atrial_fibrillation_guideline', 'bradycardia_guideline', 'cerebral_infarction_guideline', 'coma_altered_consciousness_icu_guideline', 'copd_exacerbation_guideline', 'coronary_arter
+2026-03-25 10:44:50  INFO      === Iteration 33/100  run=invasive_line  best_qa=0.0% ===
+2026-03-25 10:44:56  INFO      Exec block 1/1 …
+2026-03-25 10:44:56  INFO      Output: Line functions: []
+Catheter functions: []
+Arterial functions: []
+CVL functions: []
+
+2026-03-25 10:44:56  INFO      === Iteration 34/100  run=invasive_line  best_qa=0.0% ===
+2026-03-25 10:45:18  INFO      Exec block 1/1 …
+2026-03-25 10:45:18  INFO      Output:     itemid                                           label                                    abbreviation                 category
+0   224188                           PICC Line Site Appear                           PICC Line Site Appear  Access Lines - Invasive
+1   224263                                     Multi Lumen                                     Multi Lumen  Access Lines - Invasive
+2   224264                                       PICC Line                                       PICC Li
+2026-03-25 10:45:18  INFO      === Iteration 35/100  run=invasive_line  best_qa=0.0% ===
+2026-03-25 10:45:45  INFO      Exec block 1/1 …
+2026-03-25 10:45:45  INFO      Output:     itemid  event_count         first_event          last_event
+0   224188       342063 2110-02-12 16:40:00 2214-07-26 08:00:00
+1   224281       615940 2110-01-12 13:43:00 2214-05-07 12:00:00
+2   224283       403870 2110-01-13 12:00:00 2212-01-22 11:49:00
+3   224289       605717 2110-01-11 12:40:00 2213-05-26 04:07:00
+4   224291       576943 2110-01-11 12:40:00 2213-05-26 04:07:00
+5   224297        62564 2110-01-11 12:40:00 2208-01-20 08:00:00
+6   225225        18003 2110-04-14 15:20:00 2206-04-
+2026-03-25 10:45:45  INFO      === Iteration 36/100  run=invasive_line  best_qa=0.0% ===
+2026-03-25 10:45:59  INFO      Exec block 1/1 …
+2026-03-25 10:46:00  INFO      Output:     itemid value  valuenum     cnt
+0   226107     0       0.0  548780
+1   226107     1       1.0   15346
+2   226108     0       0.0   15410
+3   226108     1       1.0      66
+4   226109     0       0.0   54128
+5   226109     1       1.0    1461
+6   226110     0       0.0    7139
+7   226110     1       1.0    2777
+8   226113     0       0.0  506866
+9   226113     1       1.0   43853
+10  226114     0       0.0   24373
+11  226114     1       1.0     497
+12  226115     0       0.0  281368
+13  226115
+2026-03-25 10:46:00  INFO      === Iteration 37/100  run=invasive_line  best_qa=0.0% ===
+2026-03-25 10:46:09  INFO      Exec block 1/1 …
+2026-03-25 10:46:09  INFO      Output:     itemid              value     cnt
+0   224188                WNL  292179
+1   224188             Oozing   11646
+2   224188          Old blood    9836
+3   224188         Ecchymotic    8833
+4   224188            Redness    5936
+5   224188           Bleeding    5383
+6   224188       Erythematous    3101
+7   224188       Not assessed    2714
+8   224188           Drainage    1192
+9   224188           Hematoma     599
+10  224188           Swelling     408
+11  224188  Purulent drainage     170
+12  22
+2026-03-25 10:46:09  INFO      === Iteration 38/100  run=invasive_line  best_qa=0.0% ===
+2026-03-25 10:46:18  INFO      Exec block 1/1 …
+2026-03-25 10:46:19  INFO      Output:     itemid                value     cnt
+0   227751         On admission    8720
+1   227751  Post line placement    6963
+2   227751       Not applicable      25
+3   227752  Post line placement   28024
+4   227752         On admission   22775
+5   227752       Not applicable    1190
+6   227753  Post line placement   94358
+7   227753       Not applicable   15168
+8   227753         On admission    9514
+9   227754  Post line placement    4727
+10  227754         On admission    3400
+11  227754       Not
+2026-03-25 10:46:19  INFO      === Iteration 39/100  run=invasive_line  best_qa=0.0% ===
+2026-03-25 10:46:35  INFO      Exec block 1/1 …
+2026-03-25 10:46:35  INFO      Output:     itemid            value     cnt
+0   224283     Not assessed  227119
+1   224283            Sharp  166732
+2   224283         Dampened    7012
+3   224283       Positional    1790
+4   224283            Fling     878
+5   224283        Overshoot     339
+6   224291            Sharp  479675
+7   224291       Positional   56843
+8   224291         Dampened   35236
+9   224291            Fling    4600
+10  224291        Overshoot     589
+11  225227            Sharp   17058
+12  225227         Dampened     
+2026-03-25 10:46:35  INFO      === Iteration 40/100  run=invasive_line  best_qa=0.0% ===
+2026-03-25 10:47:15  INFO      Exec block 1/1 …
+2026-03-25 10:47:15  INFO      Output: Sample patients:    subject_id   hadm_id   stay_id
+0    10215503  20350217  31586378
+1    10259507  27366528  33681140
+2    10260213  20173523  31693346
+3    10338535  28900385  30963122
+4    10528268  21426875  39751566
+
+Testing with subject_id=10215503, hadm_id=20350217
+
+2026-03-25 10:47:15  INFO      === Iteration 41/100  run=invasive_line  best_qa=0.0% ===
+2026-03-25 10:47:46  INFO      Exec block 1/1 …
+2026-03-25 10:47:46  INFO      Output: Error:
+Traceback (most recent call last):
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 643, in execute
+    _run_with_timeout(_do_execute, timeout)
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 174, in _run_with_timeout
+    raise error[0]
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 156, in target
+    result[0] = func(*args, **kwargs)
+                ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/v-tiossowsk
+2026-03-25 10:47:46  INFO      === Iteration 42/100  run=invasive_line  best_qa=0.0% ===
+2026-03-25 10:48:11  INFO      Exec block 1/1 …
+2026-03-25 10:48:11  INFO      Output:     itemid                                     label           charttime                value  valuenum
+0   227756  Multi Lumen Placement Confirmed by X-ray 2169-10-14 21:30:00  Post line placement       NaN
+1   226113    Multi Lumen placed in outside facility 2169-10-14 21:30:00                    0       0.0
+2   224281                   Multi Lumen Site Appear 2169-10-14 21:30:00                  WNL       NaN
+3   227756  Multi Lumen Placement Confirmed by X-ray 2169-10-15 00:19:00  Post line 
+2026-03-25 10:48:11  INFO      === Iteration 43/100  run=invasive_line  best_qa=0.0% ===
+2026-03-25 10:49:18  INFO      Exec block 1/1 …
+2026-03-25 10:49:18  INFO      Output: Test result:
+Lines present: ['Multi Lumen (CVL)']
+Line details: {'Multi Lumen (CVL)': {'first_seen': '2169-10-14 21:30:00', 'event_count': 30, 'values_observed': ['Post line placement', '0', 'WNL'], 'valuenum_observed': [0.0]}}
+
+2026-03-25 10:49:18  INFO      === Iteration 44/100  run=invasive_line  best_qa=0.0% ===
+2026-03-25 10:49:35  INFO      Exec block 1/1 …
+2026-03-25 10:49:35  INFO      Output: Patient 2 (10259507):
+Lines present: ['Arterial Line']
+
+Patient 3 (10260213):
+Lines present: ['Arterial Line', 'Multi Lumen (CVL)']
+
+Patient 4 (10338535):
+Lines present: ['Arterial Line', 'Multi Lumen (CVL)']
+
+Patient 5 (10528268):
+Lines present: ['Arterial Line']
+
+2026-03-25 10:49:35  INFO      === Iteration 45/100  run=invasive_line  best_qa=0.0% ===
+2026-03-25 10:49:51  INFO      Exec block 1/1 …
+2026-03-25 10:49:51  INFO      Output: Test with stay_id:
+Lines present: ['Multi Lumen (CVL)']
+
+Test with only subject_id:
+Lines present: ['Multi Lumen (CVL)', 'PICC Line']
+
+Sample ICU stays:    subject_id   hadm_id
+0    10000032  29079034
+1    10001217  27703517
+2    10008287  22168393
+3    10013310  22098926
+4    10015834  25193617
+5    10015860  24698912
+6    10019287  20525411
+7    10021118  24490144
+8    10021666  22756440
+9    10025612  23403708
+
+2026-03-25 10:49:51  INFO      === Iteration 46/100  run=invasive_line  best_qa=0.0% ===
+2026-03-25 10:50:08  INFO      Exec block 1/1 …
+2026-03-25 10:50:08  INFO      Output: Patient 10000032 (might have no lines):
+Lines present: []
+
+Patient 10001217:
+Lines present: ['PICC Line']
+
+Patient 10008287:
+Lines present: ['Arterial Line']
+
+2026-03-25 10:50:08  INFO      === Iteration 47/100  run=invasive_line  best_qa=0.0% ===
+2026-03-25 10:50:24  INFO      Exec block 1/1 …
+2026-03-25 10:50:24  INFO      Output: Patient 10215503 admissions with invasive lines:
+   subject_id   hadm_id  event_count
+0    10215503  20350217           20
+
+All admissions for patient 10215503:
+   subject_id   hadm_id
+0    10215503  20350217
+1    10215503  23077710
+2    10215503  23077710
+3    10215503  26539098
+
+2026-03-25 10:50:24  INFO      === Iteration 48/100  run=invasive_line  best_qa=0.0% ===
+2026-03-25 10:51:15  INFO      Exec block 1/1 …
+2026-03-25 10:51:15  INFO      Output: Code executed successfully (no output).
+2026-03-25 10:51:15  INFO      Debug conversations will be saved to debug_logs
+2026-03-25 10:51:15  INFO      Using question from dataset column: Did this patient have an arterial line placed during their ICU stay?
+2026-03-25 10:51:15  INFO      Answer type for 'invasive_line': binary (per_row=True)
+2026-03-25 10:51:15  INFO      ReACT iteration 1/5 — 20 active patients
+Rendering conversations:   0%|          | 0/20 [00:00<?, ?it/s]Rendering conversations: 100%|██████████| 20/20 [00:00<00:00, 622.39it/s]
+Processed prompts:   0%|          | 0/20 [00:00<?, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s]Processed prompts:   5%|▌         | 1/20 [00:09<03:07,  9.85s/it, est. speed input: 60.68 toks/s, output: 15.73 toks/s]Processed prompts:  20%|██        | 4/20 [00:10<00:33,  2.07s/it, est. speed input: 224.13 toks/s, output: 59.80 toks/s]Processed prompts:  25%|██▌       | 5/20 [00:10<00:23,  1.54s/it, est. speed input: 274.88 toks/s, output: 74.98 toks/s]Processed prompts:  30%|███       | 6/20 [00:10<00:15,  1.14s/it, est. speed input: 325.38 toks/s, output: 90.41 toks/s]Processed prompts:  40%|████      | 8/20 [00:11<00:07,  1.52it/s, est. speed input: 428.61 toks/s, output: 121.98 toks/s]Processed prompts:  55%|█████▌    | 11/20 [00:11<00:03,  2.82it/s, est. speed input: 582.05 toks/s, output: 169.69 toks/s]Processed prompts:  65%|██████▌   | 13/20 [00:11<00:01,  3.83it/s, est. speed input: 680.42 toks/s, output: 200.82 toks/s]Processed prompts:  80%|████████  | 16/20 [00:11<00:00,  5.19it/s, est. speed input: 818.87 toks/s, output: 245.51 toks/s]Processed prompts: 100%|██████████| 20/20 [00:11<00:00,  5.19it/s, est. speed input: 1021.31 toks/s, output: 311.59 toks/s]Processed prompts: 100%|██████████| 20/20 [00:11<00:00,  1.72it/s, est. speed input: 1021.31 toks/s, output: 311.59 toks/s]
+2026-03-25 10:51:26  INFO      ReACT iteration 2/5 — 20 active patients
+Rendering conversations:   0%|          | 0/20 [00:00<?, ?it/s]Rendering conversations: 100%|██████████| 20/20 [00:00<00:00, 477.98it/s]
+Processed prompts:   0%|          | 0/20 [00:00<?, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s]Processed prompts:   5%|▌         | 1/20 [00:06<02:10,  6.85s/it, est. speed input: 110.56 toks/s, output: 8.62 toks/s]Processed prompts:  10%|█         | 2/20 [00:07<00:57,  3.19s/it, est. speed input: 212.11 toks/s, output: 17.64 toks/s]Processed prompts:  20%|██        | 4/20 [00:07<00:19,  1.23s/it, est. speed input: 407.07 toks/s, output: 37.28 toks/s]Processed prompts:  25%|██▌       | 5/20 [00:07<00:14,  1.04it/s, est. speed input: 486.22 toks/s, output: 46.23 toks/s]Processed prompts:  30%|███       | 6/20 [00:08<00:09,  1.42it/s, est. speed input: 581.25 toks/s, output: 56.27 toks/s]Processed prompts:  40%|████      | 8/20 [00:08<00:05,  2.36it/s, est. speed input: 758.68 toks/s, output: 76.66 toks/s]Processed prompts:  50%|█████     | 10/20 [00:08<00:03,  2.59it/s, est. speed input: 887.76 toks/s, output: 93.65 toks/s]Processed prompts:  55%|█████▌    | 11/20 [00:09<00:03,  2.61it/s, est. speed input: 942.38 toks/s, output: 102.70 toks/s]Processed prompts:  60%|██████    | 12/20 [00:09<00:02,  2.94it/s, est. speed input: 1009.95 toks/s, output: 113.39 toks/s]Processed prompts:  65%|██████▌   | 13/20 [00:09<00:02,  3.08it/s, est. speed input: 1066.94 toks/s, output: 123.30 toks/s]Processed prompts:  70%|███████   | 14/20 [00:10<00:02,  3.00it/s, est. speed input: 1112.82 toks/s, output: 132.54 toks/s]Processed prompts:  75%|███████▌  | 15/20 [00:11<00:02,  1.95it/s, est. speed input: 1082.43 toks/s, output: 135.47 toks/s]Processed prompts:  80%|████████  | 16/20 [00:11<00:01,  2.36it/s, est. speed input: 1157.47 toks/s, output: 147.94 toks/s]Processed prompts:  85%|████████▌ | 17/20 [00:12<00:01,  1.84it/s, est. speed input: 1160.96 toks/s, output: 153.45 toks/s]Processed prompts:  90%|█████████ | 18/20 [00:13<00:01,  1.52it/s, est. speed input: 1152.98 toks/s, output: 158.87 toks/s]Processed prompts:  95%|█████████▌| 19/20 [00:13<00:00,  1.56it/s, est. speed input: 1177.15 toks/s, output: 168.88 toks/s]Processed prompts: 100%|██████████| 20/20 [00:26<00:00,  4.15s/it, est. speed input: 653.59 toks/s, output: 110.17 toks/s] Processed prompts: 100%|██████████| 20/20 [00:26<00:00,  4.15s/it, est. speed input: 653.59 toks/s, output: 110.17 toks/s]Processed prompts: 100%|██████████| 20/20 [00:26<00:00,  1.31s/it, est. speed input: 653.59 toks/s, output: 110.17 toks/s]
+2026-03-25 10:51:53  INFO      ReACT iteration 3/5 — 1 active patients
+Rendering conversations:   0%|          | 0/1 [00:00<?, ?it/s]Rendering conversations: 100%|██████████| 1/1 [00:00<00:00, 338.85it/s]
+Processed prompts:   0%|          | 0/1 [00:00<?, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s]Processed prompts: 100%|██████████| 1/1 [00:05<00:00,  5.44s/it, est. speed input: 219.91 toks/s, output: 25.54 toks/s]Processed prompts: 100%|██████████| 1/1 [00:05<00:00,  5.44s/it, est. speed input: 219.91 toks/s, output: 25.54 toks/s]Processed prompts: 100%|██████████| 1/1 [00:05<00:00,  5.44s/it, est. speed input: 219.91 toks/s, output: 25.54 toks/s]
+2026-03-25 10:51:58  INFO      QA accuracy: 90.0%  (correct=18/20, parse_errors=0)
+2026-03-25 10:51:58  INFO      SUCCESS: 90.0% QA accuracy for 'invasive_line' at iteration 48
+2026-03-25 10:51:58  INFO      Function code saved to autoformalized_library/functions/invasive_line.py
+2026-03-25 10:51:58  INFO      Summary saved to autoformalized_library/summary.json
+[rank0]:[W325 10:51:58.196474452 ProcessGroupNCCL.cpp:1553] Warning: WARNING: destroy_process_group() was not called before program exit, which can leak resources. For more info, please see https://pytorch.org/docs/stable/distributed.html#shutdown (function operator())
+
+======================================================================
+AUTOFORMALIZATION COMPLETE
+======================================================================
+  Output dir      : autoformalized_library
+  Model           : Qwen/Qwen3.5-27B
+  Dataset         : /home/v-tiossowski/HealthcareAgent/mimic-code/data/MIMICIV_invasive_line_dataset/invasive_line.csv
+  Run name        : invasive_line
+  Status          : SUCCESS
+  QA accuracy     : 90.0%
+  Iterations      : 48
+  Total tokens    : 36,828  (prompt 30,185 / completion 6,643)
+  LLM calls       : 90
+  SQL queries     : 66
+  Function saved  : autoformalized_library/functions/invasive_line.py
+======================================================================

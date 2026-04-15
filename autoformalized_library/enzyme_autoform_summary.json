@@ -1,0 +1,47 @@
+{
+  "timestamp": "2026-03-25T01:30:40.633758",
+  "model": "Qwen/Qwen3.5-27B",
+  "db_path": "/home/v-tiossowski/MIMIC-IV/mimic4.db",
+  "qa_dataset": "/home/v-tiossowski/HealthcareAgent/mimic-code/data/MIMICIV_enzyme_dataset/enzyme.csv",
+  "match_threshold": 0.9,
+  "run_name": "enzyme",
+  "success": false,
+  "iterations": 100,
+  "qa_accuracy": 0.8,
+  "stats": {
+    "react": {
+      "prompt_tokens": 0,
+      "completion_tokens": 0,
+      "total_tokens": 0,
+      "llm_calls": 104,
+      "query_count": 404,
+      "query_time_sec": 4.473,
+      "wall_time_sec": 7552.185
+    },
+    "qa": {
+      "prompt_tokens": 213336,
+      "completion_tokens": 24742,
+      "total_tokens": 238078,
+      "llm_calls": 67,
+      "query_count": 47,
+      "query_time_sec": 0.228,
+      "eval_wall_time_sec": 528.941,
+      "per_question": {
+        "avg_prompt_tokens": 10666.8,
+        "avg_completion_tokens": 1237.1,
+        "avg_llm_calls": 3.35,
+        "avg_query_count": 2.35,
+        "avg_query_time_sec": 0.011,
+        "avg_wall_time_sec": 26.447
+      }
+    },
+    "total": {
+      "prompt_tokens": 213336,
+      "completion_tokens": 24742,
+      "total_tokens": 238078,
+      "llm_calls": 171,
+      "query_count": 451,
+      "query_time_sec": 4.701
+    }
+  }
+}

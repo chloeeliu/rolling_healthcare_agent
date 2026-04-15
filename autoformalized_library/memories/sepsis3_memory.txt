@@ -1,0 +1,614 @@
+=== Step 1 ===
+# Clinical Coding Agent Memory
+
+## 1. Key Schema Facts
+
+### Database Tables
+| Schema | Table | Key Columns |
+|--------|-------|-------------|
+| mimiciv_hosp | microbiologyevents | microevent_id, subject_id, hadm_id, spec_type_desc, chartdate, test_name, org_name, interpretation |
+| mimiciv_hosp | labevents | labevent_id, subject_id, hadm_id, itemid, charttime, valuenum, valueuom |
+| mimiciv_hosp | d_labitems | itemid, label, fluid, category |
+| mimiciv_icu | icustays | subject_id, hadm_id, stay_id, intime, outtime, first_careunit |
+| mimiciv_icu | chartevents | itemid, stay_id, charttime, valuenum |
+| mimiciv_icu | d_items | itemid, label, abbreviation, category, unitname |
+| mimiciv_icu | inputevents | itemid, stay_id, starttime, endtime, amount, rate |
+
+### Key ItemIDs
+| Table | ItemID | Label |
+|-------|--------|-------|
+| d_labitems | 50912 | Creatinine |
+| d_labitems | 50885 | Bilirubin, Total |
+| d_labitems | 51265 | Platelet Count |
+| d_items | 220224 | PO2 (Arterial) |
+| d_items | 225411 | Patient on vent |
+| d_items | 221289 | Epinephrine |
+| d_items | 221906 | Norepinephrine |
+
+### Specimen Types (microbiologyevents)
+- BLOOD CULTURE, URINE, SPUTUM, CSF;SPINAL FLUID, STOOL, CATHETER TIP-IV
+- Excluded: MRSA SCREEN, CRE Screen, Cipro Resistant Screen (screening cultures)
+
+### SOFA Score Components
+| Organ System | Variable | Units | Score Range |
+|--------------|----------|-------|-------------|
+| Respiration | PaO₂/FiO₂ ratio | mm Hg | 0-4 |
+| Coagulation | Platelet count | ×10³/µL | 0-4 |
+| Liver | Total bilirubin | mg/dL | 0-4 |
+| Cardiovascular | MAP, vasopressors | mm Hg, µg/kg/min | 0-4 |
+| Brain | GCS | Score (3-15) | 0-4 |
+| Kidney | Creatinine, urine output | mg/dL, mL/day | 0-4 |
+
+### Sepsis-3 Criteria
+- **Sepsis**: Suspected infection + SOFA increase ≥ 2 points from baseline
+- **Septic Shock**: Sepsis + vasopressors for MAP ≥ 65 mm Hg + lactate > 2 mmol/L after fluid resuscitation
+- **qSOFA** (screening): RR ≥ 22, altered mentation, SBP ≤ 100 (≥ 2 points prompts evaluation)
+
+## 2. Function Source Code
+
+### compute_sofa_score
+```python
+def compute_sofa_score(stay_id):
+    """
+    Compute the SOFA (Sequential Organ Failure Assessment) score for an ICU stay.
+
+    The SOFA score assesses organ dysfunction across 6 systems:
+    - Respiration (PaO2/FiO2 ratio)
+    - Coagulation (Platelet count)
+    - Liver (Bilirubin)
+    - Cardiovascular (MAP and vasopressors)
+    - Brain (Glasgow Coma Scale)
+    - Kidney (Creatinine)
+
+    Parameters
+    ----------
+    stay_id : int
+        The ICU stay identifier
+    
+    Returns
+    -------
+    dict
+        Dictionary containing:
+        - 'total_score': Total SOFA score (0-24)
+        - 'respiration_score': Respiration subscore (0-4)
+        - 'coagulation_score': Coagulation subscore (0-4)
+        - 'liver_score': Liver subscore (0-4)
+        - 'cardiovascular_score': Cardiovascular subscore (0-4)
+        - 'brain_score': Brain subscore (0-4)
+        - 'kidney_score': Kidney subscore (0-4)
+        - 'subject_id': Patient subject ID
+        - 'hadm_id': Hospital admission ID
+        - 'stay_id': ICU stay ID
+        - 'intime': ICU admission time
+        - 'outtime': ICU discharge time
+        - 'details': Dictionary with detailed component values
+    """
+```
+
+### first_day_sofa
+```python
+def first_day_sofa(stay_id):
+    """
+    Calculate the SOFA (Sequential Organ Failure Assessment) score for the first day of an ICU stay.
+
+    Parameters
+    ----------
+    stay_id : int
+        The ICU stay identifier.
+
+    Returns
+    -------
+    dict
+        A dictionary containing SOFA scores for each organ system and total score.
+    """
+```
+
+### get_suspicion_of_infection
+```python
+def get_suspicion_of_infection(stay_id, hadm_id, subject_id):
+    """
+    Determine if a patient had suspicion of infection during their ICU stay or hospital admission.
+
+    Suspicion of infection is identified by:
+    1. Diagnostic culture orders (blood, urine, sputum, wound, etc.) - indicates clinician suspected infection
+       - Excludes screening cultures (MRSA SCREEN, CRE Screen, etc.)
+    2. Antibiotic administration with treatment pattern (multiple doses or extended duration)
+       - Excludes prophylaxis antibiotics (Cefazolin)
+       - Excludes antibiotics administered before ICU admission
+       - Excludes cardiac surgery prophylaxis (Vancomycin in cardiac surgery patients without cultures)
+
+    Parameters
+    ----------
+    stay_id : int, optional
+        ICU stay identifier.
+    hadm_id : int, optional
+        Hospital admission identifier.
+    subject_id : int, optional
+        Patient identifier.
+
+    Returns
+    -------
+    dict
+        Dictionary with suspicion of infection information.
+    """
+```
+
+### get_antibiotic_info
+```python
+def get_antibiotic_info(stay_id, hadm_id, subject_id):
+    """
+    Extract antibiotic administration information for a patient.
+
+    Parameters
+    ----------
+    stay_id : int, optional
+        ICU stay identifier. If provided, returns ICU-specific antibiotic data.
+    hadm_id : int, optional
+        Hospital admission identifier. If provided, returns hospital-wide antibiotic data.
+    subject_id : int, optional
+        Patient identifier. If provided with hadm_id, filters to that admission.
+        If provided alone, returns all antibiotic data for the patient across all admissions.
+
+    Returns
+    -------
+    dict
+        A dictionary containing antibiotic administration information.
+    """
+```
+
+### has_cardiac_surgery
+```python
+def has_cardiac_surgery(hadm_id):
+    """
+    Check if patient had cardiac surgery during admission.
+    """
+```
+
+## 3. Test Results
+
+### Test Case 1: Stay 39553978 (No Infection)
+```python
+compute_sofa_score(39553978)
+# Result: {'total_score': 1, 'respiration_score': 0, 'coagulation_score': 0, 
+#          'liver_score': 0, 'cardiovascular_score': 0, 'brain_score': 1, 
+#          'kidney_score': 0, ...}
+
+get_suspicion_of_infection(stay_id=39553978, hadm_id=29079034, subject_id=10000032)
+# Result: {'has_suspicion_of_infection': False, 'culture_count': 0, 
+#          'has_treatment_pattern': False, ...}
+```
+
+### Test Case 2: Stay 37669901 (With Infection)
+```python
+compute_sofa_score(37669901)
+# Result: {'total_score': 14, 'respiration_score': 3, 'coagulation_score': 1, 
+#          'liver_score': 2, 'cardiovascular_score': 3, 'brain_score': 4, 
+#          'kidney_score': 1, ...}
+
+first_day_sofa(37669901)
+# Result: {'total_sofa_score': 12, 'respiration_score': 4, 'coagulation_score': 0, 
+#          'liver_score': 0, 'cardiovascular_score': 3, 'brain_score': 4, 
+#          'kidney_score': 1, ...}
+
+get_suspicion_of_infection(stay_id=37669901, hadm_id=28568915, subject_id=10639500)
+# Result: {'has_suspicion_of_infection': True, 'culture_count': 11, 
+#          'has_treatment_pattern': True, 'distinct_culture_types': 
+#          ['BLOOD CULTURE', 'URINE', 'STOOL', 'CATHETER TIP-IV'], ...}
+```
+
+### Test Case 3: Stay 37471848 (With Infection)
+```python
+get_suspicion_of_infection(stay_id=37471848, hadm_id=23182270, subject_id=12089662)
+# Result: {'has_suspicion_of_infection': True, 'culture_count': 22, 
+#          'has_treatment_pattern': True, 'distinct_culture_types': 
+#          ['BLOOD CULTURE', 'URINE', 'SPUTUM', 'CSF;SPINAL FLUID'], ...}
+```
+
+## 4. Error Fixes
+
+### SQL Timestamp Handling
+- **Issue**: `chartdate` and `charttime` are already TIMESTAMP types in microbiologyevents
+- **Fix**: Use `chartdate` directly without concatenation
+- **Working Query**:
+```sql
+SELECT m.chartdate as culture_time
+FROM mimiciv_hosp.microbiologyevents m
+WHERE m.subject_id = 10639500 AND m.hadm_id = 28568915
+  AND m.spec_type_desc IN ('BLOOD CULTURE', 'URINE', 'SPUTUM', 'CSF;SPINAL FLUID')
+```
+
+### Column Name Corrections
+- **d_labitems**: No `fluent_concept` column (use `label`, `fluid`, `category`)
+- **d_items**: `unitname` not `unit_name`
+
+### Available Functions
+- `sofa`, `first_day_sofa`, `suspicion_of_infection`, `get_antibiotic_info`, `has_cardiac_surgery`
+- Additional functions: `acei`, `age`, `aki`, `antibiotic`, `apsiii`, `arb`, `bg`, `blood_differential`, `cardiac_marker`, `charlson`, `chemistry`, `coagulation`, `code_status`, `complete_blood_count`, `creatinine_baseline`, `crrt`, `dobutamine`, `dopamine`, `enzyme`, `epinephrine` (42+ total)
+
+=== Step 2 ===
+# Clinical Coding Agent Memory
+
+## 1. Key Schema Facts
+
+### Database Tables
+| Schema | Table | Key Columns |
+|--------|-------|-------------|
+| mimiciv_hosp | microbiologyevents | microevent_id, subject_id, hadm_id, spec_type_desc, chartdate, test_name, org_name, interpretation |
+| mimiciv_hosp | labevents | labevent_id, subject_id, hadm_id, itemid, charttime, valuenum, valueuom |
+| mimiciv_hosp | d_labitems | itemid, label, fluid, category |
+| mimiciv_hosp | admissions | subject_id, hadm_id, admittime, dischtime |
+| mimiciv_icu | icustays | subject_id, hadm_id, stay_id, intime, outtime, first_careunit |
+| mimiciv_icu | chartevents | itemid, stay_id, charttime, valuenum |
+| mimiciv_icu | d_items | itemid, label, abbreviation, category, unitname |
+| mimiciv_icu | inputevents | itemid, stay_id, starttime, endtime, amount, rate |
+
+### Key ItemIDs
+| Table | ItemID | Label |
+|-------|--------|-------|
+| d_labitems | 50912 | Creatinine |
+| d_labitems | 50885 | Bilirubin, Total |
+| d_labitems | 51265 | Platelet Count |
+| d_labitems | 52442 | Lactate (Blood Gas) |
+| d_labitems | 53154 | Lactate (Chemistry) |
+| d_labitems | 50813 | Lactate (Blood Gas) |
+| d_items | 220224 | PO2 (Arterial) |
+| d_items | 225411 | Patient on vent |
+| d_items | 221289 | Epinephrine |
+| d_items | 221906 | Norepinephrine |
+| d_items | 221662 | Dopamine |
+| d_items | 222315 | Vasopressin |
+| d_items | 221749 | Phenylephrine |
+| d_items | 220052 | Arterial Blood Pressure mean |
+| d_items | 220181 | Non Invasive Blood Pressure mean |
+| d_items | 225312 | ART BP Mean |
+
+### Specimen Types (microbiologyevents)
+- BLOOD CULTURE, URINE, SPUTUM, CSF;SPINAL FLUID, STOOL, CATHETER TIP-IV
+- Excluded: MRSA SCREEN, CRE Screen, Cipro Resistant Screen (screening cultures)
+
+### SOFA Score Components
+| Organ System | Variable | Units | Score Range |
+|--------------|----------|-------|-------------|
+| Respiration | PaO₂/FiO₂ ratio | mm Hg | 0-4 |
+| Coagulation | Platelet count | ×10³/µL | 0-4 |
+| Liver | Total bilirubin | mg/dL | 0-4 |
+| Cardiovascular | MAP, vasopressors | mm Hg, µg/kg/min | 0-4 |
+| Brain | GCS | Score (3-15) | 0-4 |
+| Kidney | Creatinine, urine output | mg/dL, mL/day | 0-4 |
+
+### Sepsis-3 Criteria
+- **Sepsis**: Suspected infection + SOFA increase ≥ 2 points from baseline
+- **Septic Shock**: Sepsis + vasopressors for MAP ≥ 65 mm Hg + lactate > 2 mmol/L after fluid resuscitation
+- **qSOFA** (screening): RR ≥ 22, altered mentation, SBP ≤ 100 (≥ 2 points prompts evaluation)
+- **Baseline SOFA**: Should be from BEFORE acute illness (pre-admission); if no prior data, assume baseline = 0
+
+## 2. Function Source Code
+
+### compute_sofa_score
+```python
+def compute_sofa_score(stay_id):
+    """
+    Compute the SOFA (Sequential Organ Failure Assessment) score for an ICU stay.
+
+    The SOFA score assesses organ dysfunction across 6 systems:
+    - Respiration (PaO2/FiO2 ratio)
+    - Coagulation (Platelet count)
+    - Liver (Bilirubin)
+    - Cardiovascular (MAP and vasopressors)
+    - Brain (Glasgow Coma Scale)
+    - Kidney (Creatinine)
+
+    Parameters
+    ----------
+    stay_id : int
+        The ICU stay identifier
+    
+    Returns
+    -------
+    dict
+        Dictionary containing:
+        - 'total_score': Total SOFA score (0-24)
+        - 'respiration_score': Respiration subscore (0-4)
+        - 'coagulation_score': Coagulation subscore (0-4)
+        - 'liver_score': Liver subscore (0-4)
+        - 'cardiovascular_score': Cardiovascular subscore (0-4)
+        - 'brain_score': Brain subscore (0-4)
+        - 'kidney_score': Kidney subscore (0-4)
+        - 'subject_id': Patient subject ID
+        - 'hadm_id': Hospital admission ID
+        - 'stay_id': ICU stay ID
+        - 'intime': ICU admission time
+        - 'outtime': ICU discharge time
+        - 'details': Dictionary with detailed component values
+    """
+```
+
+### first_day_sofa
+```python
+def first_day_sofa(stay_id):
+    """
+    Calculate the SOFA (Sequential Organ Failure Assessment) score for the first day of an ICU stay.
+
+    Parameters
+    ----------
+    stay_id : int
+        The ICU stay identifier.
+
+    Returns
+    -------
+    dict
+        A dictionary containing SOFA scores for each organ system and total score.
+    """
+```
+
+### get_suspicion_of_infection
+```python
+def get_suspicion_of_infection(stay_id, hadm_id, subject_id):
+    """
+    Determine if a patient had suspicion of infection during their ICU stay or hospital admission.
+
+    Suspicion of infection is identified by:
+    1. Diagnostic culture orders (blood, urine, sputum, wound, etc.) - indicates clinician suspected infection
+       - Excludes screening cultures (MRSA SCREEN, CRE Screen, etc.)
+    2. Antibiotic administration with treatment pattern (multiple doses or extended duration)
+       - Excludes prophylaxis antibiotics (Cefazolin)
+       - Excludes antibiotics administered before ICU admission
+       - Excludes cardiac surgery prophylaxis (Vancomycin in cardiac surgery patients without cultures)
+
+    Parameters
+    ----------
+    stay_id : int, optional
+        ICU stay identifier.
+    hadm_id : int, optional
+        Hospital admission identifier.
+    subject_id : int, optional
+        Patient identifier.
+
+    Returns
+    -------
+    dict
+        Dictionary with suspicion of infection information.
+    """
+```
+
+### get_antibiotic_info
+```python
+def get_antibiotic_info(stay_id, hadm_id, subject_id):
+    """
+    Extract antibiotic administration information for a patient.
+
+    Parameters
+    ----------
+    stay_id : int, optional
+        ICU stay identifier. If provided, returns ICU-specific antibiotic data.
+    hadm_id : int, optional
+        Hospital admission identifier. If provided, returns hospital-wide antibiotic data.
+    subject_id : int, optional
+        Patient identifier. If provided with hadm_id, filters to that admission.
+        If provided alone, returns all antibiotic data for the patient across all admissions.
+
+    Returns
+    -------
+    dict
+        A dictionary containing antibiotic administration information.
+    """
+```
+
+### compute_sepsis3
+```python
+import pandas as pd
+import numpy as np
+from typing import Optional, Dict, Any
+
+def compute_sepsis3(stay_id: int, hadm_id: Optional[int] = None, subject_id: Optional[int] = None) -> Dict[str, Any]:
+    """
+    Compute Sepsis-3 classification for an ICU stay.
+    
+    Sepsis-3 criteria:
+    - Sepsis: Suspected infection + SOFA increase >= 2 points from baseline
+    - Septic Shock: Sepsis + vasopressors for MAP >= 65 mm Hg + lactate > 2 mmol/L
+    
+    Parameters
+    ----------
+    stay_id : int
+        ICU stay identifier
+    hadm_id : int, optional
+        Hospital admission identifier (will be looked up if not provided)
+    subject_id : int, optional
+        Patient identifier (will be looked up if not provided)
+    
+    Returns
+    -------
+    dict
+        Dictionary containing sepsis-3 classification results:
+        - stay_id: ICU stay identifier
+        - subject_id: Patient identifier
+        - hadm_id: Hospital admission identifier
+        - has_suspicion_of_infection: Boolean indicating if infection suspected
+        - baseline_sofa: SOFA score on first day of ICU stay
+        - worst_sofa: Worst SOFA score during ICU stay
+        - sofa_delta: Difference between worst and baseline SOFA
+        - has_sepsis: Boolean indicating if sepsis criteria met
+        - has_vasopressors: Boolean indicating if vasopressors administered
+        - max_lactate: Maximum lactate value (mmol/L) during admission
+        - has_septic_shock: Boolean indicating if septic shock criteria met
+    """
+    # Get stay info if hadm_id or subject_id not provided
+    if hadm_id is None or subject_id is None:
+        stay_info = query_db("""
+            SELECT subject_id, hadm_id, intime, outtime
+            FROM mimiciv_icu.icustays
+            WHERE stay_id = {}
+        """.format(stay_id))
+        if len(stay_info) == 0:
+            raise ValueError(f"No ICU stay found for stay_id={stay_id}")
+        subject_id = int(stay_info['subject_id'].iloc[0])
+        hadm_id = int(stay_info['hadm_id'].iloc[0])
+    
+    # Get suspicion of infection
+    infection_info = get_suspicion_of_infection(stay_id=stay_id, hadm_id=hadm_id, subject_id=subject_id)
+    has_suspicion = infection_info['has_suspicion_of_infection']
+    
+    # Get first day SOFA (baseline)
+    first_day = first_day_sofa(stay_id)
+    baseline_sofa = first_day['total_sofa_score']
+    
+    # Get worst SOFA during stay
+    worst_sofa = compute_sofa_score(stay_id)
+    worst_sofa_score = worst_sofa['total_score']
+    
+    # Calculate SOFA delta
+    sofa_delta = worst_sofa_score - baseline_sofa
+    
+    # Determine sepsis status
+    has_sepsis = has_suspicion and sofa_delta >= 2
+    
+    # Check for septic shock criteria
+    has_septic_shock = False
+    has_vasopressors = False
+    max_lactate = None
+    
+    if has_sepsis:
+        # Check for vasopressors
+        vasopressor_query = """
+            SELECT DISTINCT i.itemid, d.label
+            FROM mimiciv_icu.inputevents i
+            JOIN mimiciv_icu.d_items d ON i.itemid = d.itemid
+            WHERE i.stay_id = {}
+              AND d.label IN ('Norepinephrine', 'Epinephrine', 'Vasopressin', 'Dopamine', 'Phenylephrine')
+        """.format(stay_id)
+        vasopressors = query_db(vasopressor_query)
+        has_vasopressors = len(vasopressors) > 0
+        
+        # Check for lactate > 2 mmol/L
+        lactate_query = """
+            SELECT MAX(valuenum) as max_lactate
+            FROM mimiciv_hosp.labevents
+            WHERE subject_id = {} AND hadm_id = {}
+              AND itemid IN (52442, 53154, 50813)
+              AND valuenum IS NOT NULL
+        """.format(subject_id, hadm_id)
+        lactate_result = query_db(lactate_query)
+        if len(lactate_result) > 0 and lactate_result['max_lactate'].iloc[0] is not None:
+            max_lactate = float(lactate_result['max_lactate'].iloc[0])
+        
+        # Septic shock: vasopressors + lactate > 2
+        has_septic_shock = has_vasopressors and (max_lactate is not None and max_lactate > 2)
+    
+    return {
+        'stay_id': stay_id,
+        'subject_id': subject_id,
+        'hadm_id': hadm_id,
+        'has_suspicion_of_infection': has_suspicion,
+        'baseline_sofa': baseline_sofa,
+        'worst_sofa': worst_sofa_score,
+        'sofa_delta': sofa_delta,
+        'has_sepsis': has_sepsis,
+        'has_vasopressors': has_vasopressors,
+        'max_lactate': max_lactate,
+        'has_septic_shock': has_septic_shock
+    }
+```
+
+## 3. Test Results
+
+### Test Case 1: Stay 37669901 (With Sepsis and Septic Shock)
+```python
+compute_sepsis3(37669901)
+# Result:
+#   Has suspicion of infection: True
+#   Baseline SOFA: 12
+#   Worst SOFA: 14
+#   SOFA delta: 2
+#   Has sepsis: True
+#   Has vasopressors: True
+#   Max lactate: 5.3
+#   Has septic shock: True
+```
+
+### Test Case 2: Stay 39553978 (No Infection)
+```python
+compute_sepsis3(39553978)
+# Result:
+#   Has suspicion of infection: False
+#   Baseline SOFA: 7
+#   Worst SOFA: 1
+#   SOFA delta: -6
+#   Has sepsis: False
+#   Has septic shock: False
+```
+
+### Test Case 3: Stay 37471848 (Infection but No Sepsis)
+```python
+compute_sepsis3(37471848)
+# Result:
+#   Has suspicion of infection: True
+#   Baseline SOFA: 13
+#   Worst SOFA: 12
+#   SOFA delta: -1
+#   Has sepsis: False
+#   Has septic shock: False
+```
+
+### Test Case 4: Stay 37202383 (No Infection)
+```python
+compute_sepsis3(37202383)
+# Result:
+#   Has suspicion of infection: False
+#   Baseline SOFA: 3
+#   Worst SOFA: 3
+#   SOFA delta: 0
+#   Has sepsis: False
+#   Has septic shock: False
+```
+
+### Test Case 5: Stay 37792009 (Infection, SOFA Delta Issue)
+```python
+# Has suspicion of infection: True
+# First day SOFA: 9 (already elevated due to acute illness)
+# Worst SOFA: 8
+# SOFA delta: -1
+# Has sepsis: False (delta < 2)
+# Issue: first_day_sofa is already elevated due to acute illness
+```
+
+### Test Case 6: Stay 36408300 (Infection, SOFA Delta Issue)
+```python
+# Has suspicion of infection: True
+# First day SOFA: 11 (already elevated due to acute illness)
+# Worst SOFA: 13
+# SOFA delta: 2
+# Has sepsis: True (but may be false positive due to baseline issue)
+```
+
+## 4. Error Fixes
+
+### SQL Timestamp Handling
+- **Issue**: `chartdate` and `charttime` are already TIMESTAMP types in microbiologyevents
+- **Fix**: Use `chartdate` directly without concatenation
+
+### Column Name Corrections
+- **d_labitems**: No `fluent_concept` column (use `label`, `fluid`, `category`)
+- **d_items**: `unitname` not `unit_name`
+
+### Function Name Corrections
+- **Issue**: `sofa` function name doesn't exist
+- **Fix**: Use `compute_sofa_score` instead
+
+### Missing Functions
+- **Issue**: `has_cardiac_surgery` function not found in saved functions
+- **Fix**: Function exists in code but not loaded; use `get_suspicion_of_infection` which handles cardiac surgery prophylaxis logic
+
+### DuckDB DATE_SUB Error
+- **Issue**: `DATE_SUB('string_literal', INTERVAL)` fails with Binder Error
+- **Fix**: Use explicit timestamp casting or calculate dates in Python before query
+
+### Baseline SOFA Issue
+- **Issue**: Using `first_day_sofa` as baseline is problematic because it's already elevated due to acute illness
+- **Fix**: For Sepsis-3, baseline should be from BEFORE acute illness (pre-admission); if no prior data, assume baseline = 0
+- **Note**: Current implementation uses first_day_sofa as baseline, which may cause false negatives in patients who present with already elevated SOFA
+
+### Available Functions
+- `compute_sofa_score`, `first_day_sofa`, `get_suspicion_of_infection`, `get_antibiotic_info`, `compute_sepsis3`
+- Additional functions: `acei`, `age`, `aki`, `antibiotic`, `apsiii`, `arb`, `bg`, `blood_differential`, `cardiac_marker`, `charlson`, `chemistry`, `coagulation`, `code_status`, `complete_blood_count`, `creatinine_baseline`, `crrt`, `dobutamine`, `dopamine`, `enzyme`, `epinephrine` (42+ total)
+

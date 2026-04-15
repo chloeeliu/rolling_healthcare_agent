@@ -1,0 +1,1647 @@
+=== Step 1 ===
+# Clinical Coding Agent Memory
+
+## Schema Facts
+
+### Tables
+- `mimiciv_hosp.labevents`: charttime, valuenum, itemid, subject_id, hadm_id
+- `mimiciv_hosp.d_labitems`: itemid, label, fluid, category (NO abbreviation column)
+- `mimiv_hosp.patients`: subject_id, weight
+- `mimiciv_icu.icustays`: stay_id, subject_id, hadm_id, intime, outtime
+- `mimiciv_icu.chartevents`: itemid, valuenum, charttime, subject_id
+- `mimiciv_icu.outputevents`: charttime, value, itemid, subject_id
+- `mimiciv_icu.d_items`: itemid, label, category
+
+### Item IDs
+- **Creatinine**: 50912 (Creatinine), 51081 (Creatinine Serum), 51977 (Creatinine Blood), 52546 (Creatinine)
+- **Weight**: 226512 (Admission Weight Kg), 226531 (Admission Weight lbs), 224639 (Daily Weight)
+- **Urine Output**: 226559 (Foley), 226560 (Void), 226567 (Straight Cath), 226627 (OR Urine), 226631 (PACU Urine), 227489 (GU Irrigant/Urine), 226566 (Urine and GU Irrigant)
+
+### Value Ranges
+- Creatinine: mg/dL (typical 0.3-10+)
+- Weight: kg or lbs (convert lbs to kg by /2.20462)
+- Urine output: mL per event
+
+## Function Source Code (Latest Versions)
+
+```python
+import pandas as pd
+import numpy as np
+from datetime import datetime, timedelta
+
+def kdigo_creatinine(stay_id):
+    """
+    Calculate KDIGO AKI stage based on creatinine criteria for a patient's ICU stay.
+    """
+    stay_info = query_db(f"""
+        SELECT stay_id, subject_id, hadm_id, intime, outtime
+        FROM mimiciv_icu.icustays
+        WHERE stay_id = {stay_id}
+    """)
+    
+    if stay_info.empty:
+        raise ValueError(f"No ICU stay found for stay_id: {stay_id}")
+    
+    stay_info = stay_info.iloc[0]
+    subject_id = stay_info['subject_id']
+    hadm_id = stay_info['hadm_id']
+    intime = stay_info['intime']
+    outtime = stay_info['outtime']
+    
+    creatinine_items = [50912, 51081, 51977, 52546]
+    
+    baseline_query = f"""
+        SELECT MIN(valuenum) as baseline_creatinine
+        FROM mimiciv_hosp.labevents
+        WHERE subject_id = {subject_id}
+        AND itemid IN ({','.join(map(str, creatinine_items))})
+        AND charttime < '{intime}'
+        AND charttime >= '{intime}'::date - INTERVAL '3 months'
+        AND hadm_id != {hadm_id}
+        AND valuenum IS NOT NULL
+    """
+    baseline_result = query_db(baseline_query)
+    
+    if not baseline_result.empty and not pd.isna(baseline_result['baseline_creatinine'].iloc[0]):
+        baseline_creatinine = float(baseline_result['baseline_creatinine'].iloc[0])
+        baseline_source = 'prior_3_months'
+    else:
+        first_cr_query = f"""
+            SELECT valuenum
+            FROM mimiciv_hosp.labevents
+            WHERE subject_id = {subject_id}
+            AND itemid IN ({','.join(map(str, creatinine_items))})
+            AND charttime >= '{intime}'
+            AND charttime <= '{outtime}'
+            AND valuenum IS NOT NULL
+            ORDER BY charttime
+            LIMIT 1
+        """
+        first_cr_result = query_db(first_cr_query)
+        if not first_cr_result.empty and not pd.isna(first_cr_result['valuenum'].iloc[0]):
+            baseline_creatinine = float(first_cr_result['valuenum'].iloc[0])
+            baseline_source = 'first_icu_value'
+        else:
+            baseline_creatinine = None
+            baseline_source = 'none'
+    
+    cr_query = f"""
+        SELECT charttime, valuenum
+        FROM mimiciv_hosp.labevents
+        WHERE subject_id = {subject_id}
+        AND itemid IN ({','.join(map(str, creatinine_items))})
+        AND charttime >= '{intime}'
+        AND charttime <= '{outtime}'
+        AND valuenum IS NOT NULL
+        ORDER BY charttime
+    """
+    creatinine_df = query_db(cr_query)
+    
+    if baseline_creatinine is not None and len(creatinine_df) > 0:
+        creatinine_df['ratio_to_baseline'] = creatinine_df['valuenum'] / baseline_creatinine
+        creatinine_df['absolute_increase'] = creatinine_df['valuenum'] - baseline_creatinine
+        
+        max_creatinine = float(creatinine_df['valuenum'].max())
+        max_creatinine_ratio = float(creatinine_df['ratio_to_baseline'].max())
+        max_absolute_increase = float(creatinine_df['absolute_increase'].max())
+        
+        kdigo_stage = 0
+        if max_creatinine_ratio >= 3.0 or (max_creatinine >= 4.0 and max_absolute_increase >= 0.5):
+            kdigo_stage = 3
+        elif max_creatinine_ratio >= 2.0:
+            kdigo_stage = 2
+        elif max_creatinine_ratio >= 1.5 or max_absolute_increase >= 0.3:
+            kdigo_stage = 1
+    else:
+        max_creatinine = None
+        max_creatinine_ratio = None
+        max_absolute_increase = None
+        kdigo_stage = 0
+    
+    return {
+        'stay_id': int(stay_id),
+        'subject_id': int(subject_id),
+        'hadm_id': int(hadm_id),
+        'intime': str(intime),
+        'outtime': str(outtime),
+        'baseline_creatinine': baseline_creatinine,
+        'baseline_source': baseline_source,
+        'max_creatinine': max_creatinine,
+        'max_creatinine_ratio': max_creatinine_ratio,
+        'max_absolute_increase': max_absolute_increase,
+        'kdigo_stage': kdigo_stage,
+        'has_aki': kdigo_stage >= 1,
+        'has_stage_3': kdigo_stage >= 3,
+        'creatinine_values': creatinine_df
+    }
+
+
+def find_longest_consecutive(series, threshold):
+    """Find the longest consecutive run of values below threshold."""
+    if series.empty:
+        return 0
+    
+    below_threshold = series < threshold
+    runs = []
+    current_run = 0
+    
+    for val in below_threshold:
+        if val:
+            current_run += 1
+        else:
+            if current_run > 0:
+                runs.append(current_run)
+            current_run = 0
+    
+    if current_run > 0:
+        runs.append(current_run)
+    
+    return max(runs) if runs else 0
+
+
+def find_longest_consecutive_anuria(series):
+    """Find the longest consecutive run of zero urine output."""
+    if series.empty:
+        return 0
+    
+    anuria = series == 0
+    runs = []
+    current_run = 0
+    
+    for val in anuria:
+        if val:
+            current_run += 1
+        else:
+            if current_run > 0:
+                runs.append(current_run)
+            current_run = 0
+    
+    if current_run > 0:
+        runs.append(current_run)
+    
+    return max(runs) if runs else 0
+
+
+def kdigo_uo(stay_id):
+    """
+    Calculate KDIGO AKI stage based on urine output criteria for a patient's ICU stay.
+    """
+    stay_info = query_db(f"""
+        SELECT stay_id, subject_id, hadm_id, intime, outtime
+        FROM mimiciv_icu.icustays
+        WHERE stay_id = {stay_id}
+    """)
+    
+    if stay_info.empty:
+        raise ValueError(f"No ICU stay found for stay_id: {stay_id}")
+    
+    stay_info = stay_info.iloc[0]
+    subject_id = stay_info['subject_id']
+    hadm_id = stay_info['hadm_id']
+    intime = stay_info['intime']
+    outtime = stay_info['outtime']
+    
+    weight_query = f"""
+        SELECT valuenum
+        FROM mimiciv_icu.chartevents
+        WHERE subject_id = {subject_id}
+        AND itemid = 226512
+        AND charttime >= '{intime}'
+        AND charttime <= '{outtime}'
+        AND valuenum IS NOT NULL
+        AND valuenum > 0
+        ORDER BY charttime
+        LIMIT 1
+    """
+    weight_result = query_db(weight_query)
+    
+    if weight_result.empty or pd.isna(weight_result['valuenum'].iloc[0]):
+        weight_query_lbs = f"""
+            SELECT valuenum
+            FROM mimiciv_icu.chartevents
+            WHERE subject_id = {subject_id}
+            AND itemid = 226531
+            AND charttime >= '{intime}'
+            AND charttime <= '{outtime}'
+            AND valuenum IS NOT NULL
+            AND valuenum > 0
+            ORDER BY charttime
+            LIMIT 1
+        """
+        weight_result_lbs = query_db(weight_query_lbs)
+        if not weight_result_lbs.empty and not pd.isna(weight_result_lbs['valuenum'].iloc[0]):
+            weight_kg = float(weight_result_lbs['valuenum'].iloc[0]) / 2.20462
+        else:
+            weight_kg = 70.0
+    else:
+        weight_kg = float(weight_result['valuenum'].iloc[0])
+    
+    uo_items = [226559, 226560, 226567, 226627, 226631, 227489, 226566]
+    
+    uo_query = f"""
+        SELECT charttime, value
+        FROM mimiciv_icu.outputevents
+        WHERE subject_id = {subject_id}
+        AND itemid IN ({','.join(map(str, uo_items))})
+        AND charttime >= '{intime}'
+        AND charttime <= '{outtime}'
+        AND value IS NOT NULL
+        ORDER BY charttime
+    """
+    uo_df = query_db(uo_query)
+    
+    if len(uo_df) > 0:
+        uo_df['charttime'] = pd.to_datetime(uo_df['charttime'])
+        uo_df['value'] = pd.to_numeric(uo_df['value'], errors='coerce')
+        
+        intime_dt = pd.to_datetime(intime)
+        outtime_dt = pd.to_datetime(outtime)
+        
+        hourly_uo = []
+        current_time = intime_dt
+        
+        while current_time < outtime_dt:
+            next_time = current_time + timedelta(hours=1)
+            hour_uo = uo_df[(uo_df['charttime'] >= current_time) & (uo_df['charttime'] < next_time)]['value'].sum()
+            if pd.isna(hour_uo):
+                hour_uo = 0.0
+            uo_per_kg_hr = (hour_uo / weight_kg) if weight_kg > 0 else 0.0
+            
+            hourly_uo.append({
+                'hour_start': current_time,
+                'hour_end': next_time,
+                'urine_output_ml': hour_uo,
+                'uo_per_kg_hr': uo_per_kg_hr
+            })
+            current_time = next_time
+        
+        hourly_uo_df = pd.DataFrame(hourly_uo)
+        
+        uo_values = hourly_uo_df['uo_per_kg_hr'].values
+        
+        longest_below_03 = find_longest_consecutive(pd.Series(uo_values), 0.3)
+        longest_anuria = find_longest_consecutive_anuria(pd.Series(uo_values))
+        longest_below_05 = find_longest_consecutive(pd.Series(uo_values), 0.5)
+        
+        kdigo_stage = 0
+        
+        if longest_below_03 >= 24 or longest_anuria >= 12:
+            kdigo_stage = 3
+        elif longest_below_05 >= 12:
+            kdigo_stage = 2
+        elif longest_below_05 >= 6:
+            kdigo_stage = 1
+    else:
+        hourly_uo_df = pd.DataFrame(columns=['hour_start', 'hour_end', 'urine_output_ml', 'uo_per_kg_hr'])
+        kdigo_stage = 0
+    
+    return {
+        'stay_id': int(stay_id),
+        'subject_id': int(subject_id),
+        'hadm_id': int(hadm_id),
+        'intime': str(intime),
+        'outtime': str(outtime),
+        'weight_kg': weight_kg,
+        'max_kdigo_stage': kdigo_stage,
+        'has_aki': kdigo_stage >= 1,
+        'has_stage_2_or_higher': kdigo_stage >= 2,
+        'has_stage_3': kdigo_stage >= 3,
+        'hourly_uo': hourly_uo_df
+    }
+
+
+def kdigo_stages(stay_id):
+    """
+    Calculate the overall KDIGO AKI stage for a patient's ICU stay based on 
+    both creatinine and urine output criteria.
+    """
+    cr_result = kdigo_creatinine(stay_id)
+    uo_result = kdigo_uo(stay_id)
+    
+    overall_stage = max(cr_result['kdigo_stage'], uo_result['max_kdigo_stage'])
+    
+    result = {
+        'stay_id': cr_result['stay_id'],
+        'subject_id': cr_result['subject_id'],
+        'hadm_id': cr_result['hadm_id'],
+        'intime': cr_result['intime'],
+        'outtime': cr_result['outtime'],
+        'baseline_creatinine': cr_result['baseline_creatinine'],
+        'baseline_source': cr_result['baseline_source'],
+        'max_creatinine': cr_result['max_creatinine'],
+        'max_creatinine_ratio': cr_result['max_creatinine_ratio'],
+        'max_absolute_increase': cr_result['max_absolute_increase'],
+        'weight_kg': uo_result['weight_kg'],
+        'kdigo_stage_creatinine': cr_result['kdigo_stage'],
+        'kdigo_stage_uo': uo_result['max_kdigo_stage'],
+        'kdigo_stage': overall_stage,
+        'has_aki': overall_stage >= 1,
+        'has_stage_2_or_higher': overall_stage >= 2,
+        'has_stage_3': overall_stage >= 3,
+        'creatinine_values': cr_result['creatinine_values'],
+        'hourly_uo': uo_result['hourly_uo']
+    }
+    
+    return result
+```
+
+## Test Results
+
+| Stay ID | Creatinine Stage | UO Stage | Overall Stage | Has AKI |
+|---------|-----------------|----------|---------------|---------|
+| 39553978 | 1 | 1 | 1 | True |
+| 37081114 | 0 | 1 | 1 | True |
+| 39765666 | 0 | 0 | 0 | False |
+| 37067082 | 0 | 0 | 0 | False |
+| 34592300 | 0 | 0 | 0 | False |
+| 35347399 | 0 | 1 | 1 | True |
+| 36779265 | 3 | 3 | 3 | True |
+| 39874061 | 3 | 3 | 3 | True |
+| 37158200 | 3 | 3 | 3 | True |
+| 36567846 | 3 | 1 | 3 | True |
+| 36712360 | 0 | 1 | 1 | True |
+
+## Error Fixes
+
+1. **d_labitems schema error**: `abbreviation` column doesn't exist - removed from query, use `label` instead
+2. **NaN baseline handling**: `MIN()` returns NaN when no rows exist, not None - use `pd.isna()` instead of `is not None` check
+3. **Weight item IDs**: Corrected to 226512 (kg) and 226531 (lbs) from incorrect large list
+4. **Weight NaN handling**: Added `pd.isna()` check for weight values in `kdigo_uo`
+
+=== Step 2 ===
+# Clinical Coding Agent Memory
+
+## Schema Facts
+
+### Tables
+- `mimiciv_hosp.labevents`: charttime, valuenum, itemid, subject_id, hadm_id
+- `mimiciv_hosp.d_labitems`: itemid, label, fluid, category (NO abbreviation column)
+- `mimiciv_hosp.patients`: subject_id, weight
+- `mimiciv_icu.icustays`: stay_id, subject_id, hadm_id, intime, outtime
+- `mimiciv_icu.chartevents`: itemid, valuenum, charttime, subject_id
+- `mimiciv_icu.outputevents`: charttime, value, itemid, subject_id
+- `mimiciv_icu.d_items`: itemid, label, category
+
+### Item IDs
+- **Creatinine**: 50912 (Creatinine), 51081 (Creatinine Serum), 51977 (Creatinine Blood), 52546 (Creatinine)
+- **Weight**: 226512 (Admission Weight Kg), 226531 (Admission Weight lbs), 224639 (Daily Weight)
+- **Urine Output**: 226559 (Foley), 226560 (Void), 226567 (Straight Cath), 226627 (OR Urine), 226631 (PACU Urine), 227489 (GU Irrigant/Urine), 226566 (Urine and GU Irrigant)
+
+### Value Ranges
+- Creatinine: mg/dL (typical 0.3-10+)
+- Weight: kg or lbs (convert lbs to kg by /2.20462)
+- Urine output: mL per event
+
+## Function Source Code (Latest Versions)
+
+```python
+import pandas as pd
+import numpy as np
+from datetime import datetime, timedelta
+
+def find_longest_consecutive(series, threshold):
+    """Find the longest consecutive run of values below threshold."""
+    if series.empty:
+        return 0
+    
+    below_threshold = series < threshold
+    runs = []
+    current_run = 0
+    
+    for val in below_threshold:
+        if val:
+            current_run += 1
+        else:
+            if current_run > 0:
+                runs.append(current_run)
+            current_run = 0
+    
+    if current_run > 0:
+        runs.append(current_run)
+    
+    return max(runs) if runs else 0
+
+
+def find_longest_consecutive_anuria(series):
+    """Find the longest consecutive run of zero urine output."""
+    if series.empty:
+        return 0
+    
+    anuria = series == 0
+    runs = []
+    current_run = 0
+    
+    for val in anuria:
+        if val:
+            current_run += 1
+        else:
+            if current_run > 0:
+                runs.append(current_run)
+            current_run = 0
+    
+    if current_run > 0:
+        runs.append(current_run)
+    
+    return max(runs) if runs else 0
+
+
+def kdigo_creatinine(stay_id):
+    """
+    Calculate KDIGO AKI stage based on creatinine criteria for a patient's ICU stay.
+    
+    KDIGO Creatinine Criteria:
+    - Stage 1: ≥0.3 mg/dL increase OR 1.5-1.9x baseline
+    - Stage 2: 2.0-2.9x baseline
+    - Stage 3: ≥3.0x baseline OR ≥4.0 mg/dL with acute increase ≥0.5 mg/dL
+    """
+    stay_info = query_db(f"""
+        SELECT stay_id, subject_id, hadm_id, intime, outtime
+        FROM mimiciv_icu.icustays
+        WHERE stay_id = {stay_id}
+    """)
+    
+    if stay_info.empty:
+        raise ValueError(f"No ICU stay found for stay_id: {stay_id}")
+    
+    stay_info = stay_info.iloc[0]
+    subject_id = stay_info['subject_id']
+    hadm_id = stay_info['hadm_id']
+    intime = stay_info['intime']
+    outtime = stay_info['outtime']
+    
+    creatinine_items = [50912, 51081, 51977, 52546]
+    
+    # Try to find baseline creatinine from before ICU admission
+    # Include values from same admission but before ICU, or from prior admissions within 3 months
+    baseline_query = f"""
+        SELECT MIN(valuenum) as baseline_creatinine
+        FROM mimiciv_hosp.labevents
+        WHERE subject_id = {subject_id}
+        AND itemid IN ({','.join(map(str, creatinine_items))})
+        AND charttime < '{intime}'
+        AND charttime >= '{intime}'::date - INTERVAL '3 months'
+        AND valuenum IS NOT NULL
+    """
+    baseline_result = query_db(baseline_query)
+    
+    if not baseline_result.empty and not pd.isna(baseline_result['baseline_creatinine'].iloc[0]):
+        baseline_creatinine = float(baseline_result['baseline_creatinine'].iloc[0])
+        baseline_source = 'prior_to_icu'
+    else:
+        # Use first ICU value as baseline if no prior data available
+        first_cr_query = f"""
+            SELECT valuenum
+            FROM mimiciv_hosp.labevents
+            WHERE subject_id = {subject_id}
+            AND itemid IN ({','.join(map(str, creatinine_items))})
+            AND charttime >= '{intime}'
+            AND charttime <= '{outtime}'
+            AND valuenum IS NOT NULL
+            ORDER BY charttime
+            LIMIT 1
+        """
+        first_cr_result = query_db(first_cr_query)
+        if not first_cr_result.empty and not pd.isna(first_cr_result['valuenum'].iloc[0]):
+            baseline_creatinine = float(first_cr_result['valuenum'].iloc[0])
+            baseline_source = 'first_icu_value'
+        else:
+            baseline_creatinine = None
+            baseline_source = 'none'
+    
+    # Get all creatinine values during ICU stay
+    cr_query = f"""
+        SELECT charttime, valuenum
+        FROM mimiciv_hosp.labevents
+        WHERE subject_id = {subject_id}
+        AND itemid IN ({','.join(map(str, creatinine_items))})
+        AND charttime >= '{intime}'
+        AND charttime <= '{outtime}'
+        AND valuenum IS NOT NULL
+        ORDER BY charttime
+    """
+    creatinine_df = query_db(cr_query)
+    
+    if baseline_creatinine is not None and len(creatinine_df) > 0:
+        creatinine_df['ratio_to_baseline'] = creatinine_df['valuenum'] / baseline_creatinine
+        creatinine_df['absolute_increase'] = creatinine_df['valuenum'] - baseline_creatinine
+        
+        max_creatinine = float(creatinine_df['valuenum'].max())
+        max_creatinine_ratio = float(creatinine_df['ratio_to_baseline'].max())
+        max_absolute_increase = float(creatinine_df['absolute_increase'].max())
+        
+        # Determine KDIGO stage based on creatinine
+        kdigo_stage = 0
+        if max_creatinine_ratio >= 3.0 or (max_creatinine >= 4.0 and max_absolute_increase >= 0.5):
+            kdigo_stage = 3
+        elif max_creatinine_ratio >= 2.0:
+            kdigo_stage = 2
+        elif max_creatinine_ratio >= 1.5 or max_absolute_increase >= 0.3:
+            kdigo_stage = 1
+    else:
+        max_creatinine = None
+        max_creatinine_ratio = None
+        max_absolute_increase = None
+        kdigo_stage = 0
+    
+    return {
+        'stay_id': int(stay_id),
+        'subject_id': int(subject_id),
+        'hadm_id': int(hadm_id),
+        'intime': str(intime),
+        'outtime': str(outtime),
+        'baseline_creatinine': baseline_creatinine,
+        'baseline_source': baseline_source,
+        'max_creatinine': max_creatinine,
+        'max_creatinine_ratio': max_creatinine_ratio,
+        'max_absolute_increase': max_absolute_increase,
+        'kdigo_stage': kdigo_stage,
+        'has_aki': kdigo_stage >= 1,
+        'has_stage_3': kdigo_stage >= 3,
+        'creatinine_values': creatinine_df
+    }
+
+
+def kdigo_uo(stay_id):
+    """
+    Calculate KDIGO AKI stage based on urine output criteria for a patient's ICU stay.
+    
+    KDIGO Urine Output Criteria:
+    - Stage 1: <0.5 mL/kg/hr for 6 hours
+    - Stage 2: <0.5 mL/kg/hr for 12 hours
+    - Stage 3: <0.3 mL/kg/hr for 24 hours OR anuria for 12 hours
+    
+    Only hours with documented urine output are considered.
+    """
+    stay_info = query_db(f"""
+        SELECT stay_id, subject_id, hadm_id, intime, outtime
+        FROM mimiciv_icu.icustays
+        WHERE stay_id = {stay_id}
+    """)
+    
+    if stay_info.empty:
+        raise ValueError(f"No ICU stay found for stay_id: {stay_id}")
+    
+    stay_info = stay_info.iloc[0]
+    subject_id = stay_info['subject_id']
+    hadm_id = stay_info['hadm_id']
+    intime = stay_info['intime']
+    outtime = stay_info['outtime']
+    
+    # Get patient weight in kg
+    weight_query = f"""
+        SELECT valuenum
+        FROM mimiciv_icu.chartevents
+        WHERE subject_id = {subject_id}
+        AND itemid = 226512
+        AND charttime >= '{intime}'
+        AND charttime <= '{outtime}'
+        AND valuenum IS NOT NULL
+        AND valuenum > 0
+        ORDER BY charttime
+        LIMIT 1
+    """
+    weight_result = query_db(weight_query)
+    
+    if weight_result.empty or pd.isna(weight_result['valuenum'].iloc[0]):
+        # Try weight in lbs
+        weight_query_lbs = f"""
+            SELECT valuenum
+            FROM mimiciv_icu.chartevents
+            WHERE subject_id = {subject_id}
+            AND itemid = 226531
+            AND charttime >= '{intime}'
+            AND charttime <= '{outtime}'
+            AND valuenum IS NOT NULL
+            AND valuenum > 0
+            ORDER BY charttime
+            LIMIT 1
+        """
+        weight_result_lbs = query_db(weight_query_lbs)
+        if not weight_result_lbs.empty and not pd.isna(weight_result_lbs['valuenum'].iloc[0]):
+            weight_kg = float(weight_result_lbs['valuenum'].iloc[0]) / 2.20462
+        else:
+            weight_kg = 70.0  # Default weight
+    else:
+        weight_kg = float(weight_result['valuenum'].iloc[0])
+    
+    # Get urine output values
+    uo_items = [226559, 226560, 226567, 226627, 226631, 227489, 226566]
+    
+    uo_query = f"""
+        SELECT charttime, value
+        FROM mimiciv_icu.outputevents
+        WHERE subject_id = {subject_id}
+        AND itemid IN ({','.join(map(str, uo_items))})
+        AND charttime >= '{intime}'
+        AND charttime <= '{outtime}'
+        AND value IS NOT NULL
+        ORDER BY charttime
+    """
+    uo_df = query_db(uo_query)
+    
+    if len(uo_df) > 0:
+        uo_df['charttime'] = pd.to_datetime(uo_df['charttime'])
+        uo_df['value'] = pd.to_numeric(uo_df['value'], errors='coerce')
+        
+        intime_dt = pd.to_datetime(intime)
+        outtime_dt = pd.to_datetime(outtime)
+        
+        # Calculate hourly urine output - only for hours with documented output
+        hourly_uo = []
+        current_time = intime_dt
+        documented_hours = []
+        
+        while current_time < outtime_dt:
+            next_time = current_time + timedelta(hours=1)
+            hour_uo = uo_df[(uo_df['charttime'] >= current_time) & (uo_df['charttime'] < next_time)]['value'].sum()
+            
+            # Only include hours with documented output
+            if not pd.isna(hour_uo) and hour_uo >= 0:
+                uo_per_kg_hr = (hour_uo / weight_kg) if weight_kg > 0 else 0.0
+                documented_hours.append({
+                    'hour_start': current_time,
+                    'hour_end': next_time,
+                    'urine_output_ml': hour_uo,
+                    'uo_per_kg_hr': uo_per_kg_hr
+                })
+            
+            current_time = next_time
+        
+        hourly_uo_df = pd.DataFrame(documented_hours)
+        
+        if len(hourly_uo_df) > 0:
+            uo_values = hourly_uo_df['uo_per_kg_hr'].values
+            
+            # Find longest consecutive periods below thresholds
+            longest_below_03 = find_longest_consecutive(pd.Series(uo_values), 0.3)
+            longest_anuria = find_longest_consecutive_anuria(pd.Series(uo_values))
+            longest_below_05 = find_longest_consecutive(pd.Series(uo_values), 0.5)
+            
+            # Determine KDIGO stage based on urine output
+            kdigo_stage = 0
+            
+            if longest_below_03 >= 24 or longest_anuria >= 12:
+                kdigo_stage = 3
+            elif longest_below_05 >= 12:
+                kdigo_stage = 2
+            elif longest_below_05 >= 6:
+                kdigo_stage = 1
+        else:
+            kdigo_stage = 0
+    else:
+        hourly_uo_df = pd.DataFrame(columns=['hour_start', 'hour_end', 'urine_output_ml', 'uo_per_kg_hr'])
+        kdigo_stage = 0
+    
+    return {
+        'stay_id': int(stay_id),
+        'subject_id': int(subject_id),
+        'hadm_id': int(hadm_id),
+        'intime': str(intime),
+        'outtime': str(outtime),
+        'weight_kg': weight_kg,
+        'max_kdigo_stage': kdigo_stage,
+        'has_aki': kdigo_stage >= 1,
+        'has_stage_2_or_higher': kdigo_stage >= 2,
+        'has_stage_3': kdigo_stage >= 3,
+        'hourly_uo': hourly_uo_df
+    }
+
+
+def kdigo_stages(stay_id):
+    """
+    Calculate the overall KDIGO AKI stage for a patient's ICU stay based on 
+    both creatinine and urine output criteria.
+    
+    The overall stage is the higher of the creatinine-based stage and 
+    urine output-based stage.
+    
+    Parameters:
+    -----------
+    stay_id : int
+        The ICU stay identifier
+    
+    Returns:
+    --------
+    dict : A dictionary containing KDIGO staging information
+    """
+    cr_result = kdigo_creatinine(stay_id)
+    uo_result = kdigo_uo(stay_id)
+    
+    # Overall stage is the higher of creatinine and urine output stages
+    overall_stage = max(cr_result['kdigo_stage'], uo_result['max_kdigo_stage'])
+    
+    result = {
+        'stay_id': cr_result['stay_id'],
+        'subject_id': cr_result['subject_id'],
+        'hadm_id': cr_result['hadm_id'],
+        'intime': cr_result['intime'],
+        'outtime': cr_result['outtime'],
+        'baseline_creatinine': cr_result['baseline_creatinine'],
+        'baseline_source': cr_result['baseline_source'],
+        'max_creatinine': cr_result['max_creatinine'],
+        'max_creatinine_ratio': cr_result['max_creatinine_ratio'],
+        'max_absolute_increase': cr_result['max_absolute_increase'],
+        'weight_kg': uo_result['weight_kg'],
+        'kdigo_stage_creatinine': cr_result['kdigo_stage'],
+        'kdigo_stage_uo': uo_result['max_kdigo_stage'],
+        'kdigo_stage': overall_stage,
+        'has_aki': overall_stage >= 1,
+        'has_stage_2_or_higher': overall_stage >= 2,
+        'has_stage_3': overall_stage >= 3,
+        'creatinine_values': cr_result['creatinine_values'],
+        'hourly_uo': uo_result['hourly_uo']
+    }
+    
+    return result
+```
+
+## Test Results
+
+| Stay ID | Baseline Cr | Max Cr | Cr Stage | UO Stage | Overall Stage | Has AKI | Hourly UO Count |
+|---------|-------------|--------|----------|----------|---------------|---------|-----------------|
+| 39553978 | 0.3 | 0.5 | 1 | 1 | 1 | True | - |
+| 37081114 | 0.8 | 0.9 | 0 | 1 | 1 | True | - |
+| 39765666 | None | None | 0 | 0 | 0 | False | - |
+| 37067082 | - | - | 0 | 0 | 0 | False | - |
+| 34592300 | - | - | 0 | 0 | 0 | False | - |
+| 35347399 | 2.5 | 2.5 | 0 | 1 | 1 | True | - |
+| 36779265 | 5.2 | 7.7 | 3 | 3 | 3 | True | - |
+| 39874061 | 2.5 | 5.4 | 3 | 3 | 3 | True | - |
+| 37158200 | - | - | 3 | 3 | 3 | True | - |
+| 36567846 | - | - | 3 | 1 | 3 | True | - |
+| 36712360 | 0.7 | 0.7 | 0 | 1 | 1 | True | - |
+| 31404518 | 1.0 | 1.2 | 0 | 1 | 1 | True | 131 |
+| 38150924 | 1.1 | 1.5 | 1 | 1 | 1 | True | 19 |
+| 31402227 | 0.8 | 0.7 | 0 | 0 | 0 | False | 19 |
+| 33489417 | 1.4 | 1.3 | 0 | 3 | 3 | True | 363 |
+
+## Error Fixes
+
+1. **d_labitems schema error**: `abbreviation` column doesn't exist - removed from query, use `label` instead
+2. **NaN baseline handling**: `MIN()` returns NaN when no rows exist, not None - use `pd.isna()` instead of `is not None` check
+3. **Weight item IDs**: Corrected to 226512 (kg) and 226531 (lbs) from incorrect large list
+4. **Weight NaN handling**: Added `pd.isna()` check for weight values in `kdigo_uo`
+5. **Baseline creatinine query**: Removed `hadm_id != {hadm_id}` filter to include values from same admission but before ICU admission (fixes case 31402227 where baseline 0.8 was excluded)
+6. **Urine output undocumented hours**: Changed to only count hours with documented urine output events (not treating undocumented hours as zero output) - prevents false anuria detection
+
+=== Step 3 ===
+# Clinical Coding Agent Memory
+
+## Schema Facts
+
+### Tables
+- `mimiciv_hosp.labevents`: charttime, valuenum, itemid, subject_id, hadm_id
+- `mimiciv_hosp.d_labitems`: itemid, label, fluid, category (NO abbreviation column)
+- `mimiciv_hosp.patients`: subject_id, weight
+- `mimiciv_hosp.admissions`: subject_id, hadm_id, admittime, dischtime
+- `mimiciv_icu.icustays`: stay_id, subject_id, hadm_id, intime, outtime
+- `mimiciv_icu.chartevents`: itemid, valuenum, charttime, subject_id
+- `mimiciv_icu.outputevents`: charttime, value, itemid, subject_id
+- `mimiciv_icu.d_items`: itemid, label, category
+
+### Item IDs
+- **Creatinine**: 50912 (Creatinine), 51081 (Creatinine Serum), 51977 (Creatinine Blood), 52546 (Creatinine)
+- **Weight**: 226512 (Admission Weight Kg), 226531 (Admission Weight lbs), 224639 (Daily Weight)
+- **Urine Output**: 226559 (Foley), 226560 (Void), 226567 (Straight Cath), 226627 (OR Urine), 226631 (PACU Urine), 227489 (GU Irrigant/Urine), 226566 (Urine and GU Irrigant)
+
+### Value Ranges
+- Creatinine: mg/dL (typical 0.3-10+)
+- Weight: kg or lbs (convert lbs to kg by /2.20462)
+- Urine output: mL per event
+
+## Function Source Code (Latest Versions)
+
+```python
+import pandas as pd
+import numpy as np
+from datetime import datetime, timedelta
+
+def find_longest_consecutive(series, threshold):
+    """Find the longest consecutive run of values below threshold."""
+    if series.empty:
+        return 0
+    
+    below_threshold = series < threshold
+    runs = []
+    current_run = 0
+    
+    for val in below_threshold:
+        if val:
+            current_run += 1
+        else:
+            if current_run > 0:
+                runs.append(current_run)
+            current_run = 0
+    
+    if current_run > 0:
+        runs.append(current_run)
+    
+    return max(runs) if runs else 0
+
+
+def find_longest_consecutive_anuria(series):
+    """Find the longest consecutive run of zero urine output."""
+    if series.empty:
+        return 0
+    
+    anuria = series == 0
+    runs = []
+    current_run = 0
+    
+    for val in anuria:
+        if val:
+            current_run += 1
+        else:
+            if current_run > 0:
+                runs.append(current_run)
+            current_run = 0
+    
+    if current_run > 0:
+        runs.append(current_run)
+    
+    return max(runs) if runs else 0
+
+
+def kdigo_creatinine(stay_id):
+    """
+    Calculate KDIGO AKI stage based on creatinine criteria for a patient's ICU stay.
+    
+    KDIGO Creatinine Criteria:
+    - Stage 1: ≥0.3 mg/dL increase OR 1.5-1.9x baseline
+    - Stage 2: 2.0-2.9x baseline
+    - Stage 3: ≥3.0x baseline OR ≥4.0 mg/dL with acute increase ≥0.5 mg/dL
+    """
+    stay_info = query_db(f"""
+        SELECT stay_id, subject_id, hadm_id, intime, outtime
+        FROM mimiciv_icu.icustays
+        WHERE stay_id = {stay_id}
+    """)
+    
+    if stay_info.empty:
+        raise ValueError(f"No ICU stay found for stay_id: {stay_id}")
+    
+    stay_info = stay_info.iloc[0]
+    subject_id = stay_info['subject_id']
+    hadm_id = stay_info['hadm_id']
+    intime = stay_info['intime']
+    outtime = stay_info['outtime']
+    
+    creatinine_items = [50912, 51081, 51977, 52546]
+    
+    # Try to find baseline creatinine from before ICU admission
+    # Include values from same admission but before ICU, or from prior admissions within 3 months
+    baseline_query = f"""
+        SELECT MIN(valuenum) as baseline_creatinine
+        FROM mimiciv_hosp.labevents
+        WHERE subject_id = {subject_id}
+        AND itemid IN ({','.join(map(str, creatinine_items))})
+        AND charttime < '{intime}'
+        AND charttime >= '{intime}'::date - INTERVAL '3 months'
+        AND valuenum IS NOT NULL
+    """
+    baseline_result = query_db(baseline_query)
+    
+    if not baseline_result.empty and not pd.isna(baseline_result['baseline_creatinine'].iloc[0]):
+        baseline_creatinine = float(baseline_result['baseline_creatinine'].iloc[0])
+        baseline_source = 'prior_to_icu'
+    else:
+        # Use first ICU value as baseline if no prior data available
+        first_cr_query = f"""
+            SELECT valuenum
+            FROM mimiciv_hosp.labevents
+            WHERE subject_id = {subject_id}
+            AND itemid IN ({','.join(map(str, creatinine_items))})
+            AND charttime >= '{intime}'
+            AND charttime <= '{outtime}'
+            AND valuenum IS NOT NULL
+            ORDER BY charttime
+            LIMIT 1
+        """
+        first_cr_result = query_db(first_cr_query)
+        if not first_cr_result.empty and not pd.isna(first_cr_result['valuenum'].iloc[0]):
+            baseline_creatinine = float(first_cr_result['valuenum'].iloc[0])
+            baseline_source = 'first_icu_value'
+        else:
+            baseline_creatinine = None
+            baseline_source = 'none'
+    
+    # Get all creatinine values during ICU stay
+    cr_query = f"""
+        SELECT charttime, valuenum
+        FROM mimiciv_hosp.labevents
+        WHERE subject_id = {subject_id}
+        AND itemid IN ({','.join(map(str, creatinine_items))})
+        AND charttime >= '{intime}'
+        AND charttime <= '{outtime}'
+        AND valuenum IS NOT NULL
+        ORDER BY charttime
+    """
+    creatinine_df = query_db(cr_query)
+    
+    if baseline_creatinine is not None and len(creatinine_df) > 0:
+        creatinine_df['ratio_to_baseline'] = creatinine_df['valuenum'] / baseline_creatinine
+        creatinine_df['absolute_increase'] = creatinine_df['valuenum'] - baseline_creatinine
+        
+        max_creatinine = float(creatinine_df['valuenum'].max())
+        max_creatinine_ratio = float(creatinine_df['ratio_to_baseline'].max())
+        max_absolute_increase = float(creatinine_df['absolute_increase'].max())
+        
+        # Determine KDIGO stage based on creatinine
+        kdigo_stage = 0
+        if max_creatinine_ratio >= 3.0 or (max_creatinine >= 4.0 and max_absolute_increase >= 0.5):
+            kdigo_stage = 3
+        elif max_creatinine_ratio >= 2.0:
+            kdigo_stage = 2
+        elif max_creatinine_ratio >= 1.5 or max_absolute_increase >= 0.3:
+            kdigo_stage = 1
+    else:
+        max_creatinine = None
+        max_creatinine_ratio = None
+        max_absolute_increase = None
+        kdigo_stage = 0
+    
+    return {
+        'stay_id': int(stay_id),
+        'subject_id': int(subject_id),
+        'hadm_id': int(hadm_id),
+        'intime': str(intime),
+        'outtime': str(outtime),
+        'baseline_creatinine': baseline_creatinine,
+        'baseline_source': baseline_source,
+        'max_creatinine': max_creatinine,
+        'max_creatinine_ratio': max_creatinine_ratio,
+        'max_absolute_increase': max_absolute_increase,
+        'kdigo_stage': kdigo_stage,
+        'has_aki': kdigo_stage >= 1,
+        'has_stage_3': kdigo_stage >= 3,
+        'creatinine_values': creatinine_df
+    }
+
+
+def kdigo_uo(stay_id):
+    """
+    Calculate KDIGO AKI stage based on urine output criteria for a patient's ICU stay.
+    
+    KDIGO Urine Output Criteria:
+    - Stage 1: <0.5 mL/kg/hr for 6 hours
+    - Stage 2: <0.5 mL/kg/hr for 12 hours
+    - Stage 3: <0.3 mL/kg/hr for 24 hours OR anuria for 12 hours
+    
+    Only hours with documented urine output are considered.
+    """
+    stay_info = query_db(f"""
+        SELECT stay_id, subject_id, hadm_id, intime, outtime
+        FROM mimiciv_icu.icustays
+        WHERE stay_id = {stay_id}
+    """)
+    
+    if stay_info.empty:
+        raise ValueError(f"No ICU stay found for stay_id: {stay_id}")
+    
+    stay_info = stay_info.iloc[0]
+    subject_id = stay_info['subject_id']
+    hadm_id = stay_info['hadm_id']
+    intime = stay_info['intime']
+    outtime = stay_info['outtime']
+    
+    # Get patient weight in kg
+    weight_query = f"""
+        SELECT valuenum
+        FROM mimiciv_icu.chartevents
+        WHERE subject_id = {subject_id}
+        AND itemid = 226512
+        AND charttime >= '{intime}'
+        AND charttime <= '{outtime}'
+        AND valuenum IS NOT NULL
+        AND valuenum > 0
+        ORDER BY charttime
+        LIMIT 1
+    """
+    weight_result = query_db(weight_query)
+    
+    if weight_result.empty or pd.isna(weight_result['valuenum'].iloc[0]):
+        # Try weight in lbs
+        weight_query_lbs = f"""
+            SELECT valuenum
+            FROM mimiciv_icu.chartevents
+            WHERE subject_id = {subject_id}
+            AND itemid = 226531
+            AND charttime >= '{intime}'
+            AND charttime <= '{outtime}'
+            AND valuenum IS NOT NULL
+            AND valuenum > 0
+            ORDER BY charttime
+            LIMIT 1
+        """
+        weight_result_lbs = query_db(weight_query_lbs)
+        if not weight_result_lbs.empty and not pd.isna(weight_result_lbs['valuenum'].iloc[0]):
+            weight_kg = float(weight_result_lbs['valuenum'].iloc[0]) / 2.20462
+        else:
+            weight_kg = 70.0  # Default weight
+    else:
+        weight_kg = float(weight_result['valuenum'].iloc[0])
+    
+    # Get urine output values
+    uo_items = [226559, 226560, 226567, 226627, 226631, 227489, 226566]
+    
+    uo_query = f"""
+        SELECT charttime, value
+        FROM mimiciv_icu.outputevents
+        WHERE subject_id = {subject_id}
+        AND itemid IN ({','.join(map(str, uo_items))})
+        AND charttime >= '{intime}'
+        AND charttime <= '{outtime}'
+        AND value IS NOT NULL
+        ORDER BY charttime
+    """
+    uo_df = query_db(uo_query)
+    
+    if len(uo_df) > 0:
+        uo_df['charttime'] = pd.to_datetime(uo_df['charttime'])
+        uo_df['value'] = pd.to_numeric(uo_df['value'], errors='coerce')
+        
+        intime_dt = pd.to_datetime(intime)
+        outtime_dt = pd.to_datetime(outtime)
+        
+        # Calculate hourly urine output - only for hours with documented output
+        hourly_uo = []
+        current_time = intime_dt
+        documented_hours = []
+        
+        while current_time < outtime_dt:
+            next_time = current_time + timedelta(hours=1)
+            hour_uo = uo_df[(uo_df['charttime'] >= current_time) & (uo_df['charttime'] < next_time)]['value'].sum()
+            
+            # Only include hours with documented output
+            if not pd.isna(hour_uo) and hour_uo >= 0:
+                uo_per_kg_hr = (hour_uo / weight_kg) if weight_kg > 0 else 0.0
+                documented_hours.append({
+                    'hour_start': current_time,
+                    'hour_end': next_time,
+                    'urine_output_ml': hour_uo,
+                    'uo_per_kg_hr': uo_per_kg_hr
+                })
+            
+            current_time = next_time
+        
+        hourly_uo_df = pd.DataFrame(documented_hours)
+        
+        if len(hourly_uo_df) > 0:
+            uo_values = hourly_uo_df['uo_per_kg_hr'].values
+            
+            # Find longest consecutive periods below thresholds
+            longest_below_03 = find_longest_consecutive(pd.Series(uo_values), 0.3)
+            longest_anuria = find_longest_consecutive_anuria(pd.Series(uo_values))
+            longest_below_05 = find_longest_consecutive(pd.Series(uo_values), 0.5)
+            
+            # Determine KDIGO stage based on urine output
+            kdigo_stage = 0
+            
+            if longest_below_03 >= 24 or longest_anuria >= 12:
+                kdigo_stage = 3
+            elif longest_below_05 >= 12:
+                kdigo_stage = 2
+            elif longest_below_05 >= 6:
+                kdigo_stage = 1
+        else:
+            kdigo_stage = 0
+    else:
+        hourly_uo_df = pd.DataFrame(columns=['hour_start', 'hour_end', 'urine_output_ml', 'uo_per_kg_hr'])
+        kdigo_stage = 0
+    
+    return {
+        'stay_id': int(stay_id),
+        'subject_id': int(subject_id),
+        'hadm_id': int(hadm_id),
+        'intime': str(intime),
+        'outtime': str(outtime),
+        'weight_kg': weight_kg,
+        'max_kdigo_stage': kdigo_stage,
+        'has_aki': kdigo_stage >= 1,
+        'has_stage_2_or_higher': kdigo_stage >= 2,
+        'has_stage_3': kdigo_stage >= 3,
+        'hourly_uo': hourly_uo_df
+    }
+
+
+def kdigo_stages(stay_id):
+    """
+    Calculate the overall KDIGO AKI stage for a patient's ICU stay based on 
+    both creatinine and urine output criteria.
+    
+    The overall stage is the higher of the creatinine-based stage and 
+    urine output-based stage.
+    
+    Parameters:
+    -----------
+    stay_id : int
+        The ICU stay identifier
+    
+    Returns:
+    --------
+    dict : A dictionary containing KDIGO staging information
+    """
+    cr_result = kdigo_creatinine(stay_id)
+    uo_result = kdigo_uo(stay_id)
+    
+    # Overall stage is the higher of creatinine and urine output stages
+    overall_stage = max(cr_result['kdigo_stage'], uo_result['max_kdigo_stage'])
+    
+    result = {
+        'stay_id': cr_result['stay_id'],
+        'subject_id': cr_result['subject_id'],
+        'hadm_id': cr_result['hadm_id'],
+        'intime': cr_result['intime'],
+        'outtime': cr_result['outtime'],
+        'baseline_creatinine': cr_result['baseline_creatinine'],
+        'baseline_source': cr_result['baseline_source'],
+        'max_creatinine': cr_result['max_creatinine'],
+        'max_creatinine_ratio': cr_result['max_creatinine_ratio'],
+        'max_absolute_increase': cr_result['max_absolute_increase'],
+        'weight_kg': uo_result['weight_kg'],
+        'kdigo_stage_creatinine': cr_result['kdigo_stage'],
+        'kdigo_stage_uo': uo_result['max_kdigo_stage'],
+        'kdigo_stage': overall_stage,
+        'has_aki': overall_stage >= 1,
+        'has_stage_2_or_higher': overall_stage >= 2,
+        'has_stage_3': overall_stage >= 3,
+        'creatinine_values': cr_result['creatinine_values'],
+        'hourly_uo': uo_result['hourly_uo']
+    }
+    
+    return result
+```
+
+## Test Results
+
+| Stay ID | Baseline Cr | Max Cr | Cr Stage | UO Stage | Overall Stage | Has AKI | Hourly UO Count | Notes |
+|---------|-------------|--------|----------|----------|---------------|---------|-----------------|-------|
+| 39553978 | 0.3 | 0.5 | 1 | 1 | 1 | True | 10 | - |
+| 37081114 | 0.8 | 0.9 | 0 | 1 | 1 | True | - | - |
+| 39765666 | 2.3 | None | 0 | 0 | 0 | False | - | No ICU creatinine |
+| 37067082 | 0.6 | - | 0 | 0 | 0 | False | - | - |
+| 34592300 | 0.4 | - | 0 | 0 | 0 | False | - | - |
+| 35347399 | 2.5 | 2.5 | 0 | 1 | 1 | True | - | - |
+| 36779265 | 5.1 | 7.7 | 3 | 3 | 3 | True | - | Cr >= 4.0 with increase >= 0.5 |
+| 39874061 | 1.0 | 5.4 | 3 | 3 | 3 | True | - | Ratio 5.4x |
+| 37158200 | 1.0 | 3.6 | 3 | 3 | 3 | True | - | Ratio 3.6x |
+| 36567846 | 0.5 | 2.8 | 3 | 1 | 3 | True | - | Ratio 5.6x |
+| 36712360 | 0.8 | 0.7 | 0 | 1 | 1 | True | - | - |
+| 31404518 | 1.0 | 1.2 | 0 | 1 | 1 | True | 131 | **False positive** |
+| 38150924 | 1.1 | 1.5 | 1 | 1 | 1 | True | 19 | **False positive** |
+| 31402227 | 0.8 | 0.7 | 0 | 0 | 0 | False | 19 | **False negative (actual Stage 2)** |
+| 33489417 | 1.4 | 1.3 | 0 | 3 | 3 | True | 363 | **Over-staged (actual Stage 2)** |
+| 34575878 | 0.9 | 1.0 | 0 | 1 | 1 | True | 19 | **False positive** |
+| 39698942 | 1.3 | 1.7 | 1 | 2 | 2 | True | 20 | - |
+| 37510196 | 0.8 | 1.3 | 1 | 2 | 2 | True | - | - |
+
+## Error Fixes
+
+1. **d_labitems schema error**: `abbreviation` column doesn't exist - removed from query, use `label` instead
+2. **NaN baseline handling**: `MIN()` returns NaN when no rows exist, not None - use `pd.isna()` instead of `is not None` check
+3. **Weight item IDs**: Corrected to 226512 (kg) and 226531 (lbs) from incorrect large list
+4. **Weight NaN handling**: Added `pd.isna()` check for weight values in `kdigo_uo`
+5. **Baseline creatinine query**: Removed `hadm_id != {hadm_id}` filter to include values from same admission but before ICU admission
+6. **Urine output undocumented hours**: Changed to only count hours with documented urine output events (not treating undocumented hours as zero output) - prevents false anuria detection
+7. **SQL INTERVAL syntax**: Fixed by adding `::timestamp` cast when adding INTERVAL to timestamp string (Step 20)
+
+## Known Issues
+
+1. **Baseline creatinine calculation**: Current implementation uses minimum creatinine before ICU admission within 3 months. May need to use minimum creatinine from first 7 days of admission instead (e.g., stay 31402227 has baseline 0.8 before ICU but 0.4 in first 7 days of admission).
+
+2. **Urine output staging**: Some cases show discrepancies between predicted and actual stages. The consecutive hour logic is working correctly but may not match expected staging in all cases.
+
+3. **False positives**: Stays 31404518, 38150924, 34575878 predicted as AKI but actual is no AKI.
+
+4. **False negatives**: Stay 31402227 predicted as no AKI but actual is Stage 2.
+
+5. **Over-staging**: Stay 33489417 predicted as Stage 3 but actual is Stage 2.
+
+=== Step 4 ===
+# Clinical Coding Agent Memory
+
+## Schema Facts
+
+### Tables
+- `mimiciv_hosp.labevents`: charttime, valuenum, itemid, subject_id, hadm_id
+- `mimiciv_hosp.d_labitems`: itemid, label, fluid, category (NO abbreviation column)
+- `mimiciv_hosp.patients`: subject_id, weight
+- `mimiciv_hosp.admissions`: subject_id, hadm_id, admittime, dischtime
+- `mimiciv_icu.icustays`: stay_id, subject_id, hadm_id, intime, outtime
+- `mimiciv_icu.chartevents`: itemid, valuenum, charttime, subject_id
+- `mimiciv_icu.outputevents`: charttime, value, itemid, subject_id
+- `mimiciv_icu.d_items`: itemid, label, category
+
+### Item IDs
+- **Creatinine**: 50912 (Creatinine), 51081 (Creatinine Serum), 51977 (Creatinine Blood), 52546 (Creatinine)
+- **Weight**: 226512 (Admission Weight Kg), 226531 (Admission Weight lbs), 224639 (Daily Weight)
+- **Urine Output**: 226559 (Foley), 226560 (Void), 226567 (Straight Cath), 226627 (OR Urine), 226631 (PACU Urine), 227489 (GU Irrigant/Urine), 226566 (Urine and GU Irrigant)
+
+### Value Ranges
+- Creatinine: mg/dL (typical 0.3-10+)
+- Weight: kg or lbs (convert lbs to kg by /2.20462)
+- Urine output: mL per event
+
+## Function Source Code (Latest Versions)
+
+```python
+import pandas as pd
+import numpy as np
+from datetime import datetime, timedelta
+
+def find_longest_consecutive(series, threshold):
+    """Find the longest consecutive run of values below threshold."""
+    if series.empty:
+        return 0
+    
+    below_threshold = series < threshold
+    runs = []
+    current_run = 0
+    
+    for val in below_threshold:
+        if val:
+            current_run += 1
+        else:
+            if current_run > 0:
+                runs.append(current_run)
+            current_run = 0
+    
+    if current_run > 0:
+        runs.append(current_run)
+    
+    return max(runs) if runs else 0
+
+
+def find_longest_consecutive_anuria(series):
+    """Find the longest consecutive run of zero urine output."""
+    if series.empty:
+        return 0
+    
+    anuria = series == 0
+    runs = []
+    current_run = 0
+    
+    for val in anuria:
+        if val:
+            current_run += 1
+        else:
+            if current_run > 0:
+                runs.append(current_run)
+            current_run = 0
+    
+    if current_run > 0:
+        runs.append(current_run)
+    
+    return max(runs) if runs else 0
+
+
+def kdigo_creatinine(stay_id):
+    """
+    Calculate KDIGO AKI stage based on creatinine criteria for a patient's ICU stay.
+    
+    KDIGO Creatinine Criteria:
+    - Stage 1: ≥0.3 mg/dL increase OR 1.5-1.9x baseline
+    - Stage 2: 2.0-2.9x baseline
+    - Stage 3: ≥3.0x baseline OR ≥4.0 mg/dL with acute increase ≥0.5 mg/dL
+    """
+    stay_info = query_db(f"""
+        SELECT stay_id, subject_id, hadm_id, intime, outtime
+        FROM mimiciv_icu.icustays
+        WHERE stay_id = {stay_id}
+    """)
+    
+    if stay_info.empty:
+        raise ValueError(f"No ICU stay found for stay_id: {stay_id}")
+    
+    stay_info = stay_info.iloc[0]
+    subject_id = stay_info['subject_id']
+    hadm_id = stay_info['hadm_id']
+    intime = stay_info['intime']
+    outtime = stay_info['outtime']
+    
+    creatinine_items = [50912, 51081, 51977, 52546]
+    
+    # Try to find baseline creatinine from before ICU admission
+    # Include values from same admission but before ICU, or from prior admissions within 3 months
+    baseline_query = f"""
+        SELECT MIN(valuenum) as baseline_creatinine
+        FROM mimiciv_hosp.labevents
+        WHERE subject_id = {subject_id}
+        AND itemid IN ({','.join(map(str, creatinine_items))})
+        AND charttime < '{intime}'
+        AND charttime >= '{intime}'::date - INTERVAL '3 months'
+        AND valuenum IS NOT NULL
+    """
+    baseline_result = query_db(baseline_query)
+    
+    if not baseline_result.empty and not pd.isna(baseline_result['baseline_creatinine'].iloc[0]):
+        baseline_creatinine = float(baseline_result['baseline_creatinine'].iloc[0])
+        baseline_source = 'prior_to_icu'
+    else:
+        # Use first ICU value as baseline if no prior data available
+        first_cr_query = f"""
+            SELECT valuenum
+            FROM mimiciv_hosp.labevents
+            WHERE subject_id = {subject_id}
+            AND itemid IN ({','.join(map(str, creatinine_items))})
+            AND charttime >= '{intime}'
+            AND charttime <= '{outtime}'
+            AND valuenum IS NOT NULL
+            ORDER BY charttime
+            LIMIT 1
+        """
+        first_cr_result = query_db(first_cr_query)
+        if not first_cr_result.empty and not pd.isna(first_cr_result['valuenum'].iloc[0]):
+            baseline_creatinine = float(first_cr_result['valuenum'].iloc[0])
+            baseline_source = 'first_icu_value'
+        else:
+            baseline_creatinine = None
+            baseline_source = 'none'
+    
+    # Get all creatinine values during ICU stay
+    cr_query = f"""
+        SELECT charttime, valuenum
+        FROM mimiciv_hosp.labevents
+        WHERE subject_id = {subject_id}
+        AND itemid IN ({','.join(map(str, creatinine_items))})
+        AND charttime >= '{intime}'
+        AND charttime <= '{outtime}'
+        AND valuenum IS NOT NULL
+        ORDER BY charttime
+    """
+    creatinine_df = query_db(cr_query)
+    
+    if baseline_creatinine is not None and len(creatinine_df) > 0:
+        creatinine_df['ratio_to_baseline'] = creatinine_df['valuenum'] / baseline_creatinine
+        creatinine_df['absolute_increase'] = creatinine_df['valuenum'] - baseline_creatinine
+        
+        max_creatinine = float(creatinine_df['valuenum'].max())
+        max_creatinine_ratio = float(creatinine_df['ratio_to_baseline'].max())
+        max_absolute_increase = float(creatinine_df['absolute_increase'].max())
+        
+        # Determine KDIGO stage based on creatinine
+        kdigo_stage = 0
+        if max_creatinine_ratio >= 3.0 or (max_creatinine >= 4.0 and max_absolute_increase >= 0.5):
+            kdigo_stage = 3
+        elif max_creatinine_ratio >= 2.0:
+            kdigo_stage = 2
+        elif max_creatinine_ratio >= 1.5 or max_absolute_increase >= 0.3:
+            kdigo_stage = 1
+    else:
+        max_creatinine = None
+        max_creatinine_ratio = None
+        max_absolute_increase = None
+        kdigo_stage = 0
+    
+    return {
+        'stay_id': int(stay_id),
+        'subject_id': int(subject_id),
+        'hadm_id': int(hadm_id),
+        'intime': str(intime),
+        'outtime': str(outtime),
+        'baseline_creatinine': baseline_creatinine,
+        'baseline_source': baseline_source,
+        'max_creatinine': max_creatinine,
+        'max_creatinine_ratio': max_creatinine_ratio,
+        'max_absolute_increase': max_absolute_increase,
+        'kdigo_stage': kdigo_stage,
+        'has_aki': kdigo_stage >= 1,
+        'has_stage_3': kdigo_stage >= 3,
+        'creatinine_values': creatinine_df
+    }
+
+
+def kdigo_uo(stay_id):
+    """
+    Calculate KDIGO AKI stage based on urine output criteria for a patient's ICU stay.
+    
+    KDIGO Urine Output Criteria:
+    - Stage 1: <0.5 mL/kg/hr for 6 hours
+    - Stage 2: <0.5 mL/kg/hr for 12 hours
+    - Stage 3: <0.3 mL/kg/hr for 24 hours OR anuria for 12 hours
+    
+    Only hours with documented urine output are considered.
+    """
+    stay_info = query_db(f"""
+        SELECT stay_id, subject_id, hadm_id, intime, outtime
+        FROM mimiciv_icu.icustays
+        WHERE stay_id = {stay_id}
+    """)
+    
+    if stay_info.empty:
+        raise ValueError(f"No ICU stay found for stay_id: {stay_id}")
+    
+    stay_info = stay_info.iloc[0]
+    subject_id = stay_info['subject_id']
+    hadm_id = stay_info['hadm_id']
+    intime = stay_info['intime']
+    outtime = stay_info['outtime']
+    
+    # Get patient weight in kg
+    weight_query = f"""
+        SELECT valuenum
+        FROM mimiciv_icu.chartevents
+        WHERE subject_id = {subject_id}
+        AND itemid = 226512
+        AND charttime >= '{intime}'
+        AND charttime <= '{outtime}'
+        AND valuenum IS NOT NULL
+        AND valuenum > 0
+        ORDER BY charttime
+        LIMIT 1
+    """
+    weight_result = query_db(weight_query)
+    
+    if weight_result.empty or pd.isna(weight_result['valuenum'].iloc[0]):
+        # Try weight in lbs
+        weight_query_lbs = f"""
+            SELECT valuenum
+            FROM mimiciv_icu.chartevents
+            WHERE subject_id = {subject_id}
+            AND itemid = 226531
+            AND charttime >= '{intime}'
+            AND charttime <= '{outtime}'
+            AND valuenum IS NOT NULL
+            AND valuenum > 0
+            ORDER BY charttime
+            LIMIT 1
+        """
+        weight_result_lbs = query_db(weight_query_lbs)
+        if not weight_result_lbs.empty and not pd.isna(weight_result_lbs['valuenum'].iloc[0]):
+            weight_kg = float(weight_result_lbs['valuenum'].iloc[0]) / 2.20462
+        else:
+            weight_kg = 70.0  # Default weight
+    else:
+        weight_kg = float(weight_result['valuenum'].iloc[0])
+    
+    # Get urine output values
+    uo_items = [226559, 226560, 226567, 226627, 226631, 227489, 226566]
+    
+    uo_query = f"""
+        SELECT charttime, value
+        FROM mimiciv_icu.outputevents
+        WHERE subject_id = {subject_id}
+        AND itemid IN ({','.join(map(str, uo_items))})
+        AND charttime >= '{intime}'
+        AND charttime <= '{outtime}'
+        AND value IS NOT NULL
+        ORDER BY charttime
+    """
+    uo_df = query_db(uo_query)
+    
+    documented_hours = 0
+    if len(uo_df) > 0:
+        uo_df['charttime'] = pd.to_datetime(uo_df['charttime'])
+        uo_df['value'] = pd.to_numeric(uo_df['value'], errors='coerce')
+        
+        intime_dt = pd.to_datetime(intime)
+        outtime_dt = pd.to_datetime(outtime)
+        
+        # Calculate hourly urine output - only for hours with documented output
+        # FIX: Only include hours that have at least one urine output event
+        # This prevents undocumented hours from being treated as anuria (0 mL/kg/hr)
+        hourly_uo = []
+        current_time = intime_dt
+        
+        while current_time < outtime_dt:
+            next_time = current_time + timedelta(hours=1)
+            hour_events = uo_df[(uo_df['charttime'] >= current_time) & (uo_df['charttime'] < next_time)]
+            
+            # Only include hours with at least one documented event
+            if len(hour_events) > 0:
+                hour_uo = hour_events['value'].sum()
+                uo_per_kg_hr = (hour_uo / weight_kg) if weight_kg > 0 else 0.0
+                hourly_uo.append(uo_per_kg_hr)
+            
+            current_time = next_time
+        
+        documented_hours = len(hourly_uo)
+        
+        if len(hourly_uo) > 0:
+            uo_values = np.array(hourly_uo)
+            
+            # Find longest consecutive periods below thresholds
+            longest_below_03 = find_longest_consecutive(pd.Series(uo_values), 0.3)
+            longest_anuria = find_longest_consecutive_anuria(pd.Series(uo_values))
+            longest_below_05 = find_longest_consecutive(pd.Series(uo_values), 0.5)
+            
+            # Determine KDIGO stage based on urine output
+            kdigo_stage = 0
+            
+            if longest_below_03 >= 24 or longest_anuria >= 12:
+                kdigo_stage = 3
+            elif longest_below_05 >= 12:
+                kdigo_stage = 2
+            elif longest_below_05 >= 6:
+                kdigo_stage = 1
+        else:
+            kdigo_stage = 0
+    else:
+        kdigo_stage = 0
+    
+    return {
+        'stay_id': int(stay_id),
+        'subject_id': int(subject_id),
+        'hadm_id': int(hadm_id),
+        'intime': str(intime),
+        'outtime': str(outtime),
+        'weight_kg': weight_kg,
+        'max_kdigo_stage': kdigo_stage,
+        'has_aki': kdigo_stage >= 1,
+        'has_stage_2_or_higher': kdigo_stage >= 2,
+        'has_stage_3': kdigo_stage >= 3,
+        'documented_hours': documented_hours
+    }
+
+
+def kdigo_stages(stay_id):
+    """
+    Calculate the overall KDIGO AKI stage for a patient's ICU stay based on 
+    both creatinine and urine output criteria.
+    
+    The overall stage is the higher of the creatinine-based stage and 
+    urine output-based stage.
+    
+    Parameters:
+    -----------
+    stay_id : int
+        The ICU stay identifier
+    
+    Returns:
+    --------
+    dict : A dictionary containing KDIGO staging information
+    """
+    cr_result = kdigo_creatinine(stay_id)
+    uo_result = kdigo_uo(stay_id)
+    
+    # Overall stage is the higher of creatinine and urine output stages
+    overall_stage = max(cr_result['kdigo_stage'], uo_result['max_kdigo_stage'])
+    
+    result = {
+        'stay_id': cr_result['stay_id'],
+        'subject_id': cr_result['subject_id'],
+        'hadm_id': cr_result['hadm_id'],
+        'intime': cr_result['intime'],
+        'outtime': cr_result['outtime'],
+        'baseline_creatinine': cr_result['baseline_creatinine'],
+        'baseline_source': cr_result['baseline_source'],
+        'max_creatinine': cr_result['max_creatinine'],
+        'max_creatinine_ratio': cr_result['max_creatinine_ratio'],
+        'max_absolute_increase': cr_result['max_absolute_increase'],
+        'weight_kg': uo_result['weight_kg'],
+        'kdigo_stage_creatinine': cr_result['kdigo_stage'],
+        'kdigo_stage_uo': uo_result['max_kdigo_stage'],
+        'kdigo_stage': overall_stage,
+        'has_aki': overall_stage >= 1,
+        'has_stage_2_or_higher': overall_stage >= 2,
+        'has_stage_3': overall_stage >= 3,
+        'creatinine_values': cr_result['creatinine_values'],
+        'documented_hours': uo_result['documented_hours']
+    }
+    
+    return result
+```
+
+## Test Results
+
+| Stay ID | Baseline Cr | Max Cr | Cr Stage | UO Stage | Overall Stage | Has AKI | Documented Hours | Status |
+|---------|-------------|--------|----------|----------|---------------|---------|------------------|--------|
+| 39553978 | 0.3 | 0.5 | 1 | 0 | 1 | True | 10 | ✓ Correct |
+| 37081114 | 0.8 | 0.9 | 0 | 1 | 1 | True | - | - |
+| 39765666 | 2.3 | None | 0 | 0 | 0 | False | - | - |
+| 37067082 | 0.6 | - | 0 | 0 | 0 | False | - | - |
+| 34592300 | 0.4 | - | 0 | 0 | 0 | False | - | - |
+| 35347399 | 2.5 | 2.5 | 0 | 1 | 1 | True | - | - |
+| 36779265 | 5.1 | 7.7 | 3 | 2 | 3 | True | - | ✓ Correct |
+| 39874061 | 1.0 | 5.4 | 3 | 3 | 3 | True | - | - |
+| 37158200 | 1.0 | 3.6 | 3 | 3 | 3 | True | - | - |
+| 36567846 | 0.5 | 2.8 | 3 | 1 | 3 | True | - | - |
+| 36712360 | 0.8 | 0.7 | 0 | 1 | 1 | True | - | - |
+| 31404518 | 1.0 | 1.2 | 0 | 0 | 0 | False | 78 | ✓ Fixed (was false positive) |
+| 38150924 | 1.1 | 1.5 | 1 | 0 | 1 | True | 19 | ✗ False positive |
+| 31402227 | 0.8 | 0.7 | 0 | 0 | 0 | False | 15 | ✗ False negative (actual Stage 2) |
+| 33489417 | 1.4 | 1.3 | 0 | 0 | 0 | False | 6 | ✓ Fixed (was over-staged Stage 3) |
+| 34575878 | 0.9 | 1.0 | 0 | 0 | 0 | False | 19 | ✓ Fixed (was false positive) |
+| 39698942 | 1.3 | 1.7 | 1 | 2 | 2 | True | 20 | - |
+| 37510196 | 0.8 | 1.3 | 1 | 2 | 2 | True | - | - |
+
+## Error Fixes
+
+1. **d_labitems schema error**: `abbreviation` column doesn't exist - removed from query, use `label` instead
+2. **NaN baseline handling**: `MIN()` returns NaN when no rows exist, not None - use `pd.isna()` instead of `is not None` check
+3. **Weight item IDs**: Corrected to 226512 (kg) and 226531 (lbs) from incorrect large list
+4. **Weight NaN handling**: Added `pd.isna()` check for weight values in `kdigo_uo`
+5. **Baseline creatinine query**: Removed `hadm_id != {hadm_id}` filter to include values from same admission but before ICU admission
+6. **SQL INTERVAL syntax**: Fixed by adding `::timestamp` cast when adding INTERVAL to timestamp string
+7. **Urine output undocumented hours (CRITICAL FIX)**: `sum()` of empty pandas series returns 0.0, not NaN. Changed logic to only include hours with at least one documented urine output event (`len(hour_events) > 0`), preventing undocumented hours from being treated as anuria (0 mL/kg/hr). This fixed false positives in stays 31404518, 33489417, and 34575878.
+
+## Known Issues
+
+1. **Baseline creatinine calculation**: Current implementation uses minimum creatinine before ICU admission within 3 months. May need to use minimum creatinine from first 7 days of admission instead (e.g., stay 31402227 has baseline 0.8 before ICU but 0.4 in first 7 days of admission).
+
+2. **False negative (Stay 31402227)**: Predicted Stage 0 but actual is Stage 2. Creatinine is decreasing (0.8 → 0.7 → 0.6), so no AKI by creatinine criteria. Urine output shows 15 events but only 15 documented hours, none meeting AKI thresholds. May need to investigate if actual Stage 2 is based on different criteria or data.
+
+3. **False positive (Stay 38150924)**: Predicted Stage 1 (creatinine 1.1→1.5, ratio 1.36x, increase 0.4) but actual is no AKI. The absolute increase of 0.4 exceeds the 0.3 threshold for Stage 1. May need to verify actual ground truth or adjust criteria.
+
+4. **Urine output staging**: Some cases show discrepancies between predicted and actual stages. The consecutive hour logic is working correctly but may not match expected staging in all cases.
+

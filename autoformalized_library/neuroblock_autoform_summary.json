@@ -1,0 +1,47 @@
+{
+  "timestamp": "2026-03-25T07:53:06.497901",
+  "model": "Qwen/Qwen3.5-27B",
+  "db_path": "/home/v-tiossowski/MIMIC-IV/mimic4.db",
+  "qa_dataset": "/home/v-tiossowski/HealthcareAgent/mimic-code/data/MIMICIV_neuroblock_dataset/neuroblock.csv",
+  "match_threshold": 0.9,
+  "run_name": "neuroblock",
+  "success": true,
+  "iterations": 41,
+  "qa_accuracy": 1.0,
+  "stats": {
+    "react": {
+      "prompt_tokens": 0,
+      "completion_tokens": 0,
+      "total_tokens": 0,
+      "llm_calls": 41,
+      "query_count": 46,
+      "query_time_sec": 1.706,
+      "wall_time_sec": 681.612
+    },
+    "qa": {
+      "prompt_tokens": 53795,
+      "completion_tokens": 5675,
+      "total_tokens": 59470,
+      "llm_calls": 40,
+      "query_count": 80,
+      "query_time_sec": 0.242,
+      "eval_wall_time_sec": 30.191,
+      "per_question": {
+        "avg_prompt_tokens": 2689.8,
+        "avg_completion_tokens": 283.8,
+        "avg_llm_calls": 2.0,
+        "avg_query_count": 4.0,
+        "avg_query_time_sec": 0.012,
+        "avg_wall_time_sec": 1.51
+      }
+    },
+    "total": {
+      "prompt_tokens": 53795,
+      "completion_tokens": 5675,
+      "total_tokens": 59470,
+      "llm_calls": 81,
+      "query_count": 126,
+      "query_time_sec": 1.948
+    }
+  }
+}

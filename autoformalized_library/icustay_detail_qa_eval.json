@@ -1,0 +1,37 @@
+{
+  "concept": "icustay_detail",
+  "func_dir": "autoformalized_library/functions",
+  "qa_accuracy": 0.9988888888888889,
+  "precision": 0.9966777408637874,
+  "recall": 1.0,
+  "correct": 899,
+  "total": 900,
+  "parse_errors": 0,
+  "mismatches": [
+    {
+      "subject_id": 18858505,
+      "hadm_id": 25408365,
+      "stay_id": 30836761,
+      "predicted": "YES",
+      "actual": "NO"
+    }
+  ],
+  "details": "QA Accuracy: 99.9%  (correct=899/900, parse_errors=0)\nPrecision: 99.7%  Recall: 100.0%\n  Binary (600): acc=99.8%  prec=99.7%  rec=100.0%  parse_errors=0\n  Numerical (300): acc=100.0%  parse_errors=0\nTokens: 2437230 prompt + 486007 completion = 2923237 total\nLLM calls: 3253\nSQL queries: 907  (6.2s)\nEval wall time: 1324.4s\n--- Per question averages ---\n  Avg tokens: 2708 prompt + 540 completion\n  Avg LLM calls: 3.6\n  Avg SQL queries: 1.0  (0.0s)\n  Avg wall time: 1.5s\nSample misclassifications:\n  subject_id=18858505, hadm_id=25408365, stay_id=30836761: predicted=YES actual=NO",
+  "stats": {
+    "prompt_tokens": 2437230,
+    "completion_tokens": 486007,
+    "total_tokens": 2923237,
+    "llm_calls": 3253,
+    "query_count": 907,
+    "query_time_sec": 6.17,
+    "eval_wall_time_sec": 1324.362,
+    "per_question": {
+      "avg_prompt_tokens": 2708.0,
+      "avg_completion_tokens": 540.0,
+      "avg_llm_calls": 3.61,
+      "avg_query_count": 1.01,
+      "avg_query_time_sec": 0.007,
+      "avg_wall_time_sec": 1.472
+    }
+  }
+}

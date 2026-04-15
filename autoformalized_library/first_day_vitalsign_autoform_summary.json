@@ -1,0 +1,47 @@
+{
+  "timestamp": "2026-03-26T00:24:04.725889",
+  "model": "Qwen/Qwen3.5-27B",
+  "db_path": "/home/v-tiossowski/MIMIC-IV/mimic4.db",
+  "qa_dataset": "/home/v-tiossowski/HealthcareAgent/mimic-code/data/MIMICIV_first_day_vitalsign_dataset/first_day_vitalsign.csv",
+  "match_threshold": 0.9,
+  "run_name": "first_day_vitalsign",
+  "success": true,
+  "iterations": 40,
+  "qa_accuracy": 0.9,
+  "stats": {
+    "react": {
+      "prompt_tokens": 0,
+      "completion_tokens": 0,
+      "total_tokens": 0,
+      "llm_calls": 41,
+      "query_count": 36,
+      "query_time_sec": 0.358,
+      "wall_time_sec": 879.405
+    },
+    "qa": {
+      "prompt_tokens": 40484,
+      "completion_tokens": 7423,
+      "total_tokens": 47907,
+      "llm_calls": 40,
+      "query_count": 20,
+      "query_time_sec": 0.212,
+      "eval_wall_time_sec": 31.651,
+      "per_question": {
+        "avg_prompt_tokens": 2024.2,
+        "avg_completion_tokens": 371.1,
+        "avg_llm_calls": 2.0,
+        "avg_query_count": 1.0,
+        "avg_query_time_sec": 0.011,
+        "avg_wall_time_sec": 1.583
+      }
+    },
+    "total": {
+      "prompt_tokens": 40484,
+      "completion_tokens": 7423,
+      "total_tokens": 47907,
+      "llm_calls": 81,
+      "query_count": 56,
+      "query_time_sec": 0.57
+    }
+  }
+}

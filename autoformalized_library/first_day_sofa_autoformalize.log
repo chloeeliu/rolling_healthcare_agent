@@ -1,0 +1,996 @@
+2026-03-26 06:38:41  INFO      Using database: /home/v-tiossowski/MIMIC-IV/mimic4.db
+2026-03-26 06:38:41  INFO      No --model_url provided; loading vLLM in-process …
+INFO 03-26 06:38:46 [utils.py:238] non-default args: {'trust_remote_code': True, 'max_model_len': 40000, 'disable_log_stats': True, 'model': 'Qwen/Qwen3.5-27B'}
+The argument `trust_remote_code` is to be used with Auto classes. It has no effect here and is ignored.
+The argument `trust_remote_code` is to be used with Auto classes. It has no effect here and is ignored.
+The argument `trust_remote_code` is to be used with Auto classes. It has no effect here and is ignored.
+INFO 03-26 06:38:46 [model.py:531] Resolved architecture: Qwen3_5ForConditionalGeneration
+INFO 03-26 06:38:46 [model.py:1554] Using max model len 40000
+INFO 03-26 06:38:46 [scheduler.py:231] Chunked prefill is enabled with max_num_batched_tokens=8192.
+INFO 03-26 06:38:47 [config.py:544] Setting attention block size to 784 tokens to ensure that attention page size is >= mamba page size.
+INFO 03-26 06:38:47 [config.py:575] Padding mamba page size by 0.13% to ensure that mamba page size and attention page size are exactly equal.
+INFO 03-26 06:38:47 [vllm.py:747] Asynchronous scheduling is enabled.
+WARNING 03-26 06:38:55 [system_utils.py:152] We must use the `spawn` multiprocessing start method. Overriding VLLM_WORKER_MULTIPROC_METHOD to 'spawn'. See https://docs.vllm.ai/en/latest/usage/troubleshooting.html#python-multiprocessing for more information. Reasons: CUDA is initialized
+(EngineCore_DP0 pid=744239) INFO 03-26 06:39:00 [core.py:101] Initializing a V1 LLM engine (v0.17.1) with config: model='Qwen/Qwen3.5-27B', speculative_config=None, tokenizer='Qwen/Qwen3.5-27B', skip_tokenizer_init=False, tokenizer_mode=auto, revision=None, tokenizer_revision=None, trust_remote_code=True, dtype=torch.bfloat16, max_seq_len=40000, download_dir=None, load_format=auto, tensor_parallel_size=1, pipeline_parallel_size=1, data_parallel_size=1, disable_custom_all_reduce=False, quantization=None, enforce_eager=False, enable_return_routed_experts=False, kv_cache_dtype=auto, device_config=cuda, structured_outputs_config=StructuredOutputsConfig(backend='auto', disable_fallback=False, disable_any_whitespace=False, disable_additional_properties=False, reasoning_parser='', reasoning_parser_plugin='', enable_in_reasoning=False), observability_config=ObservabilityConfig(show_hidden_metrics_for_version=None, otlp_traces_endpoint=None, collect_detailed_traces=None, kv_cache_metrics=False, kv_cache_metrics_sample=0.01, cudagraph_metrics=False, enable_layerwise_nvtx_tracing=False, enable_mfu_metrics=False, enable_mm_processor_stats=False, enable_logging_iteration_details=False), seed=0, served_model_name=Qwen/Qwen3.5-27B, enable_prefix_caching=False, enable_chunked_prefill=True, pooler_config=None, compilation_config={'level': None, 'mode': <CompilationMode.VLLM_COMPILE: 3>, 'debug_dump_path': None, 'cache_dir': '', 'compile_cache_save_format': 'binary', 'backend': 'inductor', 'custom_ops': ['none'], 'splitting_ops': ['vllm::unified_attention', 'vllm::unified_attention_with_output', 'vllm::unified_mla_attention', 'vllm::unified_mla_attention_with_output', 'vllm::mamba_mixer2', 'vllm::mamba_mixer', 'vllm::short_conv', 'vllm::linear_attention', 'vllm::plamo2_mamba_mixer', 'vllm::gdn_attention_core', 'vllm::kda_attention', 'vllm::sparse_attn_indexer', 'vllm::rocm_aiter_sparse_attn_indexer', 'vllm::unified_kv_cache_update', 'vllm::unified_mla_kv_cache_update'], 'compile_mm_encoder': False, 'compile_sizes': [], 'compile_ranges_split_points': [8192], 'inductor_compile_config': {'enable_auto_functionalized_v2': False, 'combo_kernels': True, 'benchmark_combo_kernel': True}, 'inductor_passes': {}, 'cudagraph_mode': <CUDAGraphMode.FULL_AND_PIECEWISE: (2, 1)>, 'cudagraph_num_of_warmups': 1, 'cudagraph_capture_sizes': [1, 2, 4, 8, 16, 24, 32, 40, 48, 56, 64, 72, 80, 88, 96, 104, 112, 120, 128, 136, 144, 152, 160, 168, 176, 184, 192, 200, 208, 216, 224, 232, 240, 248, 256, 272, 288, 304, 320, 336, 352, 368, 384, 400, 416, 432, 448, 464, 480, 496, 512], 'cudagraph_copy_inputs': False, 'cudagraph_specialize_lora': True, 'use_inductor_graph_partition': False, 'pass_config': {'fuse_norm_quant': False, 'fuse_act_quant': False, 'fuse_attn_quant': False, 'enable_sp': False, 'fuse_gemm_comms': False, 'fuse_allreduce_rms': False}, 'max_cudagraph_capture_size': 512, 'dynamic_shapes_config': {'type': <DynamicShapesType.BACKED: 'backed'>, 'evaluate_guards': False, 'assume_32_bit_indexing': False}, 'local_cache_dir': None, 'fast_moe_cold_start': True, 'static_all_moe_layers': []}
+(EngineCore_DP0 pid=744239) INFO 03-26 06:39:02 [parallel_state.py:1393] world_size=1 rank=0 local_rank=0 distributed_init_method=tcp://10.8.144.167:53005 backend=nccl
+(EngineCore_DP0 pid=744239) INFO 03-26 06:39:02 [parallel_state.py:1715] rank 0 in world size 1 is assigned as DP rank 0, PP rank 0, PCP rank 0, TP rank 0, EP rank N/A, EPLB rank N/A
+(EngineCore_DP0 pid=744239) INFO 03-26 06:39:09 [base.py:106] Offloader set to NoopOffloader
+(EngineCore_DP0 pid=744239) INFO 03-26 06:39:09 [gpu_model_runner.py:4281] Starting to load model Qwen/Qwen3.5-27B...
+(EngineCore_DP0 pid=744239) INFO 03-26 06:39:09 [cuda.py:453] Using backend AttentionBackendEnum.FLASH_ATTN for vit attention
+(EngineCore_DP0 pid=744239) INFO 03-26 06:39:09 [mm_encoder_attention.py:215] Using AttentionBackendEnum.FLASH_ATTN for MMEncoderAttention.
+(EngineCore_DP0 pid=744239) INFO 03-26 06:39:09 [cuda.py:405] Using FLASH_ATTN attention backend out of potential backends: ['FLASH_ATTN', 'FLASHINFER', 'TRITON_ATTN', 'FLEX_ATTENTION'].
+(EngineCore_DP0 pid=744239) INFO 03-26 06:39:09 [flash_attn.py:587] Using FlashAttention version 2
+(EngineCore_DP0 pid=744239) <frozen importlib._bootstrap_external>:1301: FutureWarning: The cuda.cudart module is deprecated and will be removed in a future release, please switch to use the cuda.bindings.runtime module instead.
+(EngineCore_DP0 pid=744239) <frozen importlib._bootstrap_external>:1301: FutureWarning: The cuda.nvrtc module is deprecated and will be removed in a future release, please switch to use the cuda.bindings.nvrtc module instead.
+(EngineCore_DP0 pid=744239) Loading safetensors checkpoint shards:   0% Completed | 0/11 [00:00<?, ?it/s]
+(EngineCore_DP0 pid=744239) Loading safetensors checkpoint shards:   9% Completed | 1/11 [00:00<00:05,  1.84it/s]
+(EngineCore_DP0 pid=744239) Loading safetensors checkpoint shards:  18% Completed | 2/11 [00:01<00:05,  1.66it/s]
+(EngineCore_DP0 pid=744239) Loading safetensors checkpoint shards:  27% Completed | 3/11 [00:01<00:05,  1.57it/s]
+(EngineCore_DP0 pid=744239) Loading safetensors checkpoint shards:  36% Completed | 4/11 [00:02<00:04,  1.50it/s]
+(EngineCore_DP0 pid=744239) Loading safetensors checkpoint shards:  45% Completed | 5/11 [00:03<00:04,  1.47it/s]
+(EngineCore_DP0 pid=744239) Loading safetensors checkpoint shards:  55% Completed | 6/11 [00:03<00:03,  1.45it/s]
+(EngineCore_DP0 pid=744239) Loading safetensors checkpoint shards:  64% Completed | 7/11 [00:04<00:02,  1.43it/s]
+(EngineCore_DP0 pid=744239) Loading safetensors checkpoint shards:  73% Completed | 8/11 [00:05<00:02,  1.44it/s]
+(EngineCore_DP0 pid=744239) Loading safetensors checkpoint shards:  82% Completed | 9/11 [00:06<00:01,  1.44it/s]
+(EngineCore_DP0 pid=744239) Loading safetensors checkpoint shards:  91% Completed | 10/11 [00:06<00:00,  1.44it/s]
+(EngineCore_DP0 pid=744239) Loading safetensors checkpoint shards: 100% Completed | 11/11 [00:07<00:00,  1.60it/s]
+(EngineCore_DP0 pid=744239) Loading safetensors checkpoint shards: 100% Completed | 11/11 [00:07<00:00,  1.52it/s]
+(EngineCore_DP0 pid=744239) 
+(EngineCore_DP0 pid=744239) INFO 03-26 06:39:17 [default_loader.py:293] Loading weights took 7.31 seconds
+(EngineCore_DP0 pid=744239) INFO 03-26 06:39:18 [gpu_model_runner.py:4364] Model loading took 51.1 GiB memory and 8.369834 seconds
+(EngineCore_DP0 pid=744239) INFO 03-26 06:39:18 [gpu_model_runner.py:5280] Encoder cache will be initialized with a budget of 16384 tokens, and profiled with 1 image items of the maximum feature size.
+(EngineCore_DP0 pid=744239) INFO 03-26 06:39:26 [decorators.py:465] Directly load AOT compilation from path /home/v-tiossowski/.cache/vllm/torch_compile_cache/torch_aot_compile/0232891e22bd4d7db98ac2f43c441f0f81d0a431216053ca49fadeaff23e2af3/rank_0_0/model
+(EngineCore_DP0 pid=744239) INFO 03-26 06:39:26 [backends.py:916] Using cache directory: /home/v-tiossowski/.cache/vllm/torch_compile_cache/feaf61af16/rank_0_0/backbone for vLLM's torch.compile
+(EngineCore_DP0 pid=744239) INFO 03-26 06:39:26 [backends.py:976] Dynamo bytecode transform time: 3.56 s
+(EngineCore_DP0 pid=744239) INFO 03-26 06:39:37 [backends.py:266] Directly load the compiled graph(s) for compile range (1, 8192) from the cache, took 9.433 s
+(EngineCore_DP0 pid=744239) INFO 03-26 06:39:37 [monitor.py:35] torch.compile takes 13.90 s in total
+(EngineCore_DP0 pid=744239) INFO 03-26 06:39:38 [gpu_worker.py:424] Available KV cache memory: 18.3 GiB
+(EngineCore_DP0 pid=744239) INFO 03-26 06:39:38 [kv_cache_utils.py:1314] GPU KV cache size: 74,480 tokens
+(EngineCore_DP0 pid=744239) INFO 03-26 06:39:38 [kv_cache_utils.py:1319] Maximum concurrency for 40,000 tokens per request: 6.95x
+(EngineCore_DP0 pid=744239) Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):   0%|          | 0/51 [00:00<?, ?it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):   2%|▏         | 1/51 [00:00<00:08,  5.85it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):   4%|▍         | 2/51 [00:00<00:08,  6.05it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):   6%|▌         | 3/51 [00:00<00:07,  6.12it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):   8%|▊         | 4/51 [00:00<00:07,  6.17it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  10%|▉         | 5/51 [00:00<00:07,  6.23it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  12%|█▏        | 6/51 [00:00<00:07,  6.24it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  14%|█▎        | 7/51 [00:01<00:07,  6.25it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  16%|█▌        | 8/51 [00:01<00:06,  6.25it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  18%|█▊        | 9/51 [00:01<00:06,  6.58it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  20%|█▉        | 10/51 [00:01<00:05,  6.85it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  22%|██▏       | 11/51 [00:01<00:05,  6.84it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  24%|██▎       | 12/51 [00:01<00:05,  6.98it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  25%|██▌       | 13/51 [00:01<00:05,  7.05it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  27%|██▋       | 14/51 [00:02<00:05,  7.09it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  29%|██▉       | 15/51 [00:02<00:05,  7.13it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  31%|███▏      | 16/51 [00:02<00:04,  7.24it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  33%|███▎      | 17/51 [00:02<00:04,  7.61it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  35%|███▌      | 18/51 [00:02<00:04,  7.93it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  37%|███▋      | 19/51 [00:02<00:03,  8.14it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  39%|███▉      | 20/51 [00:02<00:03,  8.32it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  41%|████      | 21/51 [00:02<00:03,  8.45it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  43%|████▎     | 22/51 [00:03<00:03,  8.53it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  45%|████▌     | 23/51 [00:03<00:03,  8.58it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  47%|████▋     | 24/51 [00:03<00:03,  8.63it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  49%|████▉     | 25/51 [00:03<00:03,  8.62it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  51%|█████     | 26/51 [00:03<00:02,  8.67it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  53%|█████▎    | 27/51 [00:03<00:02,  8.70it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  55%|█████▍    | 28/51 [00:03<00:02,  8.69it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  57%|█████▋    | 29/51 [00:03<00:02,  8.67it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  59%|█████▉    | 30/51 [00:03<00:02,  8.70it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  61%|██████    | 31/51 [00:04<00:02,  8.66it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  63%|██████▎   | 32/51 [00:04<00:02,  8.56it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  65%|██████▍   | 33/51 [00:04<00:02,  8.91it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  67%|██████▋   | 34/51 [00:04<00:01,  9.20it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  69%|██████▊   | 35/51 [00:04<00:01,  9.36it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  73%|███████▎  | 37/51 [00:04<00:01,  9.71it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  76%|███████▋  | 39/51 [00:04<00:01,  9.92it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  80%|████████  | 41/51 [00:05<00:01,  9.98it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  84%|████████▍ | 43/51 [00:05<00:00, 10.19it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  88%|████████▊ | 45/51 [00:05<00:00, 10.37it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  92%|█████████▏| 47/51 [00:05<00:00, 10.61it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE):  96%|█████████▌| 49/51 [00:05<00:00, 10.81it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE): 100%|██████████| 51/51 [00:06<00:00, 10.86it/s]Capturing CUDA graphs (mixed prefill-decode, PIECEWISE): 100%|██████████| 51/51 [00:06<00:00,  8.44it/s]
+(EngineCore_DP0 pid=744239) Capturing CUDA graphs (decode, FULL):   0%|          | 0/35 [00:00<?, ?it/s]Capturing CUDA graphs (decode, FULL):   3%|▎         | 1/35 [00:00<00:06,  5.63it/s]Capturing CUDA graphs (decode, FULL):   6%|▌         | 2/35 [00:00<00:05,  6.18it/s]Capturing CUDA graphs (decode, FULL):   9%|▊         | 3/35 [00:00<00:05,  6.37it/s]Capturing CUDA graphs (decode, FULL):  11%|█▏        | 4/35 [00:00<00:04,  6.47it/s]Capturing CUDA graphs (decode, FULL):  14%|█▍        | 5/35 [00:00<00:04,  6.50it/s]Capturing CUDA graphs (decode, FULL):  17%|█▋        | 6/35 [00:00<00:04,  6.63it/s]Capturing CUDA graphs (decode, FULL):  20%|██        | 7/35 [00:01<00:04,  6.73it/s]Capturing CUDA graphs (decode, FULL):  23%|██▎       | 8/35 [00:01<00:03,  6.77it/s]Capturing CUDA graphs (decode, FULL):  26%|██▌       | 9/35 [00:01<00:03,  6.82it/s]Capturing CUDA graphs (decode, FULL):  29%|██▊       | 10/35 [00:01<00:03,  6.91it/s]Capturing CUDA graphs (decode, FULL):  31%|███▏      | 11/35 [00:01<00:03,  6.96it/s]Capturing CUDA graphs (decode, FULL):  34%|███▍      | 12/35 [00:01<00:03,  7.03it/s]Capturing CUDA graphs (decode, FULL):  37%|███▋      | 13/35 [00:01<00:03,  7.11it/s]Capturing CUDA graphs (decode, FULL):  40%|████      | 14/35 [00:02<00:02,  7.17it/s]Capturing CUDA graphs (decode, FULL):  43%|████▎     | 15/35 [00:02<00:02,  7.21it/s]Capturing CUDA graphs (decode, FULL):  46%|████▌     | 16/35 [00:02<00:02,  7.26it/s]Capturing CUDA graphs (decode, FULL):  49%|████▊     | 17/35 [00:02<00:02,  7.56it/s]Capturing CUDA graphs (decode, FULL):  51%|█████▏    | 18/35 [00:02<00:02,  7.78it/s]Capturing CUDA graphs (decode, FULL):  54%|█████▍    | 19/35 [00:02<00:01,  8.01it/s]Capturing CUDA graphs (decode, FULL):  57%|█████▋    | 20/35 [00:02<00:01,  8.08it/s]Capturing CUDA graphs (decode, FULL):  60%|██████    | 21/35 [00:02<00:01,  8.13it/s]Capturing CUDA graphs (decode, FULL):  63%|██████▎   | 22/35 [00:03<00:01,  8.22it/s]Capturing CUDA graphs (decode, FULL):  66%|██████▌   | 23/35 [00:03<00:01,  8.29it/s]Capturing CUDA graphs (decode, FULL):  69%|██████▊   | 24/35 [00:03<00:01,  8.43it/s]Capturing CUDA graphs (decode, FULL):  71%|███████▏  | 25/35 [00:03<00:01,  8.64it/s]Capturing CUDA graphs (decode, FULL):  74%|███████▍  | 26/35 [00:03<00:01,  8.81it/s]Capturing CUDA graphs (decode, FULL):  77%|███████▋  | 27/35 [00:03<00:00,  8.88it/s]Capturing CUDA graphs (decode, FULL):  80%|████████  | 28/35 [00:03<00:00,  8.95it/s]Capturing CUDA graphs (decode, FULL):  83%|████████▎ | 29/35 [00:03<00:00,  9.04it/s]Capturing CUDA graphs (decode, FULL):  86%|████████▌ | 30/35 [00:03<00:00,  9.13it/s]Capturing CUDA graphs (decode, FULL):  89%|████████▊ | 31/35 [00:04<00:00,  9.21it/s]Capturing CUDA graphs (decode, FULL):  91%|█████████▏| 32/35 [00:04<00:00,  9.29it/s]Capturing CUDA graphs (decode, FULL):  94%|█████████▍| 33/35 [00:04<00:00,  9.39it/s]Capturing CUDA graphs (decode, FULL):  97%|█████████▋| 34/35 [00:04<00:00,  9.35it/s]Capturing CUDA graphs (decode, FULL): 100%|██████████| 35/35 [00:04<00:00,  9.46it/s]Capturing CUDA graphs (decode, FULL): 100%|██████████| 35/35 [00:04<00:00,  7.85it/s]
+(EngineCore_DP0 pid=744239) INFO 03-26 06:39:49 [gpu_model_runner.py:5386] Graph capturing finished in 11 secs, took 1.13 GiB
+(EngineCore_DP0 pid=744239) INFO 03-26 06:39:49 [core.py:282] init engine (profile, create kv cache, warmup model) took 31.19 seconds
+(EngineCore_DP0 pid=744239) INFO 03-26 06:39:49 [vllm.py:747] Asynchronous scheduling is enabled.
+INFO 03-26 06:39:49 [llm.py:388] Supported tasks: ['generate']
+2026-03-26 06:39:49  INFO      Loading QA dataset from /home/v-tiossowski/HealthcareAgent/mimic-code/data/MIMICIV_first_day_sofa_dataset/first_day_sofa.csv
+2026-03-26 06:39:50  INFO      Dataset: 1000 rows, columns: ['subject_id', 'hadm_id', 'stay_id', 'intime', 'outtime', 'first_careunit', 'last_careunit', 'gt_label', 'question', 'gt_answer_type', 'split', 'sofa', 'respiration', 'coagulation', 'liver', 'cardiovascular', 'cns', 'renal']
+2026-03-26 06:39:50  INFO      Filtered to train split: 100 rows
+2026-03-26 06:39:50  INFO      Auto-discovered ground-truth SQL: /home/v-tiossowski/HealthcareAgent/mimic-code/mimic-iv/concepts_duckdb/firstday/first_day_sofa.sql
+2026-03-26 06:39:50  INFO      === Iteration 1/100  run=first_day_sofa  best_qa=0.0% ===
+INFO 03-26 06:39:52 [hf.py:318] Detected the chat template content format to be 'string'. You can set `--chat-template-content-format` to override this.
+2026-03-26 06:40:06  INFO      Exec block 1/1 …
+2026-03-26 06:40:06  INFO      Output: ['qsofa_guideline', 'sofa_guideline']
+
+2026-03-26 06:40:06  INFO      === Iteration 2/100  run=first_day_sofa  best_qa=0.0% ===
+2026-03-26 06:40:09  INFO      Exec block 1/1 …
+2026-03-26 06:40:09  INFO      Output: '# SOFA — Clinical Guideline\n# Generated by generate_guidelines.py\n# Source articles: 10 (PMID39539863, PMID39553003, PMID40375069, PMID41159829, PMID26903338...)\n############################################################\n\n# Sequential Organ Failure Assessment (SOFA) Score — Clinical Guideline\n\n---\n\n## 1. Definition\n\nThe **Sequential Organ Failure Assessment (SOFA)** score is a composite organ-dysfunction scoring system designed to quantify the degree of dysfunction across six organ
+2026-03-26 06:40:09  INFO      === Iteration 3/100  run=first_day_sofa  best_qa=0.0% ===
+2026-03-26 06:40:12  INFO      Exec block 1/1 …
+2026-03-26 06:40:12  INFO      Output: ['acei', 'age', 'aki', 'antibiotic', 'arb', 'bg', 'blood_differential', 'cardiac_marker', 'charlson', 'chemistry', 'coagulation', 'code_status', 'complete_blood_count', 'creatinine_baseline', 'crrt', 'dobutamine', 'dopamine', 'enzyme', 'epinephrine', 'first_day_bg', '... (34 more; pass a keyword to filter)']
+
+2026-03-26 06:40:12  INFO      === Iteration 4/100  run=first_day_sofa  best_qa=0.0% ===
+2026-03-26 06:40:15  INFO      Exec block 1/1 …
+2026-03-26 06:40:15  INFO      Output: ['first_day_bg', 'first_day_bg_art', 'first_day_gcs', 'first_day_height', 'first_day_lab', 'first_day_rrt', 'first_day_urine_output', 'first_day_vitalsign', 'first_day_weight']
+
+2026-03-26 06:40:15  INFO      === Iteration 5/100  run=first_day_sofa  best_qa=0.0% ===
+2026-03-26 06:40:20  INFO      Exec block 1/1 …
+2026-03-26 06:40:20  INFO      Output: 'def first_day_urine_output(stay_id):\n    """\n    Extract urine output information for a patient\'s first ICU day.\n\n    This function retrieves urine output data from the ICU output events table\n    and calculates the total urine output during the first 24 hours of the ICU stay.\n    It also determines if the patient has oliguria or severe oliguria on that day.\n\n    Urine output is captured from the following itemids in the outputevents table:\n    - 226557: R Ureteral Stent\n    - 226558
+2026-03-26 06:40:20  INFO      === Iteration 6/100  run=first_day_sofa  best_qa=0.0% ===
+2026-03-26 06:40:23  INFO      Exec block 1/1 …
+2026-03-26 06:40:23  INFO      Output: 'def first_day_vitalsign(stay_id):\n    """\n    Extract vital sign information for the first day (24 hours) of an ICU stay.\n\n    This function retrieves heart rate, mean arterial pressure (MAP), and \n    respiratory rate measurements from the chartevents table for the period \n    from ICU admission (intime) to 24 hours after ICU admission.\n\n    Parameters\n    ----------\n    stay_id : int\n        The ICU stay identifier.\n\n    Returns\n    -------\n    dict\n        A dictionary contai
+2026-03-26 06:40:23  INFO      === Iteration 7/100  run=first_day_sofa  best_qa=0.0% ===
+2026-03-26 06:40:27  INFO      Exec block 1/1 …
+2026-03-26 06:40:27  INFO      Output: 'def first_day_gcs(stay_id):\n    """\n    Extract Glasgow Coma Scale (GCS) information for the first day of an ICU stay.\n\n    Parameters\n    ----------\n    stay_id : int\n        The ICU stay identifier.\n\n    Returns\n    -------\n    dict\n        Dictionary with GCS information including:\n        - \'stay_id\', \'subject_id\', \'hadm_id\', \'intime\', \'first_day_end\'\n        - \'first_day_gcs_records\': DataFrame with all GCS recordings\n        - \'min_gcs_first_day\': Min GCS from
+2026-03-26 06:40:27  INFO      === Iteration 8/100  run=first_day_sofa  best_qa=0.0% ===
+2026-03-26 06:40:33  INFO      Exec block 1/1 …
+2026-03-26 06:40:33  INFO      Output: 'def first_day_lab(stay_id, subject_id, hadm_id):\n    """\n    Extract laboratory values for the first day (24 hours) of an ICU stay.\n\n    This function retrieves key laboratory measurements from the ICU chart events\n    during the first 24 hours after ICU admission. It provides summary statistics\n    and clinical flags for common lab abnormalities.\n\n    Parameters\n    ----------\n    stay_id : int, optional\n        The ICU stay identifier. If provided, data is filtered to this specific
+2026-03-26 06:40:33  INFO      === Iteration 9/100  run=first_day_sofa  best_qa=0.0% ===
+2026-03-26 06:40:42  INFO      Exec block 1/1 …
+2026-03-26 06:40:42  INFO      Output:     table_schema          table_name
+0   mimiciv_hosp          admissions
+1   mimiciv_hosp             d_hcpcs
+2   mimiciv_hosp     d_icd_diagnoses
+3   mimiciv_hosp    d_icd_procedures
+4   mimiciv_hosp          d_labitems
+5   mimiciv_hosp       diagnoses_icd
+6   mimiciv_hosp            drgcodes
+7   mimiciv_hosp                emar
+8   mimiciv_hosp         emar_detail
+9   mimiciv_hosp         hcpcsevents
+10  mimiciv_hosp           labevents
+11  mimiciv_hosp  microbiologyevents
+12  mimiciv_hosp   
+2026-03-26 06:40:42  INFO      === Iteration 10/100  run=first_day_sofa  best_qa=0.0% ===
+2026-03-26 06:40:53  INFO      Exec block 1/1 …
+2026-03-26 06:40:53  INFO      Output: Error:
+Traceback (most recent call last):
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 643, in execute
+    _run_with_timeout(_do_execute, timeout)
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 174, in _run_with_timeout
+    raise error[0]
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 156, in target
+    result[0] = func(*args, **kwargs)
+                ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/v-tiossowsk
+2026-03-26 06:40:53  INFO      === Iteration 11/100  run=first_day_sofa  best_qa=0.0% ===
+2026-03-26 06:40:58  INFO      Exec block 1/1 …
+2026-03-26 06:40:58  INFO      Output:   column_name data_type
+0      itemid   INTEGER
+1       label   VARCHAR
+2       fluid   VARCHAR
+3    category   VARCHAR
+
+2026-03-26 06:40:58  INFO      === Iteration 12/100  run=first_day_sofa  best_qa=0.0% ===
+2026-03-26 06:41:03  INFO      Exec block 1/1 …
+2026-03-26 06:41:03  INFO      Output:        column_name data_type
+0           itemid   INTEGER
+1            label   VARCHAR
+2     abbreviation   VARCHAR
+3          linksto   VARCHAR
+4         category   VARCHAR
+5         unitname   VARCHAR
+6       param_type   VARCHAR
+7   lownormalvalue     FLOAT
+8  highnormalvalue     FLOAT
+
+2026-03-26 06:41:03  INFO      === Iteration 13/100  run=first_day_sofa  best_qa=0.0% ===
+2026-03-26 06:41:11  INFO      Exec block 1/1 …
+2026-03-26 06:41:11  INFO      Output:     itemid                               label                        abbreviation unitname
+0   220615                  Creatinine (serum)                  Creatinine (serum)     None
+1   220739                   GCS - Eye Opening                         Eye Opening      NaN
+2   223900               GCS - Verbal Response                     Verbal Response      NaN
+3   223901                GCS - Motor Response                      Motor Response      NaN
+4   225170                           Pla
+2026-03-26 06:41:11  INFO      === Iteration 14/100  run=first_day_sofa  best_qa=0.0% ===
+2026-03-26 06:41:22  INFO      Exec block 1/1 …
+2026-03-26 06:41:22  INFO      Output:     itemid                         label                  abbreviation unitname
+0   225302  Pre-Oxygentated (Intubation)  Pre-Oxygentated (Intubation)      NaN
+1   226754             FiO2ApacheIIValue             FiO2ApacheIIValue        %
+2   226767           OxygenApacheIIScore           OxygenApacheIIScore     None
+3   227009             FiO2_ApacheIV_old             FiO2_ApacheIV_old     None
+4   227010                 FiO2_ApacheIV                 FiO2_ApacheIV        %
+5   227035          
+2026-03-26 06:41:22  INFO      === Iteration 15/100  run=first_day_sofa  best_qa=0.0% ===
+2026-03-26 06:41:28  INFO      Exec block 1/1 …
+2026-03-26 06:41:28  INFO      Output: Empty DataFrame
+Columns: [itemid, label, abbreviation, unitname]
+Index: []
+
+2026-03-26 06:41:28  INFO      === Iteration 16/100  run=first_day_sofa  best_qa=0.0% ===
+2026-03-26 06:41:36  INFO      Exec block 1/1 …
+2026-03-26 06:41:36  INFO      Output:    itemid                       label   category
+0   50801  Alveolar-arterial Gradient  Blood Gas
+1   50816                      Oxygen  Blood Gas
+2   50817           Oxygen Saturation  Blood Gas
+
+2026-03-26 06:41:36  INFO      === Iteration 17/100  run=first_day_sofa  best_qa=0.0% ===
+2026-03-26 06:41:41  INFO      Exec block 1/1 …
+2026-03-26 06:41:41  INFO      Output:    itemid            label
+0   50821              pO2
+1   50832  pO2, Body Fluid
+2   52042              pO2
+
+2026-03-26 06:41:41  INFO      === Iteration 18/100  run=first_day_sofa  best_qa=0.0% ===
+2026-03-26 06:41:48  INFO      Exec block 1/1 …
+2026-03-26 06:41:48  INFO      Output: Empty DataFrame
+Columns: [itemid, label]
+Index: []
+
+2026-03-26 06:41:48  INFO      === Iteration 19/100  run=first_day_sofa  best_qa=0.0% ===
+2026-03-26 06:41:53  INFO      Exec block 1/1 …
+2026-03-26 06:41:53  INFO      Output:    itemid                  label
+0  229239  FiO2 Challenge Result
+1  227009      FiO2_ApacheIV_old
+2  229841              FiO2 (CH)
+3  226754      FiO2ApacheIIValue
+4  229280            FiO2 (ECMO)
+5  227010          FiO2_ApacheIV
+6  229238         FiO2 Challenge
+
+2026-03-26 06:41:53  INFO      === Iteration 20/100  run=first_day_sofa  best_qa=0.0% ===
+2026-03-26 06:42:00  INFO      Exec block 1/1 …
+2026-03-26 06:42:00  INFO      Output:    itemid                  label
+0  225628     CK-MB fraction (%)
+1  223835   Inspired O2 Fraction
+2  227008      Ejection Fraction
+3  229841              FiO2 (CH)
+4  226754      FiO2ApacheIIValue
+5  229280            FiO2 (ECMO)
+6  227009      FiO2_ApacheIV_old
+7  229238         FiO2 Challenge
+8  229239  FiO2 Challenge Result
+9  227010          FiO2_ApacheIV
+
+2026-03-26 06:42:00  INFO      === Iteration 21/100  run=first_day_sofa  best_qa=0.0% ===
+2026-03-26 06:42:08  INFO      Exec block 1/1 …
+2026-03-26 06:42:08  INFO      Output:    itemid           label
+0  222315     Vasopressin
+1  221653      Dobutamine
+2  221289     Epinephrine
+3  229617    Epinephrine.
+4  221662        Dopamine
+5  221906  Norepinephrine
+
+2026-03-26 06:42:08  INFO      === Iteration 22/100  run=first_day_sofa  best_qa=0.0% ===
+2026-03-26 06:42:14  INFO      Exec block 1/1 …
+2026-03-26 06:42:14  INFO      Output:       column_name  data_type
+0      subject_id    INTEGER
+1         hadm_id    INTEGER
+2         stay_id    INTEGER
+3  first_careunit    VARCHAR
+4   last_careunit    VARCHAR
+5          intime  TIMESTAMP
+6         outtime  TIMESTAMP
+7             los      FLOAT
+
+2026-03-26 06:42:14  INFO      === Iteration 23/100  run=first_day_sofa  best_qa=0.0% ===
+2026-03-26 06:42:23  INFO      Exec block 1/1 …
+2026-03-26 06:42:23  INFO      Output:                       column_name  data_type
+0                      subject_id    INTEGER
+1                         hadm_id    INTEGER
+2                         stay_id    INTEGER
+3                    caregiver_id    INTEGER
+4                       starttime  TIMESTAMP
+5                         endtime  TIMESTAMP
+6                       storetime  TIMESTAMP
+7                          itemid    INTEGER
+8                          amount      FLOAT
+9                       amountuom    VARCHAR
+10   
+2026-03-26 06:42:23  INFO      === Iteration 24/100  run=first_day_sofa  best_qa=0.0% ===
+2026-03-26 06:42:30  INFO      Exec block 1/1 …
+2026-03-26 06:42:30  INFO      Output:    itemid                   label
+0  226772  PotassiumApacheIIValue
+1  226775     SodiumApacheIIScore
+2  227023            MAP_ApacheIV
+3  226765        MapApacheIIScore
+4  226771  PotassiumApacheIIScore
+5  226766        MapApacheIIValue
+6  227024       MapScore_ApacheIV
+7  226776     SodiumApacheIIValue
+
+2026-03-26 06:42:30  INFO      === Iteration 25/100  run=first_day_sofa  best_qa=0.0% ===
+2026-03-26 06:42:36  INFO      Exec block 1/1 …
+2026-03-26 06:42:36  INFO      Output:    itemid                             label
+0  220052      Arterial Blood Pressure mean
+1  226857        PA mean pressure (PA Line)
+2  220061    Pulmonary Artery Pressure mean
+3  226849      RA (mean) pressure (PA Line)
+4  220181  Non Invasive Blood Pressure mean
+5  224697              Mean Airway Pressure
+
+2026-03-26 06:42:36  INFO      === Iteration 26/100  run=first_day_sofa  best_qa=0.0% ===
+2026-03-26 06:42:55  INFO      Exec block 1/1 …
+2026-03-26 06:42:55  INFO      Output: "Functions from 'first_day_vitalsign' loaded successfully."
+
+2026-03-26 06:42:55  INFO      === Iteration 27/100  run=first_day_sofa  best_qa=0.0% ===
+2026-03-26 06:43:04  INFO      Exec block 1/1 …
+2026-03-26 06:43:04  INFO      Output: "Functions from 'first_day_urine_output' loaded successfully."
+
+2026-03-26 06:43:04  INFO      === Iteration 28/100  run=first_day_sofa  best_qa=0.0% ===
+2026-03-26 06:43:09  INFO      Exec block 1/1 …
+2026-03-26 06:43:09  INFO      Output: "Functions from 'first_day_gcs' loaded successfully."
+
+2026-03-26 06:43:09  INFO      === Iteration 29/100  run=first_day_sofa  best_qa=0.0% ===
+2026-03-26 06:43:14  INFO      Exec block 1/1 …
+2026-03-26 06:43:14  INFO      Output: "Functions from 'first_day_lab' loaded successfully."
+
+2026-03-26 06:43:14  INFO      === Iteration 30/100  run=first_day_sofa  best_qa=0.0% ===
+2026-03-26 06:43:25  INFO      Exec block 1/1 …
+2026-03-26 06:43:25  INFO      Output:    itemid            label   category
+0   50821              pO2  Blood Gas
+1   50832  pO2, Body Fluid  Blood Gas
+2   52042              pO2  Blood Gas
+
+2026-03-26 06:43:25  INFO      === Iteration 31/100  run=first_day_sofa  best_qa=0.0% ===
+2026-03-26 06:43:38  INFO      Exec block 1/1 …
+2026-03-26 06:43:38  INFO      Output:    itemid                 label abbreviation unitname
+0  223835  Inspired O2 Fraction         FiO2     None
+
+2026-03-26 06:43:38  INFO      === Iteration 32/100  run=first_day_sofa  best_qa=0.0% ===
+2026-03-26 06:43:45  INFO      Exec block 1/1 …
+2026-03-26 06:43:45  INFO      Output:           column_name  data_type
+0         labevent_id    INTEGER
+1          subject_id    INTEGER
+2             hadm_id    INTEGER
+3         specimen_id    INTEGER
+4              itemid    INTEGER
+5   order_provider_id    VARCHAR
+6           charttime  TIMESTAMP
+7           storetime  TIMESTAMP
+8               value    VARCHAR
+9            valuenum     DOUBLE
+10           valueuom    VARCHAR
+11    ref_range_lower     DOUBLE
+12    ref_range_upper     DOUBLE
+13               flag    VARCHAR
+14   
+2026-03-26 06:43:45  INFO      === Iteration 33/100  run=first_day_sofa  best_qa=0.0% ===
+2026-03-26 06:44:00  INFO      Exec block 1/1 …
+2026-03-26 06:44:00  INFO      Output:      column_name  data_type
+0     subject_id    INTEGER
+1        hadm_id    INTEGER
+2        stay_id    INTEGER
+3   caregiver_id    INTEGER
+4      charttime  TIMESTAMP
+5      storetime  TIMESTAMP
+6         itemid    INTEGER
+7          value    VARCHAR
+8       valuenum      FLOAT
+9       valueuom    VARCHAR
+10       warning   SMALLINT
+
+2026-03-26 06:44:00  INFO      === Iteration 34/100  run=first_day_sofa  best_qa=0.0% ===
+2026-03-26 06:44:15  INFO      Exec block 1/1 …
+2026-03-26 06:44:15  INFO      Output:     stay_id  subject_id   hadm_id              intime
+0  39553978    10000032  29079034 2180-07-23 14:00:00
+1  37081114    10000690  25860671 2150-11-02 19:37:00
+2  39765666    10000980  26913865 2189-06-27 08:42:00
+3  37067082    10001217  24597018 2157-11-20 19:18:02
+4  34592300    10001217  27703517 2157-12-19 15:42:24
+
+2026-03-26 06:44:15  INFO      === Iteration 35/100  run=first_day_sofa  best_qa=0.0% ===
+2026-03-26 06:44:21  INFO      Exec block 1/1 …
+2026-03-26 06:44:22  INFO      Output: {'subject_id': 10000032, 'hadm_id': 29079034, 'stay_id': 39553978, 'intime': '2180-07-23 14:00:00', 'wbc_count': {'values': [], 'max': None, 'min': None, 'mean': None, 'count': 0, 'has_elevated_wbc': False}, 'platelet_count': {'values': [], 'max': None, 'min': None, 'mean': None, 'count': 0, 'has_thrombocytopenia': False}, 'creatinine': {'values': [0.5], 'max': 0.5, 'min': 0.5, 'mean': 0.5, 'count': 1}, 'all_values':     stay_id  subject_id   hadm_id  ... valuenum   parameter   unit
+0  39553978 
+2026-03-26 06:44:22  INFO      === Iteration 36/100  run=first_day_sofa  best_qa=0.0% ===
+2026-03-26 06:44:33  INFO      Exec block 1/1 …
+2026-03-26 06:44:33  INFO      Output:     itemid                          label
+0    51966                      Bilirubin
+1    51028   Bilirubin, Total, Body Fluid
+2    50884            Bilirubin, Indirect
+3    50838      Bilirubin, Total, Ascites
+4    51464                      Bilirubin
+5    51568            Bilirubin, Neonatal
+6    50883              Bilirubin, Direct
+7    53089               Bilirubin, Total
+8    51465             Bilirubin Crystals
+9    51569    Bilirubin, Neonatal, Direct
+10   51049      Bilirubin, Total, Pleu
+2026-03-26 06:44:33  INFO      === Iteration 37/100  run=first_day_sofa  best_qa=0.0% ===
+2026-03-26 06:44:48  INFO      Exec block 1/1 …
+2026-03-26 06:44:48  INFO      Output: Empty DataFrame
+Columns: [itemid, charttime, valuenum, valueuom]
+Index: []
+
+2026-03-26 06:44:48  INFO      === Iteration 38/100  run=first_day_sofa  best_qa=0.0% ===
+2026-03-26 06:44:57  INFO      Exec block 1/1 …
+2026-03-26 06:44:57  INFO      Output: Empty DataFrame
+Columns: [itemid, label, charttime, valuenum, valueuom]
+Index: []
+
+2026-03-26 06:44:57  INFO      === Iteration 39/100  run=first_day_sofa  best_qa=0.0% ===
+2026-03-26 06:45:06  INFO      Exec block 1/1 …
+2026-03-26 06:45:06  INFO      Output:    itemid                  label    cnt
+0  229280            FiO2 (ECMO)  26636
+1  229841              FiO2 (CH)   4201
+2  229238         FiO2 Challenge    192
+3  229239  FiO2 Challenge Result    164
+4  226754      FiO2ApacheIIValue     13
+5  227010          FiO2_ApacheIV      6
+
+2026-03-26 06:45:06  INFO      === Iteration 40/100  run=first_day_sofa  best_qa=0.0% ===
+2026-03-26 06:45:17  INFO      Exec block 1/1 …
+2026-03-26 06:45:17  INFO      Output: Empty DataFrame
+Columns: [itemid, label, charttime, valuenum, valueuom]
+Index: []
+
+2026-03-26 06:45:17  INFO      === Iteration 41/100  run=first_day_sofa  best_qa=0.0% ===
+2026-03-26 06:45:27  INFO      Exec block 1/1 …
+2026-03-26 06:45:27  INFO      Output:    itemid            label     cnt
+0   50821              pO2  698483
+1   50832  pO2, Body Fluid       2
+
+2026-03-26 06:45:27  INFO      === Iteration 42/100  run=first_day_sofa  best_qa=0.0% ===
+2026-03-26 06:45:36  INFO      Exec block 1/1 …
+2026-03-26 06:45:36  INFO      Output:    itemid                 label      cnt
+0  223835  Inspired O2 Fraction  1144289
+
+2026-03-26 06:45:36  INFO      === Iteration 43/100  run=first_day_sofa  best_qa=0.0% ===
+2026-03-26 06:45:45  INFO      Exec block 1/1 …
+2026-03-26 06:45:45  INFO      Output:    itemid                          label     cnt
+0  226253               SpO2 Desat Limit  810687
+1  227516             PO2 (Mixed Venous)    9874
+2  229862  Forehead SpO2 Sensor in Place    1169
+3  227039                   PO2_ApacheIV       1
+
+2026-03-26 06:45:45  INFO      === Iteration 44/100  run=first_day_sofa  best_qa=0.0% ===
+2026-03-26 06:46:01  INFO      Exec block 1/1 …
+2026-03-26 06:46:01  INFO      Output: Empty DataFrame
+Columns: [itemid, label, cnt]
+Index: []
+
+2026-03-26 06:46:01  INFO      === Iteration 45/100  run=first_day_sofa  best_qa=0.0% ===
+2026-03-26 06:46:10  INFO      Exec block 1/1 …
+2026-03-26 06:46:10  INFO      Output:    itemid                         label      cnt
+0  220052  Arterial Blood Pressure mean  3096934
+
+2026-03-26 06:46:10  INFO      === Iteration 46/100  run=first_day_sofa  best_qa=0.0% ===
+2026-03-26 06:46:52  INFO      Exec block 1/1 …
+2026-03-26 06:46:52  INFO      Output: Empty DataFrame
+Columns: [itemid, label, starttime, amount, rate, rateuom, patientweight]
+Index: []
+
+2026-03-26 06:46:52  INFO      === Iteration 47/100  run=first_day_sofa  best_qa=0.0% ===
+2026-03-26 06:47:07  INFO      Exec block 1/1 …
+2026-03-26 06:47:07  INFO      Output:     itemid                               label                        abbreviation unitname
+0   220739                   GCS - Eye Opening                         Eye Opening      NaN
+1   223900               GCS - Verbal Response                     Verbal Response      NaN
+2   223901                GCS - Motor Response                      Motor Response      NaN
+3   226755                    GcsApacheIIScore                    GcsApacheIIScore     None
+4   226756                 GCSEyeApacheI
+2026-03-26 06:47:07  INFO      === Iteration 48/100  run=first_day_sofa  best_qa=0.0% ===
+(EngineCore_DP0 pid=744239) /home/v-tiossowski/anaconda3/envs/autoformalization/lib/python3.12/site-packages/torch/_dynamo/eval_frame.py:1181: UserWarning: Input tensor shape suggests potential format mismatch: seq_len (6) < num_heads (16). This may indicate the inputs were passed in head-first format [B, H, T, ...] Please verify your input tensor format matches the expected shape [B, T, H, ...].
+(EngineCore_DP0 pid=744239)   return fn(*args, **kwargs)
+(EngineCore_DP0 pid=744239) /home/v-tiossowski/anaconda3/envs/autoformalization/lib/python3.12/site-packages/vllm/model_executor/layers/fla/ops/utils.py:113: UserWarning: Input tensor shape suggests potential format mismatch: seq_len (6) < num_heads (48). This may indicate the inputs were passed in head-first format [B, H, T, ...] when head_first=False was specified. Please verify your input tensor format matches the expected shape [B, T, H, ...].
+(EngineCore_DP0 pid=744239)   return fn(*contiguous_args, **contiguous_kwargs)
+2026-03-26 06:47:38  INFO      Exec block 1/1 …
+2026-03-26 06:47:38  INFO      Output: {'stay_id': 39553978, 'subject_id': 10000032, 'hadm_id': 29079034, 'intime': '2180-07-23 14:00:00', 'first_day_end': '2180-07-24 14:00:00', 'heart_rate': {'min': 91.0, 'max': 105.0, 'avg': 96.5, 'count': 10}, 'map': {'min': 56.0, 'max': 67.0, 'avg': 62.3, 'count': 10}, 'respiratory_rate': {'min': 16.0, 'max': 24.0, 'avg': 20.7, 'count': 10}, 'has_hypotension': True, 'has_tachycardia': True, 'has_tachypnea': True, 'has_bradytachycardia': True}
+
+2026-03-26 06:47:38  INFO      === Iteration 49/100  run=first_day_sofa  best_qa=0.0% ===
+2026-03-26 06:47:45  INFO      Exec block 1/1 …
+2026-03-26 06:47:45  INFO      Output: {'stay_id': 39553978, 'subject_id': np.int32(10000032), 'hadm_id': np.int32(29079034), 'intime': '2180-07-23 14:00:00', 'first_day_end': '2180-07-24 14:00:00', 'first_day_gcs_records':             charttime  eye  verbal  motor  gcs_total
+0 2180-07-23 14:45:00  4.0     4.0    6.0       14.0
+1 2180-07-23 18:22:00  4.0     5.0    6.0       15.0
+2 2180-07-23 20:00:00  4.0     5.0    6.0       15.0, 'min_gcs_first_day': 14.0, 'min_gcs_first_day_all': 14.0, 'max_gcs_first_day': 15.0, 'has_severe_impai
+2026-03-26 06:47:45  INFO      === Iteration 50/100  run=first_day_sofa  best_qa=0.0% ===
+2026-03-26 06:47:56  INFO      Exec block 1/1 …
+2026-03-26 06:47:56  INFO      Output:    itemid                 label           charttime  valuenum valueuom
+0  223835  Inspired O2 Fraction 2150-11-02 20:27:00      70.0     None
+1  223835  Inspired O2 Fraction 2150-11-03 00:50:00      50.0     None
+2  223835  Inspired O2 Fraction 2150-11-03 04:38:00     100.0     None
+3  223835  Inspired O2 Fraction 2150-11-03 08:00:00     100.0     None
+4  223835  Inspired O2 Fraction 2150-11-03 09:00:00      70.0     None
+5  223835  Inspired O2 Fraction 2150-11-03 22:15:00      70.0     None
+6  
+2026-03-26 06:47:56  INFO      === Iteration 51/100  run=first_day_sofa  best_qa=0.0% ===
+2026-03-26 06:48:07  INFO      Exec block 1/1 …
+2026-03-26 06:48:07  INFO      Output:    itemid label           charttime  valuenum valueuom
+0   50821   pO2 2150-11-08 05:43:00      68.0    mm Hg
+
+2026-03-26 06:48:07  INFO      === Iteration 52/100  run=first_day_sofa  best_qa=0.0% ===
+2026-03-26 06:48:28  INFO      Exec block 1/1 …
+2026-03-26 06:48:28  INFO      Output: Empty DataFrame
+Columns: [itemid, label, starttime, amount, rate, rateuom, patientweight]
+Index: []
+
+2026-03-26 06:48:28  INFO      === Iteration 53/100  run=first_day_sofa  best_qa=0.0% ===
+2026-03-26 06:48:39  INFO      Exec block 1/1 …
+2026-03-26 06:48:39  INFO      Output:      stay_id  itemid           label           starttime      amount      rate     rateuom  patientweight
+0   34901199  221906  Norepinephrine 2110-01-19 03:00:00    0.664879  0.180233  mcg/kg/min     119.000000
+1   39953418  221653      Dobutamine 2110-01-19 03:01:00   86.162254  2.000605  mcg/kg/min      71.900002
+2   34901199  221906  Norepinephrine 2110-01-19 03:31:00    0.894527  0.250568  mcg/kg/min     119.000000
+3   34901199  221906  Norepinephrine 2110-01-19 04:01:00    2.676021  0.3811
+2026-03-26 06:48:39  INFO      === Iteration 54/100  run=first_day_sofa  best_qa=0.0% ===
+2026-03-26 06:49:19  INFO      Exec block 1/1 …
+2026-03-26 06:49:19  INFO      Output:    itemid             label   category
+0   50885  Bilirubin, Total  Chemistry
+
+2026-03-26 06:49:19  INFO      === Iteration 55/100  run=first_day_sofa  best_qa=0.0% ===
+2026-03-26 06:49:41  INFO      Exec block 1/1 …
+2026-03-26 06:49:41  INFO      Output:    itemid               label           charttime  valuenum valueuom
+0  220615  Creatinine (serum) 2150-11-03 02:56:00       0.9    mg/dL
+1  220615  Creatinine (serum) 2150-11-04 03:03:00       0.9    mg/dL
+2  220615  Creatinine (serum) 2150-11-04 17:54:00       0.8    mg/dL
+3  220615  Creatinine (serum) 2150-11-05 05:36:00       0.8    mg/dL
+4  220615  Creatinine (serum) 2150-11-06 03:10:00       0.7    mg/dL
+
+2026-03-26 06:49:41  INFO      === Iteration 56/100  run=first_day_sofa  best_qa=0.0% ===
+2026-03-26 06:50:21  INFO      Exec block 1/1 …
+2026-03-26 06:50:21  INFO      Output: Error:
+Traceback (most recent call last):
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 643, in execute
+    _run_with_timeout(_do_execute, timeout)
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 174, in _run_with_timeout
+    raise error[0]
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 156, in target
+    result[0] = func(*args, **kwargs)
+                ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/v-tiossowsk
+2026-03-26 06:50:21  INFO      === Iteration 57/100  run=first_day_sofa  best_qa=0.0% ===
+2026-03-26 06:50:32  INFO      Exec block 1/1 …
+2026-03-26 06:50:32  INFO      Output: Empty DataFrame
+Columns: [itemid, label, charttime, valueuom, value]
+Index: []
+
+2026-03-26 06:50:32  INFO      === Iteration 58/100  run=first_day_sofa  best_qa=0.0% ===
+2026-03-26 06:50:40  INFO      Exec block 1/1 …
+2026-03-26 06:50:40  INFO      Output:     column_name  data_type
+0    subject_id    INTEGER
+1       hadm_id    INTEGER
+2       stay_id    INTEGER
+3  caregiver_id    INTEGER
+4     charttime  TIMESTAMP
+5     storetime  TIMESTAMP
+6        itemid    INTEGER
+7         value      FLOAT
+8      valueuom    VARCHAR
+
+2026-03-26 06:50:40  INFO      === Iteration 59/100  run=first_day_sofa  best_qa=0.0% ===
+2026-03-26 06:51:17  INFO      Exec block 1/1 …
+2026-03-26 06:51:17  INFO      Output: {'subject_id': 10000690, 'hadm_id': 25860671, 'stay_id': 37081114, 'first_day_start': '2150-11-02 19:37:00', 'first_day_end': '2150-11-03 19:37:00', 'total_urine_output_ml': 695.0, 'num_records': 17, 'has_oliguria': np.False_, 'has_severe_oliguria': np.False_}
+
+2026-03-26 06:51:17  INFO      === Iteration 60/100  run=first_day_sofa  best_qa=0.0% ===
+2026-03-26 06:51:54  INFO      Exec block 1/1 …
+2026-03-26 06:51:54  INFO      Output:     stay_id  subject_id   hadm_id              intime
+0  37081114    10000690  25860671 2150-11-02 19:37:00
+
+2026-03-26 06:51:54  INFO      === Iteration 61/100  run=first_day_sofa  best_qa=0.0% ===
+2026-03-26 06:52:41  INFO      Exec block 1/1 …
+2026-03-26 06:52:41  INFO      Output:     stay_id              intime pao2_time  pao2           fio2_time   fio2
+0  37081114 2150-11-02 19:37:00       NaT   NaN 2150-11-02 20:27:00   70.0
+1  37081114 2150-11-02 19:37:00       NaT   NaN 2150-11-03 00:50:00   50.0
+2  37081114 2150-11-02 19:37:00       NaT   NaN 2150-11-03 04:38:00  100.0
+3  37081114 2150-11-02 19:37:00       NaT   NaN 2150-11-03 08:00:00  100.0
+4  37081114 2150-11-02 19:37:00       NaT   NaN 2150-11-03 09:00:00   70.0
+
+2026-03-26 06:52:41  INFO      === Iteration 62/100  run=first_day_sofa  best_qa=0.0% ===
+2026-03-26 06:52:52  INFO      Exec block 1/1 …
+2026-03-26 06:52:52  INFO      Output:    subject_id   hadm_id           charttime   pao2
+0    10127505  27081669 2133-05-29 15:16:00   78.0
+1    10127505  27081669 2133-05-31 19:21:00   78.0
+2    10127505  27081669 2133-06-08 16:14:00  102.0
+3    10127505  27081669 2133-06-09 01:52:00   92.0
+4    10127505  27081669 2133-06-09 12:57:00  121.0
+5    10127505  27081669 2133-06-11 12:09:00   93.0
+6    10127505  27081669 2133-06-12 22:04:00   95.0
+7    10516511  28798038 2124-04-26 08:01:00  406.0
+8    10516511  28798038 2124-04-26 11:00:
+2026-03-26 06:52:52  INFO      === Iteration 63/100  run=first_day_sofa  best_qa=0.0% ===
+2026-03-26 06:53:05  INFO      Exec block 1/1 …
+2026-03-26 06:53:05  INFO      Output:    subject_id   hadm_id           charttime   pao2
+0    11811233  20179722 2163-06-26 14:38:00  100.0
+1    11811233  20179722 2163-06-28 03:51:00  107.0
+2    11811472  24446294 2138-01-30 00:19:00  213.0
+3    11811502  26280259 2135-12-16 17:45:00  120.0
+4    11964641  25048257 2183-03-27 11:51:00  188.0
+5    11964706  29891334 2167-02-04 10:05:00  100.0
+6    11964706  29891334 2167-02-05 05:07:00  100.0
+7    11964890  28855134 2116-03-24 03:44:00   74.0
+8    11965371  23647775 2150-07-03 08:35:
+2026-03-26 06:53:05  INFO      === Iteration 64/100  run=first_day_sofa  best_qa=0.0% ===
+2026-03-26 06:53:19  INFO      Exec block 1/1 …
+2026-03-26 06:53:19  INFO      Output:     stay_id  subject_id   hadm_id              intime           pao2_time   pao2
+0  30273492    10090569  26845669 2159-01-05 16:37:59 2159-01-05 22:17:00   74.0
+1  30273492    10090569  26845669 2159-01-05 16:37:59 2159-01-06 04:42:00   44.0
+2  33822652    10090828  29123557 2182-05-01 14:38:00 2182-05-01 17:56:00   64.0
+3  37258034    10091141  22008683 2123-03-19 21:59:00 2123-03-20 00:00:00  160.0
+4  38133597    10091871  26777528 2159-05-26 11:43:41 2159-05-26 12:13:00  430.0
+5  38133597   
+2026-03-26 06:53:19  INFO      === Iteration 65/100  run=first_day_sofa  best_qa=0.0% ===
+(EngineCore_DP0 pid=744239) /home/v-tiossowski/anaconda3/envs/autoformalization/lib/python3.12/site-packages/torch/_dynamo/eval_frame.py:1181: UserWarning: Input tensor shape suggests potential format mismatch: seq_len (3) < num_heads (16). This may indicate the inputs were passed in head-first format [B, H, T, ...] Please verify your input tensor format matches the expected shape [B, T, H, ...].
+(EngineCore_DP0 pid=744239)   return fn(*args, **kwargs)
+(EngineCore_DP0 pid=744239) /home/v-tiossowski/anaconda3/envs/autoformalization/lib/python3.12/site-packages/vllm/model_executor/layers/fla/ops/utils.py:113: UserWarning: Input tensor shape suggests potential format mismatch: seq_len (3) < num_heads (48). This may indicate the inputs were passed in head-first format [B, H, T, ...] when head_first=False was specified. Please verify your input tensor format matches the expected shape [B, T, H, ...].
+(EngineCore_DP0 pid=744239)   return fn(*contiguous_args, **contiguous_kwargs)
+2026-03-26 06:56:19  INFO      Exec block 1/1 …
+2026-03-26 06:56:20  INFO      Output: Error:
+Traceback (most recent call last):
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 643, in execute
+    _run_with_timeout(_do_execute, timeout)
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 174, in _run_with_timeout
+    raise error[0]
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 156, in target
+    result[0] = func(*args, **kwargs)
+                ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/v-tiossowsk
+2026-03-26 06:56:20  INFO      === Iteration 66/100  run=first_day_sofa  best_qa=0.0% ===
+2026-03-26 06:56:20  INFO      Context approaching limit (20546 tokens, limit=25000) — forcing summarize + compress
+2026-03-26 06:59:56  INFO      Context compressed: 132 messages -> 2 messages
+2026-03-26 07:00:14  INFO      Exec block 1/1 …
+2026-03-26 07:00:15  INFO      Output: Error:
+Traceback (most recent call last):
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 643, in execute
+    _run_with_timeout(_do_execute, timeout)
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 174, in _run_with_timeout
+    raise error[0]
+  File "/home/v-tiossowski/HealthcareAgent/mimic-code/duckdb_session.py", line 156, in target
+    result[0] = func(*args, **kwargs)
+                ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/v-tiossowsk
+2026-03-26 07:00:15  INFO      === Iteration 67/100  run=first_day_sofa  best_qa=0.0% ===
+2026-03-26 07:00:31  INFO      Exec block 1/1 …
+2026-03-26 07:00:31  INFO      Output: Vasopressor test query result:
+Empty DataFrame
+Columns: [itemid, label, max_rate, rateuom, patientweight]
+Index: []
+
+2026-03-26 07:00:31  INFO      === Iteration 68/100  run=first_day_sofa  best_qa=0.0% ===
+2026-03-26 07:02:54  INFO      Exec block 1/1 …
+2026-03-26 07:02:55  INFO      Output: Test 1 (Stay ID 37081114):
+  Total SOFA Score: 2
+  Respiration: None (ratio: None)
+  Coagulation: 0 (min platelet: 199.0)
+  Liver: None (max bilirubin: None)
+  Cardiovascular: 0 (min MAP: None)
+  Brain: 2 (min GCS: 12.0)
+  Kidney: 0 (max Cr: 0.8999999761581421, urine: 695.0)
+
+2026-03-26 07:02:55  INFO      === Iteration 69/100  run=first_day_sofa  best_qa=0.0% ===
+2026-03-26 07:03:15  INFO      Exec block 1/1 …
+2026-03-26 07:03:16  INFO      Output: Test 2 (Stay ID 39553978):
+  Total SOFA Score: 7
+  Respiration: None (ratio: None)
+  Coagulation: None (min platelet: None)
+  Liver: 2 (max bilirubin: 2.7)
+  Cardiovascular: 0 (min MAP: None)
+  Brain: 1 (min GCS: 14.0)
+  Kidney: 4 (max Cr: 0.5, urine: 175.0)
+
+2026-03-26 07:03:16  INFO      === Iteration 70/100  run=first_day_sofa  best_qa=0.0% ===
+2026-03-26 07:03:35  INFO      Exec block 1/1 …
+2026-03-26 07:03:35  INFO      Output: Urine output itemids:
+    itemid                         label category
+0   226557              R Ureteral Stent   Output
+1   226558              L Ureteral Stent   Output
+2   226559                         Foley   Output
+3   226560                          Void   Output
+4   226561                   Condom Cath   Output
+5   226563                    Suprapubic   Output
+6   226564                 R Nephrostomy   Output
+7   226565                 L Nephrostomy   Output
+8   226566     Urine and GU 
+2026-03-26 07:03:35  INFO      === Iteration 71/100  run=first_day_sofa  best_qa=0.0% ===
+2026-03-26 07:03:53  INFO      Exec block 1/1 …
+2026-03-26 07:03:53  INFO      Output: Stay info for 37081114:
+    stay_id  subject_id   hadm_id              intime
+0  37081114    10000690  25860671 2150-11-02 19:37:00
+
+PaO2 data for patient 1:
+   subject_id   hadm_id  itemid           charttime  valuenum
+0    10000690  25860671   50821 2150-11-08 05:43:00      68.0
+
+FiO2 data for patient 1:
+    stay_id  itemid           charttime  valuenum
+0  37081114  223835 2150-11-04 12:00:00      50.0
+1  37081114  223835 2150-11-04 18:00:00      70.0
+2  37081114  223835 2150-11-06 08:00:00   
+2026-03-26 07:03:53  INFO      === Iteration 72/100  run=first_day_sofa  best_qa=0.0% ===
+2026-03-26 07:04:12  INFO      Exec block 1/1 …
+2026-03-26 07:04:13  INFO      Output: MAP data for patient 1:
+Empty DataFrame
+Columns: [stay_id, itemid, charttime, valuenum]
+Index: []
+
+MAP data in first 24 hours:
+Empty DataFrame
+Columns: [stay_id, itemid, charttime, valuenum]
+Index: []
+
+2026-03-26 07:04:13  INFO      === Iteration 73/100  run=first_day_sofa  best_qa=0.0% ===
+2026-03-26 07:04:35  INFO      Exec block 1/1 …
+2026-03-26 07:04:38  INFO      Output: Sample stays:
+    stay_id  subject_id   hadm_id              intime
+0  39553978    10000032  29079034 2180-07-23 14:00:00
+1  37081114    10000690  25860671 2150-11-02 19:37:00
+2  39765666    10000980  26913865 2189-06-27 08:42:00
+3  37067082    10001217  24597018 2157-11-20 19:18:02
+4  34592300    10001217  27703517 2157-12-19 15:42:24
+
+Stay 39553978: Total SOFA = 7
+  Scores: R=None, C=None, L=2, CV=0, B=1, K=4
+
+Stay 37081114: Total SOFA = 2
+  Scores: R=None, C=0, L=None, CV=0, B=2, K=0
+
+Stay 39
+2026-03-26 07:04:38  INFO      === Iteration 74/100  run=first_day_sofa  best_qa=0.0% ===
+2026-03-26 07:06:58  INFO      Exec block 1/1 …
+2026-03-26 07:06:58  INFO      Output: Code executed successfully (no output).
+2026-03-26 07:06:58  INFO      Debug conversations will be saved to debug_logs
+2026-03-26 07:06:58  INFO      Using question from dataset column: Does this patient have a first-day SOFA score of 6 or more?
+2026-03-26 07:06:58  INFO      Answer type for 'first_day_sofa': numerical (per_row=True)
+2026-03-26 07:06:58  INFO      ReACT iteration 1/5 — 20 active patients
+Rendering conversations:   0%|          | 0/20 [00:00<?, ?it/s]Rendering conversations: 100%|██████████| 20/20 [00:00<00:00, 655.04it/s]
+Processed prompts:   0%|          | 0/20 [00:00<?, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s]Processed prompts:   5%|▌         | 1/20 [00:08<02:32,  8.05s/it, est. speed input: 63.98 toks/s, output: 15.03 toks/s]Processed prompts:  10%|█         | 2/20 [00:08<01:01,  3.40s/it, est. speed input: 125.82 toks/s, output: 29.93 toks/s]Processed prompts:  20%|██        | 4/20 [00:08<00:21,  1.34s/it, est. speed input: 245.52 toks/s, output: 59.33 toks/s]Processed prompts:  35%|███▌      | 7/20 [00:08<00:07,  1.64it/s, est. speed input: 420.40 toks/s, output: 103.33 toks/s]Processed prompts:  40%|████      | 8/20 [00:09<00:06,  1.73it/s, est. speed input: 456.93 toks/s, output: 114.07 toks/s]Processed prompts:  60%|██████    | 12/20 [00:09<00:02,  3.28it/s, est. speed input: 663.80 toks/s, output: 172.51 toks/s]Processed prompts:  65%|██████▌   | 13/20 [00:10<00:02,  2.51it/s, est. speed input: 658.30 toks/s, output: 174.74 toks/s]Processed prompts:  75%|███████▌  | 15/20 [00:10<00:01,  3.44it/s, est. speed input: 750.74 toks/s, output: 206.77 toks/s]Processed prompts:  80%|████████  | 16/20 [00:10<00:01,  3.87it/s, est. speed input: 791.81 toks/s, output: 221.57 toks/s]Processed prompts:  90%|█████████ | 18/20 [00:10<00:00,  5.30it/s, est. speed input: 880.10 toks/s, output: 253.69 toks/s]Processed prompts: 100%|██████████| 20/20 [00:11<00:00,  5.33it/s, est. speed input: 945.86 toks/s, output: 280.03 toks/s]Processed prompts: 100%|██████████| 20/20 [00:11<00:00,  5.33it/s, est. speed input: 945.86 toks/s, output: 280.03 toks/s]Processed prompts: 100%|██████████| 20/20 [00:11<00:00,  1.82it/s, est. speed input: 945.86 toks/s, output: 280.03 toks/s]
+2026-03-26 07:07:21  INFO      ReACT iteration 2/5 — 20 active patients
+Rendering conversations:   0%|          | 0/20 [00:00<?, ?it/s]Rendering conversations: 100%|██████████| 20/20 [00:00<00:00, 300.59it/s]
+Processed prompts:   0%|          | 0/20 [00:00<?, ?it/s, est. speed input: 0.00 toks/s, output: 0.00 toks/s]Processed prompts:   5%|▌         | 1/20 [00:10<03:19, 10.48s/it, est. speed input: 137.93 toks/s, output: 5.92 toks/s]Processed prompts:  15%|█▌        | 3/20 [00:11<00:51,  3.06s/it, est. speed input: 369.11 toks/s, output: 17.99 toks/s]Processed prompts:  20%|██        | 4/20 [00:11<00:34,  2.14s/it, est. speed input: 496.24 toks/s, output: 25.08 toks/s]Processed prompts:  25%|██▌       | 5/20 [00:12<00:22,  1.53s/it, est. speed input: 634.52 toks/s, output: 32.63 toks/s]Processed prompts:  30%|███       | 6/20 [00:12<00:18,  1.32s/it, est. speed input: 732.66 toks/s, output: 39.50 toks/s]Processed prompts:  35%|███▌      | 7/20 [00:13<00:13,  1.01s/it, est. speed input: 822.82 toks/s, output: 48.03 toks/s]Processed prompts:  40%|████      | 8/20 [00:13<00:08,  1.33it/s, est. speed input: 943.46 toks/s, output: 56.93 toks/s]Processed prompts:  50%|█████     | 10/20 [00:13<00:04,  2.19it/s, est. speed input: 1144.38 toks/s, output: 75.33 toks/s]Processed prompts:  55%|█████▌    | 11/20 [00:13<00:03,  2.47it/s, est. speed input: 1247.14 toks/s, output: 84.29 toks/s]Processed prompts:  70%|███████   | 14/20 [00:14<00:02,  2.82it/s, est. speed input: 1455.08 toks/s, output: 109.48 toks/s]Processed prompts:  75%|███████▌  | 15/20 [00:15<00:01,  3.25it/s, est. speed input: 1549.42 toks/s, output: 119.80 toks/s]Processed prompts:  85%|████████▌ | 17/20 [00:15<00:00,  4.60it/s, est. speed input: 1771.15 toks/s, output: 141.01 toks/s]Processed prompts:  90%|█████████ | 18/20 [00:15<00:00,  3.55it/s, est. speed input: 1815.14 toks/s, output: 147.91 toks/s]Processed prompts:  95%|█████████▌| 19/20 [00:18<00:00,  1.04it/s, est. speed input: 1593.83 toks/s, output: 136.68 toks/s]Processed prompts: 100%|██████████| 20/20 [00:19<00:00,  1.25it/s, est. speed input: 1656.26 toks/s, output: 149.12 toks/s]Processed prompts: 100%|██████████| 20/20 [00:19<00:00,  1.25it/s, est. speed input: 1656.26 toks/s, output: 149.12 toks/s]Processed prompts: 100%|██████████| 20/20 [00:19<00:00,  1.04it/s, est. speed input: 1656.26 toks/s, output: 149.12 toks/s]
+2026-03-26 07:07:41  INFO      QA accuracy: 65.0%  (correct=13/20, parse_errors=0)
+2026-03-26 07:07:41  INFO      === Iteration 75/100  run=first_day_sofa  best_qa=65.0% ===
+2026-03-26 07:08:19  INFO      Exec block 1/1 …
+2026-03-26 07:08:19  INFO      Output: Stay 39946746:
+  Total SOFA: 2
+  Expected: 3.0
+  Respiration: None (ratio: None)
+  Coagulation: 1 (min platelet: 123.0)
+  Liver: None (max bilirubin: None)
+  Cardiovascular: 0 (min MAP: None)
+  Brain: 1 (min GCS: 14.0)
+  Kidney: 0 (max Cr: 0.699999988079071, urine: 1030.0)
+
+2026-03-26 07:08:19  INFO      === Iteration 76/100  run=first_day_sofa  best_qa=65.0% ===
+2026-03-26 07:08:55  INFO      Exec block 1/1 …
+2026-03-26 07:08:55  INFO      Output: Stay 35651114:
+  Total SOFA: 8
+  Expected: 2.0
+  Respiration: 4 (ratio: 98.0)
+  Coagulation: 1 (min platelet: 111.0)
+  Liver: 0 (max bilirubin: 0.5)
+  Cardiovascular: 1 (min MAP: 58.0)
+  Brain: 2 (min GCS: 11.0)
+  Kidney: 0 (max Cr: 1.0, urine: 1297.0)
+  Vasopressors: []
+
+2026-03-26 07:08:55  INFO      === Iteration 77/100  run=first_day_sofa  best_qa=65.0% ===
+2026-03-26 07:09:09  INFO      Exec block 1/1 …
+2026-03-26 07:09:09  INFO      Output: Available guidelines:
+['acidosis_guideline', 'acute_decompensated_heart_failure_guideline', 'acute_hepatic_failure_guideline', 'adverse_effect_of_anticoagulants_guideline', 'alcohol_withdrawal_syndrome_guideline', 'anemia_icu_critically_ill_hemoglobin_transfusion_guideline', 'apache_iii_guideline', 'atrial_fibrillation_guideline', 'bradycardia_guideline', 'cerebral_infarction_guideline', 'coma_altered_consciousness_icu_guideline', 'copd_exacerbation_guideline', 'coronary_artery_disease_guideline
+2026-03-26 07:09:09  INFO      === Iteration 78/100  run=first_day_sofa  best_qa=65.0% ===
+2026-03-26 07:09:18  INFO      Exec block 1/1 …
+2026-03-26 07:09:18  INFO      Output: SOFA guidelines:
+['qsofa_guideline', 'sofa_guideline']
+
+SOFA Guideline:
+(no guideline found for 'sofa')
+
+2026-03-26 07:09:18  INFO      === Iteration 79/100  run=first_day_sofa  best_qa=65.0% ===
+2026-03-26 07:09:26  INFO      Exec block 1/1 …
+2026-03-26 07:09:26  INFO      Output: SOFA Guideline:
+# SOFA — Clinical Guideline
+# Generated by generate_guidelines.py
+# Source articles: 10 (PMID39539863, PMID39553003, PMID40375069, PMID41159829, PMID26903338...)
+############################################################
+
+# Sequential Organ Failure Assessment (SOFA) Score — Clinical Guideline
+
+---
+
+## 1. Definition
+
+The **Sequential Organ Failure Assessment (SOFA)** score is a composite organ-dysfunction scoring system designed to quantify the degree of dysfunction across six o
+2026-03-26 07:09:26  INFO      === Iteration 80/100  run=first_day_sofa  best_qa=65.0% ===
+2026-03-26 07:09:42  INFO      Exec block 1/1 …
+2026-03-26 07:09:42  INFO      Output: qSOFA Guideline:
+# qSOFA — Clinical Guideline
+# Generated by generate_guidelines.py
+# Source articles: 10 (PMID26903338, PMID26903335, PMID30685836, PMID29100549, PMID27649072...)
+############################################################
+
+# Clinical Guideline: Quick Sequential [Sepsis-related] Organ Failure Assessment (qSOFA)
+
+---
+
+## 1. Definition
+
+The **quick Sequential [Sepsis-related] Organ Failure Assessment (qSOFA)** is a bedside clinical screening score introduced in 2016 by the Third 
+2026-03-26 07:09:42  INFO      === Iteration 81/100  run=first_day_sofa  best_qa=65.0% ===
+2026-03-26 07:10:20  INFO      Exec block 1/1 …
+2026-03-26 07:10:20  INFO      Output: Stay info:
+    stay_id  subject_id   hadm_id              intime
+0  35651114    17358525  22152554 2126-09-09 15:01:18
+
+Ventilator-related items:
+    itemid                                              label
+0   220125                 Left Ventricular Assit Device Flow
+1   220128               Right Ventricular Assist Device Flow
+2   220971  ESDEP (Solvent / Detergent Virus-Inactivated P...
+3   223848                                    Ventilator Type
+4   223849                                  
+2026-03-26 07:10:20  INFO      === Iteration 82/100  run=first_day_sofa  best_qa=65.0% ===
+2026-03-26 07:10:48  INFO      Exec block 1/1 …
+2026-03-26 07:10:49  INFO      Output: Ventilation status during first day:
+Empty DataFrame
+Columns: [itemid, valuenum, charttime]
+Index: []
+
+PaO2 data:
+    pao2           charttime
+0   98.0 2126-09-10 01:08:00
+1  299.0 2126-09-10 08:16:00
+2  364.0 2126-09-10 11:03:00
+3  325.0 2126-09-10 11:55:00
+4  223.0 2126-09-10 14:55:00
+
+FiO2 data:
+    fio2           charttime
+0  100.0 2126-09-10 14:00:00
+
+2026-03-26 07:10:49  INFO      === Iteration 83/100  run=first_day_sofa  best_qa=65.0% ===
+2026-03-26 07:11:52  INFO      Exec block 1/1 …
+2026-03-26 07:11:52  INFO      Output: Stay 34626474:
+  Total SOFA: 9
+  Expected: 6.0
+  Respiration: None (ratio: None)
+  Coagulation: 2 (min platelet: 69.0)
+  Liver: 0 (max bilirubin: 0.3)
+  Cardiovascular: 0 (min MAP: None)
+  Brain: 3 (min GCS: 6.0)
+  Kidney: 4 (max Cr: 6.5, urine: nan)
+
+Ventilation status:
+Empty DataFrame
+Columns: [itemid, valuenum, charttime]
+Index: []
+
+2026-03-26 07:11:52  INFO      === Iteration 84/100  run=first_day_sofa  best_qa=65.0% ===
+2026-03-26 07:12:22  INFO      Exec block 1/1 …
+2026-03-26 07:12:22  INFO      Output: Urine output records:
+Empty DataFrame
+Columns: [itemid, value, charttime]
+Index: []
+Total urine: None
+
+Creatinine data:
+   creatinine           charttime
+0         6.5 2188-09-24 02:50:00
+
+2026-03-26 07:12:22  INFO      === Iteration 85/100  run=first_day_sofa  best_qa=65.0% ===
+2026-03-26 07:12:22  INFO      Context approaching limit (20242 tokens, limit=25000) — forcing summarize + compress
+2026-03-26 07:16:12  INFO      Context compressed: 41 messages -> 2 messages
+2026-03-26 07:16:24  INFO      Exec block 1/1 …
+2026-03-26 07:16:24  INFO      Output: ['qsofa_guideline', 'sofa_guideline']
+
+2026-03-26 07:16:24  INFO      === Iteration 86/100  run=first_day_sofa  best_qa=65.0% ===
+2026-03-26 07:16:28  INFO      Exec block 1/1 …
+2026-03-26 07:16:28  INFO      Output: '# SOFA — Clinical Guideline\n# Generated by generate_guidelines.py\n# Source articles: 10 (PMID39539863, PMID39553003, PMID40375069, PMID41159829, PMID26903338...)\n############################################################\n\n# Sequential Organ Failure Assessment (SOFA) Score — Clinical Guideline\n\n---\n\n## 1. Definition\n\nThe **Sequential Organ Failure Assessment (SOFA)** score is a composite organ-dysfunction scoring system designed to quantify the degree of dysfunction across six organ
+2026-03-26 07:16:28  INFO      === Iteration 87/100  run=first_day_sofa  best_qa=65.0% ===
+2026-03-26 07:16:54  INFO      Exec block 1/1 …
+2026-03-26 07:16:55  INFO      Output: Stay info: {'stay_id': {0: 35651114}, 'subject_id': {0: 17358525}, 'hadm_id': {0: 22152554}, 'intime': {0: Timestamp('2126-09-09 15:01:18')}}
+Intime: 2126-09-09 15:01:18
+First day end: 2126-09-10 15:01:18
+Ventilation data: {'itemid': {}, 'valuenum': {}, 'charttime': {}}
+PaO2 data: {'pao2': {0: 98.0, 1: 299.0, 2: 364.0, 3: 325.0, 4: 223.0}, 'charttime': {0: Timestamp('2126-09-10 01:08:00'), 1: Timestamp('2126-09-10 08:16:00'), 2: Timestamp('2126-09-10 11:03:00'), 3: Timestamp('2126-09-10 11:55:00
+2026-03-26 07:16:55  INFO      === Iteration 88/100  run=first_day_sofa  best_qa=65.0% ===
+2026-03-26 07:19:23  INFO      Exec block 1/1 …
+2026-03-26 07:19:24  INFO      Output: Respiration score: 2
+Respiration data: {'pao2_values': [98.0, 299.0, 364.0, 325.0, 223.0], 'fio2_values': [100.0], 'pao2_fio2_ratio': 98.0, 'on_ventilation': False}
+Total SOFA: 6
+
+2026-03-26 07:19:24  INFO      === Iteration 89/100  run=first_day_sofa  best_qa=65.0% ===
+2026-03-26 07:19:39  INFO      Exec block 1/1 …
+2026-03-26 07:19:40  INFO      Output: Stay 34626474:
+  Kidney score: 4
+  Kidney data: {'creatinine_values': [6.5], 'max_creatinine': 6.5, 'total_urine_output': np.float64(nan)}
+  Total SOFA: 9
+
+Stay 39946746:
+  respiration_score: None
+  coagulation_score: 1
+  liver_score: None
+  cardiovascular_score: 0
+  brain_score: 1
+  kidney_score: 0
+  total_sofa_score: 2
+  Total SOFA: 2
+
+2026-03-26 07:19:40  INFO      === Iteration 90/100  run=first_day_sofa  best_qa=65.0% ===
+2026-03-26 07:20:42  INFO      Exec block 1/1 …
+2026-03-26 07:20:42  INFO      Output: Stay info: {'stay_id': {0: 39946746}, 'subject_id': {0: 16229623}, 'hadm_id': {0: 28190320}, 'intime': {0: Timestamp('2159-04-02 02:15:00')}}
+Intime: 2159-04-02 02:15:00
+First day end: 2159-04-03 02:15:00
+
+--- RESPIRATION ---
+PaO2 data: {'pao2': {0: 32.0}, 'charttime': {0: Timestamp('2159-04-02 02:46:00')}}
+FiO2 data: {'fio2': {}, 'charttime': {}}
+
+--- LIVER ---
+Bilirubin data: {'bilirubin': {}, 'charttime': {}}
+
+--- CARDIOVASCULAR ---
+MAP data: {'map': {}, 'charttime': {}}
+Vasopressors: {'itemi
+2026-03-26 07:20:42  INFO      === Iteration 91/100  run=first_day_sofa  best_qa=65.0% ===
+2026-03-26 07:21:09  INFO      Exec block 1/1 …
+2026-03-26 07:21:09  INFO      Output:     itemid                                                 label                     abbreviation       unitname
+0   220224                                  Arterial O2 pressure                   PO2 (Arterial)           mmHg
+1   220227                                Arterial O2 Saturation                             SaO2              %
+2   220235                                 Arterial CO2 Pressure                  PCO2 (Arterial)           mmHg
+3   220245                                      
+2026-03-26 07:21:09  INFO      === Iteration 92/100  run=first_day_sofa  best_qa=65.0% ===
+2026-03-26 07:21:53  INFO      Exec block 1/1 …
+2026-03-26 07:21:53  INFO      Output: Alternative FiO2 data: {'itemid': {}, 'valuenum': {}, 'charttime': {}}
+Arterial PO2 from chartevents: {'pao2': {}, 'charttime': {}}
+Ventilation data: {'itemid': {}, 'valuenum': {}, 'charttime': {}}
+Any FiO2 for this stay: {'valuenum': {}, 'charttime': {}}
+Any MAP for this stay: {'valuenum': {}, 'charttime': {}}
+
+2026-03-26 07:21:53  INFO      === Iteration 93/100  run=first_day_sofa  best_qa=65.0% ===
+2026-03-26 07:22:27  INFO      Exec block 1/1 …
+2026-03-26 07:22:27  INFO      Output: GCS raw data:
+            charttime  eye  verbal  motor
+0 2159-04-03 00:00:00  4.0     5.0    6.0
+1 2159-04-02 16:00:00  4.0     5.0    6.0
+2 2159-04-02 08:00:00  4.0     5.0    6.0
+3 2159-04-02 12:00:00  4.0     5.0    6.0
+4 2159-04-02 20:00:00  4.0     5.0    6.0
+5 2159-04-02 04:00:00  4.0     4.0    6.0
+
+GCS with totals:
+            charttime  eye  verbal  motor  gcs_total
+0 2159-04-03 00:00:00  4.0     5.0    6.0       15.0
+1 2159-04-02 16:00:00  4.0     5.0    6.0       15.0
+2 2159-04-02 08
+2026-03-26 07:22:27  INFO      === Iteration 94/100  run=first_day_sofa  best_qa=65.0% ===
+2026-03-26 07:23:04  INFO      Exec block 1/1 …
+2026-03-26 07:23:04  INFO      Output: SpO2 data: {'valuenum': {0: 96.0, 1: 96.0, 2: 96.0, 3: 96.0, 4: 96.0, 5: 97.0, 6: 96.0, 7: 97.0, 8: 96.0, 9: 96.0, 10: 95.0, 11: 96.0, 12: 96.0, 13: 91.0, 14: 98.0, 15: 98.0, 16: 97.0, 17: 95.0, 18: 93.0, 19: 95.0, 20: 93.0, 21: 97.0, 22: 91.0, 23: 95.0}, 'charttime': {0: Timestamp('2159-04-02 02:15:00'), 1: Timestamp('2159-04-02 03:00:00'), 2: Timestamp('2159-04-02 07:00:00'), 3: Timestamp('2159-04-02 08:00:00'), 4: Timestamp('2159-04-02 09:00:00'), 5: Timestamp('2159-04-02 10:00:00'), 6: Times
+2026-03-26 07:23:04  INFO      === Iteration 95/100  run=first_day_sofa  best_qa=65.0% ===
+2026-03-26 07:23:35  INFO      Exec block 1/1 …
+2026-03-26 07:23:35  INFO      Output: Empty DataFrame
+Columns: [valuenum]
+Index: []
+
+2026-03-26 07:23:35  INFO      === Iteration 96/100  run=first_day_sofa  best_qa=65.0% ===
+2026-03-26 07:24:04  INFO      Exec block 1/1 …
+2026-03-26 07:24:04  INFO      Output:                       value
+0                  Vapomist
+1                      None
+2               Bipap mask 
+3                  Oxymizer
+4                   T-piece
+5               Trach mask 
+6   High flow nasal cannula
+7             Nasal cannula
+8         Endotracheal tube
+9                 Face tent
+10        Tracheostomy tube
+11                    Other
+12           Non-rebreather
+13            High flow neb
+14              Venti mask 
+15             Aerosol-cool
+16           Ultrasonic 
+2026-03-26 07:24:04  INFO      === Iteration 97/100  run=first_day_sofa  best_qa=65.0% ===
+2026-03-26 07:25:11  INFO      Exec block 1/1 …
+2026-03-26 07:25:13  INFO      Output: Stay 37081114:
+  respiration_score: None
+  coagulation_score: 0
+  liver_score: None
+  cardiovascular_score: 0
+  brain_score: 2
+  kidney_score: 0
+  total_sofa_score: 2
+  Total SOFA: 2
+
+Stay 39553978:
+  respiration_score: None
+  coagulation_score: None
+  liver_score: 2
+  cardiovascular_score: 0
+  brain_score: 1
+  kidney_score: 4
+  total_sofa_score: 7
+  Total SOFA: 7
+
+2026-03-26 07:25:13  INFO      === Iteration 98/100  run=first_day_sofa  best_qa=65.0% ===
+2026-03-26 07:25:49  INFO      Exec block 1/1 …
+2026-03-26 07:25:49  INFO      Output: O2 flow data: {'valuenum': {0: 2.0, 1: 2.0, 2: 2.0, 3: 2.0, 4: 1.0, 5: 1.0}, 'charttime': {0: Timestamp('2159-04-02 08:00:00'), 1: Timestamp('2159-04-02 12:00:00'), 2: Timestamp('2159-04-02 16:00:00'), 3: Timestamp('2159-04-02 04:00:00'), 4: Timestamp('2159-04-02 20:00:00'), 5: Timestamp('2159-04-03 00:00:00')}}
+O2 delivery device: {'value': {0: 'Nasal cannula', 1: 'Nasal cannula', 2: 'Nasal cannula', 3: 'Nasal cannula', 4: 'Nasal cannula', 5: 'Nasal cannula'}, 'charttime': {0: Timestamp('2159-0
+2026-03-26 07:25:49  INFO      === Iteration 99/100  run=first_day_sofa  best_qa=65.0% ===
+2026-03-26 07:29:13  INFO      Exec block 1/1 …
+2026-03-26 07:29:13  INFO      Output: Stay 39946746 (v2):
+  respiration_score: 3
+  coagulation_score: 1
+  liver_score: None
+  cardiovascular_score: 0
+  brain_score: 1
+  kidney_score: 0
+  total_sofa_score: 5
+  Total SOFA: 5
+  Respiration data: {'pao2_values': [32.0], 'fio2_values': [], 'o2_flow_values': [2.0, 2.0, 2.0, 2.0, 1.0, 1.0], 'estimated_fio2': 0.29, 'pao2_fio2_ratio': 110.3448275862069, 'on_ventilation': False, 'respiratory_support': True}
+
+2026-03-26 07:29:13  INFO      === Iteration 100/100  run=first_day_sofa  best_qa=65.0% ===
+2026-03-26 07:29:13  INFO      Context approaching limit (21184 tokens, limit=25000) — forcing summarize + compress
+2026-03-26 07:33:35  INFO      Context compressed: 33 messages -> 2 messages
+2026-03-26 07:33:46  INFO      Exec block 1/1 …
+2026-03-26 07:33:46  INFO      Output: ['qsofa_guideline', 'sofa_guideline']
+
+2026-03-26 07:33:46  INFO      Function code saved to autoformalized_library/functions/first_day_sofa.py
+2026-03-26 07:33:46  INFO      Summary saved to autoformalized_library/summary.json
+[rank0]:[W326 07:33:46.697525398 ProcessGroupNCCL.cpp:1553] Warning: WARNING: destroy_process_group() was not called before program exit, which can leak resources. For more info, please see https://pytorch.org/docs/stable/distributed.html#shutdown (function operator())
+
+======================================================================
+AUTOFORMALIZATION COMPLETE
+======================================================================
+  Output dir      : autoformalized_library
+  Model           : Qwen/Qwen3.5-27B
+  Dataset         : /home/v-tiossowski/HealthcareAgent/mimic-code/data/MIMICIV_first_day_sofa_dataset/first_day_sofa.csv
+  Run name        : first_day_sofa
+  Status          : FAILED (below threshold)
+  QA accuracy     : 65.0%
+  Iterations      : 100
+  Total tokens    : 48,238  (prompt 42,286 / completion 5,952)
+  LLM calls       : 143
+  SQL queries     : 479
+  Function saved  : autoformalized_library/functions/first_day_sofa.py
+======================================================================

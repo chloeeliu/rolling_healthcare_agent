@@ -1,0 +1,972 @@
+=== Step 1 ===
+# Clinical Coding Agent Memory - SAPS II Implementation
+
+## 1. Key Schema Facts
+
+### Database Tables
+| Schema | Table | Key Columns |
+|--------|-------|-------------|
+| mimiciv_hosp | admissions | subject_id, hadm_id, admittime, admission_type, hospital_expire_flag |
+| mimiciv_hosp | patients | subject_id, gender, dob, dod |
+| mimiciv_hosp | labevents | subject_id, hadm_id, itemid, charttime, valuenum, valueuom |
+| mimiciv_hosp | d_labitems | itemid, label, fluid, category |
+| mimiciv_icu | icustays | subject_id, hadm_id, stay_id, intime, outtime, first_careunit |
+| mimiciv_icu | chartevents | subject_id, hadm_id, stay_id, itemid, charttime, valuenum, valueuom |
+| mimiciv_icu | d_items | itemid, label, category, unitname |
+| mimiciv_icu | outputevents | subject_id, hadm_id, stay_id, itemid, charttime, value |
+
+### SAPS II Item IDs (MIMIC-IV)
+| Variable | Item ID(s) | Table | Unit |
+|----------|------------|-------|------|
+| Heart Rate | 220045 | chartevents | bpm |
+| Systolic BP | 220050, 220179 | chartevents | mmHg |
+| Temperature | 223762 | chartevents | °C |
+| GCS Eye | 220739 | chartevents | - |
+| GCS Verbal | 223900 | chartevents | - |
+| GCS Motor | 223901 | chartevents | - |
+| WBC Count | 51300 | labevents | ×10³/mm³ |
+| Potassium | 50971, 50822 | labevents | mEq/L |
+| Sodium | 50983, 50824 | labevents | mEq/L |
+| Bicarbonate | 50882, 50803 | labevents | mEq/L |
+| Bilirubin Total | 50885 | labevents | mg/dL |
+| Urea Nitrogen (BUN) | 51006 | labevents | mg/dL |
+| pO2 | 50821 | labevents | mmHg |
+| FiO2 | 223835 | chartevents | % |
+| Urine Output | 226627, 226631, 226566, 226457, 226499 | outputevents | mL |
+
+### SAPS II Scoring Tables
+
+**Age (years)**
+| Range | Points |
+|-------|--------|
+| < 40 | 0 |
+| 40-59 | 7 |
+| 60-69 | 12 |
+| 70-74 | 15 |
+| 75-79 | 16 |
+| ≥ 80 | 18 |
+
+**Heart Rate (bpm)**
+| Range | Points |
+|-------|--------|
+| < 40 | 11 |
+| 40-69 | 2 |
+| 70-119 | 0 |
+| 120-159 | 4 |
+| ≥ 160 | 7 |
+
+**Systolic BP (mmHg)**
+| Range | Points |
+|-------|--------|
+| < 70 | 13 |
+| 70-99 | 5 |
+| 100-199 | 0 |
+| ≥ 200 | 2 |
+
+**Temperature (°C)**
+| Range | Points |
+|-------|--------|
+| < 39.0 | 0 |
+| ≥ 39.0 | 3 |
+
+**PaO₂/FiO₂ (mmHg)** - Only if ventilated/CPAP
+| Range | Points |
+|-------|--------|
+| ≥ 200 | 6 |
+| 100-199 | 9 |
+| < 100 | 11 |
+| Not ventilated | 0 |
+
+**Urinary Output (L/day)**
+| Range | Points |
+|-------|--------|
+| ≥ 1.000 | 0 |
+| 0.500-0.999 | 4 |
+| < 0.500 | 11 |
+
+**BUN (mg/dL)**
+| Range | Points |
+|-------|--------|
+| < 28 | 0 |
+| 28-83 | 6 |
+| ≥ 84 | 10 |
+
+**WBC (×10³/mm³)**
+| Range | Points |
+|-------|--------|
+| < 1.0 | 12 |
+| 1.0-19.9 | 0 |
+| ≥ 20.0 | 3 |
+
+**Potassium (mEq/L)**
+| Range | Points |
+|-------|--------|
+| < 3.0 | 3 |
+| 3.0-4.9 | 0 |
+| ≥ 5.0 | 3 |
+
+**Sodium (mEq/L)**
+| Range | Points |
+|-------|--------|
+| < 125 | 5 |
+| 125-144 | 0 |
+| ≥ 145 | 1 |
+
+**Bicarbonate (mEq/L)**
+| Range | Points |
+|-------|--------|
+| < 15 | 6 |
+| 15-19 | 3 |
+| ≥ 20 | 0 |
+
+**Bilirubin (mg/dL)**
+| Range | Points |
+|-------|--------|
+| < 4.0 | 0 |
+| 4.0-5.9 | 4 |
+| ≥ 6.0 | 9 |
+
+**GCS (lowest value)**
+| Range | Points |
+|-------|--------|
+| 14-15 | 0 |
+| 11-13 | 5 |
+| 9-10 | 7 |
+| 6-8 | 13 |
+| 3-5 | 26 |
+
+**Admission Type**
+| Type | Points |
+|------|--------|
+| Scheduled surgical | 0 |
+| Medical | 6 |
+| Unscheduled surgical | 8 |
+
+**Chronic Disease (highest only)**
+| Condition | Points |
+|-----------|--------|
+| Metastatic cancer | 9 |
+| Hematologic malignancy | 10 |
+| AIDS | 17 |
+
+### SAPS II Equation
+```
+logit = -7.7631 + 0.0737 × (SAPS-II score) + 0.9971 × ln(SAPS-II score + 1)
+Predicted Mortality = e^logit / (1 + e^logit)
+```
+
+### Score Range
+- Minimum: 0
+- Maximum: 163
+
+### Time Window
+- First 24 hours after ICU admission
+- Use worst (most abnormal) value for each physiological variable
+- GCS: lowest value
+- Urinary output: total volume over 24 hours
+
+## 2. Function Source Code
+
+No functions defined yet in this session.
+
+## 3. Test Results and Error Fixes
+
+### Error Fix - Step 17
+**Error**: `Binder Error: Referenced column "unit_name" not found in FROM clause!`
+**Fix**: Column name is `unit` not `unit_name` in `d_labitems` table
+**Correct query**:
+```sql
+SELECT itemid, label, fluid, category 
+FROM mimiciv_hosp.d_labitems
+```
+
+### Guideline Retrieved - Step 2
+- Guideline ID: `saps-ii_guideline`
+- Source: 10 articles (PMID35967847, PMID37658375, PMID38377099, PMID28804005, PMID34938790...)
+- AUC values: 0.70-0.90 depending on population
+
+### Schema Exploration Complete - Steps 6-59
+- All required item IDs identified for SAPS II calculation
+- Tables confirmed: admissions, patients, icustays, chartevents, labevents, outputevents, d_items, d_labitems
+
+=== Step 2 ===
+# Clinical Coding Agent Memory - SAPS II Implementation
+
+## 1. Key Schema Facts
+
+### Database Tables
+| Schema | Table | Key Columns |
+|--------|-------|-------------|
+| mimiciv_hosp | admissions | subject_id, hadm_id, admittime, admission_type, hospital_expire_flag |
+| mimiciv_hosp | patients | subject_id, gender, anchor_age, anchor_year, dod |
+| mimiciv_hosp | labevents | subject_id, hadm_id, itemid, charttime, valuenum, valueuom |
+| mimiciv_hosp | d_labitems | itemid, label, fluid, category |
+| mimiciv_hosp | diagnoses_icd | subject_id, hadm_id, seq_num, icd_code, icd_version |
+| mimiciv_hosp | procedures_icd | subject_id, hadm_id, seq_num, chartdate, icd_code, icd_version |
+| mimiciv_icu | icustays | subject_id, hadm_id, stay_id, intime, outtime, first_careunit |
+| mimiciv_icu | chartevents | subject_id, hadm_id, stay_id, itemid, charttime, valuenum, valueuom |
+| mimiciv_icu | d_items | itemid, label, category, unitname |
+| mimiciv_icu | outputevents | subject_id, hadm_id, stay_id, itemid, charttime, value |
+
+### SAPS II Item IDs (MIMIC-IV)
+| Variable | Item ID(s) | Table | Unit |
+|----------|------------|-------|------|
+| Heart Rate | 220045 | chartevents | bpm |
+| Systolic BP | 220050, 220179 | chartevents | mmHg |
+| Temperature (°C) | 223762 | chartevents | °C |
+| Temperature (°F) | 223761 | chartevents | °F |
+| GCS Eye | 220739 | chartevents | - |
+| GCS Verbal | 223900 | chartevents | - |
+| GCS Motor | 223901 | chartevents | - |
+| WBC Count | 51300 | labevents | ×10³/mm³ |
+| Potassium | 50971, 50822 | labevents | mEq/L |
+| Sodium | 50983, 50824 | labevents | mEq/L |
+| Bicarbonate | 50882, 50803 | labevents | mEq/L |
+| Bilirubin Total | 50885 | labevents | mg/dL |
+| Urea Nitrogen (BUN) | 51006 | labevents | mg/dL |
+| pO2 | 50821 | labevents | mmHg |
+| FiO2 | 223835 | chartevents | % |
+| Urine Output | 226627, 226631, 226566, 226457, 226499 | outputevents | mL |
+
+### Admission Types (MIMIC-IV)
+- ELECTIVE, URGENT, EW EMER., DIRECT OBSERVATION, OBSERVATION ADMIT, AMBULATORY OBSERVATION, DIRECT EMER., EU OBSERVATION, SURGICAL SAME DAY ADMISSION
+
+### SAPS II Scoring Tables
+
+**Age (years)**
+| Range | Points |
+|-------|--------|
+| < 40 | 0 |
+| 40-59 | 7 |
+| 60-69 | 12 |
+| 70-74 | 15 |
+| 75-79 | 16 |
+| ≥ 80 | 18 |
+
+**Heart Rate (bpm)**
+| Range | Points |
+|-------|--------|
+| < 40 | 11 |
+| 40-69 | 2 |
+| 70-119 | 0 |
+| 120-159 | 4 |
+| ≥ 160 | 7 |
+
+**Systolic BP (mmHg)**
+| Range | Points |
+|-------|--------|
+| < 70 | 13 |
+| 70-99 | 5 |
+| 100-199 | 0 |
+| ≥ 200 | 2 |
+
+**Temperature (°C)**
+| Range | Points |
+|-------|--------|
+| < 39.0 | 0 |
+| ≥ 39.0 | 3 |
+
+**PaO₂/FiO₂ (mmHg)** - Only if ventilated/CPAP
+| Range | Points |
+|-------|--------|
+| ≥ 200 | 6 |
+| 100-199 | 9 |
+| < 100 | 11 |
+| Not ventilated | 0 |
+
+**Urinary Output (L/day)**
+| Range | Points |
+|-------|--------|
+| ≥ 1.000 | 0 |
+| 0.500-0.999 | 4 |
+| < 0.500 | 11 |
+
+**BUN (mg/dL)**
+| Range | Points |
+|-------|--------|
+| < 28 | 0 |
+| 28-83 | 6 |
+| ≥ 84 | 10 |
+
+**WBC (×10³/mm³)**
+| Range | Points |
+|-------|--------|
+| < 1.0 | 12 |
+| 1.0-19.9 | 0 |
+| ≥ 20.0 | 3 |
+
+**Potassium (mEq/L)**
+| Range | Points |
+|-------|--------|
+| < 3.0 | 3 |
+| 3.0-4.9 | 0 |
+| ≥ 5.0 | 3 |
+
+**Sodium (mEq/L)**
+| Range | Points |
+|-------|--------|
+| < 125 | 5 |
+| 125-144 | 0 |
+| ≥ 145 | 1 |
+
+**Bicarbonate (mEq/L)**
+| Range | Points |
+|-------|--------|
+| < 15 | 6 |
+| 15-19 | 3 |
+| ≥ 20 | 0 |
+
+**Bilirubin (mg/dL)**
+| Range | Points |
+|-------|--------|
+| < 4.0 | 0 |
+| 4.0-5.9 | 4 |
+| ≥ 6.0 | 9 |
+
+**GCS (lowest value)**
+| Range | Points |
+|-------|--------|
+| 14-15 | 0 |
+| 11-13 | 5 |
+| 9-10 | 7 |
+| 6-8 | 13 |
+| 3-5 | 26 |
+
+**Admission Type**
+| Type | Points |
+|------|--------|
+| Scheduled surgical | 0 |
+| Medical | 6 |
+| Unscheduled surgical | 8 |
+
+**Chronic Disease (highest only)**
+| Condition | Points |
+|-----------|--------|
+| Metastatic cancer | 9 |
+| Hematologic malignancy | 10 |
+| AIDS | 17 |
+
+### SAPS II Equation
+```
+logit = -7.7631 + 0.0737 × (SAPS-II score) + 0.9971 × ln(SAPS-II score + 1)
+Predicted Mortality = e^logit / (1 + e^logit)
+```
+
+### Score Range
+- Minimum: 0
+- Maximum: 163
+
+### Time Window
+- First 24 hours after ICU admission
+- Use worst (most abnormal) value for each physiological variable
+- GCS: lowest value
+- Urinary output: total volume over 24 hours
+
+## 2. Function Source Code
+
+```python
+import pandas as pd
+import numpy as np
+from datetime import timedelta
+
+def compute_saps_ii(subject_id, hadm_id=None, stay_id=None):
+    """
+    Calculate SAPS II (Simplified Acute Physiology Score II) for a patient.
+    
+    Parameters
+    ----------
+    subject_id : int
+        Patient identifier
+    hadm_id : int, optional
+        Hospital admission identifier (required if stay_id not provided)
+    stay_id : int, optional
+        ICU stay identifier (required if hadm_id not provided)
+    
+    Returns
+    -------
+    dict
+        Dictionary containing:
+        - 'saps_ii_score': Total SAPS II score (0-163)
+        - 'predicted_mortality': Predicted hospital mortality probability
+        - 'components': Dictionary with individual component scores
+        - 'values': Dictionary with raw values used for scoring
+    """
+    
+    # Convert to Python native types
+    subject_id = int(subject_id)
+    if hadm_id is not None:
+        hadm_id = int(hadm_id)
+    if stay_id is not None:
+        stay_id = int(stay_id)
+    
+    # Get stay_id if not provided
+    if stay_id is None:
+        if hadm_id is None:
+            raise ValueError("Either hadm_id or stay_id must be provided")
+        sql = """
+        SELECT stay_id, intime, outtime
+        FROM mimiciv_icu.icustays
+        WHERE subject_id = ? AND hadm_id = ?
+        ORDER BY intime
+        LIMIT 1
+        """
+        df = query_db(sql, [subject_id, hadm_id])
+        if df.empty:
+            return None
+        stay_id = int(df.iloc[0]['stay_id'])
+        intime = df.iloc[0]['intime']
+    else:
+        sql = """
+        SELECT intime, outtime, hadm_id
+        FROM mimiciv_icu.icustays
+        WHERE stay_id = ?
+        """
+        df = query_db(sql, [stay_id])
+        if df.empty:
+            return None
+        intime = df.iloc[0]['intime']
+        hadm_id = int(df.iloc[0]['hadm_id'])
+    
+    # Define time window (first 24 hours)
+    window_end = intime + timedelta(hours=24)
+    
+    # Get patient demographics
+    sql = """
+    SELECT p.subject_id, p.gender, p.anchor_age,
+           a.admission_type, a.hospital_expire_flag
+    FROM mimiciv_hosp.patients p
+    JOIN mimiciv_hosp.admissions a ON p.subject_id = a.subject_id
+    WHERE p.subject_id = ? AND a.hadm_id = ?
+    """
+    demo_df = query_db(sql, [subject_id, hadm_id])
+    if demo_df.empty:
+        return None
+    
+    anchor_age = int(demo_df.iloc[0]['anchor_age'])
+    admission_type = demo_df.iloc[0]['admission_type']
+    
+    # Initialize results
+    components = {}
+    values = {}
+    
+    # 1. AGE SCORE
+    age = anchor_age
+    if age < 40:
+        age_score = 0
+    elif age < 60:
+        age_score = 7
+    elif age < 70:
+        age_score = 12
+    elif age < 75:
+        age_score = 15
+    elif age < 80:
+        age_score = 16
+    else:
+        age_score = 18
+    components['age'] = age_score
+    values['age'] = age
+    
+    # 2. HEART RATE (bpm) - worst value in 24h
+    sql = """
+    SELECT valuenum
+    FROM mimiciv_icu.chartevents
+    WHERE subject_id = ? AND stay_id = ?
+      AND itemid = 220045
+      AND charttime >= ? AND charttime <= ?
+      AND valuenum IS NOT NULL
+    """
+    df = query_db(sql, [subject_id, stay_id, intime, window_end])
+    if not df.empty:
+        hr = df['valuenum'].values
+        worst_hr = float(hr[0])
+        worst_hr_score = 0
+        for h in hr:
+            h = float(h)
+            if h < 40:
+                s = 11
+            elif h < 70:
+                s = 2
+            elif h < 120:
+                s = 0
+            elif h < 160:
+                s = 4
+            else:
+                s = 7
+            if s > worst_hr_score:
+                worst_hr_score = s
+                worst_hr = h
+        components['heart_rate'] = worst_hr_score
+        values['heart_rate'] = worst_hr
+    else:
+        components['heart_rate'] = 0
+        values['heart_rate'] = None
+    
+    # 3. SYSTOLIC BP (mmHg) - worst value in 24h
+    sql = """
+    SELECT valuenum
+    FROM mimiciv_icu.chartevents
+    WHERE subject_id = ? AND stay_id = ?
+      AND itemid IN (220050, 220179)
+      AND charttime >= ? AND charttime <= ?
+      AND valuenum IS NOT NULL
+    """
+    df = query_db(sql, [subject_id, stay_id, intime, window_end])
+    if not df.empty:
+        sbp = df['valuenum'].values
+        worst_sbp = float(sbp[0])
+        worst_sbp_score = 0
+        for b in sbp:
+            b = float(b)
+            if b < 70:
+                s = 13
+            elif b < 100:
+                s = 5
+            elif b < 200:
+                s = 0
+            else:
+                s = 2
+            if s > worst_sbp_score:
+                worst_sbp_score = s
+                worst_sbp = b
+        components['systolic_bp'] = worst_sbp_score
+        values['systolic_bp'] = worst_sbp
+    else:
+        components['systolic_bp'] = 0
+        values['systolic_bp'] = None
+    
+    # 4. TEMPERATURE (°C) - worst value in 24h
+    # Check both Celsius (223762) and Fahrenheit (223761)
+    sql = """
+    SELECT itemid, valuenum
+    FROM mimiciv_icu.chartevents
+    WHERE subject_id = ? AND stay_id = ?
+      AND itemid IN (223762, 223761)
+      AND charttime >= ? AND charttime <= ?
+      AND valuenum IS NOT NULL
+    """
+    df = query_db(sql, [subject_id, stay_id, intime, window_end])
+    temp_score = 0
+    temp_value = None
+    if not df.empty:
+        temps_celsius = []
+        for _, row in df.iterrows():
+            val = float(row['valuenum'])
+            itemid = int(row['itemid'])
+            # Convert Fahrenheit to Celsius if needed
+            if itemid == 223761:  # Fahrenheit
+                val = (val - 32) * 5 / 9
+            temps_celsius.append(val)
+        
+        worst_temp = temps_celsius[0]
+        worst_temp_score = 0
+        for t in temps_celsius:
+            if t < 39.0:
+                s = 0
+            else:
+                s = 3
+            if s > worst_temp_score:
+                worst_temp_score = s
+                worst_temp = t
+        temp_score = worst_temp_score
+        temp_value = worst_temp
+    components['temperature'] = temp_score
+    values['temperature'] = temp_value
+    
+    # 5. GCS (lowest value in 24h)
+    sql = """
+    SELECT itemid, valuenum, charttime
+    FROM mimiciv_icu.chartevents
+    WHERE subject_id = ? AND stay_id = ?
+      AND itemid IN (220739, 223900, 223901)
+      AND charttime >= ? AND charttime <= ?
+      AND valuenum IS NOT NULL
+    """
+    df = query_db(sql, [subject_id, stay_id, intime, window_end])
+    gcs_score = 0
+    gcs_value = 15
+    if not df.empty:
+        # Group by charttime and sum GCS components
+        df['valuenum'] = df['valuenum'].astype(int)
+        gcs_by_time = df.groupby('charttime')['valuenum'].sum().reset_index()
+        if not gcs_by_time.empty:
+            gcs_value = int(gcs_by_time['valuenum'].min())
+            if gcs_value >= 14:
+                gcs_score = 0
+            elif gcs_value >= 11:
+                gcs_score = 5
+            elif gcs_value >= 9:
+                gcs_score = 7
+            elif gcs_value >= 6:
+                gcs_score = 13
+            else:
+                gcs_score = 26
+    components['gcs'] = gcs_score
+    values['gcs'] = gcs_value
+    
+    # 6. WBC (×10³/mm³) - worst value in 24h
+    sql = """
+    SELECT valuenum
+    FROM mimiciv_hosp.labevents
+    WHERE subject_id = ? AND hadm_id = ?
+      AND itemid = 51300
+      AND charttime >= ? AND charttime <= ?
+      AND valuenum IS NOT NULL
+    """
+    df = query_db(sql, [subject_id, hadm_id, intime, window_end])
+    if not df.empty:
+        wbc = df['valuenum'].values
+        worst_wbc = float(wbc[0])
+        worst_wbc_score = 0
+        for w in wbc:
+            w = float(w)
+            if w < 1.0:
+                s = 12
+            elif w < 20.0:
+                s = 0
+            else:
+                s = 3
+            if s > worst_wbc_score:
+                worst_wbc_score = s
+                worst_wbc = w
+        components['wbc'] = worst_wbc_score
+        values['wbc'] = worst_wbc
+    else:
+        components['wbc'] = 0
+        values['wbc'] = None
+    
+    # 7. POTASSIUM (mEq/L) - worst value in 24h
+    sql = """
+    SELECT valuenum
+    FROM mimiciv_hosp.labevents
+    WHERE subject_id = ? AND hadm_id = ?
+      AND itemid IN (50971, 50822)
+      AND charttime >= ? AND charttime <= ?
+      AND valuenum IS NOT NULL
+    """
+    df = query_db(sql, [subject_id, hadm_id, intime, window_end])
+    if not df.empty:
+        k = df['valuenum'].values
+        worst_k = float(k[0])
+        worst_k_score = 0
+        for pot in k:
+            pot = float(pot)
+            if pot < 3.0:
+                s = 3
+            elif pot < 5.0:
+                s = 0
+            else:
+                s = 3
+            if s > worst_k_score:
+                worst_k_score = s
+                worst_k = pot
+        components['potassium'] = worst_k_score
+        values['potassium'] = worst_k
+    else:
+        components['potassium'] = 0
+        values['potassium'] = None
+    
+    # 8. SODIUM (mEq/L) - worst value in 24h
+    sql = """
+    SELECT valuenum
+    FROM mimiciv_hosp.labevents
+    WHERE subject_id = ? AND hadm_id = ?
+      AND itemid IN (50983, 50824)
+      AND charttime >= ? AND charttime <= ?
+      AND valuenum IS NOT NULL
+    """
+    df = query_db(sql, [subject_id, hadm_id, intime, window_end])
+    if not df.empty:
+        na = df['valuenum'].values
+        worst_na = float(na[0])
+        worst_na_score = 0
+        for n in na:
+            n = float(n)
+            if n < 125:
+                s = 5
+            elif n < 145:
+                s = 0
+            else:
+                s = 1
+            if s > worst_na_score:
+                worst_na_score = s
+                worst_na = n
+        components['sodium'] = worst_na_score
+        values['sodium'] = worst_na
+    else:
+        components['sodium'] = 0
+        values['sodium'] = None
+    
+    # 9. BICARBONATE (mEq/L) - worst value in 24h
+    sql = """
+    SELECT valuenum
+    FROM mimiciv_hosp.labevents
+    WHERE subject_id = ? AND hadm_id = ?
+      AND itemid IN (50882, 50803)
+      AND charttime >= ? AND charttime <= ?
+      AND valuenum IS NOT NULL
+    """
+    df = query_db(sql, [subject_id, hadm_id, intime, window_end])
+    if not df.empty:
+        bicarb = df['valuenum'].values
+        worst_bicarb = float(bicarb[0])
+        worst_bicarb_score = 0
+        for b in bicarb:
+            b = float(b)
+            if b < 15:
+                s = 6
+            elif b < 20:
+                s = 3
+            else:
+                s = 0
+            if s > worst_bicarb_score:
+                worst_bicarb_score = s
+                worst_bicarb = b
+        components['bicarbonate'] = worst_bicarb_score
+        values['bicarbonate'] = worst_bicarb
+    else:
+        components['bicarbonate'] = 0
+        values['bicarbonate'] = None
+    
+    # 10. BILIRUBIN (mg/dL) - worst value in 24h
+    sql = """
+    SELECT valuenum
+    FROM mimiciv_hosp.labevents
+    WHERE subject_id = ? AND hadm_id = ?
+      AND itemid = 50885
+      AND charttime >= ? AND charttime <= ?
+      AND valuenum IS NOT NULL
+    """
+    df = query_db(sql, [subject_id, hadm_id, intime, window_end])
+    if not df.empty:
+        bili = df['valuenum'].values
+        worst_bili = float(bili[0])
+        worst_bili_score = 0
+        for bl in bili:
+            bl = float(bl)
+            if bl < 4.0:
+                s = 0
+            elif bl < 6.0:
+                s = 4
+            else:
+                s = 9
+            if s > worst_bili_score:
+                worst_bili_score = s
+                worst_bili = bl
+        components['bilirubin'] = worst_bili_score
+        values['bilirubin'] = worst_bili
+    else:
+        components['bilirubin'] = 0
+        values['bilirubin'] = None
+    
+    # 11. BUN (mg/dL) - worst value in 24h
+    sql = """
+    SELECT valuenum
+    FROM mimiciv_hosp.labevents
+    WHERE subject_id = ? AND hadm_id = ?
+      AND itemid = 51006
+      AND charttime >= ? AND charttime <= ?
+      AND valuenum IS NOT NULL
+    """
+    df = query_db(sql, [subject_id, hadm_id, intime, window_end])
+    if not df.empty:
+        bun = df['valuenum'].values
+        worst_bun = float(bun[0])
+        worst_bun_score = 0
+        for bu in bun:
+            bu = float(bu)
+            if bu < 28:
+                s = 0
+            elif bu < 84:
+                s = 6
+            else:
+                s = 10
+            if s > worst_bun_score:
+                worst_bun_score = s
+                worst_bun = bu
+        components['bun'] = worst_bun_score
+        values['bun'] = worst_bun
+    else:
+        components['bun'] = 0
+        values['bun'] = None
+    
+    # 12. PaO2/FiO2 ratio - only if ventilated
+    # Get pO2
+    sql = """
+    SELECT valuenum
+    FROM mimiciv_hosp.labevents
+    WHERE subject_id = ? AND hadm_id = ?
+      AND itemid = 50821
+      AND charttime >= ? AND charttime <= ?
+      AND valuenum IS NOT NULL
+    """
+    df_po2 = query_db(sql, [subject_id, hadm_id, intime, window_end])
+    
+    # Get FiO2
+    sql = """
+    SELECT valuenum
+    FROM mimiciv_icu.chartevents
+    WHERE subject_id = ? AND stay_id = ?
+      AND itemid = 223835
+      AND charttime >= ? AND charttime <= ?
+      AND valuenum IS NOT NULL
+    """
+    df_fio2 = query_db(sql, [subject_id, stay_id, intime, window_end])
+    
+    pof2_score = 0
+    pof2_value = None
+    if not df_po2.empty and not df_fio2.empty:
+        po2 = df_po2['valuenum'].values
+        fio2 = df_fio2['valuenum'].values
+        # Convert FiO2 from % to decimal if needed
+        fio2_decimal = fio2 / 100.0 if fio2[0] > 1 else fio2
+        # Calculate PaO2/FiO2 ratio for each pair
+        ratios = []
+        for p, f in zip(po2, fio2_decimal):
+            if f > 0:
+                ratios.append(float(p) / float(f))
+        if ratios:
+            # Use worst (lowest) ratio
+            worst_ratio = min(ratios)
+            pof2_value = worst_ratio
+            if worst_ratio >= 200:
+                pof2_score = 6
+            elif worst_ratio >= 100:
+                pof2_score = 9
+            else:
+                pof2_score = 11
+    components['pof2_ratio'] = pof2_score
+    values['pof2_ratio'] = pof2_value
+    
+    # 13. URINARY OUTPUT (L/day) - total in 24h
+    sql = """
+    SELECT value
+    FROM mimiciv_icu.outputevents
+    WHERE subject_id = ? AND stay_id = ?
+      AND itemid IN (226627, 226631, 226566, 226457, 226499)
+      AND charttime >= ? AND charttime <= ?
+      AND value IS NOT NULL
+    """
+    df = query_db(sql, [subject_id, stay_id, intime, window_end])
+    urine_score = 0
+    urine_value = None
+    if not df.empty:
+        total_urine_ml = float(df['value'].sum())
+        urine_value = total_urine_ml / 1000.0  # Convert to L
+        if urine_value >= 1.0:
+            urine_score = 0
+        elif urine_value >= 0.5:
+            urine_score = 4
+        else:
+            urine_score = 11
+    components['urine_output'] = urine_score
+    values['urine_output'] = urine_value
+    
+    # 14. ADMISSION TYPE
+    # SAPS II: Scheduled surgical = 0, Medical = 6, Unscheduled surgical = 8
+    # Check if patient had surgery during admission
+    sql = """
+    SELECT COUNT(*) as proc_count
+    FROM mimiciv_hosp.procedures_icd
+    WHERE hadm_id = ?
+    """
+    df_proc = query_db(sql, [hadm_id])
+    has_surgery = df_proc.iloc[0]['proc_count'] > 0 if not df_proc.empty else False
+    
+    # Determine admission type score
+    if admission_type in ['ELECTIVE', 'SURGICAL SAME DAY ADMISSION']:
+        admission_score = 0  # Scheduled surgical
+    elif has_surgery:
+        admission_score = 8  # Unscheduled surgical
+    else:
+        admission_score = 6  # Medical
+    components['admission_type'] = admission_score
+    values['admission_type'] = admission_type
+    
+    # 15. CHRONIC DISEASE - need to check ICD codes
+    # Metastatic cancer, Hematologic malignancy, AIDS
+    # This requires checking diagnosis codes
+    chronic_score = 0
+    chronic_value = None
+    
+    # Check for chronic conditions in diagnoses
+    sql = """
+    SELECT icd_code
+    FROM mimiciv_hosp.diagnoses_icd
+    WHERE hadm_id = ?
+    """
+    df_diag = query_db(sql, [hadm_id])
+    if not df_diag.empty:
+        codes = df_diag['icd_code'].astype(str).tolist()
+        # Metastatic cancer (196-199, C77-C80)
+        # Hematologic malignancy (200-208)
+        # AIDS (042, V08)
+        has_metastatic = any(c in codes for c in ['196', '197', '198', '199'])
+        has_heme = any(c in codes for c in ['200', '201', '202', '203', '204', '205', '206', '207', '208'])
+        has_aids = any(c in codes for c in ['042', 'V08'])
+        
+        if has_aids:
+            chronic_score = 17
+            chronic_value = 'AIDS'
+        elif has_heme:
+            chronic_score = 10
+            chronic_value = 'Hematologic malignancy'
+        elif has_metastatic:
+            chronic_score = 9
+            chronic_value = 'Metastatic cancer'
+    
+    components['chronic_disease'] = chronic_score
+    values['chronic_disease'] = chronic_value
+    
+    # Calculate total score
+    total_score = sum(components.values())
+    
+    # Calculate predicted mortality
+    if total_score > 0:
+        logit = -7.7631 + 0.0737 * total_score + 0.9971 * np.log(total_score + 1)
+        predicted_mortality = np.exp(logit) / (1 + np.exp(logit))
+    else:
+        predicted_mortality = 0.0
+    
+    return {
+        'saps_ii_score': total_score,
+        'predicted_mortality': float(predicted_mortality),
+        'components': components,
+        'values': values,
+        'subject_id': subject_id,
+        'hadm_id': hadm_id,
+        'stay_id': stay_id
+    }
+```
+
+## 3. Test Results and Error Fixes
+
+### Error Fix - Step 4
+**Error**: `Binder Error: Referenced column "unit" not found in FROM clause!`
+**Fix**: `d_labitems` table does not have a `unit` column; units are in `labevents.valueuom`
+
+### Error Fix - Step 8
+**Error**: `Table "p" does not have a column named "dob"`
+**Fix**: `patients` table has `anchor_age` instead of `dob`
+
+### Error Fix - Step 12
+**Error**: `Unable to transform python value of type '<class 'numpy.int32'>' to DuckDB LogicalType`
+**Fix**: Convert all numpy types to Python native types using `int()` and `float()`
+
+### Error Fix - Step 13
+**Error**: `Table with name diagnoses does not exist!`
+**Fix**: Table name is `diagnoses_icd` not `diagnoses`; column is `icd_code` not `icd9_code`
+
+### Error Fix - Step 25
+**Error**: Temperature data missing for itemid 223762 (Celsius)
+**Fix**: Query both Celsius (223762) and Fahrenheit (223761) temperature items; convert Fahrenheit to Celsius using `(F - 32) * 5 / 9`
+
+### Test Results
+| Patient | Subject ID | Hadm ID | Stay ID | SAPS II Score | Predicted Mortality |
+|---------|------------|---------|---------|---------------|---------------------|
+| 1 | 10000032 | 29079034 | 39553978 | 44 | 32.6% |
+| 2 | 10000690 | 25860671 | 37081114 | 36 | 18.1% |
+
+### Key Findings
+- Patient 10000032: Age 52, AIDS diagnosis (17 pts), SBP 84 (5 pts), BUN 33 (6 pts), Potassium 5.0 (3 pts), Emergency admission (6 pts)
+- Patient 10000690: Age 86 (18 pts), GCS 12 (5 pts), SBP 99 (5 pts), HR 62 (2 pts), Emergency admission
+
