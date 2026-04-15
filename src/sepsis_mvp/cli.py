@@ -189,6 +189,7 @@ def run_command(args: argparse.Namespace) -> int:
                 temperature=args.temperature,
                 top_p=args.top_p,
                 max_new_tokens=args.max_new_tokens,
+                repair_max_new_tokens=args.repair_max_new_tokens,
                 zeroshot_guideline_path=getattr(args, "zeroshot_guideline", None),
                 trace_callback=events_sink.write,
             )
@@ -316,6 +317,11 @@ def build_parser() -> argparse.ArgumentParser:
     run_parser.add_argument("--temperature", type=float, default=0.0)
     run_parser.add_argument("--top-p", type=float, default=0.95)
     run_parser.add_argument("--max-new-tokens", type=int, default=250)
+    run_parser.add_argument(
+        "--repair-max-new-tokens",
+        type=int,
+        help="Optional override for repair generations. Defaults to an adaptive value based on --max-new-tokens.",
+    )
     run_parser.add_argument("--sample-size", type=int, help="Run only the first N trajectories.")
     run_parser.add_argument(
         "--resume",

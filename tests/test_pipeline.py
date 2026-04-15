@@ -14,6 +14,7 @@ from sepsis_mvp.agent import (
     _build_zeroshot_messages,
     _coerce_agent_output,
     _coerce_zeroshot_output,
+    _extract_zeroshot_response,
     HeuristicAgent,
 )
 from sepsis_mvp.cli import run_command
@@ -134,6 +135,11 @@ class PipelineTest(unittest.TestCase):
         response = _coerce_zeroshot_output({"python_code": "RESULT = 1"})
         self.assertEqual(response.tool_name, CODE_EXEC_TOOL_NAME)
         self.assertEqual(response.arguments, {"code": "RESULT = 1"})
+
+    def test_zeroshot_response_accepts_fenced_python_block(self):
+        response = _extract_zeroshot_response("```python\nRESULT = {'x': 1}\n```")
+        self.assertEqual(response.tool_name, CODE_EXEC_TOOL_NAME)
+        self.assertEqual(response.arguments, {"code": "RESULT = {'x': 1}"})
 
     def test_qwen_agent_forces_next_required_tool_when_model_skips_tool_use(self):
         class FakeClient:
@@ -320,6 +326,42 @@ class PipelineTest(unittest.TestCase):
         ]
         second = agent.next_response(step_input, history=history, available_tools=[])
         self.assertEqual(second.action, "infection_suspect")
+
+    def test_qwen_agent_zeroshot_repairs_truncated_json_with_fenced_python(self):
+        class FakeClient:
+            def __init__(self):
+                self.max_new_tokens = 250
+                self.outputs = [
+                    '{"python_code":"RESULT = query_db(\\"SELECT 1 AS x\\")',
+                    "```python\nRESULT = {'visible_infection': True}\n```",
+                ]
+
+            def generate(self, messages):
+                return self.outputs.pop(0)
+
+        agent = object.__new__(QwenChatAgent)
+        agent.model = "fake"
+        agent.temperature = 0.0
+        agent.top_p = 0.95
+        agent.max_new_tokens = 250
+        agent.repair_max_new_tokens = 240
+        agent.trace_callback = None
+        agent.client = FakeClient()
+        agent.zeroshot_guideline_text = "guideline"
+
+        step_input = {
+            "trajectory_id": "mimiciv_stay_1",
+            "stay_id": 30,
+            "step_index": 0,
+            "t_hour": 4,
+            "task_names": ["sepsis"],
+            "tool_backend": "zeroshot_raw",
+            "max_step_interactions": 4,
+        }
+
+        first = agent.next_response(step_input, history=[], available_tools=[])
+        self.assertEqual(first.tool_name, CODE_EXEC_TOOL_NAME)
+        self.assertEqual(first.arguments, {"code": "RESULT = {'visible_infection': True}"})
 
     def test_dataset_builder_snaps_transitions_to_checkpoints(self):
         concepts = load_concept_tables(SAMPLE)
