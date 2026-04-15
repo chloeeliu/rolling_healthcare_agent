@@ -105,6 +105,7 @@ class PipelineTest(unittest.TestCase):
         system_prompt = messages[0]["content"]
         self.assertIn("do not assume AKI states are permanent".lower(), system_prompt.lower())
         self.assertIn("aki_stage_1", system_prompt)
+        self.assertIn("current_aki_state_label", system_prompt)
 
     def test_qwen_agent_forces_next_required_tool_when_model_skips_tool_use(self):
         class FakeClient:
@@ -639,6 +640,39 @@ mimiciv_stay_1,10,20,30,2150-01-01T00:00:00,2150-01-02T00:00:00,24,high,2150-01-
         self.assertEqual(metrics["task_variant"], "non_monotonic_current_state")
         self.assertIn("state_change", metrics)
         self.assertIn("stage2_predictions_grounded_rate", metrics["tool_grounding"])
+
+    def test_single_task_non_monotonic_aki_prefers_explicit_state_label(self):
+        class StubRuntime:
+            def execute(self, tool_name, arguments):
+                if tool_name == "query_kdigo_stage":
+                    return {
+                        "stay_id": 30,
+                        "t_hour": arguments["t_hour"],
+                        "latest_aki_stage": 0,
+                        "latest_aki_stage_smoothed": 2,
+                        "current_aki_state_label": "aki_stage_2",
+                    }
+                raise ValueError(tool_name)
+
+        trajectory = Trajectory(
+            trajectory_id="mimiciv_stay_1",
+            stay_id=30,
+            subject_id=10,
+            hadm_id=20,
+            anchor="icu_intime",
+            step_hours=4,
+            horizon_hours=0,
+            transitions={"path_family": "stage2_progressive_or_persistent"},
+            checkpoints=[Checkpoint(t_hour=0, state_label="aki_stage_2")],
+            task_name="aki",
+            task_variant="non_monotonic_current_state",
+            task_names=["aki"],
+            tool_names=["query_kdigo_stage"],
+            label_spaces={"aki": ["no_aki", "aki_stage_1", "aki_stage_2", "aki_stage_3"]},
+        )
+        environment = BenchmarkEnvironment([trajectory], StubRuntime(), task_mode="single")
+        rollout = environment.run_all(HeuristicAgent())[0]
+        self.assertEqual(rollout.steps[0].predicted_action, "aki_stage_2")
 
     def test_load_single_task_non_monotonic_aki_csv(self):
         csv_text = """trajectory_id,subject_id,hadm_id,stay_id,icu_intime,icu_outtime,icu_los_hours,path_family,path_0_24,max_stage_24h,has_up_24h,has_down_24h,num_changes_24h,t_hour,checkpoint_time,current_aki_stage_smoothed,state_label,terminal

@@ -27,7 +27,10 @@ def _is_multitask_step(step_input: dict[str, Any]) -> bool:
 TOOL_DESCRIPTIONS = {
     "query_suspicion_of_infection": "infection evidence visible by this checkpoint",
     "query_sofa": "current visible SOFA summary up to this checkpoint",
-    "query_kdigo_stage": "current visible AKI stage summary up to this checkpoint",
+    "query_kdigo_stage": (
+        "current visible AKI stage summary up to this checkpoint; for non-monotonic AKI, "
+        "use current_aki_state_label as the primary decision field"
+    ),
     "query_ventilation_status": "current and highest visible respiratory support up to this checkpoint",
 }
 
@@ -53,8 +56,10 @@ CLINICAL_GUIDANCE = {
 
 AKI_NON_MONOTONIC_GUIDANCE = [
     "Predict the current visible AKI state at this checkpoint rather than the first AKI onset.",
-    "Map visible KDIGO stage 0 to no_aki, stage 1 to aki_stage_1, stage 2 to aki_stage_2, and stage 3 to aki_stage_3.",
+    "Use current_aki_state_label from query_kdigo_stage as the primary benchmark-facing state field.",
+    "If current_aki_state_label is missing, then fall back to latest_aki_stage_smoothed.",
     "Do not assume AKI states are permanent. If the visible stage decreases, de-escalate to the current lower stage.",
+    "Do not use latest_aki_stage when it conflicts with latest_aki_stage_smoothed.",
     "Use the latest visible KDIGO stage summary for the checkpoint, not the historical maximum alone.",
 ]
 
@@ -470,12 +475,14 @@ class HeuristicAgent:
         latest_aki = kdigo_output.get("latest_aki_stage_smoothed")
         label_space = _label_space_for_task(step_input, "aki")
         if "aki_stage_1" in label_space:
-            stage_label = {
-                0: "no_aki",
-                1: "aki_stage_1",
-                2: "aki_stage_2",
-                3: "aki_stage_3",
-            }.get(latest_aki if latest_aki is not None else 0, "aki_stage_3")
+            stage_label = kdigo_output.get("current_aki_state_label")
+            if stage_label is None:
+                stage_label = {
+                    0: "no_aki",
+                    1: "aki_stage_1",
+                    2: "aki_stage_2",
+                    3: "aki_stage_3",
+                }.get(latest_aki if latest_aki is not None else 0, "aki_stage_3")
             return ActionDecision(action=stage_label)
         if latest_aki is not None and latest_aki >= self.aki_alert_threshold:
             return ActionDecision(action="trigger_aki_alert")

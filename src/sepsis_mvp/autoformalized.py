@@ -17,6 +17,17 @@ AUTOFORM_TOOL_TO_FUNCTION = MappingProxyType(
 )
 
 
+def _aki_state_label_from_stage(stage: int | None) -> str | None:
+    if stage is None:
+        return None
+    return {
+        0: "no_aki",
+        1: "aki_stage_1",
+        2: "aki_stage_2",
+        3: "aki_stage_3",
+    }.get(int(stage), "aki_stage_3")
+
+
 @dataclass(slots=True)
 class _StayContext:
     stay_id: int
@@ -329,6 +340,9 @@ class AutoformalizedDuckDBToolRuntime:
             "latest_charttime": self._iso_or_none(context.visible_until),
             "latest_aki_stage": stage,
             "latest_aki_stage_smoothed": stage,
+            "current_aki_state_label": _aki_state_label_from_stage(stage),
+            "current_aki_state_stage": stage,
+            "current_aki_state_source": "latest_aki_stage_smoothed",
             "latest_components": {
                 "aki_stage_creat": result.get("kdigo_stage_creatinine"),
                 "aki_stage_uo": result.get("kdigo_stage_uo"),
