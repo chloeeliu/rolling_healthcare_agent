@@ -431,4 +431,11 @@ def build_tool_runtime(
 
         return AutoformalizedDuckDBToolRuntime(db_path=db_path, library_path=library_root)
 
+    if tool_backend == "zeroshot_raw":
+        if not db_path:
+            raise SystemExit("Zero-shot raw backend requires --db-path")
+        from .zeroshot_raw import ZeroShotRawDuckDBRuntime
+
+        return ZeroShotRawDuckDBRuntime(db_path=db_path)
+
     raise SystemExit(f"Unsupported tool backend: {tool_backend}")

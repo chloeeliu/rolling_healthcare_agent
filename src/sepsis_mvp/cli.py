@@ -111,6 +111,20 @@ def run_command(args: argparse.Namespace) -> int:
         trajectories = trajectories[: args.sample_size]
     all_target_trajectories = list(trajectories)
 
+    if args.tool_backend == "zeroshot_raw":
+        if args.agent != "qwen":
+            raise SystemExit("Zero-shot raw backend currently requires --agent qwen.")
+        unsupported = [
+            trajectory.trajectory_id
+            for trajectory in all_target_trajectories
+            if trajectory.is_multitask() or trajectory.primary_task_name() != "sepsis"
+        ]
+        if unsupported:
+            raise SystemExit(
+                "Zero-shot raw backend currently supports only the single-task sepsis dataset. "
+                f"First unsupported trajectories: {unsupported[:5]}"
+            )
+
     existing_rollouts: list[TrajectoryRollout] = []
     existing_ids: set[str] = set()
     resume_sources: list[str] = []
@@ -175,6 +189,7 @@ def run_command(args: argparse.Namespace) -> int:
                 temperature=args.temperature,
                 top_p=args.top_p,
                 max_new_tokens=args.max_new_tokens,
+                zeroshot_guideline_path=getattr(args, "zeroshot_guideline", None),
                 trace_callback=events_sink.write,
             )
 
@@ -277,7 +292,7 @@ def build_parser() -> argparse.ArgumentParser:
     )
     run_parser.add_argument(
         "--tool-backend",
-        choices=["official", "autoformalized"],
+        choices=["official", "autoformalized", "zeroshot_raw"],
         default="official",
         help="Choose whether visible tool outputs come from official derived concepts or generated functions.",
     )
@@ -285,6 +300,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--autoformalized-library",
         default="autoformalized_library",
         help="Path to the autoformalized function library root when using --tool-backend autoformalized.",
+    )
+    run_parser.add_argument(
+        "--zeroshot-guideline",
+        default="baseline/sepsis_guideline.yaml",
+        help="Path to the sepsis guidance YAML when using --tool-backend zeroshot_raw.",
     )
     run_parser.add_argument(
         "--include-out-of-scope",
