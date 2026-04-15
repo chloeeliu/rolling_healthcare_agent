@@ -2,11 +2,20 @@ from __future__ import annotations
 
 import json
 import os
+from pathlib import Path
 import re
 from dataclasses import dataclass, field
 from typing import Any, Callable, Protocol
 
-from .schemas import ACTIONS, TASK_BASELINE_ACTION, TASK_LABEL_SPACES, TASK_TOOL_NAMES, ActionDecision, ToolCall
+from .schemas import (
+    ACTIONS,
+    CODE_EXEC_TOOL_NAME,
+    TASK_BASELINE_ACTION,
+    TASK_LABEL_SPACES,
+    TASK_TOOL_NAMES,
+    ActionDecision,
+    ToolCall,
+)
 
 
 class Agent(Protocol):
@@ -27,9 +36,25 @@ def _is_multitask_step(step_input: dict[str, Any]) -> bool:
 TOOL_DESCRIPTIONS = {
     "query_suspicion_of_infection": "infection evidence visible by this checkpoint",
     "query_sofa": "current visible SOFA summary up to this checkpoint",
-    "query_kdigo_stage": "current visible AKI stage summary up to this checkpoint",
+    "query_kdigo_stage": (
+        "current visible AKI stage summary up to this checkpoint; for non-monotonic AKI, "
+        "use current_aki_state_label as the primary decision field"
+    ),
     "query_ventilation_status": "current and highest visible respiratory support up to this checkpoint",
 }
+
+ZEROSHOT_RAW_TABLES = [
+    "mimiciv_icu.icustays",
+    "mimiciv_icu.chartevents",
+    "mimiciv_icu.inputevents",
+    "mimiciv_icu.outputevents",
+    "mimiciv_icu.d_items",
+    "mimiciv_hosp.admissions",
+    "mimiciv_hosp.labevents",
+    "mimiciv_hosp.d_labitems",
+    "mimiciv_hosp.microbiologyevents",
+    "mimiciv_hosp.prescriptions",
+]
 
 CLINICAL_GUIDANCE = {
     "sepsis": [
@@ -53,8 +78,10 @@ CLINICAL_GUIDANCE = {
 
 AKI_NON_MONOTONIC_GUIDANCE = [
     "Predict the current visible AKI state at this checkpoint rather than the first AKI onset.",
-    "Map visible KDIGO stage 0 to no_aki, stage 1 to aki_stage_1, stage 2 to aki_stage_2, and stage 3 to aki_stage_3.",
+    "Use current_aki_state_label from query_kdigo_stage as the primary benchmark-facing state field.",
+    "If current_aki_state_label is missing, then fall back to latest_aki_stage_smoothed.",
     "Do not assume AKI states are permanent. If the visible stage decreases, de-escalate to the current lower stage.",
+    "Do not use latest_aki_stage when it conflicts with latest_aki_stage_smoothed.",
     "Use the latest visible KDIGO stage summary for the checkpoint, not the historical maximum alone.",
 ]
 
@@ -275,15 +302,200 @@ def _build_messages(
     ]
 
 
+def _zeroshot_code_calls_used(history: list[dict[str, Any]]) -> int:
+    return sum(
+        1
+        for item in history
+        if item["type"] == "tool_call" and item.get("tool_name") == CODE_EXEC_TOOL_NAME
+    )
+
+
+def _summarize_zeroshot_history(history: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    summarized: list[dict[str, Any]] = []
+    for item in history:
+        if item["type"] == "tool_call" and item.get("tool_name") == CODE_EXEC_TOOL_NAME:
+            payload = item.get("payload", {})
+            summarized.append(
+                {
+                    "type": "python_code",
+                    "code": payload.get("arguments", {}).get("code"),
+                }
+            )
+        elif item["type"] == "tool_output" and item.get("tool_name") == CODE_EXEC_TOOL_NAME:
+            payload = item.get("payload", {})
+            summarized.append(
+                {
+                    "type": "python_output",
+                    "ok": payload.get("ok"),
+                    "stdout": payload.get("stdout"),
+                    "stderr": payload.get("stderr"),
+                    "result": payload.get("result"),
+                    "error_type": payload.get("error_type"),
+                    "error_message": payload.get("error_message"),
+                }
+            )
+    return summarized
+
+
+def _build_zeroshot_messages(
+    step_input: dict[str, Any],
+    history: list[dict[str, Any]],
+    guideline_text: str,
+) -> list[dict[str, str]]:
+    stay_id = int(step_input["stay_id"])
+    t_hour = int(step_input["t_hour"])
+    task_names = _resolved_task_names(step_input)
+    if task_names != ["sepsis"]:
+        raise ValueError("Zero-shot raw backend currently supports single-task sepsis only.")
+    max_interactions = int(step_input.get("max_step_interactions") or 4)
+    code_calls_used = _zeroshot_code_calls_used(history)
+    remaining_code_calls = max(0, max_interactions - code_calls_used)
+    can_execute_more = remaining_code_calls > 0
+
+    system_prompt = (
+        "You are an ICU rolling sepsis monitoring agent operating directly on raw MIMIC-IV tables.\n"
+        "This is a rolling monitoring task, not a forecasting task.\n"
+        "At each checkpoint, use only data visible up to visible_until for this stay/admission.\n"
+        "You may either execute exactly one Python analysis snippet or return one final action.\n"
+        "The Python session persists within the current checkpoint only.\n"
+        "Do not output reasoning or prose.\n"
+        "Return exactly one response and nothing else.\n\n"
+        "Task labels:\n"
+        "- keep_monitoring\n"
+        "- infection_suspect\n"
+        "- trigger_sepsis_alert\n\n"
+        "Decision guidance:\n"
+        "- If suspected infection is not yet visible, prefer keep_monitoring.\n"
+        "- If suspected infection is visible but visible organ-dysfunction evidence is not yet sufficient for SOFA-style alerting, prefer infection_suspect.\n"
+        "- If suspected infection is visible and the visible data supports SOFA >= 2, prefer trigger_sepsis_alert.\n"
+        "- Pre-ICU hospital events from the same admission may already be visible at t_hour=0.\n"
+        "- For suspected infection, align with the official MIMIC Sepsis-3 operationalization: systemic antibiotics from hospital prescriptions plus microbiology culture timing with asymmetric windows.\n"
+        "- Positive culture can support the case but is not required for suspected infection.\n"
+        "- For organ dysfunction, use raw SOFA-relevant signals from chartevents, labevents, inputevents, and outputevents.\n\n"
+        "Python execution contract:\n"
+        "- Use query_db(sql, params=None) for all database access.\n"
+        "- query_db is read-only.\n"
+        "- Do not open database connections directly.\n"
+        "- Preloaded variables: stay_id, subject_id, hadm_id, icu_intime, visible_until, t_hour, pd, np, datetime, timedelta.\n"
+        "- Before the code ends, set RESULT to a concise value and/or print concise findings.\n"
+        "- Keep snippets short and focused. Prefer one small query at a time.\n"
+        "- Prefer SQL filtering and compact helper logic over long hard-coded Python lists.\n"
+        "- Never emit giant enumerations of routes, itemids, antibiotics, or repeated literals.\n"
+        "- If you need multiple checks, split them across multiple short executions instead of one large script.\n\n"
+        "Response formats:\n"
+        "- To execute Python, return only one fenced Python block and nothing else.\n"
+        "  Example:\n"
+        "  ```python\n"
+        "  abx = query_db(\"SELECT COUNT(*) AS n FROM mimiciv_hosp.prescriptions WHERE hadm_id = ? AND starttime <= ?\", [hadm_id, visible_until])\n"
+        "  RESULT = {\"antibiotic_rows\": int(abx.iloc[0][\"n\"])}\n"
+        "  ```\n"
+        '- To decide, return only one JSON object such as {"action":"keep_monitoring"}.\n'
+    )
+    if can_execute_more:
+        system_prompt += (
+            f"\nYou have {remaining_code_calls} Python execution(s) remaining before you must commit to a final action."
+        )
+    else:
+        system_prompt += "\nYou have no Python executions remaining. The next response must be a final action."
+    system_prompt += "\n\nGuideline reference:\n" + guideline_text
+
+    user_payload = {
+        "step_input": {
+            "trajectory_id": step_input["trajectory_id"],
+            "stay_id": stay_id,
+            "step_index": step_input["step_index"],
+            "t_hour": t_hour,
+            "task_name": "sepsis",
+        },
+        "tool_backend": step_input.get("tool_backend"),
+        "allowed_raw_tables": ZEROSHOT_RAW_TABLES,
+        "remaining_python_executions": remaining_code_calls,
+        "history": _summarize_zeroshot_history(history),
+    }
+    return [
+        {"role": "system", "content": system_prompt},
+        {"role": "user", "content": json.dumps(user_payload, indent=2)},
+    ]
+
+
+def _build_zeroshot_repair_messages(
+    step_input: dict[str, Any],
+    history: list[dict[str, Any]],
+    guideline_text: str,
+    bad_output: str,
+) -> list[dict[str, str]]:
+    messages = _build_zeroshot_messages(step_input, history, guideline_text)
+    messages.append({"role": "assistant", "content": bad_output})
+    remaining_code_calls = max(
+        0,
+        int(step_input.get("max_step_interactions") or 4) - _zeroshot_code_calls_used(history),
+    )
+    if remaining_code_calls > 0:
+        repair_hint = (
+            "Your previous reply was invalid or too long. Respond again with exactly one response and no extra text. "
+            "If you need code execution, return only one short fenced Python block. "
+            'If you are ready to decide, return only one JSON object such as {"action":"keep_monitoring"}. '
+            "Do not wrap Python in JSON, and avoid long literal lists."
+        )
+    else:
+        repair_hint = (
+            "Your previous reply was invalid. Respond again with JSON only and no extra text. "
+            'You must now return a final action such as {"action":"infection_suspect"}.'
+        )
+    messages.append({"role": "user", "content": repair_hint})
+    return messages
+
+
+def _sanitize_model_text(text: str) -> str:
+    return re.sub(r"<think>.*?</think>", "", text, flags=re.DOTALL | re.IGNORECASE).strip()
+
+
 def _extract_json_object(text: str) -> dict[str, Any]:
-    text = re.sub(r"<think>.*?</think>", "", text, flags=re.DOTALL | re.IGNORECASE).strip()
+    text = _sanitize_model_text(text)
     try:
         return json.loads(text)
     except json.JSONDecodeError:
-        match = re.search(r"\{.*\}", text, re.DOTALL)
-        if not match:
-            raise ValueError(f"Model did not return JSON: {text}")
-        return json.loads(match.group(0))
+        decoder = json.JSONDecoder()
+        for match in re.finditer(r"\{", text):
+            try:
+                payload, _ = decoder.raw_decode(text[match.start() :])
+            except json.JSONDecodeError:
+                continue
+            if isinstance(payload, dict):
+                return payload
+        raise ValueError(f"Model did not return JSON: {text}")
+
+
+def _extract_python_code_block(text: str) -> str | None:
+    text = _sanitize_model_text(text)
+    closed_match = re.search(r"```(?:python)?\s*\n(.*?)```", text, re.DOTALL | re.IGNORECASE)
+    if closed_match:
+        code = closed_match.group(1).strip()
+        return code or None
+
+    open_match = re.search(r"```(?:python)?\s*\n(.*)\Z", text, re.DOTALL | re.IGNORECASE)
+    if open_match:
+        code = open_match.group(1).strip()
+        return code or None
+
+    tag_match = re.search(r"<python>\s*(.*?)\s*</python>", text, re.DOTALL | re.IGNORECASE)
+    if tag_match:
+        code = tag_match.group(1).strip()
+        return code or None
+
+    open_tag_match = re.search(r"<python>\s*(.*)\Z", text, re.DOTALL | re.IGNORECASE)
+    if open_tag_match:
+        code = open_tag_match.group(1).strip()
+        return code or None
+
+    return None
+
+
+def _extract_zeroshot_response(text: str) -> ToolCall | ActionDecision:
+    code = _extract_python_code_block(text)
+    if code is not None:
+        return ToolCall(tool_name=CODE_EXEC_TOOL_NAME, arguments={"code": code})
+    return _coerce_zeroshot_output(_extract_json_object(text))
 
 
 def _build_repair_messages(
@@ -345,6 +557,22 @@ def _coerce_agent_output(payload: dict[str, Any]) -> ToolCall | ActionDecision:
     if "tool_name" in payload:
         return ToolCall(tool_name=payload["tool_name"], arguments=payload.get("arguments", {}))
     raise ValueError(f"Unrecognized agent payload: {payload}")
+
+
+def _coerce_zeroshot_output(payload: dict[str, Any]) -> ToolCall | ActionDecision:
+    has_action = "action" in payload
+    has_code = "python_code" in payload
+    if has_action == has_code:
+        raise ValueError("Zero-shot response must contain exactly one of 'action' or 'python_code'.")
+    if has_action:
+        action = payload["action"]
+        if action not in TASK_LABEL_SPACES["sepsis"]:
+            raise ValueError(f"Invalid action: {action}")
+        return ActionDecision(action=action)
+    code = payload["python_code"]
+    if not isinstance(code, str) or not code.strip():
+        raise ValueError("python_code must be a non-empty string.")
+    return ToolCall(tool_name=CODE_EXEC_TOOL_NAME, arguments={"code": code})
 
 
 @dataclass(slots=True)
@@ -470,12 +698,14 @@ class HeuristicAgent:
         latest_aki = kdigo_output.get("latest_aki_stage_smoothed")
         label_space = _label_space_for_task(step_input, "aki")
         if "aki_stage_1" in label_space:
-            stage_label = {
-                0: "no_aki",
-                1: "aki_stage_1",
-                2: "aki_stage_2",
-                3: "aki_stage_3",
-            }.get(latest_aki if latest_aki is not None else 0, "aki_stage_3")
+            stage_label = kdigo_output.get("current_aki_state_label")
+            if stage_label is None:
+                stage_label = {
+                    0: "no_aki",
+                    1: "aki_stage_1",
+                    2: "aki_stage_2",
+                    3: "aki_stage_3",
+                }.get(latest_aki if latest_aki is not None else 0, "aki_stage_3")
             return ActionDecision(action=stage_label)
         if latest_aki is not None and latest_aki >= self.aki_alert_threshold:
             return ActionDecision(action="trigger_aki_alert")
@@ -596,15 +826,30 @@ class LocalQwenChat:
         return text.strip()
 
 
+def _default_zeroshot_guideline_path() -> Path:
+    return Path(__file__).resolve().parents[2] / "baseline" / "sepsis_guideline.yaml"
+
+
+def _load_zeroshot_guideline_text(path: str | None) -> str:
+    guideline_path = Path(path) if path else _default_zeroshot_guideline_path()
+    if not guideline_path.is_absolute():
+        guideline_path = Path.cwd() / guideline_path
+    if not guideline_path.exists():
+        return f"# Guideline file not found: {guideline_path}"
+    return guideline_path.read_text()
+
+
 @dataclass(slots=True)
 class QwenChatAgent:
     model: str = "Qwen/Qwen3.5-9B"
     temperature: float = 0.0
     top_p: float = 0.95
     max_new_tokens: int = 250
-    repair_max_new_tokens: int = 120
+    repair_max_new_tokens: int | None = None
+    zeroshot_guideline_path: str | None = None
     trace_callback: Callable[[dict[str, Any]], None] | None = field(default=None, repr=False)
     client: LocalQwenChat = field(init=False, repr=False)
+    zeroshot_guideline_text: str = field(init=False, repr=False)
 
     def __post_init__(self) -> None:
         self.client = LocalQwenChat(
@@ -613,6 +858,9 @@ class QwenChatAgent:
             top_p=self.top_p,
             max_new_tokens=self.max_new_tokens,
         )
+        if self.repair_max_new_tokens is None:
+            self.repair_max_new_tokens = max(240, min(self.max_new_tokens, 800))
+        self.zeroshot_guideline_text = _load_zeroshot_guideline_text(self.zeroshot_guideline_path)
 
     def next_response(
         self,
@@ -620,6 +868,8 @@ class QwenChatAgent:
         history: list[dict[str, Any]],
         available_tools: list[str],
     ) -> ToolCall | ActionDecision:
+        if step_input.get("tool_backend") == "zeroshot_raw":
+            return self._next_zeroshot_response(step_input, history)
         context = {
             "trajectory_id": step_input["trajectory_id"],
             "stay_id": int(step_input["stay_id"]),
@@ -690,4 +940,69 @@ class QwenChatAgent:
                 tool_name=next_tool,
                 arguments={"stay_id": int(step_input["stay_id"]), "t_hour": int(step_input["t_hour"])},
             )
+        return response
+
+    def _next_zeroshot_response(
+        self,
+        step_input: dict[str, Any],
+        history: list[dict[str, Any]],
+    ) -> ToolCall | ActionDecision:
+        context = {
+            "trajectory_id": step_input["trajectory_id"],
+            "stay_id": int(step_input["stay_id"]),
+            "step_index": int(step_input["step_index"]),
+            "t_hour": int(step_input["t_hour"]),
+        }
+        messages = _build_zeroshot_messages(step_input, history, self.zeroshot_guideline_text)
+        content = self.client.generate(messages)
+        if self.trace_callback is not None:
+            self.trace_callback({"event_type": "model_output_raw", **context, "output": content})
+        try:
+            response = _extract_zeroshot_response(content)
+        except (ValueError, json.JSONDecodeError):
+            original_max_tokens = self.client.max_new_tokens
+            repair_messages = _build_zeroshot_repair_messages(
+                step_input,
+                history,
+                self.zeroshot_guideline_text,
+                content,
+            )
+            self.client.max_new_tokens = self.repair_max_new_tokens
+            try:
+                repaired = self.client.generate(repair_messages)
+            finally:
+                self.client.max_new_tokens = original_max_tokens
+            if self.trace_callback is not None:
+                self.trace_callback({"event_type": "model_output_repair", **context, "output": repaired})
+            response = _extract_zeroshot_response(repaired)
+
+        remaining_code_calls = max(
+            0,
+            int(step_input.get("max_step_interactions") or 4) - _zeroshot_code_calls_used(history),
+        )
+        if remaining_code_calls == 0 and isinstance(response, ToolCall):
+            original_max_tokens = self.client.max_new_tokens
+            repair_messages = _build_zeroshot_repair_messages(
+                step_input,
+                history,
+                self.zeroshot_guideline_text,
+                content,
+            )
+            self.client.max_new_tokens = self.repair_max_new_tokens
+            try:
+                repaired = self.client.generate(repair_messages)
+            finally:
+                self.client.max_new_tokens = original_max_tokens
+            if self.trace_callback is not None:
+                self.trace_callback(
+                    {
+                        "event_type": "model_output_repair_final_decision",
+                        **context,
+                        "output": repaired,
+                    }
+                )
+            response = _extract_zeroshot_response(repaired)
+            if isinstance(response, ToolCall):
+                raise ValueError("Zero-shot agent must return a final action after code budget is exhausted.")
+
         return response

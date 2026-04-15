@@ -1,0 +1,138 @@
+sepsis_monitoring_guideline:
+  task:
+    name: "rolling_sepsis_monitoring"
+    objective: "At each ICU checkpoint, assign the current visible sepsis surveillance state from raw MIMIC-IV data only."
+    labels:
+      - "keep_monitoring"
+      - "infection_suspect"
+      - "trigger_sepsis_alert"
+    label_meaning:
+      keep_monitoring: "No visible suspected infection yet, or evidence is too weak to leave the baseline state."
+      infection_suspect: "Visible suspected infection is present, but visible organ dysfunction is not yet strong enough for sepsis alerting."
+      trigger_sepsis_alert: "Visible suspected infection is present and visible organ-dysfunction evidence is sufficient for SOFA-style sepsis alerting."
+
+  time_scope:
+    anchor: "mimiciv_icu.icustays.intime"
+    visible_until: "icu_intime + t_hour hours"
+    rule: "Use only events from the current ICU stay or current hospital admission with event_time <= visible_until."
+    pre_icu_visibility: "Hospital-admission events before ICU admission may already be visible at t=0 if they occurred before icu_intime."
+    important_note: "This benchmark is rolling monitoring, not future forecasting."
+
+  official_alignment:
+    target_style: "Stay clinically aligned with the official MIMIC Sepsis-3 concepts when possible, but reason from raw tables rather than mimiciv_derived."
+    suspected_infection_source_concept: "MIMIC suspicion_of_infection concept"
+    sofa_source_concept: "MIMIC sofa concept"
+
+  raw_tables:
+    icu:
+      - "mimiciv_icu.icustays"
+      - "mimiciv_icu.chartevents"
+      - "mimiciv_icu.inputevents"
+      - "mimiciv_icu.outputevents"
+      - "mimiciv_icu.d_items"
+    hospital:
+      - "mimiciv_hosp.admissions"
+      - "mimiciv_hosp.labevents"
+      - "mimiciv_hosp.d_labitems"
+      - "mimiciv_hosp.microbiologyevents"
+      - "mimiciv_hosp.prescriptions"
+
+  suspected_infection:
+    intent: "Approximate the official MIMIC suspicion_of_infection logic from raw hospital tables."
+    canonical_antibiotic_source:
+      table: "mimiciv_hosp.prescriptions"
+      key_fields: ["hadm_id", "drug", "route", "starttime", "stoptime"]
+      guidance:
+        - "Treat hospital prescriptions as the canonical antibiotic source for infection suspicion."
+        - "Focus on systemic antibiotic exposure."
+        - "Exclude obviously non-systemic routes when they are clearly topical/eye/ear only."
+    canonical_culture_source:
+      table: "mimiciv_hosp.microbiologyevents"
+      key_fields: ["hadm_id", "chartdate", "charttime", "spec_type_desc", "org_name", "org_itemid"]
+      guidance:
+        - "Use culture order time, not final positivity time, for suspicion timing."
+        - "Positive culture supports infection but is not required for suspected infection."
+        - "Culture time may require COALESCE(charttime, CAST(chartdate AS TIMESTAMP))."
+    pairing_rule:
+      antibiotic_first: "If systemic antibiotics come first, look for a culture within the next 24 hours."
+      culture_first: "If a culture comes first, look for systemic antibiotics within the next 72 hours."
+      suspicion_time: "Use culture time when culture precedes antibiotics; otherwise use antibiotic time."
+    practical_state_mapping:
+      - "No visible antibiotic-culture pairing yet -> usually keep_monitoring."
+      - "Visible antibiotic-culture pairing -> at least infection_suspect unless alert-level organ dysfunction is also visible."
+
+  sofa_relevant_signals:
+    principle: "Use SOFA-style organ dysfunction evidence from raw data. Trigger sepsis alert only when suspected infection is visible and the visible data supports SOFA >= 2."
+    note: "A simplified but clinically faithful raw reconstruction is acceptable for this zero-shot baseline."
+    respiratory:
+      sources:
+        - "mimiciv_icu.chartevents"
+        - "mimiciv_hosp.labevents"
+      useful_signals:
+        fio2_chart: { itemid: 223835, label: "Inspired O2 Fraction" }
+        pao2_chart: { itemid: 220224, label: "Arterial O2 pressure" }
+        pao2_lab: { itemid: 50821, label: "pO2" }
+      guidance:
+        - "PaO2/FiO2 evidence is the most useful raw respiratory SOFA signal."
+        - "Mechanical ventilation evidence can strengthen high respiratory SOFA interpretations."
+    coagulation:
+      source: "mimiciv_hosp.labevents"
+      useful_signals:
+        platelets: { itemid: 51265, label: "Platelet Count" }
+    liver:
+      source: "mimiciv_hosp.labevents"
+      useful_signals:
+        bilirubin_total: { itemid: 50885, label: "Bilirubin, Total" }
+    cardiovascular:
+      sources:
+        - "mimiciv_icu.chartevents"
+        - "mimiciv_icu.inputevents"
+      useful_signals:
+        map_abp: { itemid: 220052, label: "Arterial Blood Pressure mean" }
+        map_nibp: { itemid: 220181, label: "Non Invasive Blood Pressure mean" }
+        dopamine: { itemid: 221662, label: "Dopamine" }
+        dobutamine: { itemid: 221653, label: "Dobutamine" }
+        epinephrine: { itemid: 221289, label: "Epinephrine" }
+        norepinephrine: { itemid: 221906, label: "Norepinephrine" }
+      guidance:
+        - "MAP < 70 supports cardiovascular dysfunction."
+        - "Vasopressor exposure from ICU inputevents is important for higher cardiovascular SOFA subscores."
+    cns:
+      source: "mimiciv_icu.chartevents"
+      useful_signals:
+        gcs_eye: { itemid: 220739, label: "GCS - Eye Opening" }
+        gcs_verbal: { itemid: 223900, label: "GCS - Verbal Response" }
+        gcs_motor: { itemid: 223901, label: "GCS - Motor Response" }
+      guidance:
+        - "Worst visible GCS components can support CNS dysfunction."
+    renal:
+      sources:
+        - "mimiciv_hosp.labevents"
+        - "mimiciv_icu.outputevents"
+      useful_signals:
+        creatinine: { itemid: 50912, label: "Creatinine" }
+      guidance:
+        - "Rising creatinine supports renal SOFA points."
+        - "Low urine output can also support renal dysfunction when enough output history is visible."
+
+  supportive_non_sofa_signals:
+    role: "Helpful for context, but not the primary benchmark definition."
+    qsofa_like_signals:
+      respiratory_rate: { itemid: 220210, label: "Respiratory Rate" }
+      sbp_nibp: { itemid: 220179, label: "Non Invasive Blood Pressure systolic" }
+      gcs_components: [220739, 223900, 223901]
+    inflammatory_or_perfusion_signals:
+      heart_rate: { itemid: 220045, label: "Heart Rate" }
+      temperature_f: { itemid: 223761, label: "Temperature Fahrenheit" }
+      temperature_c: { itemid: 223762, label: "Temperature Celsius" }
+      wbc: { itemid: 51301, label: "White Blood Cells" }
+      lactate: { itemid: 50813, label: "Lactate" }
+    guidance:
+      - "These signals can support concern, but they should not by themselves replace the infection + SOFA monitoring logic."
+
+  pitfalls:
+    - "Do not treat this as a pure prediction task. Decide from visible evidence at the checkpoint."
+    - "Do not require positive cultures to call suspected infection."
+    - "Do not restrict infection evidence to the ICU only; same-admission pre-ICU hospital events may be visible."
+    - "Do not use mimiciv_derived tables in this zero-shot raw baseline."
+    - "Do not overcall sepsis alert from vague abnormal vitals alone when suspected infection is not yet visible."

@@ -24,6 +24,17 @@ RESP_SUPPORT_LABELS = {
 }
 
 
+def _aki_state_label_from_stage(stage: int | None) -> str | None:
+    if stage is None:
+        return None
+    return {
+        0: "no_aki",
+        1: "aki_stage_1",
+        2: "aki_stage_2",
+        3: "aki_stage_3",
+    }.get(int(stage), "aki_stage_3")
+
+
 class ToolRuntime(Protocol):
     def execute(self, tool_name: str, arguments: dict[str, Any]) -> dict[str, Any]:
         ...
@@ -298,6 +309,9 @@ class DuckDBConceptToolRuntime:
                 "latest_charttime": None,
                 "latest_aki_stage": None,
                 "latest_aki_stage_smoothed": None,
+                "current_aki_state_label": None,
+                "current_aki_state_stage": None,
+                "current_aki_state_source": "latest_aki_stage_smoothed",
                 "max_aki_stage_so_far": None,
                 "max_aki_stage_smoothed_so_far": None,
                 "has_stage1_or_higher": False,
@@ -323,6 +337,9 @@ class DuckDBConceptToolRuntime:
             "latest_charttime": latest[0].isoformat() if latest[0] else None,
             "latest_aki_stage": latest[1],
             "latest_aki_stage_smoothed": latest[2],
+            "current_aki_state_label": _aki_state_label_from_stage(latest[2]),
+            "current_aki_state_stage": latest[2],
+            "current_aki_state_source": "latest_aki_stage_smoothed",
             "latest_components": {
                 "aki_stage_creat": latest[3],
                 "aki_stage_uo": latest[4],
@@ -413,5 +430,12 @@ def build_tool_runtime(
         from .autoformalized import AutoformalizedDuckDBToolRuntime
 
         return AutoformalizedDuckDBToolRuntime(db_path=db_path, library_path=library_root)
+
+    if tool_backend == "zeroshot_raw":
+        if not db_path:
+            raise SystemExit("Zero-shot raw backend requires --db-path")
+        from .zeroshot_raw import ZeroShotRawDuckDBRuntime
+
+        return ZeroShotRawDuckDBRuntime(db_path=db_path)
 
     raise SystemExit(f"Unsupported tool backend: {tool_backend}")

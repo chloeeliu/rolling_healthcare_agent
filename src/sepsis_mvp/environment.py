@@ -8,6 +8,7 @@ from .agent import Agent
 from .schemas import (
     ActionDecision,
     AgentStepInput,
+    CODE_EXEC_TOOL_NAME,
     TASK_BASELINE_ACTION,
     TASK_LABEL_SPACES,
     TASK_TOOL_NAMES,
@@ -77,6 +78,7 @@ class BenchmarkEnvironment:
                 label_spaces=trajectory.label_spaces,
                 task_mode=task_mode,
                 tool_backend=self.tool_backend,
+                max_step_interactions=self.max_tool_calls_per_step,
             )
             history: list[dict[str, Any]] = []
             tool_calls: list[dict[str, Any]] = []
@@ -84,6 +86,12 @@ class BenchmarkEnvironment:
             primary_task = trajectory.primary_task_name()
             predicted_action: str | None = TASK_BASELINE_ACTION.get(primary_task)
             predicted_task_actions: dict[str, str] | None = None
+            step_session_id = None
+            if hasattr(self.tool_runtime, "start_step_session"):
+                step_session_id = self.tool_runtime.start_step_session(
+                    stay_id=trajectory.stay_id,
+                    t_hour=checkpoint.t_hour,
+                )
 
             self._emit(
                 {
@@ -97,60 +105,67 @@ class BenchmarkEnvironment:
                 }
             )
 
-            for _ in range(self.max_tool_calls_per_step + 1):
-                response = agent.next_response(
-                    step_input=step_input.to_dict(),
-                    history=history,
-                    available_tools=step_input.available_tools,
-                )
-                if isinstance(response, ToolCall):
-                    output = self.tool_runtime.execute(response.tool_name, response.arguments)
-                    call_payload = {"tool_name": response.tool_name, "arguments": response.arguments}
-                    self._emit(
-                        {
-                            "event_type": "tool_call",
-                            "trajectory_id": trajectory.trajectory_id,
-                            "stay_id": trajectory.stay_id,
-                            "step_index": step_index,
-                            "t_hour": checkpoint.t_hour,
-                            "tool_name": response.tool_name,
-                            "arguments": response.arguments,
-                        }
+            try:
+                for _ in range(self.max_tool_calls_per_step + 1):
+                    response = agent.next_response(
+                        step_input=step_input.to_dict(),
+                        history=history,
+                        available_tools=step_input.available_tools,
                     )
-                    history.append({"type": "tool_call", "tool_name": response.tool_name, "payload": call_payload})
-                    history.append({"type": "tool_output", "tool_name": response.tool_name, "payload": output})
-                    tool_calls.append(call_payload)
-                    tool_outputs.append(output)
-                    self._emit(
-                        {
-                            "event_type": "tool_output",
-                            "trajectory_id": trajectory.trajectory_id,
-                            "stay_id": trajectory.stay_id,
-                            "step_index": step_index,
-                            "t_hour": checkpoint.t_hour,
-                            "tool_name": response.tool_name,
-                            "output": output,
-                        }
-                    )
-                    continue
-                if isinstance(response, ActionDecision):
-                    predicted_action = response.action
-                    predicted_task_actions = response.task_actions
-                    self._emit(
-                        {
-                            "event_type": "action",
-                            "trajectory_id": trajectory.trajectory_id,
-                            "stay_id": trajectory.stay_id,
-                            "step_index": step_index,
-                            "t_hour": checkpoint.t_hour,
-                            "gt_action": checkpoint.state_label,
-                            "gt_task_actions": checkpoint.task_labels,
-                            "predicted_action": predicted_action,
-                            "predicted_task_actions": predicted_task_actions,
-                        }
-                    )
-                    break
-                raise TypeError(f"Unsupported agent response: {response}")
+                    if isinstance(response, ToolCall):
+                        arguments = dict(response.arguments)
+                        if response.tool_name == CODE_EXEC_TOOL_NAME and step_session_id is not None:
+                            arguments["session_id"] = step_session_id
+                        output = self.tool_runtime.execute(response.tool_name, arguments)
+                        call_payload = {"tool_name": response.tool_name, "arguments": arguments}
+                        self._emit(
+                            {
+                                "event_type": "tool_call",
+                                "trajectory_id": trajectory.trajectory_id,
+                                "stay_id": trajectory.stay_id,
+                                "step_index": step_index,
+                                "t_hour": checkpoint.t_hour,
+                                "tool_name": response.tool_name,
+                                "arguments": arguments,
+                            }
+                        )
+                        history.append({"type": "tool_call", "tool_name": response.tool_name, "payload": call_payload})
+                        history.append({"type": "tool_output", "tool_name": response.tool_name, "payload": output})
+                        tool_calls.append(call_payload)
+                        tool_outputs.append(output)
+                        self._emit(
+                            {
+                                "event_type": "tool_output",
+                                "trajectory_id": trajectory.trajectory_id,
+                                "stay_id": trajectory.stay_id,
+                                "step_index": step_index,
+                                "t_hour": checkpoint.t_hour,
+                                "tool_name": response.tool_name,
+                                "output": output,
+                            }
+                        )
+                        continue
+                    if isinstance(response, ActionDecision):
+                        predicted_action = response.action
+                        predicted_task_actions = response.task_actions
+                        self._emit(
+                            {
+                                "event_type": "action",
+                                "trajectory_id": trajectory.trajectory_id,
+                                "stay_id": trajectory.stay_id,
+                                "step_index": step_index,
+                                "t_hour": checkpoint.t_hour,
+                                "gt_action": checkpoint.state_label,
+                                "gt_task_actions": checkpoint.task_labels,
+                                "predicted_action": predicted_action,
+                                "predicted_task_actions": predicted_task_actions,
+                            }
+                        )
+                        break
+                    raise TypeError(f"Unsupported agent response: {response}")
+            finally:
+                if hasattr(self.tool_runtime, "close_step_session"):
+                    self.tool_runtime.close_step_session(step_session_id)
 
             if not trajectory.is_multitask():
                 if (
@@ -450,11 +465,11 @@ def evaluate_multitask_rollouts(trajectories: list[Trajectory], rollouts: list[T
 def _is_grounded(task_name: str, tool_calls: list[dict[str, Any]]) -> bool:
     tools = {call["tool_name"] for call in tool_calls}
     if task_name == "sepsis":
-        return bool(tools & {"query_suspicion_of_infection", "query_sofa"})
+        return bool(tools & {"query_suspicion_of_infection", "query_sofa", CODE_EXEC_TOOL_NAME})
     if task_name == "aki":
-        return "query_kdigo_stage" in tools
+        return bool(tools & {"query_kdigo_stage", CODE_EXEC_TOOL_NAME})
     if task_name == "respiratory_support":
-        return "query_ventilation_status" in tools
+        return bool(tools & {"query_ventilation_status", CODE_EXEC_TOOL_NAME})
     return False
 
 
@@ -464,32 +479,35 @@ def _single_task_grounding_spec(
 ) -> dict[str, tuple[str, set[str]]]:
     if task_name == "sepsis":
         return {
-            "infection_suspect": ("infection_predictions_grounded_rate", {"query_suspicion_of_infection"}),
+            "infection_suspect": (
+                "infection_predictions_grounded_rate",
+                {"query_suspicion_of_infection", CODE_EXEC_TOOL_NAME},
+            ),
             "trigger_sepsis_alert": (
                 "alert_predictions_grounded_rate",
-                {"query_suspicion_of_infection", "query_sofa"},
+                {"query_suspicion_of_infection", "query_sofa", CODE_EXEC_TOOL_NAME},
             ),
         }
     if task_name == "aki":
         if label_space and "aki_stage_1" in label_space:
             return {
-                "aki_stage_1": ("stage1_predictions_grounded_rate", {"query_kdigo_stage"}),
-                "aki_stage_2": ("stage2_predictions_grounded_rate", {"query_kdigo_stage"}),
-                "aki_stage_3": ("stage3_predictions_grounded_rate", {"query_kdigo_stage"}),
+                "aki_stage_1": ("stage1_predictions_grounded_rate", {"query_kdigo_stage", CODE_EXEC_TOOL_NAME}),
+                "aki_stage_2": ("stage2_predictions_grounded_rate", {"query_kdigo_stage", CODE_EXEC_TOOL_NAME}),
+                "aki_stage_3": ("stage3_predictions_grounded_rate", {"query_kdigo_stage", CODE_EXEC_TOOL_NAME}),
             }
         return {
-            "suspect_aki": ("suspect_predictions_grounded_rate", {"query_kdigo_stage"}),
-            "trigger_aki_alert": ("alert_predictions_grounded_rate", {"query_kdigo_stage"}),
+            "suspect_aki": ("suspect_predictions_grounded_rate", {"query_kdigo_stage", CODE_EXEC_TOOL_NAME}),
+            "trigger_aki_alert": ("alert_predictions_grounded_rate", {"query_kdigo_stage", CODE_EXEC_TOOL_NAME}),
         }
     if task_name == "respiratory_support":
         return {
             "high_flow_or_noninvasive_support": (
                 "medium_support_predictions_grounded_rate",
-                {"query_ventilation_status"},
+                {"query_ventilation_status", CODE_EXEC_TOOL_NAME},
             ),
             "invasive_vent_required": (
                 "invasive_support_predictions_grounded_rate",
-                {"query_ventilation_status"},
+                {"query_ventilation_status", CODE_EXEC_TOOL_NAME},
             ),
         }
     return {}

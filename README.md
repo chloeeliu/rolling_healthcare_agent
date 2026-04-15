@@ -30,12 +30,13 @@ The main shared multi-task cohort is:
 
 ## Tool layer
 
-The pipeline now supports two tool backends:
+The pipeline now supports three tool backends:
 
 - `official`: current DuckDB wrappers over MIMIC derived concepts
 - `autoformalized`: generated Python concept functions from [/Users/chloe/Documents/New project/autoformalized_library](/Users/chloe/Documents/New project/autoformalized_library)
+- `zeroshot_raw`: checkpoint-scoped raw-table Python execution against MIMIC-IV without `mimiciv_derived`
 
-Both backends expose the same tool names:
+The derived-concept backends expose the same tool names:
 
 - `query_suspicion_of_infection`
 - `query_sofa`
@@ -49,6 +50,12 @@ For the `official` backend, these are backed by:
 - `mimiciv_derived.kdigo_stages`
 - `mimiciv_derived.ventilation`
 
+For the `zeroshot_raw` backend, the agent receives a checkpoint-scoped Python session with:
+
+- `query_db(sql, params=None)` over raw `mimiciv_icu.*` and `mimiciv_hosp.*` views
+- raw sepsis guidance from [/Users/chloe/Documents/New project/baseline/sepsis_guideline.yaml](/Users/chloe/Documents/New project/baseline/sepsis_guideline.yaml)
+- no access to `mimiciv_derived`
+
 ## Modes
 
 The runner has two independent mode choices:
@@ -60,6 +67,7 @@ The runner has two independent mode choices:
 - `--tool-backend`
   - `official`: visible tools come from official derived DuckDB concepts
   - `autoformalized`: visible tools come from generated functions in `autoformalized_library`
+  - `zeroshot_raw`: the model writes Python/SQL against checkpoint-scoped raw MIMIC-IV views
 
 Important:
 

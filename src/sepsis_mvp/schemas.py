@@ -49,7 +49,10 @@ TASK_MODES = (
 TOOL_BACKENDS = (
     "official",
     "autoformalized",
+    "zeroshot_raw",
 )
+
+CODE_EXEC_TOOL_NAME = "run_python"
 
 DEFAULT_TOOL_NAMES = [
     "query_suspicion_of_infection",
@@ -221,6 +224,7 @@ class AgentStepInput:
     label_spaces: dict[str, list[str]] | None = None
     task_mode: str | None = None
     tool_backend: str | None = None
+    max_step_interactions: int | None = None
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
