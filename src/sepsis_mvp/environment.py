@@ -73,6 +73,7 @@ class BenchmarkEnvironment:
                 available_tools=available_tools,
                 instruction=instruction,
                 task_names=task_names,
+                task_variant=trajectory.task_variant,
                 label_spaces=trajectory.label_spaces,
                 task_mode=task_mode,
                 tool_backend=self.tool_backend,
@@ -254,7 +255,8 @@ def evaluate_single_task_rollouts(trajectories: list[Trajectory], rollouts: list
         return {}
     task_name = trajectories[0].primary_task_name()
     label_space = trajectories[0].label_spaces.get(task_name, TASK_LABEL_SPACES[task_name]) if trajectories[0].label_spaces else TASK_LABEL_SPACES[task_name]
-    baseline_action = TASK_BASELINE_ACTION[task_name]
+    if _is_non_monotonic_aki_task(trajectories[0], label_space):
+        return evaluate_single_task_current_state_rollouts(trajectories, rollouts)
     total_steps = 0
     correct_steps = 0
     confusion = Counter()
@@ -262,7 +264,7 @@ def evaluate_single_task_rollouts(trajectories: list[Trajectory], rollouts: list
     transition_fields = TASK_TRANSITION_FIELDS.get(task_name, {})
     gt_hours_by_action = {action: [] for action in transition_fields}
     pred_hours_by_action = {action: [] for action in transition_fields}
-    grounding_counts = _single_task_grounding_counters(task_name)
+    grounding_counts = _single_task_grounding_counters(task_name, label_space)
 
     for rollout in rollouts:
         trajectory = trajectory_by_id[rollout.trajectory_id]
@@ -271,7 +273,13 @@ def evaluate_single_task_rollouts(trajectories: list[Trajectory], rollouts: list
             if step.gt_action == step.predicted_action:
                 correct_steps += 1
             confusion[(step.gt_action, step.predicted_action)] += 1
-            _update_single_task_grounding(task_name, step.predicted_action, step.tool_calls, grounding_counts)
+            _update_single_task_grounding(
+                task_name,
+                step.predicted_action,
+                step.tool_calls,
+                grounding_counts,
+                label_space,
+            )
 
         predicted_hours = (rollout.first_predicted_task_hours or {}).get(task_name, {})
         for action, transition_field in transition_fields.items():
@@ -305,6 +313,77 @@ def evaluate_single_task_rollouts(trajectories: list[Trajectory], rollouts: list
             "per_class": per_class,
         },
         "transition_timing": transition_timing,
+        "tool_grounding": _finalize_single_task_grounding(grounding_counts),
+    }
+
+
+def evaluate_single_task_current_state_rollouts(
+    trajectories: list[Trajectory],
+    rollouts: list[TrajectoryRollout],
+) -> dict[str, Any]:
+    trajectory_by_id = {trajectory.trajectory_id: trajectory for trajectory in trajectories}
+    task_name = trajectories[0].primary_task_name()
+    label_space = trajectories[0].label_spaces.get(task_name, TASK_LABEL_SPACES[task_name]) if trajectories[0].label_spaces else TASK_LABEL_SPACES[task_name]
+    total_steps = 0
+    correct_steps = 0
+    confusion = Counter()
+    per_class = {}
+    change_counts = {
+        "worsening": {"tp": 0, "fp": 0, "fn": 0},
+        "recovery": {"tp": 0, "fp": 0, "fn": 0},
+    }
+    exact_path_matches = 0
+    grounding_counts = _single_task_grounding_counters(task_name, label_space)
+
+    for rollout in rollouts:
+        trajectory = trajectory_by_id[rollout.trajectory_id]
+        gt_path: list[str] = []
+        pred_path: list[str] = []
+        for step in rollout.steps:
+            total_steps += 1
+            if step.gt_action == step.predicted_action:
+                correct_steps += 1
+            confusion[(step.gt_action, step.predicted_action)] += 1
+            _update_single_task_grounding(task_name, step.predicted_action, step.tool_calls, grounding_counts, label_space)
+            if step.gt_action is not None:
+                gt_path.append(step.gt_action)
+            if step.predicted_action is not None:
+                pred_path.append(step.predicted_action)
+
+        if gt_path == pred_path:
+            exact_path_matches += 1
+
+        for idx in range(1, min(len(gt_path), len(pred_path))):
+            gt_delta = _state_order(label_space, gt_path[idx]) - _state_order(label_space, gt_path[idx - 1])
+            pred_delta = _state_order(label_space, pred_path[idx]) - _state_order(label_space, pred_path[idx - 1])
+            _update_change_counts(change_counts["worsening"], gt_delta > 0, pred_delta > 0)
+            _update_change_counts(change_counts["recovery"], gt_delta < 0, pred_delta < 0)
+
+    for action in label_space:
+        tp = confusion[(action, action)]
+        fp = sum(confusion[(gt, action)] for gt in label_space if gt != action)
+        fn = sum(confusion[(action, pred)] for pred in label_space if pred != action)
+        precision = tp / (tp + fp) if tp + fp else 0.0
+        recall = tp / (tp + fn) if tp + fn else 0.0
+        per_class[action] = {
+            "precision": round(precision, 4),
+            "recall": round(recall, 4),
+            "f1": round(_f1(tp, fp, fn), 4),
+        }
+
+    return {
+        "task_name": task_name,
+        "task_variant": trajectories[0].task_variant,
+        "step_level": {
+            "accuracy": round(correct_steps / total_steps, 4) if total_steps else 0.0,
+            "macro_f1": round(sum(metrics["f1"] for metrics in per_class.values()) / len(label_space), 4),
+            "per_class": per_class,
+        },
+        "state_change": {
+            "worsening": _event_metrics(change_counts["worsening"]),
+            "recovery": _event_metrics(change_counts["recovery"]),
+            "exact_path_match_rate": round(exact_path_matches / len(rollouts), 4) if rollouts else 0.0,
+        },
         "tool_grounding": _finalize_single_task_grounding(grounding_counts),
     }
 
@@ -379,7 +458,10 @@ def _is_grounded(task_name: str, tool_calls: list[dict[str, Any]]) -> bool:
     return False
 
 
-def _single_task_grounding_spec(task_name: str) -> dict[str, tuple[str, set[str]]]:
+def _single_task_grounding_spec(
+    task_name: str,
+    label_space: list[str] | None = None,
+) -> dict[str, tuple[str, set[str]]]:
     if task_name == "sepsis":
         return {
             "infection_suspect": ("infection_predictions_grounded_rate", {"query_suspicion_of_infection"}),
@@ -389,6 +471,12 @@ def _single_task_grounding_spec(task_name: str) -> dict[str, tuple[str, set[str]
             ),
         }
     if task_name == "aki":
+        if label_space and "aki_stage_1" in label_space:
+            return {
+                "aki_stage_1": ("stage1_predictions_grounded_rate", {"query_kdigo_stage"}),
+                "aki_stage_2": ("stage2_predictions_grounded_rate", {"query_kdigo_stage"}),
+                "aki_stage_3": ("stage3_predictions_grounded_rate", {"query_kdigo_stage"}),
+            }
         return {
             "suspect_aki": ("suspect_predictions_grounded_rate", {"query_kdigo_stage"}),
             "trigger_aki_alert": ("alert_predictions_grounded_rate", {"query_kdigo_stage"}),
@@ -407,10 +495,13 @@ def _single_task_grounding_spec(task_name: str) -> dict[str, tuple[str, set[str]
     return {}
 
 
-def _single_task_grounding_counters(task_name: str) -> dict[str, dict[str, int]]:
+def _single_task_grounding_counters(
+    task_name: str,
+    label_space: list[str] | None = None,
+) -> dict[str, dict[str, int]]:
     return {
         metric_name: {"num": 0, "den": 0}
-        for metric_name, _tools in _single_task_grounding_spec(task_name).values()
+        for metric_name, _tools in _single_task_grounding_spec(task_name, label_space).values()
     }
 
 
@@ -419,11 +510,12 @@ def _update_single_task_grounding(
     predicted_action: str | None,
     tool_calls: list[dict[str, Any]],
     grounding_counts: dict[str, dict[str, int]],
+    label_space: list[str] | None = None,
 ) -> None:
     if predicted_action is None:
         return
     tools = {call["tool_name"] for call in tool_calls}
-    for action_name, (metric_name, required_tools) in _single_task_grounding_spec(task_name).items():
+    for action_name, (metric_name, required_tools) in _single_task_grounding_spec(task_name, label_space).items():
         if predicted_action != action_name:
             continue
         grounding_counts[metric_name]["den"] += 1
@@ -458,6 +550,45 @@ def _format_single_task_transition_timing(
             "invasive_support": transition_timing.get("invasive_vent_required"),
         }
     return transition_timing
+
+
+def _is_non_monotonic_aki_task(trajectory: Trajectory, label_space: list[str]) -> bool:
+    return (
+        trajectory.primary_task_name() == "aki"
+        and (
+            trajectory.task_variant == "non_monotonic_current_state"
+            or "aki_stage_1" in label_space
+        )
+    )
+
+
+def _state_order(label_space: list[str], label: str) -> int:
+    try:
+        return label_space.index(label)
+    except ValueError:
+        return -1
+
+
+def _update_change_counts(counter: dict[str, int], gt_event: bool, pred_event: bool) -> None:
+    if gt_event and pred_event:
+        counter["tp"] += 1
+    elif not gt_event and pred_event:
+        counter["fp"] += 1
+    elif gt_event and not pred_event:
+        counter["fn"] += 1
+
+
+def _event_metrics(counter: dict[str, int]) -> dict[str, float]:
+    tp = counter["tp"]
+    fp = counter["fp"]
+    fn = counter["fn"]
+    precision = tp / (tp + fp) if tp + fp else 0.0
+    recall = tp / (tp + fn) if tp + fn else 0.0
+    return {
+        "precision": round(precision, 4),
+        "recall": round(recall, 4),
+        "f1": round(_f1(tp, fp, fn), 4),
+    }
 
 
 def _timing_metrics(gt_hours: list[int | None], pred_hours: list[int | None]) -> dict[str, Any]:

@@ -87,6 +87,25 @@ class PipelineTest(unittest.TestCase):
         self.assertIn("KDIGO stage is 2 or 3", system_prompt)
         self.assertIn("Map HFNC and non-invasive ventilation", system_prompt)
 
+    def test_non_monotonic_aki_prompt_includes_deescalation_guidance(self):
+        step_input = {
+            "trajectory_id": "mimiciv_stay_1",
+            "stay_id": 30,
+            "step_index": 0,
+            "t_hour": 8,
+            "available_tools": ["query_kdigo_stage"],
+            "instruction": "Use tools if needed. Then output exactly one action.",
+            "task_names": ["aki"],
+            "task_variant": "non_monotonic_current_state",
+            "label_spaces": {
+                "aki": ["no_aki", "aki_stage_1", "aki_stage_2", "aki_stage_3"],
+            },
+        }
+        messages = _build_messages(step_input, history=[], available_tools=["query_kdigo_stage"])
+        system_prompt = messages[0]["content"]
+        self.assertIn("do not assume AKI states are permanent".lower(), system_prompt.lower())
+        self.assertIn("aki_stage_1", system_prompt)
+
     def test_qwen_agent_forces_next_required_tool_when_model_skips_tool_use(self):
         class FakeClient:
             def __init__(self):
@@ -575,6 +594,65 @@ mimiciv_stay_1,10,20,30,2150-01-01T00:00:00,2150-01-02T00:00:00,24,high,2150-01-
         self.assertEqual(metrics["task_name"], "aki")
         self.assertIn("aki_suspect", metrics["transition_timing"])
         self.assertIn("alert_predictions_grounded_rate", metrics["tool_grounding"])
+
+    def test_single_task_non_monotonic_aki_heuristic_run(self):
+        class StubRuntime:
+            def execute(self, tool_name, arguments):
+                t = arguments["t_hour"]
+                mapping = {0: 0, 4: 1, 8: 2, 12: 1}
+                if tool_name == "query_kdigo_stage":
+                    return {
+                        "stay_id": 30,
+                        "t_hour": t,
+                        "latest_aki_stage_smoothed": mapping[t],
+                    }
+                raise ValueError(tool_name)
+
+        trajectory = Trajectory(
+            trajectory_id="mimiciv_stay_1",
+            stay_id=30,
+            subject_id=10,
+            hadm_id=20,
+            anchor="icu_intime",
+            step_hours=4,
+            horizon_hours=12,
+            transitions={"path_family": "stage2_recovery_or_fluctuating", "path_0_24": "0>1>2>1"},
+            checkpoints=[
+                Checkpoint(t_hour=0, state_label="no_aki"),
+                Checkpoint(t_hour=4, state_label="aki_stage_1"),
+                Checkpoint(t_hour=8, state_label="aki_stage_2"),
+                Checkpoint(t_hour=12, state_label="aki_stage_1"),
+            ],
+            task_name="aki",
+            task_variant="non_monotonic_current_state",
+            task_names=["aki"],
+            tool_names=["query_kdigo_stage"],
+            label_spaces={"aki": ["no_aki", "aki_stage_1", "aki_stage_2", "aki_stage_3"]},
+        )
+        environment = BenchmarkEnvironment([trajectory], StubRuntime(), task_mode="single")
+        rollout = environment.run_all(HeuristicAgent())[0]
+        self.assertEqual(
+            [step.predicted_action for step in rollout.steps],
+            ["no_aki", "aki_stage_1", "aki_stage_2", "aki_stage_1"],
+        )
+        metrics = evaluate_rollouts([trajectory], [rollout])
+        self.assertEqual(metrics["task_variant"], "non_monotonic_current_state")
+        self.assertIn("state_change", metrics)
+        self.assertIn("stage2_predictions_grounded_rate", metrics["tool_grounding"])
+
+    def test_load_single_task_non_monotonic_aki_csv(self):
+        csv_text = """trajectory_id,subject_id,hadm_id,stay_id,icu_intime,icu_outtime,icu_los_hours,path_family,path_0_24,max_stage_24h,has_up_24h,has_down_24h,num_changes_24h,t_hour,checkpoint_time,current_aki_stage_smoothed,state_label,terminal
+mimiciv_stay_1,10,20,30,2150-01-01T00:00:00,2150-01-02T00:00:00,24,stage2_recovery_or_fluctuating,0>1>2>1,2,true,true,3,0,2150-01-01T00:00:00,0,no_aki,false
+mimiciv_stay_1,10,20,30,2150-01-01T00:00:00,2150-01-02T00:00:00,24,stage2_recovery_or_fluctuating,0>1>2>1,2,true,true,3,4,2150-01-01T04:00:00,1,aki_stage_1,false
+"""
+        with tempfile.TemporaryDirectory() as temp_dir:
+            path = Path(temp_dir) / "rolling_aki_non_monotonic.csv"
+            path.write_text(csv_text)
+            result = load_single_task_csv_dataset(path, task_name="aki")
+        self.assertEqual(result.included_trajectories, 1)
+        trajectory = result.trajectories[0]
+        self.assertEqual(trajectory.task_variant, "non_monotonic_current_state")
+        self.assertEqual(trajectory.label_spaces["aki"], ["no_aki", "aki_stage_1", "aki_stage_2", "aki_stage_3"])
 
     def test_environment_rejects_task_mode_mismatch(self):
         concepts = load_concept_tables(SAMPLE)

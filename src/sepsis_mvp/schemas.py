@@ -17,13 +17,22 @@ AKI_ACTIONS = (
     "trigger_aki_alert",
 )
 
+AKI_NON_MONOTONIC_ACTIONS = (
+    "no_aki",
+    "aki_stage_1",
+    "aki_stage_2",
+    "aki_stage_3",
+)
+
 RESP_SUPPORT_ACTIONS = (
     "room_air_or_low_support",
     "high_flow_or_noninvasive_support",
     "invasive_vent_required",
 )
 
-ACTIONS = tuple(dict.fromkeys(SEPSIS_ACTIONS + AKI_ACTIONS + RESP_SUPPORT_ACTIONS))
+ACTIONS = tuple(
+    dict.fromkeys(SEPSIS_ACTIONS + AKI_ACTIONS + AKI_NON_MONOTONIC_ACTIONS + RESP_SUPPORT_ACTIONS)
+)
 
 TASK_NAMES = (
     "sepsis",
@@ -117,6 +126,7 @@ class Trajectory:
     icu_los_hours: float | None = None
     is_sepsis: bool | None = None
     task_name: str | None = None
+    task_variant: str | None = None
     task_names: list[str] | None = None
     tool_names: list[str] | None = None
     label_spaces: dict[str, list[str]] | None = None
@@ -207,6 +217,7 @@ class AgentStepInput:
     available_tools: list[str]
     instruction: str
     task_names: list[str] | None = None
+    task_variant: str | None = None
     label_spaces: dict[str, list[str]] | None = None
     task_mode: str | None = None
     tool_backend: str | None = None

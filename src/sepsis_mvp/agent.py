@@ -24,14 +24,6 @@ def _is_multitask_step(step_input: dict[str, Any]) -> bool:
     return len(task_names) > 1
 
 
-TASK_DESCRIPTIONS = {
-    "sepsis": "keep_monitoring | infection_suspect | trigger_sepsis_alert",
-    "aki": "keep_monitoring | suspect_aki | trigger_aki_alert",
-    "respiratory_support": (
-        "room_air_or_low_support | high_flow_or_noninvasive_support | invasive_vent_required"
-    ),
-}
-
 TOOL_DESCRIPTIONS = {
     "query_suspicion_of_infection": "infection evidence visible by this checkpoint",
     "query_sofa": "current visible SOFA summary up to this checkpoint",
@@ -58,6 +50,13 @@ CLINICAL_GUIDANCE = {
         "If current support is unclear but highest support seen so far is higher, do not de-escalate below the highest visible support for this checkpoint.",
     ],
 }
+
+AKI_NON_MONOTONIC_GUIDANCE = [
+    "Predict the current visible AKI state at this checkpoint rather than the first AKI onset.",
+    "Map visible KDIGO stage 0 to no_aki, stage 1 to aki_stage_1, stage 2 to aki_stage_2, and stage 3 to aki_stage_3.",
+    "Do not assume AKI states are permanent. If the visible stage decreases, de-escalate to the current lower stage.",
+    "Use the latest visible KDIGO stage summary for the checkpoint, not the historical maximum alone.",
+]
 
 
 def _resolved_task_names(step_input: dict[str, Any]) -> list[str]:
@@ -117,13 +116,32 @@ def _summarize_history(history: list[dict[str, Any]]) -> dict[str, Any]:
     return {"tool_calls": tool_calls, "tool_results": tool_results}
 
 
-def _clinical_guidance_text(task_names: list[str]) -> str:
+def _clinical_guidance_text(task_names: list[str], step_input: dict[str, Any] | None = None) -> str:
     lines = ["Clinical guidance:"]
     for task_name in task_names:
         lines.append(f"- {task_name}:")
-        for rule in CLINICAL_GUIDANCE[task_name]:
+        for rule in _guidance_for_task(task_name, step_input):
             lines.append(f"  {rule}")
     return "\n".join(lines)
+
+
+def _label_space_for_task(step_input: dict[str, Any], task_name: str) -> list[str]:
+    return (step_input.get("label_spaces") or {}).get(task_name, TASK_LABEL_SPACES[task_name])
+
+
+def _is_non_monotonic_aki_step(step_input: dict[str, Any], task_name: str) -> bool:
+    label_space = _label_space_for_task(step_input, task_name)
+    return task_name == "aki" and "aki_stage_1" in label_space
+
+
+def _guidance_for_task(task_name: str, step_input: dict[str, Any] | None) -> list[str]:
+    if task_name == "aki" and step_input is not None and _is_non_monotonic_aki_step(step_input, task_name):
+        return AKI_NON_MONOTONIC_GUIDANCE
+    return CLINICAL_GUIDANCE[task_name]
+
+
+def _task_description(task_name: str, step_input: dict[str, Any]) -> str:
+    return " | ".join(_label_space_for_task(step_input, task_name))
 
 
 def _build_messages(
@@ -151,13 +169,13 @@ def _build_messages(
             "Task semantics:\n"
         )
         for task_name in task_names:
-            system_prompt += f"- {task_name}: {TASK_DESCRIPTIONS[task_name]}\n"
+            system_prompt += f"- {task_name}: {_task_description(task_name, step_input)}\n"
         system_prompt += "\nTool semantics:\n"
         for tool_name in required_tool_order:
             system_prompt += f"- {tool_name}: {TOOL_DESCRIPTIONS[tool_name]}\n"
         system_prompt += (
             "\n"
-            + _clinical_guidance_text(task_names)
+            + _clinical_guidance_text(task_names, step_input)
             + "\n"
             "\n"
             "\nRecommended decision pattern:\n"
@@ -204,7 +222,7 @@ def _build_messages(
         stay_id = int(step_input["stay_id"])
         t_hour = int(step_input["t_hour"])
         task_name = task_names[0]
-        label_space = step_input.get("label_spaces", {}).get(task_name, TASK_LABEL_SPACES[task_name])
+        label_space = _label_space_for_task(step_input, task_name)
         seen_tools = {item["tool_name"] for item in history if item["type"] == "tool_call"}
         remaining_tools = [tool_name for tool_name in required_tool_order if tool_name not in seen_tools]
         system_prompt = (
@@ -214,14 +232,14 @@ def _build_messages(
             "Do not output reasoning, analysis, markdown, or <think> tags.\n"
             "Return exactly one JSON object and nothing else.\n"
             "Evidence may already be visible at t_hour=0.\n\n"
-            f"Task semantics: {TASK_DESCRIPTIONS[task_name]}\n\n"
+            f"Task semantics: {_task_description(task_name, step_input)}\n\n"
             "Tool semantics:\n"
         )
         for tool_name in required_tool_order:
             system_prompt += f"- {tool_name}: {TOOL_DESCRIPTIONS[tool_name]}\n"
         system_prompt += (
             "\n"
-            + _clinical_guidance_text([task_name])
+            + _clinical_guidance_text([task_name], step_input)
             + "\n"
             "\n"
             "\nTool call format:\n"
@@ -450,6 +468,15 @@ class HeuristicAgent:
             return ToolCall(tool_name="query_kdigo_stage", arguments={"stay_id": stay_id, "t_hour": t_hour})
         kdigo_output = self._latest_tool_output(history, stay_id, "latest_aki_stage_smoothed") or {}
         latest_aki = kdigo_output.get("latest_aki_stage_smoothed")
+        label_space = _label_space_for_task(step_input, "aki")
+        if "aki_stage_1" in label_space:
+            stage_label = {
+                0: "no_aki",
+                1: "aki_stage_1",
+                2: "aki_stage_2",
+                3: "aki_stage_3",
+            }.get(latest_aki if latest_aki is not None else 0, "aki_stage_3")
+            return ActionDecision(action=stage_label)
         if latest_aki is not None and latest_aki >= self.aki_alert_threshold:
             return ActionDecision(action="trigger_aki_alert")
         if latest_aki is not None and latest_aki >= 1:

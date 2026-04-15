@@ -5,6 +5,7 @@ This repo contains a rolling monitoring benchmark pipeline on MIMIC-IV concept-l
 Implemented task modes:
 
 - single-task sepsis escalation
+- single-task AKI current-state tracking
 - multi-task escalation for:
   - sepsis
   - AKI
@@ -18,6 +19,7 @@ Packaged datasets live under [/Users/chloe/Documents/New project/rolling_monitor
 
 - [/Users/chloe/Documents/New project/rolling_monitor_dataset/sepsis](/Users/chloe/Documents/New project/rolling_monitor_dataset/sepsis)
 - [/Users/chloe/Documents/New project/rolling_monitor_dataset/aki](/Users/chloe/Documents/New project/rolling_monitor_dataset/aki)
+- [/Users/chloe/Documents/New project/rolling_monitor_dataset/aki_non_monotonic](/Users/chloe/Documents/New project/rolling_monitor_dataset/aki_non_monotonic)
 - [/Users/chloe/Documents/New project/rolling_monitor_dataset/respiratory_support](/Users/chloe/Documents/New project/rolling_monitor_dataset/respiratory_support)
 - [/Users/chloe/Documents/New project/rolling_monitor_dataset/multitask](/Users/chloe/Documents/New project/rolling_monitor_dataset/multitask)
 
@@ -70,6 +72,8 @@ Examples:
   runs single-task sepsis
 - `rolling_monitor_dataset/aki/rolling_aki.csv` + `--task-mode single`
   runs single-task AKI
+- `rolling_monitor_dataset/aki_non_monotonic/rolling_aki_non_monotonic.csv` + `--task-mode single`
+  runs single-task non-monotonic AKI current-state tracking
 - `rolling_monitor_dataset/respiratory_support/rolling_respiratory_support.csv` + `--task-mode single`
   runs single-task respiratory support
 - `rolling_monitor_dataset/multitask/rolling_multitask.csv` + `--task-mode multitask`
@@ -83,6 +87,12 @@ Single-task sepsis mode returns:
 
 ```json
 {"action":"infection_suspect"}
+```
+
+Single-task non-monotonic AKI mode returns:
+
+```json
+{"action":"aki_stage_2"}
 ```
 
 Multi-task mode returns:
@@ -121,6 +131,14 @@ Shared multi-task:
 PYTHONPATH=src python3 -m sepsis_mvp.cli build-dataset \
   --rolling-csv /Users/chloe/Documents/New\ project/rolling_monitor_dataset/multitask/rolling_multitask.csv \
   --output data/rolling_multitask_trajectories.json
+```
+
+Single-task non-monotonic AKI:
+
+```bash
+PYTHONPATH=src python3 -m sepsis_mvp.cli build-dataset \
+  --rolling-csv /Users/chloe/Documents/New\ project/rolling_monitor_dataset/aki_non_monotonic/rolling_aki_non_monotonic.csv \
+  --output data/rolling_aki_non_monotonic_trajectories.json
 ```
 
 ### 2. Smoke test with the heuristic agent
@@ -169,6 +187,22 @@ PYTHONPATH=src python3 -m sepsis_mvp.cli run \
   --tool-backend official \
   --sample-size 1 \
   --evaluation-output data/sample_eval.json
+```
+
+Single-task non-monotonic AKI smoke test:
+
+```bash
+PYTHONPATH=src python3 -m sepsis_mvp.cli run \
+  --db-path /Users/chloe/Desktop/healthcare/mimic-iv-3.1/buildmimic/duckdb/mimic4_dk.db \
+  --dataset /Users/chloe/Documents/New\ project/rolling_monitor_dataset/aki_non_monotonic/rolling_aki_non_monotonic.csv \
+  --agent heuristic \
+  --task-mode single \
+  --tool-backend official \
+  --sample-size 3 \
+  --events-output data/aki_non_monotonic_events.jsonl \
+  --trajectory-output data/aki_non_monotonic_trajectories.jsonl \
+  --rollouts-output data/aki_non_monotonic_rollouts.json \
+  --evaluation-output data/aki_non_monotonic_eval.json
 ```
 
 ### 3. Run the local Qwen model
@@ -247,6 +281,14 @@ For single-task runs, the saved metrics are task-specific and detailed:
   - `transition_timing.aki_alert`
   - `tool_grounding.suspect_predictions_grounded_rate`
   - `tool_grounding.alert_predictions_grounded_rate`
+- non-monotonic AKI:
+  - `step_level` over `no_aki`, `aki_stage_1`, `aki_stage_2`, `aki_stage_3`
+  - `state_change.worsening`
+  - `state_change.recovery`
+  - `state_change.exact_path_match_rate`
+  - `tool_grounding.stage1_predictions_grounded_rate`
+  - `tool_grounding.stage2_predictions_grounded_rate`
+  - `tool_grounding.stage3_predictions_grounded_rate`
 - respiratory support:
   - `transition_timing.medium_support`
   - `transition_timing.invasive_support`

@@ -12,6 +12,7 @@ from typing import Any
 
 from .schemas import (
     AKI_ACTIONS,
+    AKI_NON_MONOTONIC_ACTIONS,
     DEFAULT_TOOL_NAMES,
     MULTITASK_TOOL_NAMES,
     RESP_SUPPORT_ACTIONS,
@@ -122,6 +123,7 @@ def load_trajectories(path: str | Path) -> list[Trajectory]:
                 icu_los_hours=item.get("icu_los_hours"),
                 is_sepsis=item.get("is_sepsis"),
                 task_name=item.get("task_name"),
+                task_variant=item.get("task_variant"),
                 task_names=item.get("task_names"),
                 tool_names=item.get("tool_names"),
                 label_spaces=item.get("label_spaces"),
@@ -356,12 +358,26 @@ def load_single_task_csv_dataset(path: str | Path, *, task_name: str) -> CSVLoad
             grouped_rows[row["trajectory_id"]].append(row)
 
     if task_name == "aki":
-        transition_keys = {
-            "aki_stage1_start_hour": "aki_stage1_start_hour",
-            "aki_stage23_start_hour": "aki_stage23_start_hour",
-            "aki_stage1_start_time": "aki_stage1_start_time",
-            "aki_stage23_start_time": "aki_stage23_start_time",
-        }
+        is_non_monotonic = any(
+            key in grouped_rows[next(iter(grouped_rows))]
+            for key in ("current_aki_stage_smoothed", "path_family")
+        )
+        if is_non_monotonic:
+            transition_keys = {
+                "path_family": "path_family",
+                "path_0_24": "path_0_24",
+                "max_stage_24h": "max_stage_24h",
+                "has_up_24h": "has_up_24h",
+                "has_down_24h": "has_down_24h",
+                "num_changes_24h": "num_changes_24h",
+            }
+        else:
+            transition_keys = {
+                "aki_stage1_start_hour": "aki_stage1_start_hour",
+                "aki_stage23_start_hour": "aki_stage23_start_hour",
+                "aki_stage1_start_time": "aki_stage1_start_time",
+                "aki_stage23_start_time": "aki_stage23_start_time",
+            }
     elif task_name == "respiratory_support":
         transition_keys = {
             "medium_support_start_hour": "medium_support_start_hour",
@@ -392,8 +408,18 @@ def load_single_task_csv_dataset(path: str | Path, *, task_name: str) -> CSVLoad
         for source_key, target_key in transition_keys.items():
             if source_key.endswith("_hour"):
                 transitions[target_key] = _parse_optional_int(first.get(source_key))
+            elif source_key in {"max_stage_24h", "num_changes_24h"}:
+                transitions[target_key] = _parse_optional_int(first.get(source_key))
+            elif source_key in {"has_up_24h", "has_down_24h"}:
+                transitions[target_key] = _parse_bool(first.get(source_key))
             else:
                 transitions[target_key] = first.get(source_key) or None
+
+        task_variant = None
+        label_space = list(TASK_LABEL_SPACES[task_name])
+        if task_name == "aki" and "current_aki_stage_smoothed" in first:
+            task_variant = "non_monotonic_current_state"
+            label_space = list(AKI_NON_MONOTONIC_ACTIONS)
 
         trajectories.append(
             Trajectory(
@@ -410,9 +436,10 @@ def load_single_task_csv_dataset(path: str | Path, *, task_name: str) -> CSVLoad
                 icu_outtime=first.get("icu_outtime") or None,
                 icu_los_hours=_parse_optional_float(first.get("icu_los_hours")),
                 task_name=task_name,
+                task_variant=task_variant,
                 task_names=[task_name],
                 tool_names=list(TASK_TOOL_NAMES[task_name]),
-                label_spaces={task_name: list(TASK_LABEL_SPACES[task_name])},
+                label_spaces={task_name: label_space},
             )
         )
 

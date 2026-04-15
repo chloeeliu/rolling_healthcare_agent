@@ -1,0 +1,59 @@
+{
+  "task_mode": "single",
+  "tool_backend": "official",
+  "dataset": "/Users/chloe/Documents/New project/rolling_monitor_dataset/aki_non_monotonic/rolling_aki_non_monotonic.csv",
+  "num_trajectories": 3,
+  "sample_size": 3,
+  "agent": "heuristic",
+  "resume": false,
+  "existing_completed_trajectories": 0,
+  "newly_processed_trajectories": 3,
+  "metrics": {
+    "task_name": "aki",
+    "task_variant": "non_monotonic_current_state",
+    "step_level": {
+      "accuracy": 1.0,
+      "macro_f1": 1.0,
+      "per_class": {
+        "no_aki": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0
+        },
+        "aki_stage_1": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0
+        },
+        "aki_stage_2": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0
+        },
+        "aki_stage_3": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 1.0
+        }
+      }
+    },
+    "state_change": {
+      "worsening": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "recovery": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "exact_path_match_rate": 1.0
+    },
+    "tool_grounding": {
+      "stage1_predictions_grounded_rate": 1.0,
+      "stage2_predictions_grounded_rate": 1.0,
+      "stage3_predictions_grounded_rate": null
+    }
+  }
+}
