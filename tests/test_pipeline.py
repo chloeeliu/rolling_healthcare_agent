@@ -28,7 +28,7 @@ from sepsis_mvp.dataset import (
     save_trajectories,
 )
 from sepsis_mvp.environment import BenchmarkEnvironment, evaluate_rollouts
-from sepsis_mvp.schemas import CODE_EXEC_TOOL_NAME, Checkpoint, Trajectory, ToolCall, ActionDecision
+from sepsis_mvp.schemas import CODE_EXEC_TOOL_NAME, SQL_EXEC_TOOL_NAME, Checkpoint, Trajectory, ToolCall, ActionDecision
 from sepsis_mvp.tools import ConceptToolRuntime
 
 
@@ -150,16 +150,30 @@ class PipelineTest(unittest.TestCase):
         self.assertIn("within the next 24 hours", system_prompt)
         self.assertIn("within the next 72 hours", system_prompt)
         self.assertNotIn("trigger_sepsis_alert", system_prompt)
+        self.assertIn("fenced SQL block", system_prompt)
 
     def test_zeroshot_output_coercion_maps_python_code_to_run_python(self):
         response = _coerce_zeroshot_output({"python_code": "RESULT = 1"})
         self.assertEqual(response.tool_name, CODE_EXEC_TOOL_NAME)
         self.assertEqual(response.arguments, {"code": "RESULT = 1"})
 
+    def test_zeroshot_output_coercion_maps_sql_code_to_run_sql(self):
+        response = _coerce_zeroshot_output({"sql_code": "SELECT 1 AS x"}, execution_mode="sql")
+        self.assertEqual(response.tool_name, SQL_EXEC_TOOL_NAME)
+        self.assertEqual(response.arguments, {"sql": "SELECT 1 AS x"})
+
     def test_zeroshot_response_accepts_fenced_python_block(self):
         response = _extract_zeroshot_response("```python\nRESULT = {'x': 1}\n```")
         self.assertEqual(response.tool_name, CODE_EXEC_TOOL_NAME)
         self.assertEqual(response.arguments, {"code": "RESULT = {'x': 1}"})
+
+    def test_zeroshot_response_accepts_fenced_sql_block_for_infection_only(self):
+        response = _extract_zeroshot_response(
+            "```sql\nSELECT TRUE AS has_suspected_infection\n```",
+            execution_mode="sql",
+        )
+        self.assertEqual(response.tool_name, SQL_EXEC_TOOL_NAME)
+        self.assertEqual(response.arguments, {"sql": "SELECT TRUE AS has_suspected_infection"})
 
     def test_zeroshot_response_accepts_infection_only_action(self):
         response = _extract_zeroshot_response(
@@ -354,6 +368,68 @@ class PipelineTest(unittest.TestCase):
         second = agent.next_response(step_input, history=history, available_tools=[])
         self.assertEqual(second.action, "infection_suspect")
 
+    def test_qwen_agent_infection_only_zeroshot_returns_sql_then_final_action(self):
+        class FakeClient:
+            def __init__(self):
+                self.max_new_tokens = 250
+                self.outputs = [
+                    "```sql\nSELECT TRUE AS has_suspected_infection\n```",
+                    '{"action":"infection_suspect"}',
+                ]
+
+            def generate(self, messages):
+                return self.outputs.pop(0)
+
+        agent = object.__new__(QwenChatAgent)
+        agent.model = "fake"
+        agent.temperature = 0.0
+        agent.top_p = 0.95
+        agent.max_new_tokens = 250
+        agent.repair_max_new_tokens = 120
+        agent.trace_callback = None
+        agent.client = FakeClient()
+        agent.zeroshot_guideline_text = "guideline"
+
+        step_input = {
+            "trajectory_id": "mimiciv_stay_1",
+            "stay_id": 30,
+            "step_index": 0,
+            "t_hour": 4,
+            "task_names": ["infection_only"],
+            "label_spaces": {"infection_only": ["keep_monitoring", "infection_suspect"]},
+            "tool_backend": "zeroshot_raw",
+            "max_step_interactions": 4,
+        }
+
+        first = agent.next_response(step_input, history=[], available_tools=[])
+        self.assertEqual(first.tool_name, SQL_EXEC_TOOL_NAME)
+
+        history = [
+            {
+                "type": "tool_call",
+                "tool_name": SQL_EXEC_TOOL_NAME,
+                "payload": {"tool_name": SQL_EXEC_TOOL_NAME, "arguments": {"sql": "SELECT TRUE AS has_suspected_infection"}},
+            },
+            {
+                "type": "tool_output",
+                "tool_name": SQL_EXEC_TOOL_NAME,
+                "payload": {
+                    "backend": "zeroshot_raw",
+                    "ok": True,
+                    "stdout": "",
+                    "stderr": "",
+                    "result": {
+                        "kind": "dataframe",
+                        "rows": 1,
+                        "columns": ["has_suspected_infection"],
+                        "head": [{"has_suspected_infection": True}],
+                    },
+                },
+            },
+        ]
+        second = agent.next_response(step_input, history=history, available_tools=[])
+        self.assertEqual(second.action, "infection_suspect")
+
     def test_qwen_agent_zeroshot_repairs_truncated_json_with_fenced_python(self):
         class FakeClient:
             def __init__(self):
@@ -500,6 +576,58 @@ class PipelineTest(unittest.TestCase):
         self.assertEqual(runtime.started, ["30:0"])
         self.assertEqual(runtime.closed, ["30:0"])
         self.assertEqual(rollout.steps[0].tool_calls[0]["tool_name"], CODE_EXEC_TOOL_NAME)
+
+    def test_environment_supports_zero_shot_sql_sessions(self):
+        class StubZeroShotRuntime:
+            def __init__(self):
+                self.started = []
+                self.closed = []
+
+            def start_step_session(self, *, stay_id, t_hour):
+                session_id = f"{stay_id}:{t_hour}"
+                self.started.append(session_id)
+                return session_id
+
+            def close_step_session(self, session_id):
+                self.closed.append(session_id)
+
+            def execute(self, tool_name, arguments):
+                if tool_name != SQL_EXEC_TOOL_NAME:
+                    raise ValueError(tool_name)
+                return {
+                    "backend": "zeroshot_raw",
+                    "ok": True,
+                    "stdout": "",
+                    "stderr": "",
+                    "result": {"kind": "dataframe", "rows": 1, "columns": ["has_suspected_infection"], "head": [{"has_suspected_infection": True}]},
+                }
+
+        class StubZeroShotAgent:
+            def next_response(self, step_input, history, available_tools):
+                if not history:
+                    return ToolCall(tool_name=SQL_EXEC_TOOL_NAME, arguments={"sql": "SELECT TRUE AS has_suspected_infection"})
+                return ActionDecision(action="infection_suspect")
+
+        trajectory = Trajectory(
+            trajectory_id="mimiciv_stay_1",
+            stay_id=30,
+            subject_id=10,
+            hadm_id=20,
+            anchor="icu_intime",
+            step_hours=4,
+            horizon_hours=0,
+            transitions={"infection_start_hour": 0},
+            checkpoints=[Checkpoint(t_hour=0, state_label="infection_suspect")],
+            task_name="infection_only",
+            task_names=["infection_only"],
+        )
+        runtime = StubZeroShotRuntime()
+        environment = BenchmarkEnvironment([trajectory], runtime, task_mode="single", tool_backend="zeroshot_raw")
+        rollout = environment.run_all(StubZeroShotAgent())[0]
+        self.assertEqual(rollout.steps[0].predicted_action, "infection_suspect")
+        self.assertEqual(runtime.started, ["30:0"])
+        self.assertEqual(runtime.closed, ["30:0"])
+        self.assertEqual(rollout.steps[0].tool_calls[0]["tool_name"], SQL_EXEC_TOOL_NAME)
 
     def test_dataset_can_be_saved(self):
         concepts = load_concept_tables(SAMPLE)

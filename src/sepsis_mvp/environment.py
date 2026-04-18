@@ -9,6 +9,7 @@ from .schemas import (
     ActionDecision,
     AgentStepInput,
     CODE_EXEC_TOOL_NAME,
+    SQL_EXEC_TOOL_NAME,
     TASK_BASELINE_ACTION,
     TASK_LABEL_SPACES,
     TASK_TOOL_NAMES,
@@ -114,7 +115,7 @@ class BenchmarkEnvironment:
                     )
                     if isinstance(response, ToolCall):
                         arguments = dict(response.arguments)
-                        if response.tool_name == CODE_EXEC_TOOL_NAME and step_session_id is not None:
+                        if response.tool_name in {CODE_EXEC_TOOL_NAME, SQL_EXEC_TOOL_NAME} and step_session_id is not None:
                             arguments["session_id"] = step_session_id
                         output = self.tool_runtime.execute(response.tool_name, arguments)
                         call_payload = {"tool_name": response.tool_name, "arguments": arguments}
@@ -465,13 +466,13 @@ def evaluate_multitask_rollouts(trajectories: list[Trajectory], rollouts: list[T
 def _is_grounded(task_name: str, tool_calls: list[dict[str, Any]]) -> bool:
     tools = {call["tool_name"] for call in tool_calls}
     if task_name == "sepsis":
-        return bool(tools & {"query_suspicion_of_infection", "query_sofa", CODE_EXEC_TOOL_NAME})
+        return bool(tools & {"query_suspicion_of_infection", "query_sofa", CODE_EXEC_TOOL_NAME, SQL_EXEC_TOOL_NAME})
     if task_name == "infection_only":
-        return bool(tools & {"query_suspicion_of_infection", CODE_EXEC_TOOL_NAME})
+        return bool(tools & {"query_suspicion_of_infection", CODE_EXEC_TOOL_NAME, SQL_EXEC_TOOL_NAME})
     if task_name == "aki":
-        return bool(tools & {"query_kdigo_stage", CODE_EXEC_TOOL_NAME})
+        return bool(tools & {"query_kdigo_stage", CODE_EXEC_TOOL_NAME, SQL_EXEC_TOOL_NAME})
     if task_name == "respiratory_support":
-        return bool(tools & {"query_ventilation_status", CODE_EXEC_TOOL_NAME})
+        return bool(tools & {"query_ventilation_status", CODE_EXEC_TOOL_NAME, SQL_EXEC_TOOL_NAME})
     return False
 
 
@@ -483,40 +484,40 @@ def _single_task_grounding_spec(
         return {
             "infection_suspect": (
                 "infection_predictions_grounded_rate",
-                {"query_suspicion_of_infection", CODE_EXEC_TOOL_NAME},
+                {"query_suspicion_of_infection", CODE_EXEC_TOOL_NAME, SQL_EXEC_TOOL_NAME},
             ),
             "trigger_sepsis_alert": (
                 "alert_predictions_grounded_rate",
-                {"query_suspicion_of_infection", "query_sofa", CODE_EXEC_TOOL_NAME},
+                {"query_suspicion_of_infection", "query_sofa", CODE_EXEC_TOOL_NAME, SQL_EXEC_TOOL_NAME},
             ),
         }
     if task_name == "infection_only":
         return {
             "infection_suspect": (
                 "infection_predictions_grounded_rate",
-                {"query_suspicion_of_infection", CODE_EXEC_TOOL_NAME},
+                {"query_suspicion_of_infection", CODE_EXEC_TOOL_NAME, SQL_EXEC_TOOL_NAME},
             ),
         }
     if task_name == "aki":
         if label_space and "aki_stage_1" in label_space:
             return {
-                "aki_stage_1": ("stage1_predictions_grounded_rate", {"query_kdigo_stage", CODE_EXEC_TOOL_NAME}),
-                "aki_stage_2": ("stage2_predictions_grounded_rate", {"query_kdigo_stage", CODE_EXEC_TOOL_NAME}),
-                "aki_stage_3": ("stage3_predictions_grounded_rate", {"query_kdigo_stage", CODE_EXEC_TOOL_NAME}),
+                "aki_stage_1": ("stage1_predictions_grounded_rate", {"query_kdigo_stage", CODE_EXEC_TOOL_NAME, SQL_EXEC_TOOL_NAME}),
+                "aki_stage_2": ("stage2_predictions_grounded_rate", {"query_kdigo_stage", CODE_EXEC_TOOL_NAME, SQL_EXEC_TOOL_NAME}),
+                "aki_stage_3": ("stage3_predictions_grounded_rate", {"query_kdigo_stage", CODE_EXEC_TOOL_NAME, SQL_EXEC_TOOL_NAME}),
             }
         return {
-            "suspect_aki": ("suspect_predictions_grounded_rate", {"query_kdigo_stage", CODE_EXEC_TOOL_NAME}),
-            "trigger_aki_alert": ("alert_predictions_grounded_rate", {"query_kdigo_stage", CODE_EXEC_TOOL_NAME}),
+            "suspect_aki": ("suspect_predictions_grounded_rate", {"query_kdigo_stage", CODE_EXEC_TOOL_NAME, SQL_EXEC_TOOL_NAME}),
+            "trigger_aki_alert": ("alert_predictions_grounded_rate", {"query_kdigo_stage", CODE_EXEC_TOOL_NAME, SQL_EXEC_TOOL_NAME}),
         }
     if task_name == "respiratory_support":
         return {
             "high_flow_or_noninvasive_support": (
                 "medium_support_predictions_grounded_rate",
-                {"query_ventilation_status", CODE_EXEC_TOOL_NAME},
+                {"query_ventilation_status", CODE_EXEC_TOOL_NAME, SQL_EXEC_TOOL_NAME},
             ),
             "invasive_vent_required": (
                 "invasive_support_predictions_grounded_rate",
-                {"query_ventilation_status", CODE_EXEC_TOOL_NAME},
+                {"query_ventilation_status", CODE_EXEC_TOOL_NAME, SQL_EXEC_TOOL_NAME},
             ),
         }
     return {}

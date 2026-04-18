@@ -9,7 +9,7 @@ import traceback
 from typing import Any
 from uuid import uuid4
 
-from .schemas import CODE_EXEC_TOOL_NAME
+from .schemas import CODE_EXEC_TOOL_NAME, SQL_EXEC_TOOL_NAME
 
 
 SAFE_BUILTINS: dict[str, Any] = {
@@ -278,15 +278,21 @@ class ZeroShotRawDuckDBRuntime:
         }
 
     def execute(self, tool_name: str, arguments: dict[str, Any]) -> dict[str, Any]:
-        if tool_name != CODE_EXEC_TOOL_NAME:
+        if tool_name not in {CODE_EXEC_TOOL_NAME, SQL_EXEC_TOOL_NAME}:
             raise ValueError(f"Unknown tool: {tool_name}")
         session_id = arguments.get("session_id")
         if not session_id or session_id not in self._sessions:
-            raise ValueError("run_python requires a valid session_id.")
-        code = arguments.get("code")
-        if not isinstance(code, str) or not code.strip():
-            raise ValueError("run_python requires non-empty Python code.")
-        return self._execute_code(self._sessions[session_id], code)
+            raise ValueError(f"{tool_name} requires a valid session_id.")
+        session = self._sessions[session_id]
+        if tool_name == CODE_EXEC_TOOL_NAME:
+            code = arguments.get("code")
+            if not isinstance(code, str) or not code.strip():
+                raise ValueError("run_python requires non-empty Python code.")
+            return self._execute_code(session, code)
+        sql = arguments.get("sql")
+        if not isinstance(sql, str) or not sql.strip():
+            raise ValueError("run_sql requires non-empty SQL.")
+        return self._execute_sql(session, sql)
 
     def _execute_code(self, session: _PythonSession, code: str) -> dict[str, Any]:
         stdout_buffer = io.StringIO()
@@ -315,6 +321,35 @@ class ZeroShotRawDuckDBRuntime:
             "result": self._summarize_result(result),
         }
 
+    def _execute_sql(self, session: _PythonSession, sql: str) -> dict[str, Any]:
+        stdout_buffer = io.StringIO()
+        stderr_buffer = io.StringIO()
+        try:
+            with redirect_stdout(stdout_buffer), redirect_stderr(stderr_buffer):
+                first_token = sql.lstrip().split(None, 1)[0].upper()
+                if first_token not in READ_ONLY_SQL_PREFIXES:
+                    raise ValueError(
+                        "run_sql is read-only. Use SELECT/WITH/DESCRIBE/SHOW/PRAGMA statements only."
+                    )
+                result = session.conn.execute(sql).fetchdf()
+        except Exception as exc:
+            return {
+                "backend": "zeroshot_raw",
+                "ok": False,
+                "stdout": self._truncate(stdout_buffer.getvalue()),
+                "stderr": self._truncate(stderr_buffer.getvalue()),
+                "error_type": type(exc).__name__,
+                "error_message": str(exc),
+                "traceback": self._truncate(traceback.format_exc(), limit=5000),
+            }
+        return {
+            "backend": "zeroshot_raw",
+            "ok": True,
+            "stdout": self._truncate(stdout_buffer.getvalue()),
+            "stderr": self._truncate(stderr_buffer.getvalue()),
+            "result": self._summarize_result(result),
+        }
+
     def _truncate(self, text: str | None, *, limit: int = 3000) -> str:
         if not text:
             return ""
@@ -332,7 +367,7 @@ class ZeroShotRawDuckDBRuntime:
                 "kind": "dataframe",
                 "rows": int(len(value)),
                 "columns": [str(col) for col in value.columns.tolist()],
-                "head": preview.to_dict(orient="records"),
+                "head": self._json_safe(preview.to_dict(orient="records")),
             }
         if isinstance(value, self.pd.Series):
             preview = value.head(10).copy()
@@ -340,15 +375,36 @@ class ZeroShotRawDuckDBRuntime:
             return {
                 "kind": "series",
                 "length": int(len(value)),
-                "head": preview.to_dict(),
+                "head": self._json_safe(preview.to_dict()),
             }
         if isinstance(value, (list, tuple)):
             preview = list(value[:10])
-            return {"kind": type(value).__name__, "length": len(value), "preview": preview}
+            return {"kind": type(value).__name__, "length": len(value), "preview": self._json_safe(preview)}
         if isinstance(value, dict):
             preview = {str(key): value[key] for key in list(value)[:10]}
-            return {"kind": "dict", "preview": preview}
+            return {"kind": "dict", "preview": self._json_safe(preview)}
         return {
             "kind": type(value).__name__,
             "repr": self._truncate(repr(value), limit=1500),
         }
+
+    def _json_safe(self, value: Any) -> Any:
+        if value is None or isinstance(value, (str, int, float, bool)):
+            return value
+        if isinstance(value, dict):
+            return {str(key): self._json_safe(item) for key, item in value.items()}
+        if isinstance(value, (list, tuple)):
+            return [self._json_safe(item) for item in value]
+        if hasattr(value, "item"):
+            try:
+                return self._json_safe(value.item())
+            except Exception:
+                pass
+        if hasattr(value, "isoformat"):
+            try:
+                return value.isoformat()
+            except Exception:
+                pass
+        if self.pd.isna(value):
+            return None
+        return self._truncate(repr(value), limit=500)

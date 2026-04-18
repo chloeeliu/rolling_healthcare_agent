@@ -16,6 +16,15 @@ from .schemas import StepRecord, TrajectoryRollout
 from .tools import build_tool_runtime
 
 
+def _json_default(value):
+    if hasattr(value, "isoformat"):
+        try:
+            return value.isoformat()
+        except Exception:
+            pass
+    return str(value)
+
+
 class JsonlSink:
     def __init__(self, path: str | None):
         self.path = Path(path) if path else None
@@ -26,7 +35,7 @@ class JsonlSink:
         if self.path is None:
             return
         with self.path.open("a") as handle:
-            handle.write(json.dumps(payload) + "\n")
+            handle.write(json.dumps(payload, default=_json_default) + "\n")
             handle.flush()
 
 
@@ -261,10 +270,10 @@ def run_command(args: argparse.Namespace) -> int:
     }
 
     if args.rollouts_output:
-        Path(args.rollouts_output).write_text(json.dumps(rollout_to_dicts(rollouts), indent=2))
+        Path(args.rollouts_output).write_text(json.dumps(rollout_to_dicts(rollouts), indent=2, default=_json_default))
     if args.evaluation_output:
-        Path(args.evaluation_output).write_text(json.dumps(evaluation_summary, indent=2))
-    print(json.dumps(evaluation_summary, indent=2))
+        Path(args.evaluation_output).write_text(json.dumps(evaluation_summary, indent=2, default=_json_default))
+    print(json.dumps(evaluation_summary, indent=2, default=_json_default))
     return 0
 
 

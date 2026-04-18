@@ -61,6 +61,7 @@ TOOL_BACKENDS = (
 )
 
 CODE_EXEC_TOOL_NAME = "run_python"
+SQL_EXEC_TOOL_NAME = "run_sql"
 
 DEFAULT_TOOL_NAMES = [
     "query_suspicion_of_infection",

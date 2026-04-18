@@ -10,6 +10,7 @@ from typing import Any, Callable, Protocol
 from .schemas import (
     ACTIONS,
     CODE_EXEC_TOOL_NAME,
+    SQL_EXEC_TOOL_NAME,
     TASK_BASELINE_ACTION,
     TASK_LABEL_SPACES,
     TASK_TOOL_NAMES,
@@ -55,6 +56,8 @@ ZEROSHOT_RAW_TABLES = [
     "mimiciv_hosp.microbiologyevents",
     "mimiciv_hosp.prescriptions",
 ]
+
+ZEROSHOT_EXEC_TOOL_NAMES = {CODE_EXEC_TOOL_NAME, SQL_EXEC_TOOL_NAME}
 
 CLINICAL_GUIDANCE = {
     "sepsis": [
@@ -311,11 +314,11 @@ def _build_messages(
     ]
 
 
-def _zeroshot_code_calls_used(history: list[dict[str, Any]]) -> int:
+def _zeroshot_exec_calls_used(history: list[dict[str, Any]]) -> int:
     return sum(
         1
         for item in history
-        if item["type"] == "tool_call" and item.get("tool_name") == CODE_EXEC_TOOL_NAME
+        if item["type"] == "tool_call" and item.get("tool_name") in ZEROSHOT_EXEC_TOOL_NAMES
     )
 
 
@@ -330,11 +333,32 @@ def _summarize_zeroshot_history(history: list[dict[str, Any]]) -> list[dict[str,
                     "code": payload.get("arguments", {}).get("code"),
                 }
             )
+        elif item["type"] == "tool_call" and item.get("tool_name") == SQL_EXEC_TOOL_NAME:
+            payload = item.get("payload", {})
+            summarized.append(
+                {
+                    "type": "sql_query",
+                    "sql": payload.get("arguments", {}).get("sql"),
+                }
+            )
         elif item["type"] == "tool_output" and item.get("tool_name") == CODE_EXEC_TOOL_NAME:
             payload = item.get("payload", {})
             summarized.append(
                 {
                     "type": "python_output",
+                    "ok": payload.get("ok"),
+                    "stdout": payload.get("stdout"),
+                    "stderr": payload.get("stderr"),
+                    "result": payload.get("result"),
+                    "error_type": payload.get("error_type"),
+                    "error_message": payload.get("error_message"),
+                }
+            )
+        elif item["type"] == "tool_output" and item.get("tool_name") == SQL_EXEC_TOOL_NAME:
+            payload = item.get("payload", {})
+            summarized.append(
+                {
+                    "type": "sql_output",
                     "ok": payload.get("ok"),
                     "stdout": payload.get("stdout"),
                     "stderr": payload.get("stderr"),
@@ -358,24 +382,62 @@ def _build_zeroshot_messages(
     if task_names not in (["sepsis"], ["infection_only"]):
         raise ValueError("Zero-shot raw backend currently supports only single-task sepsis or infection-only.")
     max_interactions = int(step_input.get("max_step_interactions") or 4)
-    code_calls_used = _zeroshot_code_calls_used(history)
-    remaining_code_calls = max(0, max_interactions - code_calls_used)
-    can_execute_more = remaining_code_calls > 0
+    exec_calls_used = _zeroshot_exec_calls_used(history)
+    remaining_exec_calls = max(0, max_interactions - exec_calls_used)
+    can_execute_more = remaining_exec_calls > 0
 
     if task_name == "infection_only":
+        execution_mode = "sql"
         task_labels = ["keep_monitoring", "infection_suspect"]
         decision_guidance = (
             "Decision guidance:\n"
             "- If suspected infection is not yet visible, prefer keep_monitoring.\n"
             "- If suspected infection is visible from the official antibiotic-culture overlap logic, prefer infection_suspect.\n"
-            "- Pre-ICU hospital events from the same admission may already be visible at t_hour=0.\n"
-            "- Align with the official MIMIC suspicion_of_infection logic: systemic antibiotics plus microbiology culture timing with asymmetric windows.\n"
+            "- Do not use culture positivity, organism identity, or final result status.\n"
+            "- Use culture order time only.\n"
             "- If systemic antibiotics come first, look for a culture within the next 24 hours.\n"
             "- If a culture comes first, look for systemic antibiotics within the next 72 hours.\n"
             "- Use culture time when culture precedes antibiotics; otherwise use antibiotic time.\n"
-            "- Positive culture can support the case but is not required.\n\n"
+            "- The checkpoint-scoped SQL views are already limited to the current admission and visible time window.\n\n"
+        )
+        execution_contract = (
+            "SQL execution contract:\n"
+            "- Use only one read-only SQL statement per turn.\n"
+            "- Use only SELECT/WITH/DESCRIBE/SHOW/PRAGMA.\n"
+            "- The SQL runs against checkpoint-scoped views that are already filtered to this stay/admission and visible_until.\n"
+            "- For infection-only, focus on mimiciv_hosp.prescriptions and mimiciv_hosp.microbiologyevents.\n"
+            "- Return a compact one-row result with fields such as has_suspected_infection, first_suspicion_time, first_antibiotic_time, first_culture_time.\n"
+            "- Prefer one CTE-based query that directly computes the overlap decision.\n\n"
+            "Response formats:\n"
+            "- To execute SQL, return only one fenced SQL block and nothing else.\n"
+            "  Example:\n"
+            "  ```sql\n"
+            "  WITH abx AS (\n"
+            "    SELECT starttime AS antibiotic_time\n"
+            "    FROM mimiciv_hosp.prescriptions\n"
+            "    WHERE starttime IS NOT NULL\n"
+            "  ),\n"
+            "  cult AS (\n"
+            "    SELECT COALESCE(charttime, CAST(chartdate AS TIMESTAMP)) AS culture_time\n"
+            "    FROM mimiciv_hosp.microbiologyevents\n"
+            "    WHERE COALESCE(charttime, CAST(chartdate AS TIMESTAMP)) IS NOT NULL\n"
+            "  ),\n"
+            "  pairs AS (\n"
+            "    SELECT CASE WHEN culture_time <= antibiotic_time THEN culture_time ELSE antibiotic_time END AS suspicion_time\n"
+            "    FROM abx\n"
+            "    JOIN cult\n"
+            "      ON (\n"
+            "        culture_time <= antibiotic_time AND antibiotic_time <= culture_time + INTERVAL '72 hours'\n"
+            "      ) OR (\n"
+            "        antibiotic_time < culture_time AND culture_time <= antibiotic_time + INTERVAL '24 hours'\n"
+            "      )\n"
+            "  )\n"
+            "  SELECT COUNT(*) > 0 AS has_suspected_infection, MIN(suspicion_time) AS first_suspicion_time FROM pairs;\n"
+            "  ```\n"
+            '- To decide, return only one JSON object such as {"action":"keep_monitoring"}.\n'
         )
     else:
+        execution_mode = "python"
         task_labels = ["keep_monitoring", "infection_suspect", "trigger_sepsis_alert"]
         decision_guidance = (
             "Decision guidance:\n"
@@ -386,6 +448,26 @@ def _build_zeroshot_messages(
             "- For suspected infection, align with the official MIMIC Sepsis-3 operationalization: systemic antibiotics from hospital prescriptions plus microbiology culture timing with asymmetric windows.\n"
             "- Positive culture can support the case but is not required for suspected infection.\n"
             "- For organ dysfunction, use raw SOFA-relevant signals from chartevents, labevents, inputevents, and outputevents.\n\n"
+        )
+        execution_contract = (
+            "Python execution contract:\n"
+            "- Use query_db(sql, params=None) for all database access.\n"
+            "- query_db is read-only.\n"
+            "- Do not open database connections directly.\n"
+            "- Preloaded variables: stay_id, subject_id, hadm_id, icu_intime, visible_until, t_hour, pd, np, datetime, timedelta.\n"
+            "- Before the code ends, set RESULT to a concise value and/or print concise findings.\n"
+            "- Keep snippets short and focused. Prefer one small query at a time.\n"
+            "- Prefer SQL filtering and compact helper logic over long hard-coded Python lists.\n"
+            "- Never emit giant enumerations of routes, itemids, antibiotics, or repeated literals.\n"
+            "- If you need multiple checks, split them across multiple short executions instead of one large script.\n\n"
+            "Response formats:\n"
+            "- To execute Python, return only one fenced Python block and nothing else.\n"
+            "  Example:\n"
+            "  ```python\n"
+            "  abx = query_db(\"SELECT COUNT(*) AS n FROM mimiciv_hosp.prescriptions WHERE hadm_id = ? AND starttime <= ?\", [hadm_id, visible_until])\n"
+            "  RESULT = {\"antibiotic_rows\": int(abx.iloc[0][\"n\"])}\n"
+            "  ```\n"
+            '- To decide, return only one JSON object such as {"action":"keep_monitoring"}.\n'
         )
 
     system_prompt = (
@@ -400,31 +482,14 @@ def _build_zeroshot_messages(
         + "".join(f"- {label}\n" for label in task_labels)
         + "\n"
         + decision_guidance
-        + "Python execution contract:\n"
-        "- Use query_db(sql, params=None) for all database access.\n"
-        "- query_db is read-only.\n"
-        "- Do not open database connections directly.\n"
-        "- Preloaded variables: stay_id, subject_id, hadm_id, icu_intime, visible_until, t_hour, pd, np, datetime, timedelta.\n"
-        "- Before the code ends, set RESULT to a concise value and/or print concise findings.\n"
-        "- Keep snippets short and focused. Prefer one small query at a time.\n"
-        "- Prefer SQL filtering and compact helper logic over long hard-coded Python lists.\n"
-        "- Never emit giant enumerations of routes, itemids, antibiotics, or repeated literals.\n"
-        "- If you need multiple checks, split them across multiple short executions instead of one large script.\n\n"
-        "Response formats:\n"
-        "- To execute Python, return only one fenced Python block and nothing else.\n"
-        "  Example:\n"
-        "  ```python\n"
-        "  abx = query_db(\"SELECT COUNT(*) AS n FROM mimiciv_hosp.prescriptions WHERE hadm_id = ? AND starttime <= ?\", [hadm_id, visible_until])\n"
-        "  RESULT = {\"antibiotic_rows\": int(abx.iloc[0][\"n\"])}\n"
-        "  ```\n"
-        '- To decide, return only one JSON object such as {"action":"keep_monitoring"}.\n'
+        + execution_contract
     )
     if can_execute_more:
         system_prompt += (
-            f"\nYou have {remaining_code_calls} Python execution(s) remaining before you must commit to a final action."
+            f"\nYou have {remaining_exec_calls} execution(s) remaining before you must commit to a final action."
         )
     else:
-        system_prompt += "\nYou have no Python executions remaining. The next response must be a final action."
+        system_prompt += "\nYou have no executions remaining. The next response must be a final action."
     system_prompt += "\n\nGuideline reference:\n" + guideline_text
 
     user_payload = {
@@ -437,7 +502,8 @@ def _build_zeroshot_messages(
         },
         "tool_backend": step_input.get("tool_backend"),
         "allowed_raw_tables": ZEROSHOT_RAW_TABLES,
-        "remaining_python_executions": remaining_code_calls,
+        "execution_mode": execution_mode,
+        "remaining_executions": remaining_exec_calls,
         "history": _summarize_zeroshot_history(history),
     }
     return [
@@ -456,15 +522,24 @@ def _build_zeroshot_repair_messages(
     messages.append({"role": "assistant", "content": bad_output})
     remaining_code_calls = max(
         0,
-        int(step_input.get("max_step_interactions") or 4) - _zeroshot_code_calls_used(history),
+        int(step_input.get("max_step_interactions") or 4) - _zeroshot_exec_calls_used(history),
     )
+    execution_mode = "sql" if _single_task_name(step_input) == "infection_only" else "python"
     if remaining_code_calls > 0:
-        repair_hint = (
-            "Your previous reply was invalid or too long. Respond again with exactly one response and no extra text. "
-            "If you need code execution, return only one short fenced Python block. "
-            'If you are ready to decide, return only one JSON object such as {"action":"keep_monitoring"}. '
-            "Do not wrap Python in JSON, and avoid long literal lists."
-        )
+        if execution_mode == "sql":
+            repair_hint = (
+                "Your previous reply was invalid or too long. Respond again with exactly one response and no extra text. "
+                "If you need execution, return only one short fenced SQL block. "
+                'If you are ready to decide, return only one JSON object such as {"action":"keep_monitoring"}. '
+                "Do not wrap SQL in JSON."
+            )
+        else:
+            repair_hint = (
+                "Your previous reply was invalid or too long. Respond again with exactly one response and no extra text. "
+                "If you need code execution, return only one short fenced Python block. "
+                'If you are ready to decide, return only one JSON object such as {"action":"keep_monitoring"}. '
+                "Do not wrap Python in JSON, and avoid long literal lists."
+            )
     else:
         repair_hint = (
             "Your previous reply was invalid. Respond again with JSON only and no extra text. "
@@ -519,15 +594,39 @@ def _extract_python_code_block(text: str) -> str | None:
     return None
 
 
+def _extract_sql_code_block(text: str) -> str | None:
+    text = _sanitize_model_text(text)
+    closed_match = re.search(r"```sql\s*\n(.*?)```", text, re.DOTALL | re.IGNORECASE)
+    if closed_match:
+        sql = closed_match.group(1).strip()
+        return sql or None
+
+    open_match = re.search(r"```sql\s*\n(.*)\Z", text, re.DOTALL | re.IGNORECASE)
+    if open_match:
+        sql = open_match.group(1).strip()
+        return sql or None
+    return None
+
+
 def _extract_zeroshot_response(
     text: str,
     *,
     allowed_actions: list[str] | None = None,
+    execution_mode: str = "python",
 ) -> ToolCall | ActionDecision:
-    code = _extract_python_code_block(text)
-    if code is not None:
-        return ToolCall(tool_name=CODE_EXEC_TOOL_NAME, arguments={"code": code})
-    return _coerce_zeroshot_output(_extract_json_object(text), allowed_actions=allowed_actions)
+    if execution_mode == "sql":
+        sql = _extract_sql_code_block(text)
+        if sql is not None:
+            return ToolCall(tool_name=SQL_EXEC_TOOL_NAME, arguments={"sql": sql})
+    else:
+        code = _extract_python_code_block(text)
+        if code is not None:
+            return ToolCall(tool_name=CODE_EXEC_TOOL_NAME, arguments={"code": code})
+    return _coerce_zeroshot_output(
+        _extract_json_object(text),
+        allowed_actions=allowed_actions,
+        execution_mode=execution_mode,
+    )
 
 
 def _build_repair_messages(
@@ -595,18 +694,25 @@ def _coerce_zeroshot_output(
     payload: dict[str, Any],
     *,
     allowed_actions: list[str] | None = None,
+    execution_mode: str = "python",
 ) -> ToolCall | ActionDecision:
     has_action = "action" in payload
     has_code = "python_code" in payload
-    if has_action == has_code:
-        raise ValueError("Zero-shot response must contain exactly one of 'action' or 'python_code'.")
+    has_sql = "sql_code" in payload
+    if sum(int(flag) for flag in (has_action, has_code, has_sql)) != 1:
+        raise ValueError("Zero-shot response must contain exactly one of 'action', 'python_code', or 'sql_code'.")
     if has_action:
         action = payload["action"]
         valid_actions = allowed_actions or TASK_LABEL_SPACES["sepsis"]
         if action not in valid_actions:
             raise ValueError(f"Invalid action: {action}")
         return ActionDecision(action=action)
-    code = payload["python_code"]
+    if execution_mode == "sql":
+        sql = payload.get("sql_code")
+        if not isinstance(sql, str) or not sql.strip():
+            raise ValueError("sql_code must be a non-empty string.")
+        return ToolCall(tool_name=SQL_EXEC_TOOL_NAME, arguments={"sql": sql})
+    code = payload.get("python_code")
     if not isinstance(code, str) or not code.strip():
         raise ValueError("python_code must be a non-empty string.")
     return ToolCall(tool_name=CODE_EXEC_TOOL_NAME, arguments={"code": code})
@@ -988,6 +1094,7 @@ class QwenChatAgent:
     ) -> ToolCall | ActionDecision:
         task_name = _single_task_name(step_input)
         allowed_actions = _label_space_for_task(step_input, task_name)
+        execution_mode = "sql" if task_name == "infection_only" else "python"
         context = {
             "trajectory_id": step_input["trajectory_id"],
             "stay_id": int(step_input["stay_id"]),
@@ -999,7 +1106,11 @@ class QwenChatAgent:
         if self.trace_callback is not None:
             self.trace_callback({"event_type": "model_output_raw", **context, "output": content})
         try:
-            response = _extract_zeroshot_response(content, allowed_actions=allowed_actions)
+            response = _extract_zeroshot_response(
+                content,
+                allowed_actions=allowed_actions,
+                execution_mode=execution_mode,
+            )
         except (ValueError, json.JSONDecodeError):
             original_max_tokens = self.client.max_new_tokens
             repair_messages = _build_zeroshot_repair_messages(
@@ -1015,11 +1126,15 @@ class QwenChatAgent:
                 self.client.max_new_tokens = original_max_tokens
             if self.trace_callback is not None:
                 self.trace_callback({"event_type": "model_output_repair", **context, "output": repaired})
-            response = _extract_zeroshot_response(repaired, allowed_actions=allowed_actions)
+            response = _extract_zeroshot_response(
+                repaired,
+                allowed_actions=allowed_actions,
+                execution_mode=execution_mode,
+            )
 
         remaining_code_calls = max(
             0,
-            int(step_input.get("max_step_interactions") or 4) - _zeroshot_code_calls_used(history),
+            int(step_input.get("max_step_interactions") or 4) - _zeroshot_exec_calls_used(history),
         )
         if remaining_code_calls == 0 and isinstance(response, ToolCall):
             original_max_tokens = self.client.max_new_tokens
@@ -1042,7 +1157,11 @@ class QwenChatAgent:
                         "output": repaired,
                     }
                 )
-            response = _extract_zeroshot_response(repaired, allowed_actions=allowed_actions)
+            response = _extract_zeroshot_response(
+                repaired,
+                allowed_actions=allowed_actions,
+                execution_mode=execution_mode,
+            )
             if isinstance(response, ToolCall):
                 raise ValueError("Zero-shot agent must return a final action after code budget is exhausted.")
 
