@@ -5,6 +5,7 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta
 import io
 from pathlib import Path
+import re
 import traceback
 from typing import Any
 from uuid import uuid4
@@ -44,6 +45,9 @@ SAFE_BUILTINS: dict[str, Any] = {
 }
 
 READ_ONLY_SQL_PREFIXES = ("SELECT", "WITH", "DESCRIBE", "SHOW", "PRAGMA")
+FORBIDDEN_SQL_PATTERNS = (
+    (re.compile(r"\bsource\s*\.", re.IGNORECASE), "Direct access to source.* is not allowed. Query the checkpoint-scoped mimiciv_* views instead."),
+)
 
 
 @dataclass(slots=True)
@@ -251,13 +255,7 @@ class ZeroShotRawDuckDBRuntime:
 
     def _build_namespace(self, conn: Any, context: _StayContext) -> dict[str, Any]:
         def query_db(sql: str, params: Any = None):
-            if not isinstance(sql, str) or not sql.strip():
-                raise ValueError("query_db requires a non-empty SQL string.")
-            first_token = sql.lstrip().split(None, 1)[0].upper()
-            if first_token not in READ_ONLY_SQL_PREFIXES:
-                raise ValueError(
-                    "query_db is read-only. Use SELECT/WITH/DESCRIBE/SHOW/PRAGMA statements only."
-                )
+            self._validate_user_sql(sql, tool_name="query_db")
             if params is None:
                 return conn.execute(sql).fetchdf()
             return conn.execute(sql, params).fetchdf()
@@ -294,6 +292,18 @@ class ZeroShotRawDuckDBRuntime:
             raise ValueError("run_sql requires non-empty SQL.")
         return self._execute_sql(session, sql)
 
+    def _validate_user_sql(self, sql: str, *, tool_name: str) -> None:
+        if not isinstance(sql, str) or not sql.strip():
+            raise ValueError(f"{tool_name} requires a non-empty SQL string.")
+        first_token = sql.lstrip().split(None, 1)[0].upper()
+        if first_token not in READ_ONLY_SQL_PREFIXES:
+            raise ValueError(
+                f"{tool_name} is read-only. Use SELECT/WITH/DESCRIBE/SHOW/PRAGMA statements only."
+            )
+        for pattern, message in FORBIDDEN_SQL_PATTERNS:
+            if pattern.search(sql):
+                raise ValueError(message)
+
     def _execute_code(self, session: _PythonSession, code: str) -> dict[str, Any]:
         stdout_buffer = io.StringIO()
         stderr_buffer = io.StringIO()
@@ -326,11 +336,7 @@ class ZeroShotRawDuckDBRuntime:
         stderr_buffer = io.StringIO()
         try:
             with redirect_stdout(stdout_buffer), redirect_stderr(stderr_buffer):
-                first_token = sql.lstrip().split(None, 1)[0].upper()
-                if first_token not in READ_ONLY_SQL_PREFIXES:
-                    raise ValueError(
-                        "run_sql is read-only. Use SELECT/WITH/DESCRIBE/SHOW/PRAGMA statements only."
-                    )
+                self._validate_user_sql(sql, tool_name="run_sql")
                 result = session.conn.execute(sql).fetchdf()
         except Exception as exc:
             return {

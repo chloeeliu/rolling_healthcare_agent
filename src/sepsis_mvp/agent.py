@@ -393,19 +393,20 @@ def _build_zeroshot_messages(
             "Decision guidance:\n"
             "- If suspected infection is not yet visible, prefer keep_monitoring.\n"
             "- If suspected infection is visible from the official antibiotic-culture overlap logic, prefer infection_suspect.\n"
-            "- Do not use culture positivity, organism identity, or final result status.\n"
-            "- Use culture order time only.\n"
+            "- Use mimiciv_hosp.prescriptions.starttime as antibiotic_time.\n"
+            "- Use COALESCE(microbiologyevents.charttime, CAST(chartdate AS TIMESTAMP)) as culture_time.\n"
             "- If systemic antibiotics come first, look for a culture within the next 24 hours.\n"
             "- If a culture comes first, look for systemic antibiotics within the next 72 hours.\n"
             "- Use culture time when culture precedes antibiotics; otherwise use antibiotic time.\n"
-            "- The checkpoint-scoped SQL views are already limited to the current admission and visible time window.\n\n"
+            "- Ignore culture positivity, organism identity, susceptibilities, and final result status.\n"
+            "- Pre-ICU hospital rows from the same admission may already be visible at t_hour=0.\n\n"
         )
         execution_contract = (
             "SQL execution contract:\n"
             "- Use only one read-only SQL statement per turn.\n"
             "- Use only SELECT/WITH/DESCRIBE/SHOW/PRAGMA.\n"
-            "- The SQL runs against checkpoint-scoped views that are already filtered to this stay/admission and visible_until.\n"
-            "- For infection-only, focus on mimiciv_hosp.prescriptions and mimiciv_hosp.microbiologyevents.\n"
+            "- The available mimiciv_hosp tables are already restricted to the current admission and checkpoint visibility window.\n"
+            "- For this task, focus on mimiciv_hosp.prescriptions and mimiciv_hosp.microbiologyevents.\n"
             "- Return a compact one-row result with fields such as has_suspected_infection, first_suspicion_time, first_antibiotic_time, first_culture_time.\n"
             "- Prefer one CTE-based query that directly computes the overlap decision.\n\n"
             "Response formats:\n"
@@ -423,7 +424,10 @@ def _build_zeroshot_messages(
             "    WHERE COALESCE(charttime, CAST(chartdate AS TIMESTAMP)) IS NOT NULL\n"
             "  ),\n"
             "  pairs AS (\n"
-            "    SELECT CASE WHEN culture_time <= antibiotic_time THEN culture_time ELSE antibiotic_time END AS suspicion_time\n"
+            "    SELECT\n"
+            "      antibiotic_time,\n"
+            "      culture_time,\n"
+            "      CASE WHEN culture_time <= antibiotic_time THEN culture_time ELSE antibiotic_time END AS suspicion_time\n"
             "    FROM abx\n"
             "    JOIN cult\n"
             "      ON (\n"
@@ -432,7 +436,12 @@ def _build_zeroshot_messages(
             "        antibiotic_time < culture_time AND culture_time <= antibiotic_time + INTERVAL '24 hours'\n"
             "      )\n"
             "  )\n"
-            "  SELECT COUNT(*) > 0 AS has_suspected_infection, MIN(suspicion_time) AS first_suspicion_time FROM pairs;\n"
+            "  SELECT\n"
+            "    COUNT(*) > 0 AS has_suspected_infection,\n"
+            "    MIN(suspicion_time) AS first_suspicion_time,\n"
+            "    MIN(antibiotic_time) AS first_antibiotic_time,\n"
+            "    MIN(culture_time) AS first_culture_time\n"
+            "  FROM pairs;\n"
             "  ```\n"
             '- To decide, return only one JSON object such as {"action":"keep_monitoring"}.\n'
         )
@@ -470,20 +479,35 @@ def _build_zeroshot_messages(
             '- To decide, return only one JSON object such as {"action":"keep_monitoring"}.\n'
         )
 
-    system_prompt = (
-        f"You are an ICU rolling {task_name.replace('_', ' ')} monitoring agent operating directly on raw MIMIC-IV tables.\n"
-        "This is a rolling monitoring task, not a forecasting task.\n"
-        "At each checkpoint, use only data visible up to visible_until for this stay/admission.\n"
-        "You may either execute exactly one Python analysis snippet or return one final action.\n"
-        "The Python session persists within the current checkpoint only.\n"
-        "Do not output reasoning or prose.\n"
-        "Return exactly one response and nothing else.\n\n"
-        "Task labels:\n"
-        + "".join(f"- {label}\n" for label in task_labels)
-        + "\n"
-        + decision_guidance
-        + execution_contract
-    )
+    if execution_mode == "sql":
+        system_prompt = (
+            f"You are an ICU rolling {task_name.replace('_', ' ')} monitoring agent operating directly on raw MIMIC-IV tables.\n"
+            "This is a rolling monitoring task, not a forecasting task.\n"
+            "At each checkpoint, use only data already visible for this admission.\n"
+            "You may either execute exactly one SQL query or return one final action.\n"
+            "Do not output reasoning or prose.\n"
+            "Return exactly one response and nothing else.\n\n"
+            "Task labels:\n"
+            + "".join(f"- {label}\n" for label in task_labels)
+            + "\n"
+            + decision_guidance
+            + execution_contract
+        )
+    else:
+        system_prompt = (
+            f"You are an ICU rolling {task_name.replace('_', ' ')} monitoring agent operating directly on raw MIMIC-IV tables.\n"
+            "This is a rolling monitoring task, not a forecasting task.\n"
+            "At each checkpoint, use only data visible up to visible_until for this stay/admission.\n"
+            "You may either execute exactly one Python analysis snippet or return one final action.\n"
+            "The Python session persists within the current checkpoint only.\n"
+            "Do not output reasoning or prose.\n"
+            "Return exactly one response and nothing else.\n\n"
+            "Task labels:\n"
+            + "".join(f"- {label}\n" for label in task_labels)
+            + "\n"
+            + decision_guidance
+            + execution_contract
+        )
     if can_execute_more:
         system_prompt += (
             f"\nYou have {remaining_exec_calls} execution(s) remaining before you must commit to a final action."

@@ -30,6 +30,7 @@ from sepsis_mvp.dataset import (
 from sepsis_mvp.environment import BenchmarkEnvironment, evaluate_rollouts
 from sepsis_mvp.schemas import CODE_EXEC_TOOL_NAME, SQL_EXEC_TOOL_NAME, Checkpoint, Trajectory, ToolCall, ActionDecision
 from sepsis_mvp.tools import ConceptToolRuntime
+from sepsis_mvp.zeroshot_raw import ZeroShotRawDuckDBRuntime
 
 
 SAMPLE = ROOT / "data" / "sample_concepts.json"
@@ -151,6 +152,9 @@ class PipelineTest(unittest.TestCase):
         self.assertIn("within the next 72 hours", system_prompt)
         self.assertNotIn("trigger_sepsis_alert", system_prompt)
         self.assertIn("fenced SQL block", system_prompt)
+        self.assertIn("mimiciv_hosp.prescriptions.starttime", system_prompt)
+        self.assertNotIn("Python session persists", system_prompt)
+        self.assertNotIn("Python analysis snippet", system_prompt)
 
     def test_zeroshot_output_coercion_maps_python_code_to_run_python(self):
         response = _coerce_zeroshot_output({"python_code": "RESULT = 1"})
@@ -429,6 +433,18 @@ class PipelineTest(unittest.TestCase):
         ]
         second = agent.next_response(step_input, history=history, available_tools=[])
         self.assertEqual(second.action, "infection_suspect")
+
+    def test_zeroshot_runtime_blocks_direct_source_access_in_sql(self):
+        runtime = object.__new__(ZeroShotRawDuckDBRuntime)
+        with self.assertRaisesRegex(ValueError, "source\\.\\* is not allowed"):
+            runtime._validate_user_sql("SELECT * FROM source.mimiciv_hosp.prescriptions", tool_name="run_sql")
+
+    def test_zeroshot_runtime_allows_scoped_view_sql(self):
+        runtime = object.__new__(ZeroShotRawDuckDBRuntime)
+        runtime._validate_user_sql(
+            "SELECT starttime FROM mimiciv_hosp.prescriptions WHERE starttime IS NOT NULL",
+            tool_name="run_sql",
+        )
 
     def test_qwen_agent_zeroshot_repairs_truncated_json_with_fenced_python(self):
         class FakeClient:

@@ -1,32 +1,32 @@
 infection_only_monitoring_guideline:
   task:
     name: "rolling_infection_only_monitoring"
-    objective: "At each checkpoint, decide whether suspected infection is already visible."
+    objective: "At each checkpoint, decide whether suspected infection is already visible from the current hospital admission."
     labels:
       - "keep_monitoring"
       - "infection_suspect"
 
   rule:
-    summary: "Use only the official antibiotic-culture overlap timing logic."
-    keep_monitoring: "No visible overlap pair yet."
-    infection_suspect: "At least one visible overlap pair exists."
+    summary: "Use only the antibiotic-culture timing rule for suspected infection."
+    keep_monitoring: "No qualifying antibiotic-culture pair is visible yet."
+    infection_suspect: "At least one qualifying antibiotic-culture pair is already visible."
 
-  official_logic:
-    antibiotic_source: "mimiciv_hosp.prescriptions.starttime"
-    culture_source: "COALESCE(mimiciv_hosp.microbiologyevents.charttime, CAST(chartdate AS TIMESTAMP))"
-    antibiotic_first: "antibiotic_time < culture_time AND culture_time <= antibiotic_time + 24h"
-    culture_first: "culture_time <= antibiotic_time AND antibiotic_time <= culture_time + 72h"
-    suspicion_time: "culture_time when culture comes first, otherwise antibiotic_time"
+  clinical_definition:
+    antibiotic_time: "Use mimiciv_hosp.prescriptions.starttime as the antibiotic time."
+    culture_time: "Use COALESCE(mimiciv_hosp.microbiologyevents.charttime, CAST(chartdate AS TIMESTAMP)) as the culture time."
+    antibiotic_first: "If antibiotics are first, a culture must occur within the next 24 hours."
+    culture_first: "If the culture is first, antibiotics must occur within the next 72 hours."
+    suspicion_time: "Use the earlier event in the qualifying pair: culture time when culture is first, otherwise antibiotic time."
 
-  use:
-    - "Use culture order time only."
-    - "Use same-admission data only."
-    - "Use only events visible by the current checkpoint."
-    - "Focus on prescriptions and microbiology events."
+  database_scope:
+    - "Use mimiciv_hosp.prescriptions and mimiciv_hosp.microbiologyevents."
+    - "Use only rows from the current admission."
+    - "Use only rows visible by the current checkpoint."
+    - "Pre-ICU hospital rows from the same admission may already be visible at t_hour=0."
 
-  do_not_use:
-    - "Do not require positive cultures."
-    - "Do not use organism identity."
-    - "Do not use culture result status."
-    - "Do not add SOFA or other organ dysfunction logic."
-    - "Do not use mimiciv_derived tables in the raw baseline."
+  interpretation:
+    - "Decide whether suspected infection is already present, not whether it will happen later."
+    - "A positive culture is not required."
+    - "Do not use organism identity, susceptibilities, or final culture status."
+    - "Do not add SOFA or any organ dysfunction rule."
+    - "Do not rely on mimiciv_derived tables in the raw baseline."
