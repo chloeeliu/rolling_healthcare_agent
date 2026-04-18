@@ -219,6 +219,35 @@ PYTHONPATH=src python3 -m sepsis_mvp.cli run \
 export QWEN_MODEL="Qwen/Qwen3.5-9B"
 export QWEN_OFFLINE=0
 
+## Gradio demo
+
+The repo now includes a checkpoint-by-checkpoint Gradio monitoring console for the single-task sepsis dataset.
+
+Features:
+
+- start a session from a `stay_id`
+- replay checkpoint times directly from `rolling_monitor_dataset/sepsis/rolling_sepsis.csv`
+- OpenAI-powered checkpoint decisions with tool-calling
+- structured rationale for each action
+- interactive follow-up investigation using infection, SOFA, and AKI tools
+
+Run it with:
+
+```bash
+PYTHONPATH=src python3 -m sepsis_mvp.gradio_demo \
+  --dataset /Users/chloe/Documents/New\ project/rolling_monitor_dataset/sepsis/rolling_sepsis.csv \
+  --db-path /path/to/mimic4_dk.db \
+  --guideline-dir /Users/chloe/Documents/New\ project/clinical_guidelines
+```
+
+You can also use the installed console script:
+
+```bash
+sepsis-mvp-demo --db-path /path/to/mimic4_dk.db
+```
+
+The demo reads `OPENAI_API_KEY` from the environment by default, or you can enter the key in the UI.
+
 PYTHONPATH=src python3 -m sepsis_mvp.cli run \
   --db-path /Users/chloe/Desktop/healthcare/mimic-iv-3.1/buildmimic/duckdb/mimic4_dk.db \
   --dataset /Users/chloe/Documents/New\ project/rolling_monitor_dataset/multitask/rolling_multitask.csv \

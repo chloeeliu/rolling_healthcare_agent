@@ -1,0 +1,36 @@
+Sepsis Diagnosis (Sepsis-3) – Concise Summary
+
+Definition:
+Sepsis is a life-threatening organ dysfunction caused by a dysregulated host response to infection.
+
+Core Diagnostic Criteria:
+1. Suspected or confirmed infection
+2. Evidence of organ dysfunction:
+   - Operationalized as an increase in SOFA score ≥ 2
+
+Clinical Interpretation:
+- SOFA ≥ 2 indicates significant risk of mortality (~10%)
+- Reflects multi-organ involvement (respiratory, cardiovascular, renal, liver, coagulation, CNS)
+
+Screening (outside ICU):
+qSOFA ≥ 2 suggests high risk of poor outcomes:
+- Respiratory rate ≥ 22/min
+- Altered mentation
+- Systolic BP ≤ 100 mmHg
+
+Septic Shock (subset of sepsis):
+- Requires vasopressors to maintain MAP ≥ 65 mmHg
+- Lactate > 2 mmol/L despite adequate fluid resuscitation
+- Associated with >40% mortality
+
+Key Concepts:
+- Sepsis ≠ infection alone; requires organ dysfunction
+- SIRS criteria are insufficient (low specificity/sensitivity)
+- Early recognition and intervention are critical
+- No single gold-standard diagnostic test exists
+
+Practical EHR Implementation:
+- Identify infection via antibiotics + culture timing
+- Track SOFA score dynamically (e.g., hourly or 4-hour windows)
+- Use qSOFA for rapid bedside screening
+- Escalate to full evaluation when criteria met

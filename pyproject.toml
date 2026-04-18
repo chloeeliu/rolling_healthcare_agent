@@ -8,14 +8,17 @@ version = "0.1.0"
 description = "Rolling sepsis surveillance MVP benchmark on concept-layer MIMIC-IV data."
 readme = "README.md"
 requires-python = ">=3.10"
-dependencies = []
+dependencies = [
+    "gradio>=5.0.0,<6",
+    "openai>=1.0.0,<2",
+]
 
 [project.scripts]
 sepsis-mvp = "sepsis_mvp.cli:main"
+sepsis-mvp-demo = "sepsis_mvp.gradio_demo:main"
 
 [tool.setuptools]
 package-dir = {"" = "src"}
 
 [tool.setuptools.packages.find]
 where = ["src"]
-

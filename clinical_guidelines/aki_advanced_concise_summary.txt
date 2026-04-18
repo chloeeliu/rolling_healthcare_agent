@@ -1,0 +1,68 @@
+Acute Kidney Injury (AKI) – Advanced Concise Summary (Pathophysiology & System Effects)
+
+Definition:
+AKI is a complex clinical syndrome characterized by abrupt decline in kidney function, involving both structural injury and functional impairment.
+
+Core Concept Shift:
+- AKI is no longer viewed as an isolated organ failure
+- It is part of systemic multi-organ dysfunction, with active cross-organ interactions
+
+Pathophysiology:
+- Multifactorial and heterogeneous:
+  • Sepsis (inflammation, cytokine-mediated injury)
+  • Ischemia (hypoperfusion, microcirculatory dysfunction)
+  • Nephrotoxicity (drugs, toxins)
+- Often mixed etiology → difficult to isolate single cause
+- Cellular mechanisms:
+  • ATP depletion
+  • Oxidative stress
+  • Inflammation and apoptosis
+- Tubular cells (especially proximal) are most vulnerable
+
+Diagnosis (Conceptual):
+- Based on decreased GFR:
+  • Rising serum creatinine (sCr)
+  • Reduced urine output (UO)
+- sCr limitations:
+  • Delayed response to injury
+  • Influenced by age, muscle mass, hydration, drugs
+  • Reflects function, not direct structural damage
+- Biomarkers (emerging):
+  • Aim to detect early structural injury
+  • Not yet standardized
+
+Etiology Classification:
+- Pre-renal: decreased perfusion (no intrinsic damage initially)
+- Intrinsic: direct kidney injury (true renal disease)
+- Post-renal: obstruction
+- Persistent pre/post → can progress to intrinsic damage
+
+Organ Crosstalk:
+1. Cardiorenal Syndrome (CRS):
+   - Heart and kidney dysfunction are bidirectional
+   - Five subtypes based on primary/secondary organ
+   - Example: heart failure → AKI, or AKI → cardiac dysfunction
+
+2. Hepatorenal Interactions:
+   - AKI can induce liver injury via inflammation and oxidative stress
+   - Hepatorenal syndrome (HRS):
+     • Functional renal failure in advanced liver disease
+     • Reduced GFR without structural kidney damage
+
+3. Systemic Disease (e.g., Sepsis):
+   - Can simultaneously affect multiple organs
+   - AKI acts as both consequence and amplifier of systemic dysfunction
+
+Clinical Implications:
+- Even mild AKI predicts poor outcomes
+- Early detection is critical but challenging
+- Requires integration of:
+  • Functional markers (sCr, UO)
+  • Clinical context (sepsis, cardiac, hepatic status)
+
+Practical Insight for EHR/Agent:
+- AKI should be treated as a dynamic, system-level condition
+- Monitoring should:
+  • Track trends (not single values)
+  • Incorporate multi-organ context
+  • Recognize mixed etiologies

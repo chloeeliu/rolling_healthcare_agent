@@ -1,0 +1,48 @@
+Acute Kidney Injury (AKI) – Concise Summary
+
+Definition:
+AKI is an abrupt (hours to days) decline in kidney function, including both structural injury and functional impairment.
+
+Core Diagnostic Criteria (KDIGO):
+AKI is diagnosed if any of the following:
+1. Increase in serum creatinine (sCr) ≥ 0.3 mg/dL within 48 hours
+2. Increase in sCr ≥ 1.5× baseline within 7 days
+3. Urine output < 0.5 mL/kg/h for ≥ 6 hours
+
+Severity Staging:
+- Stage 1: 1.5–1.9× baseline sCr or ≥0.3 mg/dL increase; UO <0.5 mL/kg/h (6–12h)
+- Stage 2: 2.0–2.9× baseline sCr; UO <0.5 mL/kg/h (≥12h)
+- Stage 3: ≥3× baseline sCr or sCr ≥4.0 mg/dL or RRT; UO <0.3 mL/kg/h (≥24h) or anuria ≥12h
+
+Clinical Interpretation:
+- Even small increases in sCr are clinically significant
+- AKI reflects decreased GFR and impaired waste/fluid regulation
+- Associated with high mortality and risk of chronic kidney disease
+
+Key Features:
+- Multifactorial etiology (often mixed):
+  • Pre-renal (hypoperfusion)
+  • Intrinsic (tubular, glomerular, interstitial, vascular injury)
+  • Post-renal (urinary obstruction)
+- sCr is an imperfect marker (delayed, influenced by non-renal factors)
+- Urine output is a critical complementary signal
+
+Pathophysiology:
+- Common mechanisms: ischemia, nephrotoxicity, sepsis
+- Cellular injury driven by ATP depletion, inflammation, oxidative stress
+- Tubular cells (especially proximal) are most vulnerable
+
+Special Context (Sepsis-related AKI):
+- Occurs frequently in sepsis
+- Driven by inflammation, microvascular dysfunction, cytokines
+- Not purely ischemic → complex systemic process
+
+Systemic Impact:
+- AKI contributes to multi-organ dysfunction (lung, heart, liver, brain)
+- Bidirectional organ crosstalk (e.g., cardiorenal syndrome)
+
+Practical EHR Implementation:
+- Monitor rolling sCr baseline (48h / 7-day window)
+- Track urine output continuously
+- Detect early-stage AKI (small sCr changes)
+- Combine with context (e.g., sepsis, drugs, hypotension)
