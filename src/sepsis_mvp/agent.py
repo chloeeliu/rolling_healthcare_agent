@@ -63,6 +63,11 @@ CLINICAL_GUIDANCE = {
         "If suspected infection is visible and SOFA is 2 or higher, this is usually alert-level evidence for trigger_sepsis_alert.",
         "Do not skip the intermediate infection_suspect state when infection is visible but sepsis alert evidence is not yet established.",
     ],
+    "infection_only": [
+        "If suspected infection is not visible yet, prefer keep_monitoring.",
+        "If suspected infection is visible from the official antibiotic-culture overlap logic, prefer infection_suspect.",
+        "Use the infection tool as the primary decision source; this task does not require SOFA reasoning.",
+    ],
     "aki": [
         "If visible KDIGO stage is 0 or absent, prefer keep_monitoring.",
         "If visible KDIGO stage is 1, prefer suspect_aki.",
@@ -89,6 +94,10 @@ AKI_NON_MONOTONIC_GUIDANCE = [
 def _resolved_task_names(step_input: dict[str, Any]) -> list[str]:
     task_names = step_input.get("task_names") or []
     return task_names or ["sepsis"]
+
+
+def _single_task_name(step_input: dict[str, Any]) -> str:
+    return _resolved_task_names(step_input)[0]
 
 
 def _required_tool_order(step_input: dict[str, Any], available_tools: list[str]) -> list[str]:
@@ -345,15 +354,42 @@ def _build_zeroshot_messages(
     stay_id = int(step_input["stay_id"])
     t_hour = int(step_input["t_hour"])
     task_names = _resolved_task_names(step_input)
-    if task_names != ["sepsis"]:
-        raise ValueError("Zero-shot raw backend currently supports single-task sepsis only.")
+    task_name = _single_task_name(step_input)
+    if task_names not in (["sepsis"], ["infection_only"]):
+        raise ValueError("Zero-shot raw backend currently supports only single-task sepsis or infection-only.")
     max_interactions = int(step_input.get("max_step_interactions") or 4)
     code_calls_used = _zeroshot_code_calls_used(history)
     remaining_code_calls = max(0, max_interactions - code_calls_used)
     can_execute_more = remaining_code_calls > 0
 
+    if task_name == "infection_only":
+        task_labels = ["keep_monitoring", "infection_suspect"]
+        decision_guidance = (
+            "Decision guidance:\n"
+            "- If suspected infection is not yet visible, prefer keep_monitoring.\n"
+            "- If suspected infection is visible from the official antibiotic-culture overlap logic, prefer infection_suspect.\n"
+            "- Pre-ICU hospital events from the same admission may already be visible at t_hour=0.\n"
+            "- Align with the official MIMIC suspicion_of_infection logic: systemic antibiotics plus microbiology culture timing with asymmetric windows.\n"
+            "- If systemic antibiotics come first, look for a culture within the next 24 hours.\n"
+            "- If a culture comes first, look for systemic antibiotics within the next 72 hours.\n"
+            "- Use culture time when culture precedes antibiotics; otherwise use antibiotic time.\n"
+            "- Positive culture can support the case but is not required.\n\n"
+        )
+    else:
+        task_labels = ["keep_monitoring", "infection_suspect", "trigger_sepsis_alert"]
+        decision_guidance = (
+            "Decision guidance:\n"
+            "- If suspected infection is not yet visible, prefer keep_monitoring.\n"
+            "- If suspected infection is visible but visible organ-dysfunction evidence is not yet sufficient for SOFA-style alerting, prefer infection_suspect.\n"
+            "- If suspected infection is visible and the visible data supports SOFA >= 2, prefer trigger_sepsis_alert.\n"
+            "- Pre-ICU hospital events from the same admission may already be visible at t_hour=0.\n"
+            "- For suspected infection, align with the official MIMIC Sepsis-3 operationalization: systemic antibiotics from hospital prescriptions plus microbiology culture timing with asymmetric windows.\n"
+            "- Positive culture can support the case but is not required for suspected infection.\n"
+            "- For organ dysfunction, use raw SOFA-relevant signals from chartevents, labevents, inputevents, and outputevents.\n\n"
+        )
+
     system_prompt = (
-        "You are an ICU rolling sepsis monitoring agent operating directly on raw MIMIC-IV tables.\n"
+        f"You are an ICU rolling {task_name.replace('_', ' ')} monitoring agent operating directly on raw MIMIC-IV tables.\n"
         "This is a rolling monitoring task, not a forecasting task.\n"
         "At each checkpoint, use only data visible up to visible_until for this stay/admission.\n"
         "You may either execute exactly one Python analysis snippet or return one final action.\n"
@@ -361,18 +397,10 @@ def _build_zeroshot_messages(
         "Do not output reasoning or prose.\n"
         "Return exactly one response and nothing else.\n\n"
         "Task labels:\n"
-        "- keep_monitoring\n"
-        "- infection_suspect\n"
-        "- trigger_sepsis_alert\n\n"
-        "Decision guidance:\n"
-        "- If suspected infection is not yet visible, prefer keep_monitoring.\n"
-        "- If suspected infection is visible but visible organ-dysfunction evidence is not yet sufficient for SOFA-style alerting, prefer infection_suspect.\n"
-        "- If suspected infection is visible and the visible data supports SOFA >= 2, prefer trigger_sepsis_alert.\n"
-        "- Pre-ICU hospital events from the same admission may already be visible at t_hour=0.\n"
-        "- For suspected infection, align with the official MIMIC Sepsis-3 operationalization: systemic antibiotics from hospital prescriptions plus microbiology culture timing with asymmetric windows.\n"
-        "- Positive culture can support the case but is not required for suspected infection.\n"
-        "- For organ dysfunction, use raw SOFA-relevant signals from chartevents, labevents, inputevents, and outputevents.\n\n"
-        "Python execution contract:\n"
+        + "".join(f"- {label}\n" for label in task_labels)
+        + "\n"
+        + decision_guidance
+        + "Python execution contract:\n"
         "- Use query_db(sql, params=None) for all database access.\n"
         "- query_db is read-only.\n"
         "- Do not open database connections directly.\n"
@@ -405,7 +433,7 @@ def _build_zeroshot_messages(
             "stay_id": stay_id,
             "step_index": step_input["step_index"],
             "t_hour": t_hour,
-            "task_name": "sepsis",
+            "task_name": task_name,
         },
         "tool_backend": step_input.get("tool_backend"),
         "allowed_raw_tables": ZEROSHOT_RAW_TABLES,
@@ -491,11 +519,15 @@ def _extract_python_code_block(text: str) -> str | None:
     return None
 
 
-def _extract_zeroshot_response(text: str) -> ToolCall | ActionDecision:
+def _extract_zeroshot_response(
+    text: str,
+    *,
+    allowed_actions: list[str] | None = None,
+) -> ToolCall | ActionDecision:
     code = _extract_python_code_block(text)
     if code is not None:
         return ToolCall(tool_name=CODE_EXEC_TOOL_NAME, arguments={"code": code})
-    return _coerce_zeroshot_output(_extract_json_object(text))
+    return _coerce_zeroshot_output(_extract_json_object(text), allowed_actions=allowed_actions)
 
 
 def _build_repair_messages(
@@ -559,14 +591,19 @@ def _coerce_agent_output(payload: dict[str, Any]) -> ToolCall | ActionDecision:
     raise ValueError(f"Unrecognized agent payload: {payload}")
 
 
-def _coerce_zeroshot_output(payload: dict[str, Any]) -> ToolCall | ActionDecision:
+def _coerce_zeroshot_output(
+    payload: dict[str, Any],
+    *,
+    allowed_actions: list[str] | None = None,
+) -> ToolCall | ActionDecision:
     has_action = "action" in payload
     has_code = "python_code" in payload
     if has_action == has_code:
         raise ValueError("Zero-shot response must contain exactly one of 'action' or 'python_code'.")
     if has_action:
         action = payload["action"]
-        if action not in TASK_LABEL_SPACES["sepsis"]:
+        valid_actions = allowed_actions or TASK_LABEL_SPACES["sepsis"]
+        if action not in valid_actions:
             raise ValueError(f"Invalid action: {action}")
         return ActionDecision(action=action)
     code = payload["python_code"]
@@ -590,7 +627,7 @@ class HeuristicAgent:
         if len(task_names) > 1:
             return self._next_multitask_response(step_input, history, available_tools)
         task_name = task_names[0]
-        if task_name == "sepsis":
+        if task_name in {"sepsis", "infection_only"}:
             return self._next_sepsis_response(step_input, history, available_tools)
         if task_name == "aki":
             return self._next_aki_response(step_input, history, available_tools)
@@ -614,6 +651,8 @@ class HeuristicAgent:
         t_hour = int(step_input["t_hour"])
         stay_id = int(step_input["stay_id"])
         seen_tools = {item["tool_name"] for item in history if item["type"] == "tool_call"}
+        task_name = _single_task_name(step_input)
+        label_space = _label_space_for_task(step_input, task_name)
 
         infection_output = self._latest_tool_output(history, stay_id, "has_suspected_infection")
         sofa_output = self._latest_tool_output(history, stay_id, "latest_sofa_24hours")
@@ -624,10 +663,10 @@ class HeuristicAgent:
                 arguments={"stay_id": stay_id, "t_hour": t_hour},
             )
         if infection_output and infection_output.get("has_suspected_infection"):
-            if "query_sofa" in available_tools and "query_sofa" not in seen_tools:
+            if "trigger_sepsis_alert" in label_space and "query_sofa" in available_tools and "query_sofa" not in seen_tools:
                 return ToolCall(tool_name="query_sofa", arguments={"stay_id": stay_id, "t_hour": t_hour})
             latest_sofa = (sofa_output or {}).get("latest_sofa_24hours")
-            if latest_sofa is not None and latest_sofa >= self.sofa_alert_threshold:
+            if "trigger_sepsis_alert" in label_space and latest_sofa is not None and latest_sofa >= self.sofa_alert_threshold:
                 return ActionDecision(action="trigger_sepsis_alert")
             return ActionDecision(action="infection_suspect")
         return ActionDecision(action="keep_monitoring")
@@ -947,6 +986,8 @@ class QwenChatAgent:
         step_input: dict[str, Any],
         history: list[dict[str, Any]],
     ) -> ToolCall | ActionDecision:
+        task_name = _single_task_name(step_input)
+        allowed_actions = _label_space_for_task(step_input, task_name)
         context = {
             "trajectory_id": step_input["trajectory_id"],
             "stay_id": int(step_input["stay_id"]),
@@ -958,7 +999,7 @@ class QwenChatAgent:
         if self.trace_callback is not None:
             self.trace_callback({"event_type": "model_output_raw", **context, "output": content})
         try:
-            response = _extract_zeroshot_response(content)
+            response = _extract_zeroshot_response(content, allowed_actions=allowed_actions)
         except (ValueError, json.JSONDecodeError):
             original_max_tokens = self.client.max_new_tokens
             repair_messages = _build_zeroshot_repair_messages(
@@ -974,7 +1015,7 @@ class QwenChatAgent:
                 self.client.max_new_tokens = original_max_tokens
             if self.trace_callback is not None:
                 self.trace_callback({"event_type": "model_output_repair", **context, "output": repaired})
-            response = _extract_zeroshot_response(repaired)
+            response = _extract_zeroshot_response(repaired, allowed_actions=allowed_actions)
 
         remaining_code_calls = max(
             0,
@@ -1001,7 +1042,7 @@ class QwenChatAgent:
                         "output": repaired,
                     }
                 )
-            response = _extract_zeroshot_response(repaired)
+            response = _extract_zeroshot_response(repaired, allowed_actions=allowed_actions)
             if isinstance(response, ToolCall):
                 raise ValueError("Zero-shot agent must return a final action after code budget is exhausted.")
 

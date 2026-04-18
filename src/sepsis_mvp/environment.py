@@ -173,10 +173,10 @@ class BenchmarkEnvironment:
                     and predicted_action != TASK_BASELINE_ACTION.get(primary_task)
                 ):
                     first_predicted_task_hours[primary_task].setdefault(predicted_action, checkpoint.t_hour)
-                if primary_task == "sepsis":
+                if primary_task in {"sepsis", "infection_only"}:
                     if predicted_action == "infection_suspect" and first_predicted_infection_hour is None:
                         first_predicted_infection_hour = checkpoint.t_hour
-                    if predicted_action == "trigger_sepsis_alert":
+                    if primary_task == "sepsis" and predicted_action == "trigger_sepsis_alert":
                         if first_predicted_infection_hour is None:
                             first_predicted_infection_hour = checkpoint.t_hour
                         if first_predicted_alert_hour is None:
@@ -466,6 +466,8 @@ def _is_grounded(task_name: str, tool_calls: list[dict[str, Any]]) -> bool:
     tools = {call["tool_name"] for call in tool_calls}
     if task_name == "sepsis":
         return bool(tools & {"query_suspicion_of_infection", "query_sofa", CODE_EXEC_TOOL_NAME})
+    if task_name == "infection_only":
+        return bool(tools & {"query_suspicion_of_infection", CODE_EXEC_TOOL_NAME})
     if task_name == "aki":
         return bool(tools & {"query_kdigo_stage", CODE_EXEC_TOOL_NAME})
     if task_name == "respiratory_support":
@@ -486,6 +488,13 @@ def _single_task_grounding_spec(
             "trigger_sepsis_alert": (
                 "alert_predictions_grounded_rate",
                 {"query_suspicion_of_infection", "query_sofa", CODE_EXEC_TOOL_NAME},
+            ),
+        }
+    if task_name == "infection_only":
+        return {
+            "infection_suspect": (
+                "infection_predictions_grounded_rate",
+                {"query_suspicion_of_infection", CODE_EXEC_TOOL_NAME},
             ),
         }
     if task_name == "aki":
@@ -556,6 +565,10 @@ def _format_single_task_transition_timing(
         return {
             "infection": transition_timing.get("infection_suspect"),
             "sepsis_alert": transition_timing.get("trigger_sepsis_alert"),
+        }
+    if task_name == "infection_only":
+        return {
+            "infection": transition_timing.get("infection_suspect"),
         }
     if task_name == "aki":
         return {

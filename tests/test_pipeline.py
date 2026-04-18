@@ -21,6 +21,7 @@ from sepsis_mvp.cli import run_command
 from sepsis_mvp.dataset import (
     build_dataset,
     load_concept_tables,
+    load_dataset_auto,
     load_multitask_csv_dataset,
     load_rolling_csv_dataset,
     load_single_task_csv_dataset,
@@ -131,6 +132,25 @@ class PipelineTest(unittest.TestCase):
         self.assertIn("microbiology", system_prompt.lower())
         self.assertIn("visible_until", system_prompt)
 
+    def test_infection_only_zeroshot_prompt_uses_overlap_windows_without_sofa_label(self):
+        step_input = {
+            "trajectory_id": "mimiciv_stay_1",
+            "stay_id": 30,
+            "step_index": 0,
+            "t_hour": 4,
+            "task_names": ["infection_only"],
+            "label_spaces": {
+                "infection_only": ["keep_monitoring", "infection_suspect"],
+            },
+            "tool_backend": "zeroshot_raw",
+            "max_step_interactions": 4,
+        }
+        messages = _build_zeroshot_messages(step_input, history=[], guideline_text="guideline body")
+        system_prompt = messages[0]["content"]
+        self.assertIn("within the next 24 hours", system_prompt)
+        self.assertIn("within the next 72 hours", system_prompt)
+        self.assertNotIn("trigger_sepsis_alert", system_prompt)
+
     def test_zeroshot_output_coercion_maps_python_code_to_run_python(self):
         response = _coerce_zeroshot_output({"python_code": "RESULT = 1"})
         self.assertEqual(response.tool_name, CODE_EXEC_TOOL_NAME)
@@ -140,6 +160,13 @@ class PipelineTest(unittest.TestCase):
         response = _extract_zeroshot_response("```python\nRESULT = {'x': 1}\n```")
         self.assertEqual(response.tool_name, CODE_EXEC_TOOL_NAME)
         self.assertEqual(response.arguments, {"code": "RESULT = {'x': 1}"})
+
+    def test_zeroshot_response_accepts_infection_only_action(self):
+        response = _extract_zeroshot_response(
+            '{"action":"infection_suspect"}',
+            allowed_actions=["keep_monitoring", "infection_suspect"],
+        )
+        self.assertEqual(response.action, "infection_suspect")
 
     def test_qwen_agent_forces_next_required_tool_when_model_skips_tool_use(self):
         class FakeClient:
@@ -644,6 +671,22 @@ mimiciv_stay_1,10,20,30,2150-01-01T00:00:00,2150-01-02T00:00:00,24,high,2150-01-
             self.assertEqual(trajectory.tool_names, ["query_ventilation_status"])
             self.assertEqual(trajectory.transitions["invasive_support_start_hour"], 8)
 
+    def test_load_dataset_auto_detects_infection_only_csv(self):
+        csv_text = """trajectory_id,task_name,subject_id,hadm_id,stay_id,icu_intime,icu_outtime,icu_los_hours,infection_start_time,infection_start_hour,t_hour,checkpoint_time,state_label,terminal
+mimiciv_stay_1,infection_only,10,20,30,2150-01-01T00:00:00,2150-01-02T00:00:00,24,2150-01-01T04:00:00,4,0,2150-01-01T00:00:00,keep_monitoring,false
+mimiciv_stay_1,infection_only,10,20,30,2150-01-01T00:00:00,2150-01-02T00:00:00,24,2150-01-01T04:00:00,4,4,2150-01-01T04:00:00,infection_suspect,true
+"""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            path = Path(tmpdir) / "rolling_infection_only.csv"
+            path.write_text(csv_text)
+            trajectories = load_dataset_auto(path)
+            trajectory = trajectories[0]
+            self.assertEqual(trajectory.task_name, "infection_only")
+            self.assertEqual(trajectory.task_names, ["infection_only"])
+            self.assertEqual(trajectory.tool_names, ["query_suspicion_of_infection"])
+            self.assertEqual(trajectory.label_spaces["infection_only"], ["keep_monitoring", "infection_suspect"])
+            self.assertEqual(trajectory.transitions["infection_start_hour"], 4)
+
     def test_multitask_heuristic_run(self):
         class StubRuntime:
             def execute(self, tool_name, arguments):
@@ -771,6 +814,44 @@ mimiciv_stay_1,10,20,30,2150-01-01T00:00:00,2150-01-02T00:00:00,24,high,2150-01-
         self.assertEqual(metrics["task_name"], "aki")
         self.assertIn("aki_suspect", metrics["transition_timing"])
         self.assertIn("alert_predictions_grounded_rate", metrics["tool_grounding"])
+
+    def test_single_task_infection_only_heuristic_run(self):
+        class StubRuntime:
+            def execute(self, tool_name, arguments):
+                t = arguments["t_hour"]
+                if tool_name == "query_suspicion_of_infection":
+                    return {"stay_id": 30, "t_hour": t, "has_suspected_infection": t >= 4}
+                raise ValueError(tool_name)
+
+        trajectory = Trajectory(
+            trajectory_id="mimiciv_stay_1",
+            stay_id=30,
+            subject_id=10,
+            hadm_id=20,
+            anchor="icu_intime",
+            step_hours=4,
+            horizon_hours=8,
+            transitions={"infection_start_hour": 4},
+            checkpoints=[
+                Checkpoint(t_hour=0, state_label="keep_monitoring"),
+                Checkpoint(t_hour=4, state_label="infection_suspect"),
+                Checkpoint(t_hour=8, state_label="infection_suspect"),
+            ],
+            task_name="infection_only",
+            task_names=["infection_only"],
+            tool_names=["query_suspicion_of_infection"],
+            label_spaces={"infection_only": ["keep_monitoring", "infection_suspect"]},
+        )
+        environment = BenchmarkEnvironment([trajectory], StubRuntime(), task_mode="single")
+        rollout = environment.run_all(HeuristicAgent())[0]
+        self.assertEqual(
+            [step.predicted_action for step in rollout.steps],
+            ["keep_monitoring", "infection_suspect", "infection_suspect"],
+        )
+        metrics = evaluate_rollouts([trajectory], [rollout])
+        self.assertEqual(metrics["task_name"], "infection_only")
+        self.assertIn("infection", metrics["transition_timing"])
+        self.assertIn("infection_predictions_grounded_rate", metrics["tool_grounding"])
 
     def test_single_task_non_monotonic_aki_heuristic_run(self):
         class StubRuntime:

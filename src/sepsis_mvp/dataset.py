@@ -14,6 +14,7 @@ from .schemas import (
     AKI_ACTIONS,
     AKI_NON_MONOTONIC_ACTIONS,
     DEFAULT_TOOL_NAMES,
+    INFECTION_ONLY_ACTIONS,
     MULTITASK_TOOL_NAMES,
     RESP_SUPPORT_ACTIONS,
     SEPSIS_ACTIONS,
@@ -143,6 +144,8 @@ def load_dataset_auto(
         with dataset_path.open() as handle:
             reader = csv.DictReader(handle)
             first_row = next(reader)
+        if first_row.get("task_name") == "infection_only":
+            return load_single_task_csv_dataset(dataset_path, task_name="infection_only").trajectories
         if "sepsis_label" in first_row:
             return load_multitask_csv_dataset(dataset_path).trajectories
         if "aki_stage1_start_hour" in first_row:
@@ -158,21 +161,28 @@ def load_dataset_auto(
 
 
 def _parse_optional_int(value: str | None) -> int | None:
-    if value in (None, ""):
+    if value is None:
+        return None
+    if str(value).strip().lower() in {"", "null", "none", "nan"}:
         return None
     return int(float(value))
 
 
 def _parse_optional_float(value: str | None) -> float | None:
-    if value in (None, ""):
+    if value is None:
+        return None
+    if str(value).strip().lower() in {"", "null", "none", "nan"}:
         return None
     return float(value)
 
 
 def _parse_bool(value: str | None) -> bool | None:
-    if value in (None, ""):
+    if value is None:
         return None
-    return value.strip().lower() == "true" or value.strip() == "1"
+    normalized = value.strip().lower()
+    if normalized in {"", "null", "none", "nan"}:
+        return None
+    return normalized == "true" or normalized == "1"
 
 
 def _trajectory_skip_reason(rows: list[dict[str, str]]) -> str | None:
@@ -386,6 +396,11 @@ def load_single_task_csv_dataset(path: str | Path, *, task_name: str) -> CSVLoad
             "invasive_start_time": "invasive_support_start_time",
             "invasive_support_start_time": "invasive_support_start_time",
         }
+    elif task_name == "infection_only":
+        transition_keys = {
+            "infection_start_hour": "infection_start_hour",
+            "infection_start_time": "infection_start_time",
+        }
     else:
         raise ValueError(f"Unsupported single-task CSV type: {task_name}")
 
@@ -420,6 +435,8 @@ def load_single_task_csv_dataset(path: str | Path, *, task_name: str) -> CSVLoad
         if task_name == "aki" and "current_aki_stage_smoothed" in first:
             task_variant = "non_monotonic_current_state"
             label_space = list(AKI_NON_MONOTONIC_ACTIONS)
+        elif task_name == "infection_only":
+            label_space = list(INFECTION_ONLY_ACTIONS)
 
         trajectories.append(
             Trajectory(
@@ -474,6 +491,15 @@ def label_for_checkpoint(
     if sepsis_start_hour is None or checkpoint_hour < sepsis_start_hour:
         return "infection_suspect"
     return "trigger_sepsis_alert"
+
+
+def infection_only_label_for_checkpoint(
+    checkpoint_hour: int,
+    infection_start_hour: int | None,
+) -> str:
+    if infection_start_hour is None or checkpoint_hour < infection_start_hour:
+        return "keep_monitoring"
+    return "infection_suspect"
 
 
 def build_dataset(

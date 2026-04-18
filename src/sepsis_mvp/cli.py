@@ -117,11 +117,11 @@ def run_command(args: argparse.Namespace) -> int:
         unsupported = [
             trajectory.trajectory_id
             for trajectory in all_target_trajectories
-            if trajectory.is_multitask() or trajectory.primary_task_name() != "sepsis"
+            if trajectory.is_multitask() or trajectory.primary_task_name() not in {"sepsis", "infection_only"}
         ]
         if unsupported:
             raise SystemExit(
-                "Zero-shot raw backend currently supports only the single-task sepsis dataset. "
+                "Zero-shot raw backend currently supports only the single-task sepsis or infection-only dataset. "
                 f"First unsupported trajectories: {unsupported[:5]}"
             )
 
@@ -184,13 +184,21 @@ def run_command(args: argparse.Namespace) -> int:
         if args.agent == "heuristic":
             agent = HeuristicAgent(sofa_alert_threshold=args.sofa_alert_threshold)
         else:
+            zeroshot_guideline_path = getattr(args, "zeroshot_guideline", None)
+            if args.tool_backend == "zeroshot_raw" and not zeroshot_guideline_path:
+                default_guideline = (
+                    "baseline/infection_only_guideline.yaml"
+                    if trajectories[0].primary_task_name() == "infection_only"
+                    else "baseline/sepsis_guideline.yaml"
+                )
+                zeroshot_guideline_path = default_guideline
             agent = QwenChatAgent(
                 model=args.model,
                 temperature=args.temperature,
                 top_p=args.top_p,
                 max_new_tokens=args.max_new_tokens,
                 repair_max_new_tokens=args.repair_max_new_tokens,
-                zeroshot_guideline_path=getattr(args, "zeroshot_guideline", None),
+                zeroshot_guideline_path=zeroshot_guideline_path,
                 trace_callback=events_sink.write,
             )
 
@@ -304,8 +312,8 @@ def build_parser() -> argparse.ArgumentParser:
     )
     run_parser.add_argument(
         "--zeroshot-guideline",
-        default="baseline/sepsis_guideline.yaml",
-        help="Path to the sepsis guidance YAML when using --tool-backend zeroshot_raw.",
+        default=None,
+        help="Optional path to the zero-shot guidance YAML. If omitted, a task-specific default is chosen.",
     )
     run_parser.add_argument(
         "--include-out-of-scope",

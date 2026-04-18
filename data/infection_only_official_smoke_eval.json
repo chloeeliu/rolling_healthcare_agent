@@ -1,0 +1,42 @@
+{
+  "task_mode": "single",
+  "tool_backend": "official",
+  "dataset": "data/rolling_infection_only_trajectories.json",
+  "num_trajectories": 3,
+  "sample_size": 3,
+  "agent": "heuristic",
+  "resume": false,
+  "existing_completed_trajectories": 0,
+  "newly_processed_trajectories": 3,
+  "metrics": {
+    "task_name": "infection_only",
+    "step_level": {
+      "accuracy": 1.0,
+      "macro_f1": 1.0,
+      "per_class": {
+        "keep_monitoring": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0
+        },
+        "infection_suspect": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0
+        }
+      }
+    },
+    "transition_timing": {
+      "infection": {
+        "exact_match_rate": 0.6667,
+        "mean_absolute_error_hours": 0.0,
+        "early_rate": 0.0,
+        "late_rate": 0.0,
+        "missed_rate": 0.3333
+      }
+    },
+    "tool_grounding": {
+      "infection_predictions_grounded_rate": 1.0
+    }
+  }
+}

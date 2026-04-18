@@ -1,0 +1,54 @@
+infection_only_monitoring_guideline:
+  task:
+    name: "rolling_infection_only_monitoring"
+    objective: "At each ICU checkpoint, decide whether suspected infection is already visible from raw MIMIC-IV data."
+    labels:
+      - "keep_monitoring"
+      - "infection_suspect"
+    label_meaning:
+      keep_monitoring: "No visible suspected infection yet."
+      infection_suspect: "Visible suspected infection is present from the official antibiotic-culture overlap logic."
+
+  time_scope:
+    anchor: "mimiciv_icu.icustays.intime"
+    visible_until: "icu_intime + t_hour hours"
+    rule: "Use only same-admission events with event_time <= visible_until."
+    pre_icu_visibility: "Hospital-admission events before ICU admission may already be visible at t=0."
+    important_note: "This is rolling monitoring, not forecasting."
+
+  official_alignment:
+    target_style: "Follow the official MIMIC suspicion_of_infection logic as closely as possible from raw tables."
+    source_concept: "mimiciv_derived.suspicion_of_infection"
+
+  raw_tables:
+    - "mimiciv_icu.icustays"
+    - "mimiciv_hosp.prescriptions"
+    - "mimiciv_hosp.microbiologyevents"
+
+  suspected_infection:
+    antibiotic_source:
+      table: "mimiciv_hosp.prescriptions"
+      key_fields: ["hadm_id", "drug", "route", "starttime", "stoptime"]
+      guidance:
+        - "Treat hospital prescriptions as the canonical antibiotic source."
+        - "Focus on systemic antibiotics."
+        - "Exclude clearly non-systemic topical, eye, and ear routes when obvious."
+    culture_source:
+      table: "mimiciv_hosp.microbiologyevents"
+      key_fields: ["hadm_id", "chartdate", "charttime", "spec_type_desc", "org_name"]
+      guidance:
+        - "Use culture order time, not final positivity time, for suspicion timing."
+        - "Culture time may require COALESCE(charttime, CAST(chartdate AS TIMESTAMP))."
+    pairing_rule:
+      antibiotic_first: "If systemic antibiotics come first, look for a culture within the next 24 hours."
+      culture_first: "If a culture comes first, look for systemic antibiotics within the next 72 hours."
+      suspicion_time: "Use culture time when culture precedes antibiotics; otherwise use antibiotic time."
+    practical_mapping:
+      - "No visible antibiotic-culture pairing yet -> keep_monitoring."
+      - "Visible official-style antibiotic-culture pairing -> infection_suspect."
+
+  pitfalls:
+    - "Do not require positive cultures to call suspected infection."
+    - "Do not restrict infection evidence to the ICU only; same-admission hospital events may already be visible."
+    - "Do not use mimiciv_derived tables in the zero-shot raw baseline."
+    - "Do not add SOFA reasoning in this infection-only task."
