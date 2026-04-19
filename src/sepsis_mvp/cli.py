@@ -16,6 +16,15 @@ from .schemas import StepRecord, TrajectoryRollout
 from .tools import build_tool_runtime
 
 
+def _json_default(value):
+    if hasattr(value, "isoformat"):
+        try:
+            return value.isoformat()
+        except Exception:
+            pass
+    return str(value)
+
+
 class JsonlSink:
     def __init__(self, path: str | None):
         self.path = Path(path) if path else None
@@ -26,7 +35,7 @@ class JsonlSink:
         if self.path is None:
             return
         with self.path.open("a") as handle:
-            handle.write(json.dumps(payload) + "\n")
+            handle.write(json.dumps(payload, default=_json_default) + "\n")
             handle.flush()
 
 
@@ -49,6 +58,21 @@ def _load_jsonl_dicts(path: Path) -> list[dict]:
             if line:
                 payloads.append(json.loads(line))
     return payloads
+
+
+def _write_canonical_trajectory_output(
+    trajectory_output: str | None,
+    rollouts: list[TrajectoryRollout],
+) -> None:
+    if not trajectory_output:
+        return
+    path = Path(trajectory_output)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    payload_lines = [
+        json.dumps(rollout.to_dict(), default=_json_default)
+        for rollout in rollouts
+    ]
+    path.write_text("".join(f"{line}\n" for line in payload_lines))
 
 
 def _load_existing_rollouts(
@@ -117,11 +141,11 @@ def run_command(args: argparse.Namespace) -> int:
         unsupported = [
             trajectory.trajectory_id
             for trajectory in all_target_trajectories
-            if trajectory.is_multitask() or trajectory.primary_task_name() != "sepsis"
+            if trajectory.is_multitask() or trajectory.primary_task_name() not in {"sepsis", "infection_only"}
         ]
         if unsupported:
             raise SystemExit(
-                "Zero-shot raw backend currently supports only the single-task sepsis dataset. "
+                "Zero-shot raw backend currently supports only the single-task sepsis or infection-only dataset. "
                 f"First unsupported trajectories: {unsupported[:5]}"
             )
 
@@ -180,17 +204,26 @@ def run_command(args: argparse.Namespace) -> int:
             event_callback=events_sink.write,
             tool_backend=args.tool_backend,
             task_mode=args.task_mode,
+            protocol=args.protocol,
         )
         if args.agent == "heuristic":
             agent = HeuristicAgent(sofa_alert_threshold=args.sofa_alert_threshold)
         else:
+            zeroshot_guideline_path = getattr(args, "zeroshot_guideline", None)
+            if args.tool_backend == "zeroshot_raw" and not zeroshot_guideline_path:
+                default_guideline = (
+                    "baseline/infection_only_guideline.yaml"
+                    if trajectories[0].primary_task_name() == "infection_only"
+                    else "baseline/sepsis_guideline.yaml"
+                )
+                zeroshot_guideline_path = default_guideline
             agent = QwenChatAgent(
                 model=args.model,
                 temperature=args.temperature,
                 top_p=args.top_p,
                 max_new_tokens=args.max_new_tokens,
                 repair_max_new_tokens=args.repair_max_new_tokens,
-                zeroshot_guideline_path=getattr(args, "zeroshot_guideline", None),
+                zeroshot_guideline_path=zeroshot_guideline_path,
                 trace_callback=events_sink.write,
             )
 
@@ -238,9 +271,10 @@ def run_command(args: argparse.Namespace) -> int:
             f"{len(missing)} trajectories. First missing IDs: {missing[:5]}"
         )
 
-    evaluation = evaluate_rollouts(all_target_trajectories, rollouts)
+    evaluation = evaluate_rollouts(all_target_trajectories, rollouts, protocol=args.protocol)
     evaluation_summary = {
         "task_mode": args.task_mode,
+        "protocol": args.protocol,
         "tool_backend": args.tool_backend,
         "dataset": args.dataset,
         "num_trajectories": total_target,
@@ -253,10 +287,11 @@ def run_command(args: argparse.Namespace) -> int:
     }
 
     if args.rollouts_output:
-        Path(args.rollouts_output).write_text(json.dumps(rollout_to_dicts(rollouts), indent=2))
+        Path(args.rollouts_output).write_text(json.dumps(rollout_to_dicts(rollouts), indent=2, default=_json_default))
+    _write_canonical_trajectory_output(args.trajectory_output, rollouts)
     if args.evaluation_output:
-        Path(args.evaluation_output).write_text(json.dumps(evaluation_summary, indent=2))
-    print(json.dumps(evaluation_summary, indent=2))
+        Path(args.evaluation_output).write_text(json.dumps(evaluation_summary, indent=2, default=_json_default))
+    print(json.dumps(evaluation_summary, indent=2, default=_json_default))
     return 0
 
 
@@ -298,14 +333,23 @@ def build_parser() -> argparse.ArgumentParser:
         help="Choose whether visible tool outputs come from official derived concepts or generated functions.",
     )
     run_parser.add_argument(
+        "--protocol",
+        choices=["rolling_no_history", "rolling_with_history", "rolling_toolbox_with_history"],
+        default="rolling_no_history",
+        help=(
+            "Choose whether each checkpoint sees only current-step tool outputs, compact summaries from prior checkpoints, "
+            "or the sepsis toolbox-with-history controller."
+        ),
+    )
+    run_parser.add_argument(
         "--autoformalized-library",
         default="autoformalized_library",
         help="Path to the autoformalized function library root when using --tool-backend autoformalized.",
     )
     run_parser.add_argument(
         "--zeroshot-guideline",
-        default="baseline/sepsis_guideline.yaml",
-        help="Path to the sepsis guidance YAML when using --tool-backend zeroshot_raw.",
+        default=None,
+        help="Optional path to the zero-shot guidance YAML. If omitted, a task-specific default is chosen.",
     )
     run_parser.add_argument(
         "--include-out-of-scope",

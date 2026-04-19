@@ -9,6 +9,8 @@ from .schemas import (
     ActionDecision,
     AgentStepInput,
     CODE_EXEC_TOOL_NAME,
+    SEPSIS_TOOLBOX_TOOL_NAMES,
+    SQL_EXEC_TOOL_NAME,
     TASK_BASELINE_ACTION,
     TASK_LABEL_SPACES,
     TASK_TOOL_NAMES,
@@ -22,6 +24,8 @@ from .tools import ToolRuntime
 
 
 class BenchmarkEnvironment:
+    SUPPORTED_PROTOCOLS = {"rolling_no_history", "rolling_with_history", "rolling_toolbox_with_history"}
+
     def __init__(
         self,
         trajectories: list[Trajectory],
@@ -31,6 +35,7 @@ class BenchmarkEnvironment:
         event_callback: Any | None = None,
         tool_backend: str = "official",
         task_mode: str = "auto",
+        protocol: str = "rolling_no_history",
     ) -> None:
         self.trajectories = trajectories
         self.tool_runtime = tool_runtime
@@ -38,6 +43,11 @@ class BenchmarkEnvironment:
         self.event_callback = event_callback
         self.tool_backend = tool_backend
         self.task_mode = task_mode
+        if protocol not in self.SUPPORTED_PROTOCOLS:
+            raise ValueError(
+                f"Unsupported protocol '{protocol}'. Supported protocols: {sorted(self.SUPPORTED_PROTOCOLS)}"
+            )
+        self.protocol = protocol
 
     def _emit(self, event: dict[str, Any]) -> None:
         if self.event_callback is not None:
@@ -62,10 +72,17 @@ class BenchmarkEnvironment:
             }
         )
 
-        available_tools = trajectory.resolved_tool_names()
+        available_tools = self._available_tools_for_protocol(trajectory)
+        rolling_history: list[dict[str, Any]] = []
 
         for step_index, checkpoint in enumerate(trajectory.checkpoints):
             instruction = self._instruction_for_trajectory(trajectory)
+            step_rolling_history = (
+                list(rolling_history)
+                if self.protocol in {"rolling_with_history", "rolling_toolbox_with_history"}
+                else []
+            )
+            step_max_interactions = self._max_step_interactions_for_protocol(available_tools)
             step_input = AgentStepInput(
                 trajectory_id=trajectory.trajectory_id,
                 stay_id=trajectory.stay_id,
@@ -78,7 +95,9 @@ class BenchmarkEnvironment:
                 label_spaces=trajectory.label_spaces,
                 task_mode=task_mode,
                 tool_backend=self.tool_backend,
-                max_step_interactions=self.max_tool_calls_per_step,
+                max_step_interactions=step_max_interactions,
+                protocol=self.protocol,
+                rolling_history=step_rolling_history,
             )
             history: list[dict[str, Any]] = []
             tool_calls: list[dict[str, Any]] = []
@@ -102,11 +121,14 @@ class BenchmarkEnvironment:
                     "t_hour": checkpoint.t_hour,
                     "gt_action": checkpoint.state_label,
                     "gt_task_actions": checkpoint.task_labels,
+                    "protocol": self.protocol,
+                    "rolling_history_length": len(step_rolling_history),
+                    "available_tools": available_tools,
                 }
             )
 
             try:
-                for _ in range(self.max_tool_calls_per_step + 1):
+                for _ in range(step_max_interactions + 1):
                     response = agent.next_response(
                         step_input=step_input.to_dict(),
                         history=history,
@@ -114,7 +136,7 @@ class BenchmarkEnvironment:
                     )
                     if isinstance(response, ToolCall):
                         arguments = dict(response.arguments)
-                        if response.tool_name == CODE_EXEC_TOOL_NAME and step_session_id is not None:
+                        if response.tool_name in {CODE_EXEC_TOOL_NAME, SQL_EXEC_TOOL_NAME} and step_session_id is not None:
                             arguments["session_id"] = step_session_id
                         output = self.tool_runtime.execute(response.tool_name, arguments)
                         call_payload = {"tool_name": response.tool_name, "arguments": arguments}
@@ -173,10 +195,10 @@ class BenchmarkEnvironment:
                     and predicted_action != TASK_BASELINE_ACTION.get(primary_task)
                 ):
                     first_predicted_task_hours[primary_task].setdefault(predicted_action, checkpoint.t_hour)
-                if primary_task == "sepsis":
+                if primary_task in {"sepsis", "infection_only"}:
                     if predicted_action == "infection_suspect" and first_predicted_infection_hour is None:
                         first_predicted_infection_hour = checkpoint.t_hour
-                    if predicted_action == "trigger_sepsis_alert":
+                    if primary_task == "sepsis" and predicted_action == "trigger_sepsis_alert":
                         if first_predicted_infection_hour is None:
                             first_predicted_infection_hour = checkpoint.t_hour
                         if first_predicted_alert_hour is None:
@@ -198,6 +220,14 @@ class BenchmarkEnvironment:
                     tool_outputs=tool_outputs,
                 )
             )
+            history_entry = _build_rolling_history_entry(
+                trajectory=trajectory,
+                checkpoint=checkpoint,
+                step_index=step_index,
+                tool_outputs=tool_outputs,
+            )
+            if history_entry is not None and self.protocol in {"rolling_with_history", "rolling_toolbox_with_history"}:
+                rolling_history.append(history_entry)
 
         rollout = TrajectoryRollout(
             trajectory_id=trajectory.trajectory_id,
@@ -214,6 +244,7 @@ class BenchmarkEnvironment:
                 "stay_id": trajectory.stay_id,
                 "task_mode": task_mode,
                 "tool_backend": self.tool_backend,
+                "protocol": self.protocol,
                 "first_predicted_infection_hour": first_predicted_infection_hour,
                 "first_predicted_alert_hour": first_predicted_alert_hour,
                 "first_predicted_task_hours": rollout.first_predicted_task_hours or None,
@@ -233,8 +264,22 @@ class BenchmarkEnvironment:
             raise ValueError(
                 f"Dataset/task-mode mismatch: trajectory {trajectory.trajectory_id} is {inferred}, "
                 f"but runner requested {self.task_mode}."
-            )
+        )
         return self.task_mode
+
+    def _available_tools_for_protocol(self, trajectory: Trajectory) -> list[str]:
+        if self.protocol == "rolling_toolbox_with_history":
+            if trajectory.is_multitask() or trajectory.primary_task_name() != "sepsis":
+                raise ValueError(
+                    "Protocol 'rolling_toolbox_with_history' currently supports only the single-task sepsis dataset."
+                )
+            return list(SEPSIS_TOOLBOX_TOOL_NAMES)
+        return trajectory.resolved_tool_names()
+
+    def _max_step_interactions_for_protocol(self, available_tools: list[str]) -> int:
+        if self.protocol == "rolling_toolbox_with_history":
+            return max(self.max_tool_calls_per_step, len(available_tools) + 2)
+        return self.max_tool_calls_per_step
 
     def _instruction_for_trajectory(self, trajectory: Trajectory) -> str:
         if trajectory.is_multitask():
@@ -258,13 +303,30 @@ def _f1(tp: int, fp: int, fn: int) -> float:
     return 2 * precision * recall / (precision + recall)
 
 
-def evaluate_rollouts(trajectories: list[Trajectory], rollouts: list[TrajectoryRollout]) -> dict[str, Any]:
+def evaluate_rollouts(
+    trajectories: list[Trajectory],
+    rollouts: list[TrajectoryRollout],
+    *,
+    protocol: str | None = None,
+) -> dict[str, Any]:
     if trajectories and trajectories[0].is_multitask():
         return evaluate_multitask_rollouts(trajectories, rollouts)
-    return evaluate_single_task_rollouts(trajectories, rollouts)
+    metrics = evaluate_single_task_rollouts(trajectories, rollouts, protocol=protocol)
+    if (
+        protocol == "rolling_toolbox_with_history"
+        and trajectories
+        and trajectories[0].primary_task_name() == "sepsis"
+    ):
+        metrics["toolbox_efficiency"] = evaluate_sepsis_toolbox_efficiency(rollouts)
+    return metrics
 
 
-def evaluate_single_task_rollouts(trajectories: list[Trajectory], rollouts: list[TrajectoryRollout]) -> dict[str, Any]:
+def evaluate_single_task_rollouts(
+    trajectories: list[Trajectory],
+    rollouts: list[TrajectoryRollout],
+    *,
+    protocol: str | None = None,
+) -> dict[str, Any]:
     trajectory_by_id = {trajectory.trajectory_id: trajectory for trajectory in trajectories}
     if not trajectories:
         return {}
@@ -281,20 +343,36 @@ def evaluate_single_task_rollouts(trajectories: list[Trajectory], rollouts: list
     pred_hours_by_action = {action: [] for action in transition_fields}
     grounding_counts = _single_task_grounding_counters(task_name, label_space)
 
+    use_history_aware_grounding = protocol == "rolling_toolbox_with_history"
+
     for rollout in rollouts:
         trajectory = trajectory_by_id[rollout.trajectory_id]
+        prior_state = _empty_toolbox_state() if use_history_aware_grounding else None
         for step in rollout.steps:
             total_steps += 1
             if step.gt_action == step.predicted_action:
                 correct_steps += 1
             confusion[(step.gt_action, step.predicted_action)] += 1
-            _update_single_task_grounding(
-                task_name,
-                step.predicted_action,
-                step.tool_calls,
-                grounding_counts,
-                label_space,
-            )
+            if use_history_aware_grounding and prior_state is not None:
+                current_state = dict(prior_state)
+                for call_payload, output in zip(step.tool_calls or [], step.tool_outputs or []):
+                    _update_toolbox_state_from_output(current_state, call_payload["tool_name"], output)
+                _update_single_task_grounding_from_state(
+                    task_name,
+                    step.predicted_action,
+                    grounding_counts,
+                    current_state,
+                    label_space,
+                )
+                prior_state = current_state
+            else:
+                _update_single_task_grounding(
+                    task_name,
+                    step.predicted_action,
+                    step.tool_calls,
+                    grounding_counts,
+                    label_space,
+                )
 
         predicted_hours = (rollout.first_predicted_task_hours or {}).get(task_name, {})
         for action, transition_field in transition_fields.items():
@@ -465,11 +543,13 @@ def evaluate_multitask_rollouts(trajectories: list[Trajectory], rollouts: list[T
 def _is_grounded(task_name: str, tool_calls: list[dict[str, Any]]) -> bool:
     tools = {call["tool_name"] for call in tool_calls}
     if task_name == "sepsis":
-        return bool(tools & {"query_suspicion_of_infection", "query_sofa", CODE_EXEC_TOOL_NAME})
+        return bool(tools & {"query_suspicion_of_infection", "query_sofa", CODE_EXEC_TOOL_NAME, SQL_EXEC_TOOL_NAME})
+    if task_name == "infection_only":
+        return bool(tools & {"query_suspicion_of_infection", CODE_EXEC_TOOL_NAME, SQL_EXEC_TOOL_NAME})
     if task_name == "aki":
-        return bool(tools & {"query_kdigo_stage", CODE_EXEC_TOOL_NAME})
+        return bool(tools & {"query_kdigo_stage", CODE_EXEC_TOOL_NAME, SQL_EXEC_TOOL_NAME})
     if task_name == "respiratory_support":
-        return bool(tools & {"query_ventilation_status", CODE_EXEC_TOOL_NAME})
+        return bool(tools & {"query_ventilation_status", CODE_EXEC_TOOL_NAME, SQL_EXEC_TOOL_NAME})
     return False
 
 
@@ -481,33 +561,40 @@ def _single_task_grounding_spec(
         return {
             "infection_suspect": (
                 "infection_predictions_grounded_rate",
-                {"query_suspicion_of_infection", CODE_EXEC_TOOL_NAME},
+                {"query_suspicion_of_infection", CODE_EXEC_TOOL_NAME, SQL_EXEC_TOOL_NAME},
             ),
             "trigger_sepsis_alert": (
                 "alert_predictions_grounded_rate",
-                {"query_suspicion_of_infection", "query_sofa", CODE_EXEC_TOOL_NAME},
+                {"query_suspicion_of_infection", "query_sofa", CODE_EXEC_TOOL_NAME, SQL_EXEC_TOOL_NAME},
+            ),
+        }
+    if task_name == "infection_only":
+        return {
+            "infection_suspect": (
+                "infection_predictions_grounded_rate",
+                {"query_suspicion_of_infection", CODE_EXEC_TOOL_NAME, SQL_EXEC_TOOL_NAME},
             ),
         }
     if task_name == "aki":
         if label_space and "aki_stage_1" in label_space:
             return {
-                "aki_stage_1": ("stage1_predictions_grounded_rate", {"query_kdigo_stage", CODE_EXEC_TOOL_NAME}),
-                "aki_stage_2": ("stage2_predictions_grounded_rate", {"query_kdigo_stage", CODE_EXEC_TOOL_NAME}),
-                "aki_stage_3": ("stage3_predictions_grounded_rate", {"query_kdigo_stage", CODE_EXEC_TOOL_NAME}),
+                "aki_stage_1": ("stage1_predictions_grounded_rate", {"query_kdigo_stage", CODE_EXEC_TOOL_NAME, SQL_EXEC_TOOL_NAME}),
+                "aki_stage_2": ("stage2_predictions_grounded_rate", {"query_kdigo_stage", CODE_EXEC_TOOL_NAME, SQL_EXEC_TOOL_NAME}),
+                "aki_stage_3": ("stage3_predictions_grounded_rate", {"query_kdigo_stage", CODE_EXEC_TOOL_NAME, SQL_EXEC_TOOL_NAME}),
             }
         return {
-            "suspect_aki": ("suspect_predictions_grounded_rate", {"query_kdigo_stage", CODE_EXEC_TOOL_NAME}),
-            "trigger_aki_alert": ("alert_predictions_grounded_rate", {"query_kdigo_stage", CODE_EXEC_TOOL_NAME}),
+            "suspect_aki": ("suspect_predictions_grounded_rate", {"query_kdigo_stage", CODE_EXEC_TOOL_NAME, SQL_EXEC_TOOL_NAME}),
+            "trigger_aki_alert": ("alert_predictions_grounded_rate", {"query_kdigo_stage", CODE_EXEC_TOOL_NAME, SQL_EXEC_TOOL_NAME}),
         }
     if task_name == "respiratory_support":
         return {
             "high_flow_or_noninvasive_support": (
                 "medium_support_predictions_grounded_rate",
-                {"query_ventilation_status", CODE_EXEC_TOOL_NAME},
+                {"query_ventilation_status", CODE_EXEC_TOOL_NAME, SQL_EXEC_TOOL_NAME},
             ),
             "invasive_vent_required": (
                 "invasive_support_predictions_grounded_rate",
-                {"query_ventilation_status", CODE_EXEC_TOOL_NAME},
+                {"query_ventilation_status", CODE_EXEC_TOOL_NAME, SQL_EXEC_TOOL_NAME},
             ),
         }
     return {}
@@ -520,6 +607,20 @@ def _single_task_grounding_counters(
     return {
         metric_name: {"num": 0, "den": 0}
         for metric_name, _tools in _single_task_grounding_spec(task_name, label_space).values()
+    }
+
+
+def _empty_toolbox_state() -> dict[str, Any]:
+    return {
+        "infection_assessed": False,
+        "infection_positive": False,
+        "sofa_assessed": False,
+        "sofa_alert": False,
+        "max_sofa": None,
+        "kdigo_assessed": False,
+        "max_kdigo": None,
+        "vent_assessed": False,
+        "max_support_rank": None,
     }
 
 
@@ -541,10 +642,231 @@ def _update_single_task_grounding(
             grounding_counts[metric_name]["num"] += 1
 
 
+def _update_single_task_grounding_from_state(
+    task_name: str,
+    predicted_action: str | None,
+    grounding_counts: dict[str, dict[str, int]],
+    current_state: dict[str, Any],
+    label_space: list[str] | None = None,
+) -> None:
+    if predicted_action is None:
+        return
+    spec = _single_task_grounding_spec(task_name, label_space)
+    if predicted_action not in spec:
+        return
+    metric_name, _required_tools = spec[predicted_action]
+    grounding_counts[metric_name]["den"] += 1
+
+    grounded = False
+    if task_name == "sepsis":
+        if predicted_action == "infection_suspect":
+            grounded = bool(current_state["infection_positive"])
+        elif predicted_action == "trigger_sepsis_alert":
+            grounded = bool(current_state["infection_positive"] and current_state["sofa_alert"])
+    elif task_name == "infection_only":
+        grounded = bool(current_state["infection_positive"])
+    elif task_name == "aki":
+        stage = current_state.get("max_kdigo")
+        if predicted_action == "suspect_aki":
+            grounded = stage is not None and stage >= 1
+        elif predicted_action == "trigger_aki_alert":
+            grounded = stage is not None and stage >= 2
+    elif task_name == "respiratory_support":
+        support_rank = current_state.get("max_support_rank")
+        if predicted_action == "high_flow_or_noninvasive_support":
+            grounded = support_rank is not None and support_rank >= 1
+        elif predicted_action == "invasive_vent_required":
+            grounded = support_rank is not None and support_rank >= 2
+
+    if grounded:
+        grounding_counts[metric_name]["num"] += 1
+
+
 def _finalize_single_task_grounding(grounding_counts: dict[str, dict[str, int]]) -> dict[str, float | None]:
     return {
         metric_name: round(counts["num"] / counts["den"], 4) if counts["den"] else None
         for metric_name, counts in grounding_counts.items()
+    }
+
+
+def _rate(num: int, den: int) -> float | None:
+    return round(num / den, 4) if den else None
+
+
+def _support_level_rank(level: str | None) -> int | None:
+    if level == "room_air_or_low_support":
+        return 0
+    if level == "high_flow_or_noninvasive_support":
+        return 1
+    if level == "invasive_vent_required":
+        return 2
+    return None
+
+
+def _update_toolbox_state_from_output(state: dict[str, Any], tool_name: str, output: dict[str, Any]) -> None:
+    if tool_name == "query_suspicion_of_infection":
+        state["infection_assessed"] = True
+        if output.get("has_suspected_infection"):
+            state["infection_positive"] = True
+    elif tool_name == "query_sofa":
+        state["sofa_assessed"] = True
+        max_sofa = output.get("max_sofa_24hours_so_far")
+        latest_sofa = output.get("latest_sofa_24hours")
+        sofa_value = max_sofa if max_sofa is not None else latest_sofa
+        if sofa_value is not None:
+            previous = state.get("max_sofa")
+            state["max_sofa"] = sofa_value if previous is None else max(previous, sofa_value)
+        if (state.get("max_sofa") or 0) >= 2:
+            state["sofa_alert"] = True
+    elif tool_name == "query_kdigo_stage":
+        state["kdigo_assessed"] = True
+        stage = output.get("max_aki_stage_smoothed_so_far")
+        if stage is None:
+            stage = output.get("latest_aki_stage_smoothed")
+        if stage is not None:
+            previous = state.get("max_kdigo")
+            state["max_kdigo"] = stage if previous is None else max(previous, stage)
+    elif tool_name == "query_ventilation_status":
+        state["vent_assessed"] = True
+        level = output.get("highest_support_level_so_far") or output.get("current_support_level")
+        rank = _support_level_rank(level)
+        if rank is not None:
+            previous = state.get("max_support_rank")
+            state["max_support_rank"] = rank if previous is None else max(previous, rank)
+
+
+def _tool_call_has_marginal_utility(
+    tool_name: str,
+    output: dict[str, Any],
+    prior_state: dict[str, Any],
+) -> bool:
+    if tool_name == "query_suspicion_of_infection":
+        return (not prior_state["infection_assessed"]) or (
+            not prior_state["infection_positive"] and bool(output.get("has_suspected_infection"))
+        )
+    if tool_name == "query_sofa":
+        latest_sofa = output.get("latest_sofa_24hours")
+        max_sofa = output.get("max_sofa_24hours_so_far")
+        sofa_value = max_sofa if max_sofa is not None else latest_sofa
+        return (not prior_state["sofa_assessed"]) or (
+            sofa_value is not None and (prior_state["max_sofa"] is None or sofa_value > prior_state["max_sofa"])
+        )
+    if tool_name == "query_kdigo_stage":
+        stage = output.get("max_aki_stage_smoothed_so_far")
+        if stage is None:
+            stage = output.get("latest_aki_stage_smoothed")
+        return (not prior_state["kdigo_assessed"]) or (
+            stage is not None and (prior_state["max_kdigo"] is None or stage > prior_state["max_kdigo"])
+        )
+    if tool_name == "query_ventilation_status":
+        level = output.get("highest_support_level_so_far") or output.get("current_support_level")
+        rank = _support_level_rank(level)
+        return (not prior_state["vent_assessed"]) or (
+            rank is not None
+            and (prior_state["max_support_rank"] is None or rank > prior_state["max_support_rank"])
+        )
+    return False
+
+
+def evaluate_sepsis_toolbox_efficiency(rollouts: list[TrajectoryRollout]) -> dict[str, Any]:
+    total_steps = 0
+    total_tool_calls = 0
+    steps_without_calls = 0
+    repeated_tool_calls = 0
+    infection_calls_total = 0
+    infection_calls_after_positive = 0
+    positive_actions_total = 0
+    positive_actions_without_sufficient_evidence = 0
+    necessary_infection_total = 0
+    necessary_infection_covered = 0
+    necessary_sofa_total = 0
+    necessary_sofa_covered = 0
+    marginal_utility_total = 0
+    marginal_utility_positive = 0
+    call_counts_by_tool = Counter()
+    useful_call_counts_by_tool = Counter()
+
+    for rollout in rollouts:
+        prior_state = _empty_toolbox_state()
+        called_tools_seen: set[str] = set()
+
+        for step in rollout.steps:
+            total_steps += 1
+            tool_calls = step.tool_calls or []
+            tool_outputs = step.tool_outputs or []
+            step_state_before = dict(prior_state)
+            if not tool_calls:
+                steps_without_calls += 1
+
+            current_step_outputs: dict[str, dict[str, Any]] = {}
+            for call_payload, output in zip(tool_calls, tool_outputs):
+                tool_name = call_payload["tool_name"]
+                pre_call_state = dict(prior_state)
+                current_step_outputs[tool_name] = output
+                total_tool_calls += 1
+                call_counts_by_tool[tool_name] += 1
+                if tool_name in called_tools_seen:
+                    repeated_tool_calls += 1
+                if tool_name == "query_suspicion_of_infection":
+                    infection_calls_total += 1
+                    if pre_call_state["infection_positive"]:
+                        infection_calls_after_positive += 1
+                is_useful = _tool_call_has_marginal_utility(tool_name, output, pre_call_state)
+                marginal_utility_total += 1
+                if is_useful:
+                    marginal_utility_positive += 1
+                    useful_call_counts_by_tool[tool_name] += 1
+                _update_toolbox_state_from_output(prior_state, tool_name, output)
+                called_tools_seen.add(tool_name)
+
+            predicted_action = step.predicted_action
+            if predicted_action in {"infection_suspect", "trigger_sepsis_alert"}:
+                positive_actions_total += 1
+                if predicted_action == "infection_suspect":
+                    sufficient = prior_state["infection_positive"]
+                else:
+                    sufficient = prior_state["infection_positive"] and prior_state["sofa_alert"]
+                if not sufficient:
+                    positive_actions_without_sufficient_evidence += 1
+
+                if (
+                    not step_state_before["infection_positive"]
+                    and "query_suspicion_of_infection" not in current_step_outputs
+                ):
+                    necessary_infection_total += 1
+                elif not step_state_before["infection_positive"]:
+                    necessary_infection_total += 1
+                    necessary_infection_covered += 1
+
+                if predicted_action == "trigger_sepsis_alert":
+                    if not step_state_before["sofa_alert"] and "query_sofa" not in current_step_outputs:
+                        necessary_sofa_total += 1
+                    elif not step_state_before["sofa_alert"]:
+                        necessary_sofa_total += 1
+                        necessary_sofa_covered += 1
+
+    return {
+        "avg_tool_calls_per_step": round(total_tool_calls / total_steps, 4) if total_steps else 0.0,
+        "steps_without_tool_calls_rate": _rate(steps_without_calls, total_steps),
+        "repeated_tool_call_rate": _rate(repeated_tool_calls, total_tool_calls),
+        "repeated_infection_call_after_positive_rate": _rate(
+            infection_calls_after_positive,
+            infection_calls_total,
+        ),
+        "positive_action_without_sufficient_evidence_rate": _rate(
+            positive_actions_without_sufficient_evidence,
+            positive_actions_total,
+        ),
+        "necessary_call_coverage": {
+            "infection": _rate(necessary_infection_covered, necessary_infection_total),
+            "sofa_for_alert": _rate(necessary_sofa_covered, necessary_sofa_total),
+        },
+        "marginal_utility_of_call_rate": _rate(marginal_utility_positive, marginal_utility_total),
+        "tool_call_counts": dict(call_counts_by_tool),
+        "tool_marginal_utility_rate": {
+            tool_name: _rate(useful_call_counts_by_tool[tool_name], call_counts_by_tool[tool_name])
+            for tool_name in sorted(call_counts_by_tool)
+        },
     }
 
 
@@ -556,6 +878,10 @@ def _format_single_task_transition_timing(
         return {
             "infection": transition_timing.get("infection_suspect"),
             "sepsis_alert": transition_timing.get("trigger_sepsis_alert"),
+        }
+    if task_name == "infection_only":
+        return {
+            "infection": transition_timing.get("infection_suspect"),
         }
     if task_name == "aki":
         return {
@@ -645,3 +971,98 @@ def _timing_metrics(gt_hours: list[int | None], pred_hours: list[int | None]) ->
 
 def rollout_to_dicts(rollouts: list[TrajectoryRollout]) -> list[dict[str, Any]]:
     return [asdict(rollout) for rollout in rollouts]
+
+
+def _latest_step_tool_output(
+    tool_outputs: list[dict[str, Any]],
+    key: str,
+) -> dict[str, Any] | None:
+    return next((item for item in reversed(tool_outputs) if key in item), None)
+
+
+def _compact_infection_history(output: dict[str, Any] | None) -> dict[str, Any] | None:
+    if output is None:
+        return None
+    evidence_preview = []
+    for item in (output.get("evidence") or [])[:2]:
+        evidence_preview.append(
+            {
+                "antibiotic": item.get("antibiotic"),
+                "antibiotic_time": item.get("antibiotic_time"),
+                "culture_time": item.get("culture_time"),
+                "specimen": item.get("specimen"),
+            }
+        )
+    return {
+        "infection": output.get("has_suspected_infection"),
+        "infection_first_visible_hour": output.get("first_visible_suspected_infection_hour"),
+        "infection_first_visible_time": output.get("first_visible_suspected_infection_time"),
+        "evidence": evidence_preview,
+    }
+
+
+def _compact_sofa_history(output: dict[str, Any] | None) -> dict[str, Any] | None:
+    if output is None:
+        return None
+    return {
+        "sofa_score": output.get("latest_sofa_24hours"),
+        "sofa_hr": output.get("latest_visible_hr"),
+        "max_sofa_score_so_far": output.get("max_sofa_24hours_so_far"),
+    }
+
+
+def _build_rolling_history_entry(
+    *,
+    trajectory: Trajectory,
+    checkpoint: Any,
+    step_index: int,
+    tool_outputs: list[dict[str, Any]],
+) -> dict[str, Any] | None:
+    task_name = trajectory.primary_task_name()
+    if task_name == "sepsis":
+        infection = _compact_infection_history(
+            _latest_step_tool_output(tool_outputs, "has_suspected_infection")
+        ) or {
+            "infection": None,
+            "infection_first_visible_hour": None,
+            "infection_first_visible_time": None,
+            "evidence": [],
+        }
+        sofa = _compact_sofa_history(
+            _latest_step_tool_output(tool_outputs, "latest_sofa_24hours")
+        ) or {
+            "sofa_score": None,
+            "sofa_hr": None,
+            "max_sofa_score_so_far": None,
+        }
+        return {
+            "task_name": task_name,
+            "step_index": step_index,
+            "t_hour": checkpoint.t_hour,
+            "sofa_score": sofa["sofa_score"],
+            "sofa_hr": sofa["sofa_hr"],
+            "max_sofa_score_so_far": sofa["max_sofa_score_so_far"],
+            "infection": infection["infection"],
+            "infection_first_visible_hour": infection["infection_first_visible_hour"],
+            "infection_first_visible_time": infection["infection_first_visible_time"],
+            "evidence": infection["evidence"],
+        }
+    if task_name == "infection_only":
+        infection = _compact_infection_history(
+            _latest_step_tool_output(tool_outputs, "has_suspected_infection")
+        ) or {
+            "infection": None,
+            "infection_first_visible_hour": None,
+            "infection_first_visible_time": None,
+            "evidence": [],
+        }
+        return {
+            "task_name": task_name,
+            "step_index": step_index,
+            "t_hour": checkpoint.t_hour,
+            "infection": infection["infection"],
+            "infection_first_visible_hour": infection["infection_first_visible_hour"],
+            "infection_first_visible_time": infection["infection_first_visible_time"],
+            "evidence": infection["evidence"],
+        }
+    return None

@@ -1,0 +1,32 @@
+infection_only_monitoring_guideline:
+  task:
+    name: "rolling_infection_only_monitoring"
+    objective: "At each checkpoint, decide whether suspected infection is already visible from the current hospital admission."
+    labels:
+      - "keep_monitoring"
+      - "infection_suspect"
+
+  rule:
+    summary: "Use only the antibiotic-culture timing rule for suspected infection."
+    keep_monitoring: "No qualifying antibiotic-culture pair is visible yet."
+    infection_suspect: "At least one qualifying antibiotic-culture pair is already visible."
+
+  clinical_definition:
+    antibiotic_time: "Define antibiotic_time as mimiciv_hosp.prescriptions.starttime, restricting to records where the prescribed medication is an antibiotic (e.g., vancomycin, piperacillin-tazobactam, cefepime, meropenem, levofloxacin)."    
+    culture_time: "Use COALESCE(mimiciv_hosp.microbiologyevents.charttime, CAST(chartdate AS TIMESTAMP)) as the culture time."
+    antibiotic_first: "If antibiotics are first, a culture must occur within the next 24 hours."
+    culture_first: "If the culture is first, antibiotics must occur within the next 72 hours."
+    suspicion_time: "Use the earlier event in the qualifying pair: culture time when culture is first, otherwise antibiotic time."
+
+  database_scope:
+    - "Use mimiciv_hosp.prescriptions and mimiciv_hosp.microbiologyevents."
+    - "Use only rows from the current admission."
+    - "Use only rows visible by the current checkpoint."
+    - "Pre-ICU hospital rows from the same admission may already be visible at t_hour=0."
+
+  interpretation:
+    - "Decide whether suspected infection is already present, not whether it will happen later."
+    - "A positive culture is not required."
+    - "Do not use organism identity, susceptibilities, or final culture status."
+    - "Do not add SOFA or any organ dysfunction rule."
+    - "Do not rely on mimiciv_derived tables in the raw baseline."

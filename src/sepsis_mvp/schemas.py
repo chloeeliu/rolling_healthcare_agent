@@ -11,6 +11,11 @@ SEPSIS_ACTIONS = (
     "trigger_sepsis_alert",
 )
 
+INFECTION_ONLY_ACTIONS = (
+    "keep_monitoring",
+    "infection_suspect",
+)
+
 AKI_ACTIONS = (
     "keep_monitoring",
     "suspect_aki",
@@ -31,11 +36,14 @@ RESP_SUPPORT_ACTIONS = (
 )
 
 ACTIONS = tuple(
-    dict.fromkeys(SEPSIS_ACTIONS + AKI_ACTIONS + AKI_NON_MONOTONIC_ACTIONS + RESP_SUPPORT_ACTIONS)
+    dict.fromkeys(
+        SEPSIS_ACTIONS + INFECTION_ONLY_ACTIONS + AKI_ACTIONS + AKI_NON_MONOTONIC_ACTIONS + RESP_SUPPORT_ACTIONS
+    )
 )
 
 TASK_NAMES = (
     "sepsis",
+    "infection_only",
     "aki",
     "respiratory_support",
 )
@@ -53,10 +61,18 @@ TOOL_BACKENDS = (
 )
 
 CODE_EXEC_TOOL_NAME = "run_python"
+SQL_EXEC_TOOL_NAME = "run_sql"
 
 DEFAULT_TOOL_NAMES = [
     "query_suspicion_of_infection",
     "query_sofa",
+]
+
+SEPSIS_TOOLBOX_TOOL_NAMES = [
+    "query_suspicion_of_infection",
+    "query_sofa",
+    "query_kdigo_stage",
+    "query_ventilation_status",
 ]
 
 MULTITASK_TOOL_NAMES = [
@@ -68,12 +84,14 @@ MULTITASK_TOOL_NAMES = [
 
 TASK_LABEL_SPACES: dict[str, list[str]] = {
     "sepsis": list(SEPSIS_ACTIONS),
+    "infection_only": list(INFECTION_ONLY_ACTIONS),
     "aki": list(AKI_ACTIONS),
     "respiratory_support": list(RESP_SUPPORT_ACTIONS),
 }
 
 TASK_TOOL_NAMES: dict[str, list[str]] = {
     "sepsis": ["query_suspicion_of_infection", "query_sofa"],
+    "infection_only": ["query_suspicion_of_infection"],
     "aki": ["query_kdigo_stage"],
     "respiratory_support": ["query_ventilation_status"],
 }
@@ -82,6 +100,9 @@ TASK_TRANSITION_FIELDS: dict[str, dict[str, str]] = {
     "sepsis": {
         "infection_suspect": "infection_start_hour",
         "trigger_sepsis_alert": "sepsis_start_hour",
+    },
+    "infection_only": {
+        "infection_suspect": "infection_start_hour",
     },
     "aki": {
         "suspect_aki": "aki_stage1_start_hour",
@@ -95,6 +116,7 @@ TASK_TRANSITION_FIELDS: dict[str, dict[str, str]] = {
 
 TASK_BASELINE_ACTION: dict[str, str] = {
     "sepsis": SEPSIS_ACTIONS[0],
+    "infection_only": INFECTION_ONLY_ACTIONS[0],
     "aki": AKI_ACTIONS[0],
     "respiratory_support": RESP_SUPPORT_ACTIONS[0],
 }
@@ -225,6 +247,8 @@ class AgentStepInput:
     task_mode: str | None = None
     tool_backend: str | None = None
     max_step_interactions: int | None = None
+    protocol: str | None = None
+    rolling_history: list[dict[str, Any]] | None = None
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
