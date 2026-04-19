@@ -60,6 +60,21 @@ def _load_jsonl_dicts(path: Path) -> list[dict]:
     return payloads
 
 
+def _write_canonical_trajectory_output(
+    trajectory_output: str | None,
+    rollouts: list[TrajectoryRollout],
+) -> None:
+    if not trajectory_output:
+        return
+    path = Path(trajectory_output)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    payload_lines = [
+        json.dumps(rollout.to_dict(), default=_json_default)
+        for rollout in rollouts
+    ]
+    path.write_text("".join(f"{line}\n" for line in payload_lines))
+
+
 def _load_existing_rollouts(
     trajectory_output: str | None,
     rollouts_output: str | None,
@@ -273,6 +288,7 @@ def run_command(args: argparse.Namespace) -> int:
 
     if args.rollouts_output:
         Path(args.rollouts_output).write_text(json.dumps(rollout_to_dicts(rollouts), indent=2, default=_json_default))
+    _write_canonical_trajectory_output(args.trajectory_output, rollouts)
     if args.evaluation_output:
         Path(args.evaluation_output).write_text(json.dumps(evaluation_summary, indent=2, default=_json_default))
     print(json.dumps(evaluation_summary, indent=2, default=_json_default))

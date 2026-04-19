@@ -311,7 +311,7 @@ def evaluate_rollouts(
 ) -> dict[str, Any]:
     if trajectories and trajectories[0].is_multitask():
         return evaluate_multitask_rollouts(trajectories, rollouts)
-    metrics = evaluate_single_task_rollouts(trajectories, rollouts)
+    metrics = evaluate_single_task_rollouts(trajectories, rollouts, protocol=protocol)
     if (
         protocol == "rolling_toolbox_with_history"
         and trajectories
@@ -321,7 +321,12 @@ def evaluate_rollouts(
     return metrics
 
 
-def evaluate_single_task_rollouts(trajectories: list[Trajectory], rollouts: list[TrajectoryRollout]) -> dict[str, Any]:
+def evaluate_single_task_rollouts(
+    trajectories: list[Trajectory],
+    rollouts: list[TrajectoryRollout],
+    *,
+    protocol: str | None = None,
+) -> dict[str, Any]:
     trajectory_by_id = {trajectory.trajectory_id: trajectory for trajectory in trajectories}
     if not trajectories:
         return {}
@@ -338,20 +343,36 @@ def evaluate_single_task_rollouts(trajectories: list[Trajectory], rollouts: list
     pred_hours_by_action = {action: [] for action in transition_fields}
     grounding_counts = _single_task_grounding_counters(task_name, label_space)
 
+    use_history_aware_grounding = protocol == "rolling_toolbox_with_history"
+
     for rollout in rollouts:
         trajectory = trajectory_by_id[rollout.trajectory_id]
+        prior_state = _empty_toolbox_state() if use_history_aware_grounding else None
         for step in rollout.steps:
             total_steps += 1
             if step.gt_action == step.predicted_action:
                 correct_steps += 1
             confusion[(step.gt_action, step.predicted_action)] += 1
-            _update_single_task_grounding(
-                task_name,
-                step.predicted_action,
-                step.tool_calls,
-                grounding_counts,
-                label_space,
-            )
+            if use_history_aware_grounding and prior_state is not None:
+                current_state = dict(prior_state)
+                for call_payload, output in zip(step.tool_calls or [], step.tool_outputs or []):
+                    _update_toolbox_state_from_output(current_state, call_payload["tool_name"], output)
+                _update_single_task_grounding_from_state(
+                    task_name,
+                    step.predicted_action,
+                    grounding_counts,
+                    current_state,
+                    label_space,
+                )
+                prior_state = current_state
+            else:
+                _update_single_task_grounding(
+                    task_name,
+                    step.predicted_action,
+                    step.tool_calls,
+                    grounding_counts,
+                    label_space,
+                )
 
         predicted_hours = (rollout.first_predicted_task_hours or {}).get(task_name, {})
         for action, transition_field in transition_fields.items():
@@ -589,6 +610,20 @@ def _single_task_grounding_counters(
     }
 
 
+def _empty_toolbox_state() -> dict[str, Any]:
+    return {
+        "infection_assessed": False,
+        "infection_positive": False,
+        "sofa_assessed": False,
+        "sofa_alert": False,
+        "max_sofa": None,
+        "kdigo_assessed": False,
+        "max_kdigo": None,
+        "vent_assessed": False,
+        "max_support_rank": None,
+    }
+
+
 def _update_single_task_grounding(
     task_name: str,
     predicted_action: str | None,
@@ -605,6 +640,46 @@ def _update_single_task_grounding(
         grounding_counts[metric_name]["den"] += 1
         if tools & required_tools:
             grounding_counts[metric_name]["num"] += 1
+
+
+def _update_single_task_grounding_from_state(
+    task_name: str,
+    predicted_action: str | None,
+    grounding_counts: dict[str, dict[str, int]],
+    current_state: dict[str, Any],
+    label_space: list[str] | None = None,
+) -> None:
+    if predicted_action is None:
+        return
+    spec = _single_task_grounding_spec(task_name, label_space)
+    if predicted_action not in spec:
+        return
+    metric_name, _required_tools = spec[predicted_action]
+    grounding_counts[metric_name]["den"] += 1
+
+    grounded = False
+    if task_name == "sepsis":
+        if predicted_action == "infection_suspect":
+            grounded = bool(current_state["infection_positive"])
+        elif predicted_action == "trigger_sepsis_alert":
+            grounded = bool(current_state["infection_positive"] and current_state["sofa_alert"])
+    elif task_name == "infection_only":
+        grounded = bool(current_state["infection_positive"])
+    elif task_name == "aki":
+        stage = current_state.get("max_kdigo")
+        if predicted_action == "suspect_aki":
+            grounded = stage is not None and stage >= 1
+        elif predicted_action == "trigger_aki_alert":
+            grounded = stage is not None and stage >= 2
+    elif task_name == "respiratory_support":
+        support_rank = current_state.get("max_support_rank")
+        if predicted_action == "high_flow_or_noninvasive_support":
+            grounded = support_rank is not None and support_rank >= 1
+        elif predicted_action == "invasive_vent_required":
+            grounded = support_rank is not None and support_rank >= 2
+
+    if grounded:
+        grounding_counts[metric_name]["num"] += 1
 
 
 def _finalize_single_task_grounding(grounding_counts: dict[str, dict[str, int]]) -> dict[str, float | None]:
@@ -712,17 +787,7 @@ def evaluate_sepsis_toolbox_efficiency(rollouts: list[TrajectoryRollout]) -> dic
     useful_call_counts_by_tool = Counter()
 
     for rollout in rollouts:
-        prior_state = {
-            "infection_assessed": False,
-            "infection_positive": False,
-            "sofa_assessed": False,
-            "sofa_alert": False,
-            "max_sofa": None,
-            "kdigo_assessed": False,
-            "max_kdigo": None,
-            "vent_assessed": False,
-            "max_support_rank": None,
-        }
+        prior_state = _empty_toolbox_state()
         called_tools_seen: set[str] = set()
 
         for step in rollout.steps:

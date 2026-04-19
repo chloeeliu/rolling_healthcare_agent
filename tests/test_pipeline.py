@@ -904,6 +904,8 @@ class PipelineTest(unittest.TestCase):
             first_predicted_alert_hour=4,
         )
         metrics = evaluate_rollouts([trajectory], [rollout], protocol="rolling_toolbox_with_history")
+        self.assertEqual(metrics["tool_grounding"]["infection_predictions_grounded_rate"], 0.0)
+        self.assertEqual(metrics["tool_grounding"]["alert_predictions_grounded_rate"], 1.0)
         toolbox = metrics["toolbox_efficiency"]
         self.assertEqual(toolbox["avg_tool_calls_per_step"], 1.0)
         self.assertEqual(toolbox["steps_without_tool_calls_rate"], 0.5)
@@ -913,6 +915,58 @@ class PipelineTest(unittest.TestCase):
         self.assertEqual(toolbox["marginal_utility_of_call_rate"], 1.0)
         self.assertEqual(toolbox["tool_call_counts"]["query_suspicion_of_infection"], 1)
         self.assertEqual(toolbox["tool_call_counts"]["query_sofa"], 1)
+
+    def test_run_command_rewrites_canonical_trajectory_output_from_rollouts(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            tmpdir = Path(tmpdir)
+            trajectory_output = tmpdir / "trajectories.jsonl"
+            trajectory_output.write_text(
+                json.dumps(
+                    {
+                        "trajectory_id": "stale",
+                        "stay_id": 999,
+                        "steps": [],
+                        "first_predicted_infection_hour": None,
+                        "first_predicted_alert_hour": None,
+                        "first_predicted_task_hours": None,
+                    }
+                )
+                + "\n"
+            )
+            rollouts_output = tmpdir / "rollouts.json"
+            evaluation_output = tmpdir / "evaluation.json"
+            args = argparse.Namespace(
+                concepts=str(SAMPLE),
+                db_path=None,
+                dataset=str(ROOT / "data" / "sample_trajectories.json"),
+                task_mode="single",
+                protocol="rolling_no_history",
+                tool_backend="official",
+                autoformalized_library=str(ROOT / "autoformalized_library"),
+                include_out_of_scope=False,
+                agent="heuristic",
+                model="Qwen/Qwen3.5-9B",
+                temperature=0.0,
+                top_p=0.95,
+                max_new_tokens=250,
+                repair_max_new_tokens=None,
+                sample_size=1,
+                resume=False,
+                sofa_alert_threshold=2,
+                rollouts_output=str(rollouts_output),
+                evaluation_output=str(evaluation_output),
+                events_output=None,
+                trajectory_output=str(trajectory_output),
+            )
+            exit_code = run_command(args)
+            self.assertEqual(exit_code, 0)
+            trajectory_lines = [
+                json.loads(line)
+                for line in trajectory_output.read_text().splitlines()
+                if line.strip()
+            ]
+            self.assertEqual(len(trajectory_lines), 1)
+            self.assertEqual(trajectory_lines[0]["trajectory_id"], "mimiciv_stay_300001")
 
     def test_dataset_can_be_saved(self):
         concepts = load_concept_tables(SAMPLE)
