@@ -133,6 +133,92 @@ class PipelineTest(unittest.TestCase):
         self.assertIn("microbiology", system_prompt.lower())
         self.assertIn("visible_until", system_prompt)
 
+    def test_single_task_prompt_includes_rolling_history_when_protocol_enabled(self):
+        step_input = {
+            "trajectory_id": "mimiciv_stay_1",
+            "stay_id": 30,
+            "step_index": 1,
+            "t_hour": 4,
+            "task_names": ["sepsis"],
+            "label_spaces": {
+                "sepsis": ["keep_monitoring", "infection_suspect", "trigger_sepsis_alert"],
+            },
+            "task_mode": "single",
+            "tool_backend": "official",
+            "protocol": "rolling_with_history",
+            "rolling_history": [
+                {
+                    "task_name": "sepsis",
+                    "step_index": 0,
+                    "t_hour": 0,
+                    "sofa_score": 0,
+                    "infection": False,
+                    "evidence": [],
+                }
+            ],
+        }
+        messages = _build_messages(
+            step_input,
+            history=[],
+            available_tools=["query_suspicion_of_infection", "query_sofa"],
+        )
+        system_prompt = messages[0]["content"]
+        user_payload = json.loads(messages[1]["content"])
+        self.assertIn("Rolling-with-history protocol", system_prompt)
+        self.assertEqual(user_payload["protocol"], "rolling_with_history")
+        self.assertEqual(len(user_payload["rolling_history"]), 1)
+        self.assertEqual(user_payload["rolling_history"][0]["step_index"], 0)
+        self.assertEqual(user_payload["rolling_history"][0]["sofa_score"], 0)
+        self.assertFalse(user_payload["rolling_history"][0]["infection"])
+
+    def test_toolbox_prompt_exposes_shared_sepsis_toolbox_with_history(self):
+        step_input = {
+            "trajectory_id": "mimiciv_stay_1",
+            "stay_id": 30,
+            "step_index": 2,
+            "t_hour": 8,
+            "task_names": ["sepsis"],
+            "label_spaces": {
+                "sepsis": ["keep_monitoring", "infection_suspect", "trigger_sepsis_alert"],
+            },
+            "task_mode": "single",
+            "tool_backend": "official",
+            "protocol": "rolling_toolbox_with_history",
+            "rolling_history": [
+                {"task_name": "sepsis", "step_index": 0, "t_hour": 0, "sofa_score": 0, "infection": False, "evidence": []},
+                {"task_name": "sepsis", "step_index": 1, "t_hour": 4, "sofa_score": 2, "infection": True, "evidence": [{"antibiotic": "cefepime"}]},
+            ],
+        }
+        messages = _build_messages(
+            step_input,
+            history=[],
+            available_tools=[
+                "query_suspicion_of_infection",
+                "query_sofa",
+                "query_kdigo_stage",
+                "query_ventilation_status",
+            ],
+        )
+        system_prompt = messages[0]["content"]
+        user_payload = json.loads(messages[1]["content"])
+        self.assertIn("Protocol: rolling_toolbox_with_history", system_prompt)
+        self.assertIn("query_suspicion_of_infection", system_prompt)
+        self.assertIn("query_sofa", system_prompt)
+        self.assertIn("query_kdigo_stage", system_prompt)
+        self.assertIn("query_ventilation_status", system_prompt)
+        self.assertIn("real longitudinal monitoring task", system_prompt.lower())
+        self.assertEqual(user_payload["protocol"], "rolling_toolbox_with_history")
+        self.assertEqual(len(user_payload["rolling_history"]), 2)
+        self.assertEqual(
+            user_payload["available_tools"],
+            [
+                "query_suspicion_of_infection",
+                "query_sofa",
+                "query_kdigo_stage",
+                "query_ventilation_status",
+            ],
+        )
+
     def test_infection_only_zeroshot_prompt_uses_overlap_windows_without_sofa_label(self):
         step_input = {
             "trajectory_id": "mimiciv_stay_1",
@@ -434,6 +520,51 @@ class PipelineTest(unittest.TestCase):
         second = agent.next_response(step_input, history=history, available_tools=[])
         self.assertEqual(second.action, "infection_suspect")
 
+    def test_qwen_agent_toolbox_protocol_allows_direct_final_action_without_forcing_tools(self):
+        class FakeClient:
+            def __init__(self):
+                self.max_new_tokens = 250
+
+            def generate(self, messages):
+                return '{"action":"infection_suspect"}'
+
+        trace_events = []
+        agent = object.__new__(QwenChatAgent)
+        agent.model = "fake"
+        agent.temperature = 0.0
+        agent.top_p = 0.95
+        agent.max_new_tokens = 250
+        agent.repair_max_new_tokens = 120
+        agent.trace_callback = trace_events.append
+        agent.client = FakeClient()
+
+        step_input = {
+            "trajectory_id": "mimiciv_stay_1",
+            "stay_id": 30,
+            "step_index": 1,
+            "t_hour": 4,
+            "task_names": ["sepsis"],
+            "label_spaces": {
+                "sepsis": ["keep_monitoring", "infection_suspect", "trigger_sepsis_alert"],
+            },
+            "task_mode": "single",
+            "tool_backend": "official",
+            "protocol": "rolling_toolbox_with_history",
+            "rolling_history": [],
+        }
+        response = agent.next_response(
+            step_input,
+            history=[],
+            available_tools=[
+                "query_suspicion_of_infection",
+                "query_sofa",
+                "query_kdigo_stage",
+                "query_ventilation_status",
+            ],
+        )
+        self.assertEqual(response.action, "infection_suspect")
+        self.assertFalse(any(event["event_type"] == "model_output_forced_tool" for event in trace_events))
+
     def test_zeroshot_runtime_blocks_direct_source_access_in_sql(self):
         runtime = object.__new__(ZeroShotRawDuckDBRuntime)
         with self.assertRaisesRegex(ValueError, "source\\.\\* is not allowed"):
@@ -645,6 +776,59 @@ class PipelineTest(unittest.TestCase):
         self.assertEqual(runtime.closed, ["30:0"])
         self.assertEqual(rollout.steps[0].tool_calls[0]["tool_name"], SQL_EXEC_TOOL_NAME)
 
+    def test_environment_exposes_shared_sepsis_toolbox_under_toolbox_protocol(self):
+        class CapturingAgent:
+            def __init__(self):
+                self.step_inputs = []
+
+            def next_response(self, step_input, history, available_tools):
+                self.step_inputs.append(step_input)
+                return ActionDecision(action="keep_monitoring")
+
+        class StubRuntime:
+            def execute(self, tool_name, arguments):
+                raise AssertionError("No tool execution expected in this test")
+
+        trajectory = Trajectory(
+            trajectory_id="mimiciv_stay_1",
+            stay_id=30,
+            subject_id=10,
+            hadm_id=20,
+            anchor="icu_intime",
+            step_hours=4,
+            horizon_hours=4,
+            transitions={"infection_start_hour": 4, "sepsis_start_hour": 8},
+            checkpoints=[
+                Checkpoint(t_hour=0, state_label="keep_monitoring"),
+                Checkpoint(t_hour=4, state_label="infection_suspect"),
+            ],
+            task_name="sepsis",
+            task_names=["sepsis"],
+            tool_names=["query_suspicion_of_infection", "query_sofa"],
+            label_spaces={"sepsis": ["keep_monitoring", "infection_suspect", "trigger_sepsis_alert"]},
+        )
+        agent = CapturingAgent()
+        environment = BenchmarkEnvironment(
+            [trajectory],
+            StubRuntime(),
+            task_mode="single",
+            protocol="rolling_toolbox_with_history",
+        )
+        environment.run_all(agent)
+        self.assertEqual(len(agent.step_inputs), 2)
+        self.assertEqual(
+            agent.step_inputs[0]["available_tools"],
+            [
+                "query_suspicion_of_infection",
+                "query_sofa",
+                "query_kdigo_stage",
+                "query_ventilation_status",
+            ],
+        )
+        self.assertEqual(agent.step_inputs[0]["protocol"], "rolling_toolbox_with_history")
+        self.assertEqual(agent.step_inputs[0]["max_step_interactions"], 6)
+        self.assertEqual(agent.step_inputs[1]["rolling_history"][0]["step_index"], 0)
+
     def test_dataset_can_be_saved(self):
         concepts = load_concept_tables(SAMPLE)
         trajectories = build_dataset(concepts)
@@ -662,6 +846,7 @@ class PipelineTest(unittest.TestCase):
                 db_path=None,
                 dataset=str(ROOT / "data" / "sample_trajectories.json"),
                 task_mode="single",
+                protocol="rolling_no_history",
                 tool_backend="official",
                 autoformalized_library=str(ROOT / "autoformalized_library"),
                 include_out_of_scope=False,
@@ -682,6 +867,7 @@ class PipelineTest(unittest.TestCase):
             self.assertEqual(exit_code, 0)
             payload = json.loads(evaluation_output.read_text())
             self.assertEqual(payload["task_mode"], "single")
+            self.assertEqual(payload["protocol"], "rolling_no_history")
             self.assertEqual(payload["tool_backend"], "official")
             self.assertEqual(payload["agent"], "heuristic")
             self.assertIn("metrics", payload)
@@ -711,6 +897,7 @@ class PipelineTest(unittest.TestCase):
                 db_path=None,
                 dataset=str(dataset_path),
                 task_mode="single",
+                protocol="rolling_no_history",
                 tool_backend="official",
                 autoformalized_library=str(ROOT / "autoformalized_library"),
                 include_out_of_scope=False,
@@ -744,6 +931,7 @@ class PipelineTest(unittest.TestCase):
 
             payload = json.loads(evaluation_output.read_text())
             self.assertTrue(payload["resume"])
+            self.assertEqual(payload["protocol"], "rolling_no_history")
             self.assertEqual(payload["existing_completed_trajectories"], 1)
             self.assertEqual(payload["newly_processed_trajectories"], len(trajectories) - 1)
             self.assertEqual(payload["num_trajectories"], len(trajectories))
@@ -996,6 +1184,167 @@ mimiciv_stay_1,infection_only,10,20,30,2150-01-01T00:00:00,2150-01-02T00:00:00,2
         self.assertEqual(metrics["task_name"], "infection_only")
         self.assertIn("infection", metrics["transition_timing"])
         self.assertIn("infection_predictions_grounded_rate", metrics["tool_grounding"])
+
+    def test_environment_builds_rolling_with_history_for_sepsis(self):
+        class StubRuntime:
+            def execute(self, tool_name, arguments):
+                t = arguments["t_hour"]
+                if tool_name == "query_suspicion_of_infection":
+                    return {
+                        "stay_id": 30,
+                        "t_hour": t,
+                        "has_suspected_infection": t >= 4,
+                        "first_visible_suspected_infection_hour": 4 if t >= 4 else None,
+                        "first_visible_suspected_infection_time": "2150-01-01T04:00:00" if t >= 4 else None,
+                        "evidence": [
+                            {
+                                "antibiotic": "cefepime",
+                                "antibiotic_time": "2150-01-01T04:00:00",
+                                "culture_time": "2150-01-01T05:00:00",
+                                "specimen": "blood",
+                            }
+                        ] if t >= 4 else [],
+                    }
+                if tool_name == "query_sofa":
+                    return {
+                        "stay_id": 30,
+                        "t_hour": t,
+                        "latest_visible_hr": t,
+                        "latest_sofa_24hours": 2 if t >= 8 else 1,
+                        "max_sofa_24hours_so_far": 2 if t >= 8 else 1,
+                    }
+                raise ValueError(tool_name)
+
+        class RecordingAgent:
+            def __init__(self):
+                self.snapshots = []
+                self.delegate = HeuristicAgent()
+
+            def next_response(self, step_input, history, available_tools):
+                if not history:
+                    self.snapshots.append(step_input.get("rolling_history") or [])
+                return self.delegate.next_response(step_input, history, available_tools)
+
+        trajectory = Trajectory(
+            trajectory_id="mimiciv_stay_1",
+            stay_id=30,
+            subject_id=10,
+            hadm_id=20,
+            anchor="icu_intime",
+            step_hours=4,
+            horizon_hours=8,
+            transitions={"infection_start_hour": 4, "sepsis_start_hour": 8},
+            checkpoints=[
+                Checkpoint(t_hour=0, state_label="keep_monitoring"),
+                Checkpoint(t_hour=4, state_label="infection_suspect"),
+                Checkpoint(t_hour=8, state_label="trigger_sepsis_alert"),
+            ],
+            task_name="sepsis",
+            task_names=["sepsis"],
+            tool_names=["query_suspicion_of_infection", "query_sofa"],
+            label_spaces={"sepsis": ["keep_monitoring", "infection_suspect", "trigger_sepsis_alert"]},
+        )
+        agent = RecordingAgent()
+        environment = BenchmarkEnvironment(
+            [trajectory],
+            StubRuntime(),
+            task_mode="single",
+            protocol="rolling_with_history",
+        )
+        rollout = environment.run_all(agent)[0]
+        self.assertEqual(
+            [step.predicted_action for step in rollout.steps],
+            ["keep_monitoring", "infection_suspect", "trigger_sepsis_alert"],
+        )
+        self.assertEqual([len(snapshot) for snapshot in agent.snapshots], [0, 1, 2])
+        self.assertEqual(agent.snapshots[1][0]["task_name"], "sepsis")
+        self.assertFalse(agent.snapshots[1][0]["infection"])
+        self.assertEqual(agent.snapshots[2][1]["infection"], True)
+        self.assertEqual(agent.snapshots[2][1]["sofa_score"], 1)
+        self.assertEqual(
+            agent.snapshots[2],
+            [
+                {
+                    "task_name": "sepsis",
+                    "step_index": 0,
+                    "t_hour": 0,
+                    "sofa_score": None,
+                    "sofa_hr": None,
+                    "max_sofa_score_so_far": None,
+                    "infection": False,
+                    "infection_first_visible_hour": None,
+                    "infection_first_visible_time": None,
+                    "evidence": [],
+                },
+                {
+                    "task_name": "sepsis",
+                    "step_index": 1,
+                    "t_hour": 4,
+                    "sofa_score": 1,
+                    "sofa_hr": 4,
+                    "max_sofa_score_so_far": 1,
+                    "infection": True,
+                    "infection_first_visible_hour": 4,
+                    "infection_first_visible_time": "2150-01-01T04:00:00",
+                    "evidence": [
+                        {
+                            "antibiotic": "cefepime",
+                            "antibiotic_time": "2150-01-01T04:00:00",
+                            "culture_time": "2150-01-01T05:00:00",
+                            "specimen": "blood",
+                        }
+                    ],
+                },
+            ],
+        )
+
+    def test_environment_keeps_rolling_history_empty_for_no_history_protocol(self):
+        class StubRuntime:
+            def execute(self, tool_name, arguments):
+                t = arguments["t_hour"]
+                if tool_name == "query_suspicion_of_infection":
+                    return {"stay_id": 30, "t_hour": t, "has_suspected_infection": False, "evidence": []}
+                if tool_name == "query_sofa":
+                    return {"stay_id": 30, "t_hour": t, "latest_sofa_24hours": 0}
+                raise ValueError(tool_name)
+
+        class RecordingAgent:
+            def __init__(self):
+                self.snapshots = []
+                self.delegate = HeuristicAgent()
+
+            def next_response(self, step_input, history, available_tools):
+                if not history:
+                    self.snapshots.append(step_input.get("rolling_history") or [])
+                return self.delegate.next_response(step_input, history, available_tools)
+
+        trajectory = Trajectory(
+            trajectory_id="mimiciv_stay_1",
+            stay_id=30,
+            subject_id=10,
+            hadm_id=20,
+            anchor="icu_intime",
+            step_hours=4,
+            horizon_hours=4,
+            transitions={"infection_start_hour": None, "sepsis_start_hour": None},
+            checkpoints=[
+                Checkpoint(t_hour=0, state_label="keep_monitoring"),
+                Checkpoint(t_hour=4, state_label="keep_monitoring"),
+            ],
+            task_name="sepsis",
+            task_names=["sepsis"],
+            tool_names=["query_suspicion_of_infection", "query_sofa"],
+            label_spaces={"sepsis": ["keep_monitoring", "infection_suspect", "trigger_sepsis_alert"]},
+        )
+        agent = RecordingAgent()
+        environment = BenchmarkEnvironment(
+            [trajectory],
+            StubRuntime(),
+            task_mode="single",
+            protocol="rolling_no_history",
+        )
+        environment.run_all(agent)
+        self.assertEqual(agent.snapshots, [[], []])
 
     def test_single_task_non_monotonic_aki_heuristic_run(self):
         class StubRuntime:

@@ -189,6 +189,7 @@ def run_command(args: argparse.Namespace) -> int:
             event_callback=events_sink.write,
             tool_backend=args.tool_backend,
             task_mode=args.task_mode,
+            protocol=args.protocol,
         )
         if args.agent == "heuristic":
             agent = HeuristicAgent(sofa_alert_threshold=args.sofa_alert_threshold)
@@ -258,6 +259,7 @@ def run_command(args: argparse.Namespace) -> int:
     evaluation = evaluate_rollouts(all_target_trajectories, rollouts)
     evaluation_summary = {
         "task_mode": args.task_mode,
+        "protocol": args.protocol,
         "tool_backend": args.tool_backend,
         "dataset": args.dataset,
         "num_trajectories": total_target,
@@ -313,6 +315,15 @@ def build_parser() -> argparse.ArgumentParser:
         choices=["official", "autoformalized", "zeroshot_raw"],
         default="official",
         help="Choose whether visible tool outputs come from official derived concepts or generated functions.",
+    )
+    run_parser.add_argument(
+        "--protocol",
+        choices=["rolling_no_history", "rolling_with_history", "rolling_toolbox_with_history"],
+        default="rolling_no_history",
+        help=(
+            "Choose whether each checkpoint sees only current-step tool outputs, compact summaries from prior checkpoints, "
+            "or the sepsis toolbox-with-history controller."
+        ),
     )
     run_parser.add_argument(
         "--autoformalized-library",

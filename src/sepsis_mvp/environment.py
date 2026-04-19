@@ -9,6 +9,7 @@ from .schemas import (
     ActionDecision,
     AgentStepInput,
     CODE_EXEC_TOOL_NAME,
+    SEPSIS_TOOLBOX_TOOL_NAMES,
     SQL_EXEC_TOOL_NAME,
     TASK_BASELINE_ACTION,
     TASK_LABEL_SPACES,
@@ -23,6 +24,8 @@ from .tools import ToolRuntime
 
 
 class BenchmarkEnvironment:
+    SUPPORTED_PROTOCOLS = {"rolling_no_history", "rolling_with_history", "rolling_toolbox_with_history"}
+
     def __init__(
         self,
         trajectories: list[Trajectory],
@@ -32,6 +35,7 @@ class BenchmarkEnvironment:
         event_callback: Any | None = None,
         tool_backend: str = "official",
         task_mode: str = "auto",
+        protocol: str = "rolling_no_history",
     ) -> None:
         self.trajectories = trajectories
         self.tool_runtime = tool_runtime
@@ -39,6 +43,11 @@ class BenchmarkEnvironment:
         self.event_callback = event_callback
         self.tool_backend = tool_backend
         self.task_mode = task_mode
+        if protocol not in self.SUPPORTED_PROTOCOLS:
+            raise ValueError(
+                f"Unsupported protocol '{protocol}'. Supported protocols: {sorted(self.SUPPORTED_PROTOCOLS)}"
+            )
+        self.protocol = protocol
 
     def _emit(self, event: dict[str, Any]) -> None:
         if self.event_callback is not None:
@@ -63,10 +72,17 @@ class BenchmarkEnvironment:
             }
         )
 
-        available_tools = trajectory.resolved_tool_names()
+        available_tools = self._available_tools_for_protocol(trajectory)
+        rolling_history: list[dict[str, Any]] = []
 
         for step_index, checkpoint in enumerate(trajectory.checkpoints):
             instruction = self._instruction_for_trajectory(trajectory)
+            step_rolling_history = (
+                list(rolling_history)
+                if self.protocol in {"rolling_with_history", "rolling_toolbox_with_history"}
+                else []
+            )
+            step_max_interactions = self._max_step_interactions_for_protocol(available_tools)
             step_input = AgentStepInput(
                 trajectory_id=trajectory.trajectory_id,
                 stay_id=trajectory.stay_id,
@@ -79,7 +95,9 @@ class BenchmarkEnvironment:
                 label_spaces=trajectory.label_spaces,
                 task_mode=task_mode,
                 tool_backend=self.tool_backend,
-                max_step_interactions=self.max_tool_calls_per_step,
+                max_step_interactions=step_max_interactions,
+                protocol=self.protocol,
+                rolling_history=step_rolling_history,
             )
             history: list[dict[str, Any]] = []
             tool_calls: list[dict[str, Any]] = []
@@ -103,11 +121,14 @@ class BenchmarkEnvironment:
                     "t_hour": checkpoint.t_hour,
                     "gt_action": checkpoint.state_label,
                     "gt_task_actions": checkpoint.task_labels,
+                    "protocol": self.protocol,
+                    "rolling_history_length": len(step_rolling_history),
+                    "available_tools": available_tools,
                 }
             )
 
             try:
-                for _ in range(self.max_tool_calls_per_step + 1):
+                for _ in range(step_max_interactions + 1):
                     response = agent.next_response(
                         step_input=step_input.to_dict(),
                         history=history,
@@ -199,6 +220,14 @@ class BenchmarkEnvironment:
                     tool_outputs=tool_outputs,
                 )
             )
+            history_entry = _build_rolling_history_entry(
+                trajectory=trajectory,
+                checkpoint=checkpoint,
+                step_index=step_index,
+                tool_outputs=tool_outputs,
+            )
+            if history_entry is not None and self.protocol in {"rolling_with_history", "rolling_toolbox_with_history"}:
+                rolling_history.append(history_entry)
 
         rollout = TrajectoryRollout(
             trajectory_id=trajectory.trajectory_id,
@@ -215,6 +244,7 @@ class BenchmarkEnvironment:
                 "stay_id": trajectory.stay_id,
                 "task_mode": task_mode,
                 "tool_backend": self.tool_backend,
+                "protocol": self.protocol,
                 "first_predicted_infection_hour": first_predicted_infection_hour,
                 "first_predicted_alert_hour": first_predicted_alert_hour,
                 "first_predicted_task_hours": rollout.first_predicted_task_hours or None,
@@ -234,8 +264,22 @@ class BenchmarkEnvironment:
             raise ValueError(
                 f"Dataset/task-mode mismatch: trajectory {trajectory.trajectory_id} is {inferred}, "
                 f"but runner requested {self.task_mode}."
-            )
+        )
         return self.task_mode
+
+    def _available_tools_for_protocol(self, trajectory: Trajectory) -> list[str]:
+        if self.protocol == "rolling_toolbox_with_history":
+            if trajectory.is_multitask() or trajectory.primary_task_name() != "sepsis":
+                raise ValueError(
+                    "Protocol 'rolling_toolbox_with_history' currently supports only the single-task sepsis dataset."
+                )
+            return list(SEPSIS_TOOLBOX_TOOL_NAMES)
+        return trajectory.resolved_tool_names()
+
+    def _max_step_interactions_for_protocol(self, available_tools: list[str]) -> int:
+        if self.protocol == "rolling_toolbox_with_history":
+            return max(self.max_tool_calls_per_step, len(available_tools) + 2)
+        return self.max_tool_calls_per_step
 
     def _instruction_for_trajectory(self, trajectory: Trajectory) -> str:
         if trajectory.is_multitask():
@@ -659,3 +703,98 @@ def _timing_metrics(gt_hours: list[int | None], pred_hours: list[int | None]) ->
 
 def rollout_to_dicts(rollouts: list[TrajectoryRollout]) -> list[dict[str, Any]]:
     return [asdict(rollout) for rollout in rollouts]
+
+
+def _latest_step_tool_output(
+    tool_outputs: list[dict[str, Any]],
+    key: str,
+) -> dict[str, Any] | None:
+    return next((item for item in reversed(tool_outputs) if key in item), None)
+
+
+def _compact_infection_history(output: dict[str, Any] | None) -> dict[str, Any] | None:
+    if output is None:
+        return None
+    evidence_preview = []
+    for item in (output.get("evidence") or [])[:2]:
+        evidence_preview.append(
+            {
+                "antibiotic": item.get("antibiotic"),
+                "antibiotic_time": item.get("antibiotic_time"),
+                "culture_time": item.get("culture_time"),
+                "specimen": item.get("specimen"),
+            }
+        )
+    return {
+        "infection": output.get("has_suspected_infection"),
+        "infection_first_visible_hour": output.get("first_visible_suspected_infection_hour"),
+        "infection_first_visible_time": output.get("first_visible_suspected_infection_time"),
+        "evidence": evidence_preview,
+    }
+
+
+def _compact_sofa_history(output: dict[str, Any] | None) -> dict[str, Any] | None:
+    if output is None:
+        return None
+    return {
+        "sofa_score": output.get("latest_sofa_24hours"),
+        "sofa_hr": output.get("latest_visible_hr"),
+        "max_sofa_score_so_far": output.get("max_sofa_24hours_so_far"),
+    }
+
+
+def _build_rolling_history_entry(
+    *,
+    trajectory: Trajectory,
+    checkpoint: Any,
+    step_index: int,
+    tool_outputs: list[dict[str, Any]],
+) -> dict[str, Any] | None:
+    task_name = trajectory.primary_task_name()
+    if task_name == "sepsis":
+        infection = _compact_infection_history(
+            _latest_step_tool_output(tool_outputs, "has_suspected_infection")
+        ) or {
+            "infection": None,
+            "infection_first_visible_hour": None,
+            "infection_first_visible_time": None,
+            "evidence": [],
+        }
+        sofa = _compact_sofa_history(
+            _latest_step_tool_output(tool_outputs, "latest_sofa_24hours")
+        ) or {
+            "sofa_score": None,
+            "sofa_hr": None,
+            "max_sofa_score_so_far": None,
+        }
+        return {
+            "task_name": task_name,
+            "step_index": step_index,
+            "t_hour": checkpoint.t_hour,
+            "sofa_score": sofa["sofa_score"],
+            "sofa_hr": sofa["sofa_hr"],
+            "max_sofa_score_so_far": sofa["max_sofa_score_so_far"],
+            "infection": infection["infection"],
+            "infection_first_visible_hour": infection["infection_first_visible_hour"],
+            "infection_first_visible_time": infection["infection_first_visible_time"],
+            "evidence": infection["evidence"],
+        }
+    if task_name == "infection_only":
+        infection = _compact_infection_history(
+            _latest_step_tool_output(tool_outputs, "has_suspected_infection")
+        ) or {
+            "infection": None,
+            "infection_first_visible_hour": None,
+            "infection_first_visible_time": None,
+            "evidence": [],
+        }
+        return {
+            "task_name": task_name,
+            "step_index": step_index,
+            "t_hour": checkpoint.t_hour,
+            "infection": infection["infection"],
+            "infection_first_visible_hour": infection["infection_first_visible_hour"],
+            "infection_first_visible_time": infection["infection_first_visible_time"],
+            "evidence": infection["evidence"],
+        }
+    return None

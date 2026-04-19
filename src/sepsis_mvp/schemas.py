@@ -68,6 +68,13 @@ DEFAULT_TOOL_NAMES = [
     "query_sofa",
 ]
 
+SEPSIS_TOOLBOX_TOOL_NAMES = [
+    "query_suspicion_of_infection",
+    "query_sofa",
+    "query_kdigo_stage",
+    "query_ventilation_status",
+]
+
 MULTITASK_TOOL_NAMES = [
     "query_suspicion_of_infection",
     "query_sofa",
@@ -240,6 +247,8 @@ class AgentStepInput:
     task_mode: str | None = None
     tool_backend: str | None = None
     max_step_interactions: int | None = None
+    protocol: str | None = None
+    rolling_history: list[dict[str, Any]] | None = None
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
