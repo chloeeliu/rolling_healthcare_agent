@@ -256,7 +256,7 @@ def run_command(args: argparse.Namespace) -> int:
             f"{len(missing)} trajectories. First missing IDs: {missing[:5]}"
         )
 
-    evaluation = evaluate_rollouts(all_target_trajectories, rollouts)
+    evaluation = evaluate_rollouts(all_target_trajectories, rollouts, protocol=args.protocol)
     evaluation_summary = {
         "task_mode": args.task_mode,
         "protocol": args.protocol,

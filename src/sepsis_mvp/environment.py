@@ -303,10 +303,22 @@ def _f1(tp: int, fp: int, fn: int) -> float:
     return 2 * precision * recall / (precision + recall)
 
 
-def evaluate_rollouts(trajectories: list[Trajectory], rollouts: list[TrajectoryRollout]) -> dict[str, Any]:
+def evaluate_rollouts(
+    trajectories: list[Trajectory],
+    rollouts: list[TrajectoryRollout],
+    *,
+    protocol: str | None = None,
+) -> dict[str, Any]:
     if trajectories and trajectories[0].is_multitask():
         return evaluate_multitask_rollouts(trajectories, rollouts)
-    return evaluate_single_task_rollouts(trajectories, rollouts)
+    metrics = evaluate_single_task_rollouts(trajectories, rollouts)
+    if (
+        protocol == "rolling_toolbox_with_history"
+        and trajectories
+        and trajectories[0].primary_task_name() == "sepsis"
+    ):
+        metrics["toolbox_efficiency"] = evaluate_sepsis_toolbox_efficiency(rollouts)
+    return metrics
 
 
 def evaluate_single_task_rollouts(trajectories: list[Trajectory], rollouts: list[TrajectoryRollout]) -> dict[str, Any]:
@@ -599,6 +611,197 @@ def _finalize_single_task_grounding(grounding_counts: dict[str, dict[str, int]])
     return {
         metric_name: round(counts["num"] / counts["den"], 4) if counts["den"] else None
         for metric_name, counts in grounding_counts.items()
+    }
+
+
+def _rate(num: int, den: int) -> float | None:
+    return round(num / den, 4) if den else None
+
+
+def _support_level_rank(level: str | None) -> int | None:
+    if level == "room_air_or_low_support":
+        return 0
+    if level == "high_flow_or_noninvasive_support":
+        return 1
+    if level == "invasive_vent_required":
+        return 2
+    return None
+
+
+def _update_toolbox_state_from_output(state: dict[str, Any], tool_name: str, output: dict[str, Any]) -> None:
+    if tool_name == "query_suspicion_of_infection":
+        state["infection_assessed"] = True
+        if output.get("has_suspected_infection"):
+            state["infection_positive"] = True
+    elif tool_name == "query_sofa":
+        state["sofa_assessed"] = True
+        max_sofa = output.get("max_sofa_24hours_so_far")
+        latest_sofa = output.get("latest_sofa_24hours")
+        sofa_value = max_sofa if max_sofa is not None else latest_sofa
+        if sofa_value is not None:
+            previous = state.get("max_sofa")
+            state["max_sofa"] = sofa_value if previous is None else max(previous, sofa_value)
+        if (state.get("max_sofa") or 0) >= 2:
+            state["sofa_alert"] = True
+    elif tool_name == "query_kdigo_stage":
+        state["kdigo_assessed"] = True
+        stage = output.get("max_aki_stage_smoothed_so_far")
+        if stage is None:
+            stage = output.get("latest_aki_stage_smoothed")
+        if stage is not None:
+            previous = state.get("max_kdigo")
+            state["max_kdigo"] = stage if previous is None else max(previous, stage)
+    elif tool_name == "query_ventilation_status":
+        state["vent_assessed"] = True
+        level = output.get("highest_support_level_so_far") or output.get("current_support_level")
+        rank = _support_level_rank(level)
+        if rank is not None:
+            previous = state.get("max_support_rank")
+            state["max_support_rank"] = rank if previous is None else max(previous, rank)
+
+
+def _tool_call_has_marginal_utility(
+    tool_name: str,
+    output: dict[str, Any],
+    prior_state: dict[str, Any],
+) -> bool:
+    if tool_name == "query_suspicion_of_infection":
+        return (not prior_state["infection_assessed"]) or (
+            not prior_state["infection_positive"] and bool(output.get("has_suspected_infection"))
+        )
+    if tool_name == "query_sofa":
+        latest_sofa = output.get("latest_sofa_24hours")
+        max_sofa = output.get("max_sofa_24hours_so_far")
+        sofa_value = max_sofa if max_sofa is not None else latest_sofa
+        return (not prior_state["sofa_assessed"]) or (
+            sofa_value is not None and (prior_state["max_sofa"] is None or sofa_value > prior_state["max_sofa"])
+        )
+    if tool_name == "query_kdigo_stage":
+        stage = output.get("max_aki_stage_smoothed_so_far")
+        if stage is None:
+            stage = output.get("latest_aki_stage_smoothed")
+        return (not prior_state["kdigo_assessed"]) or (
+            stage is not None and (prior_state["max_kdigo"] is None or stage > prior_state["max_kdigo"])
+        )
+    if tool_name == "query_ventilation_status":
+        level = output.get("highest_support_level_so_far") or output.get("current_support_level")
+        rank = _support_level_rank(level)
+        return (not prior_state["vent_assessed"]) or (
+            rank is not None
+            and (prior_state["max_support_rank"] is None or rank > prior_state["max_support_rank"])
+        )
+    return False
+
+
+def evaluate_sepsis_toolbox_efficiency(rollouts: list[TrajectoryRollout]) -> dict[str, Any]:
+    total_steps = 0
+    total_tool_calls = 0
+    steps_without_calls = 0
+    repeated_tool_calls = 0
+    infection_calls_total = 0
+    infection_calls_after_positive = 0
+    positive_actions_total = 0
+    positive_actions_without_sufficient_evidence = 0
+    necessary_infection_total = 0
+    necessary_infection_covered = 0
+    necessary_sofa_total = 0
+    necessary_sofa_covered = 0
+    marginal_utility_total = 0
+    marginal_utility_positive = 0
+    call_counts_by_tool = Counter()
+    useful_call_counts_by_tool = Counter()
+
+    for rollout in rollouts:
+        prior_state = {
+            "infection_assessed": False,
+            "infection_positive": False,
+            "sofa_assessed": False,
+            "sofa_alert": False,
+            "max_sofa": None,
+            "kdigo_assessed": False,
+            "max_kdigo": None,
+            "vent_assessed": False,
+            "max_support_rank": None,
+        }
+        called_tools_seen: set[str] = set()
+
+        for step in rollout.steps:
+            total_steps += 1
+            tool_calls = step.tool_calls or []
+            tool_outputs = step.tool_outputs or []
+            step_state_before = dict(prior_state)
+            if not tool_calls:
+                steps_without_calls += 1
+
+            current_step_outputs: dict[str, dict[str, Any]] = {}
+            for call_payload, output in zip(tool_calls, tool_outputs):
+                tool_name = call_payload["tool_name"]
+                pre_call_state = dict(prior_state)
+                current_step_outputs[tool_name] = output
+                total_tool_calls += 1
+                call_counts_by_tool[tool_name] += 1
+                if tool_name in called_tools_seen:
+                    repeated_tool_calls += 1
+                if tool_name == "query_suspicion_of_infection":
+                    infection_calls_total += 1
+                    if pre_call_state["infection_positive"]:
+                        infection_calls_after_positive += 1
+                is_useful = _tool_call_has_marginal_utility(tool_name, output, pre_call_state)
+                marginal_utility_total += 1
+                if is_useful:
+                    marginal_utility_positive += 1
+                    useful_call_counts_by_tool[tool_name] += 1
+                _update_toolbox_state_from_output(prior_state, tool_name, output)
+                called_tools_seen.add(tool_name)
+
+            predicted_action = step.predicted_action
+            if predicted_action in {"infection_suspect", "trigger_sepsis_alert"}:
+                positive_actions_total += 1
+                if predicted_action == "infection_suspect":
+                    sufficient = prior_state["infection_positive"]
+                else:
+                    sufficient = prior_state["infection_positive"] and prior_state["sofa_alert"]
+                if not sufficient:
+                    positive_actions_without_sufficient_evidence += 1
+
+                if (
+                    not step_state_before["infection_positive"]
+                    and "query_suspicion_of_infection" not in current_step_outputs
+                ):
+                    necessary_infection_total += 1
+                elif not step_state_before["infection_positive"]:
+                    necessary_infection_total += 1
+                    necessary_infection_covered += 1
+
+                if predicted_action == "trigger_sepsis_alert":
+                    if not step_state_before["sofa_alert"] and "query_sofa" not in current_step_outputs:
+                        necessary_sofa_total += 1
+                    elif not step_state_before["sofa_alert"]:
+                        necessary_sofa_total += 1
+                        necessary_sofa_covered += 1
+
+    return {
+        "avg_tool_calls_per_step": round(total_tool_calls / total_steps, 4) if total_steps else 0.0,
+        "steps_without_tool_calls_rate": _rate(steps_without_calls, total_steps),
+        "repeated_tool_call_rate": _rate(repeated_tool_calls, total_tool_calls),
+        "repeated_infection_call_after_positive_rate": _rate(
+            infection_calls_after_positive,
+            infection_calls_total,
+        ),
+        "positive_action_without_sufficient_evidence_rate": _rate(
+            positive_actions_without_sufficient_evidence,
+            positive_actions_total,
+        ),
+        "necessary_call_coverage": {
+            "infection": _rate(necessary_infection_covered, necessary_infection_total),
+            "sofa_for_alert": _rate(necessary_sofa_covered, necessary_sofa_total),
+        },
+        "marginal_utility_of_call_rate": _rate(marginal_utility_positive, marginal_utility_total),
+        "tool_call_counts": dict(call_counts_by_tool),
+        "tool_marginal_utility_rate": {
+            tool_name: _rate(useful_call_counts_by_tool[tool_name], call_counts_by_tool[tool_name])
+            for tool_name in sorted(call_counts_by_tool)
+        },
     }
 
 

@@ -28,7 +28,16 @@ from sepsis_mvp.dataset import (
     save_trajectories,
 )
 from sepsis_mvp.environment import BenchmarkEnvironment, evaluate_rollouts
-from sepsis_mvp.schemas import CODE_EXEC_TOOL_NAME, SQL_EXEC_TOOL_NAME, Checkpoint, Trajectory, ToolCall, ActionDecision
+from sepsis_mvp.schemas import (
+    CODE_EXEC_TOOL_NAME,
+    SQL_EXEC_TOOL_NAME,
+    ActionDecision,
+    Checkpoint,
+    StepRecord,
+    ToolCall,
+    Trajectory,
+    TrajectoryRollout,
+)
 from sepsis_mvp.tools import ConceptToolRuntime
 from sepsis_mvp.zeroshot_raw import ZeroShotRawDuckDBRuntime
 
@@ -207,6 +216,9 @@ class PipelineTest(unittest.TestCase):
         self.assertIn("query_kdigo_stage", system_prompt)
         self.assertIn("query_ventilation_status", system_prompt)
         self.assertIn("real longitudinal monitoring task", system_prompt.lower())
+        self.assertIn("null means not yet assessed", system_prompt.lower())
+        self.assertIn("do not return infection_suspect unless suspected infection is explicitly supported", system_prompt.lower())
+        self.assertIn("do not default to infection_suspect", system_prompt.lower())
         self.assertEqual(user_payload["protocol"], "rolling_toolbox_with_history")
         self.assertEqual(len(user_payload["rolling_history"]), 2)
         self.assertEqual(
@@ -828,6 +840,79 @@ class PipelineTest(unittest.TestCase):
         self.assertEqual(agent.step_inputs[0]["protocol"], "rolling_toolbox_with_history")
         self.assertEqual(agent.step_inputs[0]["max_step_interactions"], 6)
         self.assertEqual(agent.step_inputs[1]["rolling_history"][0]["step_index"], 0)
+
+    def test_toolbox_protocol_evaluation_reports_efficiency_metrics(self):
+        trajectory = Trajectory(
+            trajectory_id="mimiciv_stay_1",
+            stay_id=30,
+            subject_id=10,
+            hadm_id=20,
+            anchor="icu_intime",
+            step_hours=4,
+            horizon_hours=4,
+            transitions={"infection_start_hour": 0, "sepsis_start_hour": 4},
+            checkpoints=[
+                Checkpoint(t_hour=0, state_label="infection_suspect"),
+                Checkpoint(t_hour=4, state_label="trigger_sepsis_alert"),
+            ],
+            task_name="sepsis",
+            task_names=["sepsis"],
+            label_spaces={"sepsis": ["keep_monitoring", "infection_suspect", "trigger_sepsis_alert"]},
+        )
+        rollout = TrajectoryRollout(
+            trajectory_id="mimiciv_stay_1",
+            stay_id=30,
+            steps=[
+                StepRecord(
+                    step_index=0,
+                    t_hour=0,
+                    gt_action="infection_suspect",
+                    predicted_action="infection_suspect",
+                    tool_calls=[],
+                    tool_outputs=[],
+                ),
+                StepRecord(
+                    step_index=1,
+                    t_hour=4,
+                    gt_action="trigger_sepsis_alert",
+                    predicted_action="trigger_sepsis_alert",
+                    tool_calls=[
+                        {"tool_name": "query_suspicion_of_infection", "arguments": {"stay_id": 30, "t_hour": 4}},
+                        {"tool_name": "query_sofa", "arguments": {"stay_id": 30, "t_hour": 4}},
+                    ],
+                    tool_outputs=[
+                        {
+                            "stay_id": 30,
+                            "t_hour": 4,
+                            "has_suspected_infection": True,
+                            "first_visible_suspected_infection_hour": 0,
+                            "first_visible_suspected_infection_time": "2150-01-01T00:00:00",
+                            "evidence": [{"antibiotic": "cefepime"}],
+                        },
+                        {
+                            "stay_id": 30,
+                            "t_hour": 4,
+                            "latest_visible_hr": 4,
+                            "latest_sofa_24hours": 3,
+                            "max_sofa_24hours_so_far": 3,
+                            "latest_components": {},
+                        },
+                    ],
+                ),
+            ],
+            first_predicted_infection_hour=0,
+            first_predicted_alert_hour=4,
+        )
+        metrics = evaluate_rollouts([trajectory], [rollout], protocol="rolling_toolbox_with_history")
+        toolbox = metrics["toolbox_efficiency"]
+        self.assertEqual(toolbox["avg_tool_calls_per_step"], 1.0)
+        self.assertEqual(toolbox["steps_without_tool_calls_rate"], 0.5)
+        self.assertEqual(toolbox["positive_action_without_sufficient_evidence_rate"], 0.5)
+        self.assertEqual(toolbox["necessary_call_coverage"]["infection"], 0.5)
+        self.assertEqual(toolbox["necessary_call_coverage"]["sofa_for_alert"], 1.0)
+        self.assertEqual(toolbox["marginal_utility_of_call_rate"], 1.0)
+        self.assertEqual(toolbox["tool_call_counts"]["query_suspicion_of_infection"], 1)
+        self.assertEqual(toolbox["tool_call_counts"]["query_sofa"], 1)
 
     def test_dataset_can_be_saved(self):
         concepts = load_concept_tables(SAMPLE)
