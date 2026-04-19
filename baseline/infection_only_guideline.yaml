@@ -12,7 +12,7 @@ infection_only_monitoring_guideline:
     infection_suspect: "At least one qualifying antibiotic-culture pair is already visible."
 
   clinical_definition:
-    antibiotic_time: "Use mimiciv_hosp.prescriptions.starttime as the antibiotic time."
+    antibiotic_time: "Define antibiotic_time as mimiciv_hosp.prescriptions.starttime, restricting to records where the prescribed medication is an antibiotic (e.g., vancomycin, piperacillin-tazobactam, cefepime, meropenem, levofloxacin)."    
     culture_time: "Use COALESCE(mimiciv_hosp.microbiologyevents.charttime, CAST(chartdate AS TIMESTAMP)) as the culture time."
     antibiotic_first: "If antibiotics are first, a culture must occur within the next 24 hours."
     culture_first: "If the culture is first, antibiotics must occur within the next 72 hours."
