@@ -290,3 +290,175 @@ The best next analysis or patch is:
 2. tighten escalation behavior for true alert transitions
 3. specifically target the `trigger_sepsis_alert -> infection_suspect` error mode
 4. keep using toolbox-efficiency metrics as first-class outputs, not just step accuracy
+
+## Future Direction: What To Improve Next
+
+The comparison suggests that the new toolbox-with-history protocol is already the right **benchmark direction**, but the next gains will come from better **task design** and a better **agent framework**.
+
+### Task Design
+
+#### 1. Keep the toolbox-with-history protocol as the main longitudinal benchmark
+
+The benchmark should not move back toward fixed stepwise calling. The old protocol is useful as a baseline, but it does not really test longitudinal monitoring because tool use is predetermined.
+
+The benchmark should keep:
+
+- variable tool use
+- explicit prior-step history
+- zero-call steps as a valid outcome
+- tool-use efficiency as a first-class metric
+
+#### 2. Add explicit latent-state evaluation
+
+The current action space is simple, but the alert-stage error pattern suggests that the benchmark would benefit from tracking latent state explicitly:
+
+- infection established?
+- alert-level organ dysfunction established?
+- last confirmed SOFA threshold time?
+
+This could remain an internal eval target rather than a visible action label. It would let us distinguish:
+
+- bad longitudinal state tracking
+- from bad final action choice
+
+#### 3. Split reporting into infection-tracking and escalation-tracking phases
+
+The results suggest that these are two different subproblems:
+
+- infection tracking
+- escalation after infection is already known
+
+Future benchmark reporting should therefore include:
+
+- infection-onset timing
+- post-infection escalation timing
+- SOFA re-check coverage after infection is established
+- escalation delay after the first alert-eligible checkpoint
+
+That would make the current “stops at `infection_suspect`” problem easier to localize.
+
+#### 4. Add a richer derived history state
+
+The flat rolling history is transparent, but still cognitively heavy for the agent.
+
+Keep the full history, but also provide a compact derived state summary, for example:
+
+- infection state
+- sofa state
+- last infection check step
+- last sofa check step
+- whether each concept is resolved or still open
+
+This would preserve the longitudinal task while making the agent’s decision problem cleaner.
+
+### Agent Framework
+
+#### 5. Move from a flat prompt policy to a structured controller
+
+The current toolbox controller is still mostly “tool-or-act” from a single prompt. The next version should maintain an explicit belief state.
+
+Suggested controller loop:
+
+1. update belief state from rolling history and current tool outputs
+2. identify unresolved or stale evidence gaps
+3. choose the next tool only if it closes a meaningful gap
+4. emit the final action only when the relevant state is established
+
+Useful internal fields:
+
+- infection status
+- sofa status
+- last confirmed infection evidence
+- last confirmed sofa evidence
+- whether evidence is stale at the current checkpoint
+
+#### 6. Add an explicit escalation gate
+
+The dominant toolbox weakness is that many true alerts become `infection_suspect`.
+
+The controller should therefore enforce a lightweight escalation rule:
+
+- `trigger_sepsis_alert` requires explicit infection evidence plus explicit alert-level SOFA evidence
+- if infection is already known but SOFA evidence is unresolved, the controller should prefer `query_sofa` over finalizing at `infection_suspect`
+
+This could be implemented:
+
+- first as a stronger prompt rule
+- then more robustly as a controller-side guardrail
+
+#### 7. Add a verifier pass for positive decisions
+
+A practical next step is a cheap verifier only for positive outputs.
+
+Verifier questions:
+
+- Is infection explicitly established?
+- If `trigger_sepsis_alert` is proposed, is alert-level SOFA evidence explicitly established?
+- If not, what is the highest-value missing tool?
+
+This should improve reliability without turning every step into a multi-pass pipeline.
+
+#### 8. Use retrieval over history, not only full history
+
+The agent should continue to see full rolling history for transparency, but it would likely benefit from retrieval-style access to the most relevant prior evidence:
+
+- latest infection-positive event
+- latest SOFA summary
+- maximum SOFA so far
+- last step each concept was checked
+
+That should make history reuse more reliable and reduce unnecessary rereading of the full history list.
+
+### Measurement And Pipeline
+
+#### 9. Expand tool-use evaluation
+
+The current toolbox metrics are already much better than the old setup, but the next round should add:
+
+- phase-conditioned marginal utility
+- staleness-aware necessary-call coverage
+- escalation-opportunity capture
+- correctness on zero-call steps
+
+These would better distinguish genuinely informed history reuse from simply skipping tools.
+
+#### 10. Tighten artifact hygiene
+
+The comparison also surfaced a practical issue:
+
+- stale `events.jsonl` can diverge from `rollouts.json`
+
+Future runs should:
+
+- treat `rollouts.json` as canonical
+- store a run manifest with:
+  - dataset hash
+  - trajectory IDs
+  - protocol version
+  - metric version
+- optionally export matched-cohort subsets directly
+
+### Recommended Roadmap
+
+The best roadmap from here is:
+
+1. keep `rolling_toolbox_with_history` as the main longitudinal protocol
+2. add a compact derived state summary on top of rolling history
+3. implement a controller-side escalation gate
+4. add a verifier pass for positive decisions
+5. expand phase-conditioned tool-use metrics
+6. rerun official toolbox before expanding the visible tool set further
+
+## Final Recommendation
+
+The main lesson is:
+
+- the benchmark form is already strong
+- the next improvements should be concentrated on the agent framework
+
+So the future direction should be:
+
+- preserve the real longitudinal task
+- make the controller more state-aware
+- make escalation more explicitly evidence-gated
+- keep tool-use and history-use evaluation as central benchmark outputs

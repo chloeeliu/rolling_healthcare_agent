@@ -288,3 +288,184 @@ The main weakness to fix next is:
 - too many true alerts are stopped at `infection_suspect`
 
 So the next prompt or controller improvement should focus on **when a SOFA re-check is truly necessary for final escalation**.
+
+## Future Direction: How To Mitigate Toolbox-With-History Weaknesses
+
+The right next move is **not** to revert to the old fixed-tool baseline. That would recover some accuracy partly by removing the longitudinal decision problem. The better direction is to keep the toolbox-with-history protocol and make the benchmark and controller better match the structure of real monitoring.
+
+### Task Design
+
+#### 1. Make the latent longitudinal state explicit
+
+The current action space is simple and good:
+
+- `keep_monitoring`
+- `infection_suspect`
+- `trigger_sepsis_alert`
+
+But the analysis suggests the alert-stage errors come from an under-specified intermediate state. The model often seems to know infection has been established, but it is not confident about whether escalation evidence is already sufficient.
+
+Recommended task additions:
+
+- Evaluate a hidden carried-forward state alongside the final action:
+  - infection established?
+  - alert-level organ dysfunction established?
+  - last confirmed SOFA threshold crossing time?
+- Reward correct longitudinal state tracking even when the final action is wrong.
+- Add explicit persistence-aware scoring:
+  - once infection is established, repeated infection querying should usually be penalized unless there is a real reason.
+
+This would separate “bad state tracking” from “bad final action selection.”
+
+#### 2. Separate infection tracking from escalation tracking
+
+The official toolbox run is already strongest at infection timing, but weaker at final alert escalation. That means the benchmark should treat these as partially different longitudinal subtasks.
+
+Recommended reporting:
+
+- infection-detection phase metrics
+- post-infection escalation phase metrics
+- SOFA re-check coverage after infection is already established
+- delay-to-alert after the first alert-eligible checkpoint
+
+That would make the current `trigger_sepsis_alert -> infection_suspect` failure mode much easier to study.
+
+#### 3. Add a richer history summary state
+
+The current rolling history is a flat list of earlier step summaries. That is transparent, but still harder than necessary for the model to use well.
+
+Keep the full history, but add a compact derived state block such as:
+
+- `infection_state: unknown | absent | established`
+- `sofa_state: unknown | below_alert | alert_eligible`
+- `last_infection_check_step`
+- `last_sofa_check_step`
+- `open_question_for_current_step`
+
+This would make the task more explicitly longitudinal without removing the benchmark challenge.
+
+### Agent Framework
+
+#### 4. Move from flat prompting to a state-tracking controller
+
+The current toolbox agent is still a mostly flat “tool-or-act” policy. The next version should explicitly maintain a compact belief state.
+
+Recommended controller flow:
+
+1. update belief state from prior history and current-step tool outputs
+2. detect unresolved evidence gaps
+3. choose only the highest-value next tool
+4. make the final action only when the required state is established
+
+Suggested internal state fields:
+
+- infection status
+- sofa status
+- last infection evidence time
+- last sofa evidence time
+- whether evidence is resolved vs stale
+
+This would help the agent understand that “infection known but escalation unresolved” should usually trigger a SOFA-oriented next step.
+
+#### 5. Add an explicit escalation gate
+
+The main toolbox failure mode is:
+
+- ground truth: `trigger_sepsis_alert`
+- prediction: `infection_suspect`
+
+That suggests the agent needs a stricter escalation gate.
+
+Recommended rule:
+
+- `trigger_sepsis_alert` should require:
+  - infection explicitly established
+  - and alert-level SOFA evidence explicitly established
+- if infection is known but SOFA evidence is unresolved or stale, the controller should prefer `query_sofa` rather than settling on `infection_suspect`
+
+This can be done either:
+
+- as a stronger prompt rule
+- or, preferably, as a lightweight controller-side guardrail
+
+The controller-side version should be more reliable.
+
+#### 6. Add a verifier pass only for positive decisions
+
+A cheap way to improve reliability is a two-stage response for positive outputs:
+
+1. the model proposes either a tool call or a final action
+2. if the proposed action is positive, run a tiny verifier:
+   - is infection explicitly established?
+   - if alert is proposed, is SOFA alert evidence explicitly established?
+   - if not, which tool is still needed?
+
+This should reduce unsupported escalation errors without adding much cost to negative steps.
+
+#### 7. Use retrieval over history, not only raw history
+
+The model should still see the full rolling history, but it should also get retrieval-style access to the most relevant prior facts:
+
+- latest infection-positive evidence
+- latest SOFA summary
+- max SOFA so far
+- last step each concept was checked
+
+That would make the controller less likely to miss an already-established fact or to stop one level short of escalation.
+
+### Measurement And Pipeline
+
+#### 8. Expand tool-use evaluation
+
+The current toolbox metrics are already useful, but the next round should add:
+
+- phase-conditioned marginal utility
+  - before vs after infection is established
+- staleness-aware necessary-call coverage
+- escalation-opportunity capture
+  - how often SOFA is checked when infection is already known but alert is unresolved
+- zero-call correctness
+  - among no-call steps, how often is the final action correct?
+
+These would tell us whether history reuse is truly informed rather than just cheaper.
+
+#### 9. Improve run artifact hygiene
+
+The analysis also surfaced a practical issue:
+
+- stale `events.jsonl` can diverge from `rollouts.json`
+
+For future benchmark credibility:
+
+- treat `rollouts.json` as canonical
+- add run manifests with:
+  - dataset hash
+  - trajectory IDs
+  - protocol version
+  - metric version
+- optionally export matched-cohort slices directly
+
+### Recommended Roadmap
+
+The most sensible roadmap is:
+
+1. keep `rolling_toolbox_with_history` as the main longitudinal sepsis benchmark
+2. add a compact state-summary layer on top of the existing rolling history
+3. implement a controller-side escalation gate for `trigger_sepsis_alert`
+4. add a verifier pass for positive decisions
+5. expand the phase-conditioned tool-use metrics
+6. rerun the official toolbox benchmark before changing the visible tool set further
+
+## Final Recommendation
+
+The key lesson from this comparison is:
+
+- the benchmark direction is already right
+- the main remaining work is now in the **agent framework**
+
+So the future direction should be:
+
+- keep the real longitudinal task
+- make the controller more state-aware
+- make escalation more explicitly evidence-gated
+- keep tool-efficiency and history-use metrics as first-class outputs
