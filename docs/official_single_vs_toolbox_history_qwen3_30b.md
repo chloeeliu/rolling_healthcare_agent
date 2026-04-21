@@ -1,0 +1,290 @@
+# Official Sepsis: Stepwise Tool Calling vs Toolbox With History
+
+This note compares two **official-backend** single-sepsis runs with the same model family:
+
+1. [official_single_sepsis_Qwen3-30B-A3B-Instruct-2507](/Users/chloe/Documents/New project/result/official_single_sepsis_Qwen3-30B-A3B-Instruct-2507)
+2. [sepsis_toolbox_history_official_qwen3_30b](/Users/chloe/Documents/New project/result/sepsis_toolbox_history_official_qwen3_30b)
+
+The main question is not only which one is more accurate. It is whether the toolbox-with-history version behaves like a **real longitudinal task** and whether the extra tool-use metrics are informative.
+
+## Executive Summary
+
+- The old stepwise setting is **not a real longitudinal monitoring task** in practice.
+  It always calls both tools at every checkpoint:
+  - `query_suspicion_of_infection`
+  - `query_sofa`
+- The toolbox-with-history setting **is a real longitudinal task**.
+  It uses history, skips many tool calls, and turns tool-use behavior into something we can actually evaluate.
+- On a fair **matched 50-stay cohort**, the toolbox-with-history run:
+  - uses `71.4%` fewer tool calls per step
+  - makes no tool call on `42.86%` of steps
+  - improves infection onset timing substantially
+  - improves alert timing precision
+  - but loses step-level classification accuracy and misses more true alerts
+
+So the tradeoff is:
+
+- `official_single_sepsis`: stronger as a fixed checklist benchmark
+- `official_toolbox_with_history`: stronger as a realistic longitudinal monitoring benchmark
+
+## Source Of Truth And Caveat
+
+- The stepwise run has `98` rollouts.
+- The toolbox-with-history run has `50` rollouts.
+- For a fair comparison, I compare the stepwise run on the **same 50 trajectory IDs** used by the toolbox run.
+- In the toolbox folder, [events.jsonl](/Users/chloe/Documents/New project/result/sepsis_toolbox_history_official_qwen3_30b/events.jsonl) appears stale and contains `60` trajectories, while [rollouts.json](/Users/chloe/Documents/New project/result/sepsis_toolbox_history_official_qwen3_30b/rollouts.json) and [eval.json](/Users/chloe/Documents/New project/result/sepsis_toolbox_history_official_qwen3_30b/eval.json) are internally consistent at `50` trajectories.
+- This report uses `rollouts.json` and `eval.json` as the canonical source.
+
+## What Changes Between The Two Protocols
+
+### Stepwise tool calling
+
+- visible tools: `query_suspicion_of_infection`, `query_sofa`
+- actual behavior: both tools called every step
+- history is irrelevant because the tool schedule is fixed
+
+### Toolbox with history
+
+- visible tools:
+  - `query_suspicion_of_infection`
+  - `query_sofa`
+  - `query_kdigo_stage`
+  - `query_ventilation_status`
+- actual behavior:
+  - variable number of calls per step
+  - history reuse can replace fresh tool calls
+  - repeated-call rate, necessary-call coverage, and marginal utility become meaningful
+
+That is why the toolbox version is a real longitudinal task and the stepwise version is not.
+
+## Saved Eval Summary
+
+These are the saved evals in each folder.
+
+| Run | N trajectories | Step acc | Macro F1 | Infection exact | Alert exact |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Stepwise official | 98 | 0.8003 | 0.6152 | 0.6875 | 0.3958 |
+| Toolbox with history official | 50 | 0.6743 | 0.6188 | 0.7200 | 0.6000 |
+
+At face value, the toolbox run already looks promising on timing, but the sample sizes differ. The matched 50-stay comparison below is the fairer one.
+
+## Matched 50-Stay Comparison
+
+The 50 trajectory IDs from the toolbox run were used to slice the stepwise run.
+
+### Overall Performance
+
+| Run | Step acc | Avg tool calls/step | Zero-call rate |
+| --- | ---: | ---: | ---: |
+| Stepwise official on matched 50 | 0.7686 | 2.0000 | 0.0000 |
+| Toolbox with history official | 0.6743 | 0.5714 | 0.4286 |
+
+Interpretation:
+
+- The stepwise run wins on raw step accuracy.
+- The toolbox run cuts tool use by `71.4%`.
+- Nearly half of toolbox steps use **no new tool call**, which is strong evidence of actual history reuse.
+
+```mermaid
+xychart-beta
+  title "Official Only: Step Accuracy on Matched 50 Stays"
+  x-axis ["Stepwise", "Toolbox+History"]
+  y-axis "Accuracy" 0 --> 0.85
+  bar [0.7686, 0.6743]
+```
+
+```mermaid
+xychart-beta
+  title "Official Only: Average Tool Calls Per Step"
+  x-axis ["Stepwise", "Toolbox+History"]
+  y-axis "Calls / step" 0 --> 2.1
+  bar [2.0, 0.5714]
+```
+
+## Why Toolbox With History Is A Real Longitudinal Task
+
+The most concrete evidence is tool behavior:
+
+| Property | Stepwise official | Toolbox with history official |
+| --- | --- | --- |
+| Calls both tools every step | Yes | No |
+| Zero-call steps exist | No | Yes |
+| Repeated-call rate is meaningful | No | Yes |
+| Necessary-call coverage is meaningful | No | Yes |
+| Marginal utility of call is meaningful | No | Yes |
+
+Stepwise official is a fixed checklist.
+
+Toolbox-with-history is a monitoring policy:
+
+- it can defer a call
+- it can reuse previous evidence
+- it can choose when escalation needs another check
+
+That is the core longitudinal property we wanted.
+
+## Transition Timing On Matched 50
+
+Ground-truth onset was reconstructed directly from the per-step `gt_action` sequence in `rollouts.json`.
+
+| Run | Infection exact | Infection MAE | Infection early | Infection late | Infection missed | Alert exact | Alert MAE | Alert early | Alert late | Alert missed |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| Stepwise official | 0.7200 | 2.64 | 0.16 | 0.12 | 0.00 | 0.5600 | 2.64 | 0.36 | 0.08 | 0.00 |
+| Toolbox with history official | 0.8200 | 0.40 | 0.18 | 0.00 | 0.00 | 0.6000 | 1.90 | 0.08 | 0.12 | 0.20 |
+
+Key conclusions:
+
+- Toolbox-with-history is clearly better on **infection onset timing**.
+  - exact match rises from `0.72` to `0.82`
+  - MAE drops from `2.64h` to `0.40h`
+  - late infection predictions drop from `0.12` to `0.00`
+- Toolbox-with-history also improves **alert timing precision**.
+  - alert exact match rises from `0.56` to `0.60`
+  - alert MAE drops from `2.64h` to `1.90h`
+  - early alert rate drops sharply from `0.36` to `0.08`
+- But the toolbox run becomes more conservative for final escalation.
+  - alert missed rate rises from `0.00` to `0.20`
+
+```mermaid
+xychart-beta
+  title "Official Only: Infection Onset Exact Match"
+  x-axis ["Stepwise", "Toolbox+History"]
+  y-axis "Exact match rate" 0 --> 0.9
+  bar [0.72, 0.82]
+```
+
+```mermaid
+xychart-beta
+  title "Official Only: Alert Onset Mean Absolute Error"
+  x-axis ["Stepwise", "Toolbox+History"]
+  y-axis "Hours" 0 --> 3.0
+  bar [2.64, 1.90]
+```
+
+## Tool Use Evaluation
+
+These metrics are the main added value of the toolbox-with-history run.
+
+### Stepwise official
+
+Tool behavior is fixed:
+
+- `query_suspicion_of_infection`: `350` calls
+- `query_sofa`: `350` calls
+- total: `700` calls over `350` steps
+- average: `2.0` calls per step
+
+This means:
+
+- repeated calls are forced rather than chosen
+- necessary-call coverage is trivially perfect
+- marginal utility cannot distinguish good from bad policies
+
+### Toolbox with history official
+
+From [eval.json](/Users/chloe/Documents/New project/result/sepsis_toolbox_history_official_qwen3_30b/eval.json):
+
+| Metric | Value |
+| --- | ---: |
+| Avg tool calls / step | 0.5714 |
+| Steps without tool calls | 0.4286 |
+| Repeated tool call rate | 0.6600 |
+| Repeated infection call after positive | 0.0000 |
+| Positive action without sufficient evidence | 0.0000 |
+| Necessary infection-call coverage | 1.0000 |
+| Necessary SOFA-call coverage for alert | 1.0000 |
+| Marginal utility of any call | 0.3900 |
+
+Tool mix:
+
+| Tool | Calls | Share of all toolbox calls | Marginal utility |
+| --- | ---: | ---: | ---: |
+| `query_suspicion_of_infection` | 176 | 88.0% | 0.3352 |
+| `query_sofa` | 24 | 12.0% | 0.7917 |
+
+Interpretation:
+
+- The model uses infection queries much more often than SOFA queries.
+- But SOFA calls are much more targeted:
+  `79.17%` of them add new useful evidence.
+- The run never makes a positive decision without sufficient evidence according to the toolbox metric.
+- It also never repeats infection calls after infection is already positive.
+
+This is exactly the kind of evaluation that the stepwise setting cannot reveal.
+
+```mermaid
+xychart-beta
+  title "Official Toolbox+History: Tool Mix"
+  x-axis ["Infection", "SOFA"]
+  y-axis "Calls" 0 --> 190
+  bar [176, 24]
+```
+
+```mermaid
+xychart-beta
+  title "Official Toolbox+History: Marginal Utility by Tool"
+  x-axis ["Infection", "SOFA"]
+  y-axis "Utility rate" 0 --> 0.9
+  bar [0.3352, 0.7917]
+```
+
+## Error Pattern Shift
+
+### Stepwise official on matched 50
+
+Most common errors:
+
+- `keep_monitoring -> trigger_sepsis_alert`: `39`
+- `infection_suspect -> keep_monitoring`: `21`
+- `infection_suspect -> trigger_sepsis_alert`: `11`
+
+This policy tends to over-alert more aggressively.
+
+### Toolbox with history official
+
+Most common errors:
+
+- `trigger_sepsis_alert -> infection_suspect`: `56`
+- `keep_monitoring -> infection_suspect`: `39`
+- `keep_monitoring -> trigger_sepsis_alert`: `19`
+
+This policy is more cautious:
+
+- fewer hard false alerts
+- more “one level short” errors where a true alert becomes `infection_suspect`
+
+So the toolbox run trades some raw classification accuracy for better-timed and more evidence-disciplined escalation.
+
+## Bottom Line
+
+If the question is:
+
+- “Which one gets higher step accuracy on this cohort?”
+
+the answer is:
+
+- **stepwise official**
+
+If the question is:
+
+- “Which one is the more realistic longitudinal benchmark?”
+
+the answer is:
+
+- **toolbox with history official**
+
+because it:
+
+- actually reuses history
+- makes many zero-call decisions
+- lets us evaluate repeated-call behavior
+- lets us evaluate necessary-call coverage
+- lets us evaluate marginal utility of tool calls
+- improves infection timing substantially
+- improves alert timing precision
+
+The main weakness to fix next is:
+
+- too many true alerts are stopped at `infection_suspect`
+
+So the next prompt or controller improvement should focus on **when a SOFA re-check is truly necessary for final escalation**.
