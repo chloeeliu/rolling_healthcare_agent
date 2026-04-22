@@ -68,10 +68,15 @@ ZEROSHOT_EXEC_TOOL_NAMES = {CODE_EXEC_TOOL_NAME, SQL_EXEC_TOOL_NAME}
 
 CLINICAL_GUIDANCE = {
     "sepsis": [
+        "Sepsis in this benchmark follows a rolling Sepsis-3 style definition: suspected infection plus acute organ dysfunction consistent with SOFA >= 2 at the current visible checkpoint.",
+        "Treat infection evidence and organ-dysfunction evidence as jointly necessary for trigger_sepsis_alert.",
+        "Use infection_suspect only for the intermediate state where infection is visible but current alert-level organ dysfunction is not yet established.",
         "If suspected infection is not visible yet, prefer keep_monitoring.",
         "If suspected infection is visible but alert-level organ dysfunction is not yet visible, prefer infection_suspect.",
         "If suspected infection is visible and SOFA is 2 or higher, this is usually alert-level evidence for trigger_sepsis_alert.",
         "Do not skip the intermediate infection_suspect state when infection is visible but sepsis alert evidence is not yet established.",
+        "Once infection is already established, the next high-value question is whether organ dysfunction has reached alert-level severity yet.",
+        "If infection is already explicit in rolling_history but alert status is still unresolved, a SOFA check is often the most informative next step.",
     ],
     "infection_only": [
         "If suspected infection is not visible yet, prefer keep_monitoring.",
@@ -202,6 +207,8 @@ def _toolbox_evidence_requirements(task_names: list[str], step_input: dict[str, 
                 "If no earlier checkpoint explicitly established infection, query_suspicion_of_infection before making a positive sepsis decision.",
                 "If no earlier checkpoint explicitly established SOFA alert evidence, query_sofa before making trigger_sepsis_alert.",
                 "If rolling_history already explicitly established suspected infection and you are continuing infection_suspect, do not repeat query_suspicion_of_infection just to reconfirm it.",
+                "If rolling_history already explicitly established suspected infection but sepsis alert status is still unresolved at the current checkpoint, consider query_sofa instead of stopping at infection_suspect.",
+                "Do not treat infection_suspect as a terminal resting state when infection is already known and current alert status has not been reassessed.",
                 "If rolling_history already explicitly established trigger_sepsis_alert, continue trigger_sepsis_alert directly unless the task definition specifically allows de-escalation.",
                 "Do not downgrade from trigger_sepsis_alert back to infection_suspect once rolling_history already established alert-level sepsis.",
             ]
@@ -415,7 +422,7 @@ def _build_toolbox_messages(
     )
     if not _is_multitask_step(step_input):
         system_prompt += (
-            "- If rolling_history already explicitly supports the same label you are continuing, a direct final action without a repeated primary tool call is acceptable.\n"
+            "- If rolling_history already explicitly supports the same label you are continuing, a direct final action without a repeated tool call can be acceptable.\n"
         )
     for line in _toolbox_evidence_requirements(task_names, step_input):
         system_prompt += f"- {line}\n"
