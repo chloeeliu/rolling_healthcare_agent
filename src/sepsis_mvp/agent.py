@@ -4,6 +4,7 @@ import json
 import os
 from pathlib import Path
 import re
+import time
 from dataclasses import dataclass, field
 from typing import Any, Callable, Protocol
 
@@ -1235,7 +1236,8 @@ class LocalQwenChat:
             return self.model.device
         return next(self.model.parameters()).device
 
-    def generate(self, messages: list[dict[str, str]]) -> str:
+    def generate_with_stats(self, messages: list[dict[str, str]]) -> tuple[str, dict[str, Any]]:
+        started = time.perf_counter()
         if hasattr(self.tokenizer, "apply_chat_template"):
             prompt = self.tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
             inputs = self.tokenizer(prompt, return_tensors="pt")
@@ -1246,6 +1248,7 @@ class LocalQwenChat:
             prompt += "[ASSISTANT]\n"
             inputs = self.tokenizer(prompt, return_tensors="pt")
 
+        prompt_tokens = int(inputs["input_ids"].shape[-1])
         inputs = {key: value.to(self.device) for key, value in inputs.items()}
         do_sample = self.temperature > 0
 
@@ -1260,8 +1263,19 @@ class LocalQwenChat:
             )
 
         generated = output[0][inputs["input_ids"].shape[-1] :]
+        completion_tokens = int(generated.shape[-1])
         text = self.tokenizer.decode(generated, skip_special_tokens=True)
-        return text.strip()
+        elapsed = time.perf_counter() - started
+        return text.strip(), {
+            "prompt_tokens": prompt_tokens,
+            "completion_tokens": completion_tokens,
+            "total_tokens": prompt_tokens + completion_tokens,
+            "generation_runtime_sec": elapsed,
+        }
+
+    def generate(self, messages: list[dict[str, str]]) -> str:
+        text, _stats = self.generate_with_stats(messages)
+        return text
 
 
 def _default_zeroshot_guideline_path() -> Path:
@@ -1290,6 +1304,7 @@ class QwenChatAgent:
     trace_callback: Callable[[dict[str, Any]], None] | None = field(default=None, repr=False)
     client: LocalQwenChat = field(init=False, repr=False)
     zeroshot_guideline_text: str = field(init=False, repr=False)
+    _last_response_metrics: dict[str, Any] = field(init=False, repr=False, default_factory=dict)
 
     def __post_init__(self) -> None:
         self.client = LocalQwenChat(
@@ -1302,12 +1317,46 @@ class QwenChatAgent:
             self.repair_max_new_tokens = max(240, min(self.max_new_tokens, 800))
         self.zeroshot_guideline_text = _load_zeroshot_guideline_text(self.zeroshot_guideline_path)
 
+    def _reset_last_response_metrics(self) -> None:
+        self._last_response_metrics = {
+            "model_calls": 0,
+            "prompt_tokens": 0,
+            "completion_tokens": 0,
+            "total_tokens": 0,
+            "model_runtime_sec": 0.0,
+        }
+
+    def _generate_with_metrics(self, messages: list[dict[str, str]]) -> str:
+        if hasattr(self.client, "generate_with_stats"):
+            text, stats = self.client.generate_with_stats(messages)
+        else:
+            started = time.perf_counter()
+            text = self.client.generate(messages)
+            stats = {
+                "prompt_tokens": 0,
+                "completion_tokens": 0,
+                "total_tokens": 0,
+                "generation_runtime_sec": time.perf_counter() - started,
+            }
+        self._last_response_metrics["model_calls"] += 1
+        self._last_response_metrics["prompt_tokens"] += int(stats.get("prompt_tokens", 0))
+        self._last_response_metrics["completion_tokens"] += int(stats.get("completion_tokens", 0))
+        self._last_response_metrics["total_tokens"] += int(stats.get("total_tokens", 0))
+        self._last_response_metrics["model_runtime_sec"] += float(stats.get("generation_runtime_sec", 0.0))
+        return text
+
+    def pop_last_response_metrics(self) -> dict[str, Any]:
+        metrics = dict(self._last_response_metrics)
+        self._last_response_metrics = {}
+        return metrics
+
     def next_response(
         self,
         step_input: dict[str, Any],
         history: list[dict[str, Any]],
         available_tools: list[str],
     ) -> ToolCall | ActionDecision:
+        self._reset_last_response_metrics()
         if step_input.get("tool_backend") == "zeroshot_python":
             return self._next_zeroshot_python_response(step_input, history)
         if step_input.get("tool_backend") in {"zeroshot_sql", "zeroshot_raw"}:
@@ -1322,7 +1371,7 @@ class QwenChatAgent:
         }
         next_tool = _next_missing_tool_for_step(step_input, history, available_tools)
         messages = _build_messages(step_input, history, available_tools)
-        content = self.client.generate(messages)
+        content = self._generate_with_metrics(messages)
         if self.trace_callback is not None:
             self.trace_callback({"event_type": "model_output_raw", **context, "output": content})
         try:
@@ -1332,7 +1381,7 @@ class QwenChatAgent:
             repair_messages = _build_repair_messages(step_input, history, available_tools, content)
             self.client.max_new_tokens = self.repair_max_new_tokens
             try:
-                repaired = self.client.generate(repair_messages)
+                repaired = self._generate_with_metrics(repair_messages)
             finally:
                 self.client.max_new_tokens = original_max_tokens
             if self.trace_callback is not None:
@@ -1344,7 +1393,7 @@ class QwenChatAgent:
             repair_messages = _build_repair_messages(step_input, history, available_tools, content)
             self.client.max_new_tokens = self.repair_max_new_tokens
             try:
-                repaired = self.client.generate(repair_messages)
+                repaired = self._generate_with_metrics(repair_messages)
             finally:
                 self.client.max_new_tokens = original_max_tokens
             if self.trace_callback is not None:
@@ -1399,7 +1448,7 @@ class QwenChatAgent:
             "t_hour": int(step_input["t_hour"]),
         }
         messages = _build_toolbox_messages(step_input, history, available_tools)
-        content = self.client.generate(messages)
+        content = self._generate_with_metrics(messages)
         if self.trace_callback is not None:
             self.trace_callback({"event_type": "model_output_raw", **context, "output": content})
         try:
@@ -1413,7 +1462,7 @@ class QwenChatAgent:
             repair_messages = _build_toolbox_repair_messages(step_input, history, available_tools, content)
             self.client.max_new_tokens = self.repair_max_new_tokens
             try:
-                repaired = self.client.generate(repair_messages)
+                repaired = self._generate_with_metrics(repair_messages)
             finally:
                 self.client.max_new_tokens = original_max_tokens
             if self.trace_callback is not None:
@@ -1440,7 +1489,7 @@ class QwenChatAgent:
             "t_hour": int(step_input["t_hour"]),
         }
         messages = _build_zeroshot_messages(step_input, history, self.zeroshot_guideline_text)
-        content = self.client.generate(messages)
+        content = self._generate_with_metrics(messages)
         if self.trace_callback is not None:
             self.trace_callback({"event_type": "model_output_raw", **context, "output": content})
         try:
@@ -1459,7 +1508,7 @@ class QwenChatAgent:
             )
             self.client.max_new_tokens = self.repair_max_new_tokens
             try:
-                repaired = self.client.generate(repair_messages)
+                repaired = self._generate_with_metrics(repair_messages)
             finally:
                 self.client.max_new_tokens = original_max_tokens
             if self.trace_callback is not None:
@@ -1484,7 +1533,7 @@ class QwenChatAgent:
             )
             self.client.max_new_tokens = self.repair_max_new_tokens
             try:
-                repaired = self.client.generate(repair_messages)
+                repaired = self._generate_with_metrics(repair_messages)
             finally:
                 self.client.max_new_tokens = original_max_tokens
             if self.trace_callback is not None:
@@ -1518,7 +1567,7 @@ class QwenChatAgent:
             "t_hour": int(step_input["t_hour"]),
         }
         messages = _build_zeroshot_python_messages(step_input, history, self.zeroshot_guideline_text)
-        content = self.client.generate(messages)
+        content = self._generate_with_metrics(messages)
         if self.trace_callback is not None:
             self.trace_callback({"event_type": "model_output_raw", **context, "output": content})
         try:
@@ -1540,7 +1589,7 @@ class QwenChatAgent:
             )
             self.client.max_new_tokens = self.repair_max_new_tokens
             try:
-                repaired = self.client.generate(repair_messages)
+                repaired = self._generate_with_metrics(repair_messages)
             finally:
                 self.client.max_new_tokens = original_max_tokens
             if self.trace_callback is not None:
@@ -1568,7 +1617,7 @@ class QwenChatAgent:
             )
             self.client.max_new_tokens = self.repair_max_new_tokens
             try:
-                repaired = self.client.generate(repair_messages)
+                repaired = self._generate_with_metrics(repair_messages)
             finally:
                 self.client.max_new_tokens = original_max_tokens
             if self.trace_callback is not None:

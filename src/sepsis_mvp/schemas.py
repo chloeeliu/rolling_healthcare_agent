@@ -278,6 +278,7 @@ class StepRecord:
     predicted_task_actions: dict[str, str] | None = None
     tool_calls: list[dict[str, Any]] = field(default_factory=list)
     tool_outputs: list[dict[str, Any]] = field(default_factory=list)
+    resource_usage: dict[str, Any] = field(default_factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
@@ -291,6 +292,7 @@ class TrajectoryRollout:
     first_predicted_infection_hour: int | None = None
     first_predicted_alert_hour: int | None = None
     first_predicted_task_hours: dict[str, dict[str, int | None]] | None = None
+    resource_usage: dict[str, Any] = field(default_factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)

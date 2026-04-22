@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from collections import Counter, defaultdict
 from dataclasses import asdict
+import time
 from typing import Any
 
 from .agent import Agent
@@ -76,6 +77,7 @@ class BenchmarkEnvironment:
         rolling_history: list[dict[str, Any]] = []
 
         for step_index, checkpoint in enumerate(trajectory.checkpoints):
+            step_started = time.perf_counter()
             instruction = self._instruction_for_trajectory(trajectory)
             step_rolling_history = (
                 list(rolling_history)
@@ -103,6 +105,7 @@ class BenchmarkEnvironment:
             history: list[dict[str, Any]] = []
             tool_calls: list[dict[str, Any]] = []
             tool_outputs: list[dict[str, Any]] = []
+            step_resource_usage = _empty_step_resource_usage()
             primary_task = trajectory.primary_task_name()
             predicted_action: str | None = TASK_BASELINE_ACTION.get(primary_task)
             predicted_task_actions: dict[str, str] | None = None
@@ -130,16 +133,23 @@ class BenchmarkEnvironment:
 
             try:
                 for _ in range(step_max_interactions + 1):
+                    agent_call_started = time.perf_counter()
                     response = agent.next_response(
                         step_input=step_input.to_dict(),
                         history=history,
                         available_tools=step_input.available_tools,
                     )
+                    step_resource_usage["agent_calls"] += 1
+                    step_resource_usage["agent_runtime_sec"] += time.perf_counter() - agent_call_started
+                    _merge_agent_response_metrics(step_resource_usage, _pop_agent_response_metrics(agent))
                     if isinstance(response, ToolCall):
                         arguments = dict(response.arguments)
                         if response.tool_name in {CODE_EXEC_TOOL_NAME, SQL_EXEC_TOOL_NAME} and step_session_id is not None:
                             arguments["session_id"] = step_session_id
+                        tool_call_started = time.perf_counter()
                         output = self.tool_runtime.execute(response.tool_name, arguments)
+                        step_resource_usage["tool_calls"] += 1
+                        step_resource_usage["tool_runtime_sec"] += time.perf_counter() - tool_call_started
                         call_payload = {"tool_name": response.tool_name, "arguments": arguments}
                         self._emit(
                             {
@@ -219,6 +229,10 @@ class BenchmarkEnvironment:
                     predicted_task_actions=predicted_task_actions,
                     tool_calls=tool_calls,
                     tool_outputs=tool_outputs,
+                    resource_usage=_finalize_step_resource_usage(
+                        step_resource_usage,
+                        step_runtime_sec=time.perf_counter() - step_started,
+                    ),
                 )
             )
             history_entry = _build_rolling_history_entry(
@@ -241,6 +255,7 @@ class BenchmarkEnvironment:
             first_predicted_infection_hour=first_predicted_infection_hour,
             first_predicted_alert_hour=first_predicted_alert_hour,
             first_predicted_task_hours=dict(first_predicted_task_hours) if first_predicted_task_hours else None,
+            resource_usage=_aggregate_rollout_resource_usage(steps),
         )
         self._emit(
             {
@@ -321,14 +336,16 @@ def evaluate_rollouts(
     protocol: str | None = None,
 ) -> dict[str, Any]:
     if trajectories and trajectories[0].is_multitask():
-        return evaluate_multitask_rollouts(trajectories, rollouts)
-    metrics = evaluate_single_task_rollouts(trajectories, rollouts, protocol=protocol)
-    if (
-        protocol == "rolling_toolbox_with_history"
-        and trajectories
-        and trajectories[0].primary_task_name() == "sepsis"
-    ):
-        metrics["toolbox_efficiency"] = evaluate_sepsis_toolbox_efficiency(rollouts)
+        metrics = evaluate_multitask_rollouts(trajectories, rollouts)
+    else:
+        metrics = evaluate_single_task_rollouts(trajectories, rollouts, protocol=protocol)
+        if (
+            protocol == "rolling_toolbox_with_history"
+            and trajectories
+            and trajectories[0].primary_task_name() == "sepsis"
+        ):
+            metrics["toolbox_efficiency"] = evaluate_sepsis_toolbox_efficiency(rollouts)
+    metrics["resource_usage"] = evaluate_resource_usage(rollouts)
     return metrics
 
 
@@ -706,6 +723,120 @@ def _finalize_single_task_grounding(grounding_counts: dict[str, dict[str, int]])
 
 def _rate(num: int, den: int) -> float | None:
     return round(num / den, 4) if den else None
+
+
+def _empty_step_resource_usage() -> dict[str, Any]:
+    return {
+        "agent_calls": 0,
+        "tool_calls": 0,
+        "model_calls": 0,
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "total_tokens": 0,
+        "agent_runtime_sec": 0.0,
+        "model_runtime_sec": 0.0,
+        "tool_runtime_sec": 0.0,
+    }
+
+
+def _pop_agent_response_metrics(agent: Agent) -> dict[str, Any]:
+    if hasattr(agent, "pop_last_response_metrics"):
+        metrics = agent.pop_last_response_metrics()
+        return metrics if isinstance(metrics, dict) else {}
+    return {}
+
+
+def _merge_agent_response_metrics(step_resource_usage: dict[str, Any], metrics: dict[str, Any]) -> None:
+    step_resource_usage["model_calls"] += int(metrics.get("model_calls", 0) or 0)
+    step_resource_usage["prompt_tokens"] += int(metrics.get("prompt_tokens", 0) or 0)
+    step_resource_usage["completion_tokens"] += int(metrics.get("completion_tokens", 0) or 0)
+    step_resource_usage["total_tokens"] += int(metrics.get("total_tokens", 0) or 0)
+    step_resource_usage["model_runtime_sec"] += float(metrics.get("model_runtime_sec", 0.0) or 0.0)
+
+
+def _finalize_step_resource_usage(
+    step_resource_usage: dict[str, Any],
+    *,
+    step_runtime_sec: float,
+) -> dict[str, Any]:
+    finalized = dict(step_resource_usage)
+    finalized["agent_runtime_sec"] = round(finalized["agent_runtime_sec"], 6)
+    finalized["model_runtime_sec"] = round(finalized["model_runtime_sec"], 6)
+    finalized["tool_runtime_sec"] = round(finalized["tool_runtime_sec"], 6)
+    finalized["step_runtime_sec"] = round(step_runtime_sec, 6)
+    return finalized
+
+
+def _aggregate_rollout_resource_usage(steps: list[StepRecord]) -> dict[str, Any]:
+    totals = _empty_step_resource_usage()
+    total_step_runtime_sec = 0.0
+    for step in steps:
+        usage = step.resource_usage or {}
+        totals["agent_calls"] += int(usage.get("agent_calls", 0) or 0)
+        totals["tool_calls"] += int(usage.get("tool_calls", 0) or 0)
+        totals["model_calls"] += int(usage.get("model_calls", 0) or 0)
+        totals["prompt_tokens"] += int(usage.get("prompt_tokens", 0) or 0)
+        totals["completion_tokens"] += int(usage.get("completion_tokens", 0) or 0)
+        totals["total_tokens"] += int(usage.get("total_tokens", 0) or 0)
+        totals["agent_runtime_sec"] += float(usage.get("agent_runtime_sec", 0.0) or 0.0)
+        totals["model_runtime_sec"] += float(usage.get("model_runtime_sec", 0.0) or 0.0)
+        totals["tool_runtime_sec"] += float(usage.get("tool_runtime_sec", 0.0) or 0.0)
+        total_step_runtime_sec += float(usage.get("step_runtime_sec", 0.0) or 0.0)
+    totals["agent_runtime_sec"] = round(totals["agent_runtime_sec"], 6)
+    totals["model_runtime_sec"] = round(totals["model_runtime_sec"], 6)
+    totals["tool_runtime_sec"] = round(totals["tool_runtime_sec"], 6)
+    totals["total_step_runtime_sec"] = round(total_step_runtime_sec, 6)
+    totals["num_steps"] = len(steps)
+    return totals
+
+
+def evaluate_resource_usage(rollouts: list[TrajectoryRollout]) -> dict[str, Any]:
+    num_rollouts = len(rollouts)
+    all_steps = [step for rollout in rollouts for step in rollout.steps]
+    num_steps = len(all_steps)
+    total_agent_calls = sum(int((step.resource_usage or {}).get("agent_calls", 0) or 0) for step in all_steps)
+    total_tool_calls = sum(int((step.resource_usage or {}).get("tool_calls", 0) or 0) for step in all_steps)
+    total_model_calls = sum(int((step.resource_usage or {}).get("model_calls", 0) or 0) for step in all_steps)
+    total_prompt_tokens = sum(int((step.resource_usage or {}).get("prompt_tokens", 0) or 0) for step in all_steps)
+    total_completion_tokens = sum(int((step.resource_usage or {}).get("completion_tokens", 0) or 0) for step in all_steps)
+    total_tokens = sum(int((step.resource_usage or {}).get("total_tokens", 0) or 0) for step in all_steps)
+    total_agent_runtime = sum(float((step.resource_usage or {}).get("agent_runtime_sec", 0.0) or 0.0) for step in all_steps)
+    total_model_runtime = sum(float((step.resource_usage or {}).get("model_runtime_sec", 0.0) or 0.0) for step in all_steps)
+    total_tool_runtime = sum(float((step.resource_usage or {}).get("tool_runtime_sec", 0.0) or 0.0) for step in all_steps)
+    total_step_runtime = sum(float((step.resource_usage or {}).get("step_runtime_sec", 0.0) or 0.0) for step in all_steps)
+
+    return {
+        "totals": {
+            "num_trajectories": num_rollouts,
+            "num_steps": num_steps,
+            "agent_calls": total_agent_calls,
+            "tool_calls": total_tool_calls,
+            "model_calls": total_model_calls,
+            "prompt_tokens": total_prompt_tokens,
+            "completion_tokens": total_completion_tokens,
+            "total_tokens": total_tokens,
+            "agent_runtime_sec": round(total_agent_runtime, 6),
+            "model_runtime_sec": round(total_model_runtime, 6),
+            "tool_runtime_sec": round(total_tool_runtime, 6),
+            "step_runtime_sec": round(total_step_runtime, 6),
+        },
+        "step_level": {
+            "avg_agent_calls_per_step": round(total_agent_calls / num_steps, 4) if num_steps else 0.0,
+            "avg_tool_calls_per_step": round(total_tool_calls / num_steps, 4) if num_steps else 0.0,
+            "avg_prompt_tokens_per_step": round(total_prompt_tokens / num_steps, 4) if num_steps else 0.0,
+            "avg_completion_tokens_per_step": round(total_completion_tokens / num_steps, 4) if num_steps else 0.0,
+            "avg_total_tokens_per_step": round(total_tokens / num_steps, 4) if num_steps else 0.0,
+            "avg_agent_runtime_sec_per_step": round(total_agent_runtime / num_steps, 6) if num_steps else 0.0,
+            "avg_model_runtime_sec_per_step": round(total_model_runtime / num_steps, 6) if num_steps else 0.0,
+            "avg_tool_runtime_sec_per_step": round(total_tool_runtime / num_steps, 6) if num_steps else 0.0,
+            "avg_step_runtime_sec": round(total_step_runtime / num_steps, 6) if num_steps else 0.0,
+        },
+        "trajectory_level": {
+            "avg_steps_per_trajectory": round(num_steps / num_rollouts, 4) if num_rollouts else 0.0,
+            "avg_total_tokens_per_trajectory": round(total_tokens / num_rollouts, 4) if num_rollouts else 0.0,
+            "avg_total_runtime_sec_per_trajectory": round(total_step_runtime / num_rollouts, 6) if num_rollouts else 0.0,
+        },
+    }
 
 
 def _support_level_rank(level: str | None) -> int | None:

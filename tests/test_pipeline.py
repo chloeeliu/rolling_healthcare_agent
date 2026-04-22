@@ -892,6 +892,59 @@ class PipelineTest(unittest.TestCase):
         self.assertEqual(agent.step_inputs[0]["max_step_interactions"], 4)
         self.assertEqual(agent.step_inputs[1]["rolling_history"], [])
 
+    def test_environment_records_step_resource_usage(self):
+        class InstrumentedAgent:
+            def __init__(self):
+                self._metrics = {}
+
+            def next_response(self, step_input, history, available_tools):
+                self._metrics = {
+                    "model_calls": 1,
+                    "prompt_tokens": 42,
+                    "completion_tokens": 8,
+                    "total_tokens": 50,
+                    "model_runtime_sec": 0.12,
+                }
+                return ActionDecision(action="keep_monitoring")
+
+            def pop_last_response_metrics(self):
+                metrics = dict(self._metrics)
+                self._metrics = {}
+                return metrics
+
+        class StubRuntime:
+            def execute(self, tool_name, arguments):
+                raise AssertionError("No tool execution expected in this test")
+
+        trajectory = Trajectory(
+            trajectory_id="mimiciv_stay_1",
+            stay_id=30,
+            subject_id=10,
+            hadm_id=20,
+            anchor="icu_intime",
+            step_hours=4,
+            horizon_hours=4,
+            transitions={"infection_start_hour": 4, "sepsis_start_hour": 8},
+            checkpoints=[Checkpoint(t_hour=0, state_label="keep_monitoring")],
+            task_name="sepsis",
+            task_names=["sepsis"],
+            label_spaces={"sepsis": ["keep_monitoring", "infection_suspect", "trigger_sepsis_alert"]},
+        )
+        rollout = BenchmarkEnvironment(
+            [trajectory],
+            StubRuntime(),
+            task_mode="single",
+            tool_backend="zeroshot_python",
+            protocol="rolling_toolbox_with_history",
+        ).run_all(InstrumentedAgent())[0]
+        step_usage = rollout.steps[0].resource_usage
+        self.assertEqual(step_usage["prompt_tokens"], 42)
+        self.assertEqual(step_usage["completion_tokens"], 8)
+        self.assertEqual(step_usage["total_tokens"], 50)
+        self.assertEqual(step_usage["model_calls"], 1)
+        self.assertGreaterEqual(step_usage["step_runtime_sec"], 0.0)
+        self.assertEqual(rollout.resource_usage["total_tokens"], 50)
+
     def test_toolbox_protocol_evaluation_reports_efficiency_metrics(self):
         trajectory = Trajectory(
             trajectory_id="mimiciv_stay_1",
@@ -1031,6 +1084,80 @@ class PipelineTest(unittest.TestCase):
         toolbox = metrics["toolbox_efficiency"]
         self.assertEqual(toolbox["execution_success_rate"], 0.5)
         self.assertEqual(toolbox["execution_informative_rate"], 0.5)
+        resource_usage = metrics["resource_usage"]
+        self.assertEqual(resource_usage["totals"]["total_tokens"], 0)
+        self.assertEqual(resource_usage["totals"]["step_runtime_sec"], 0.0)
+
+    def test_evaluation_reports_resource_usage_from_step_records(self):
+        trajectory = Trajectory(
+            trajectory_id="mimiciv_stay_1",
+            stay_id=30,
+            subject_id=10,
+            hadm_id=20,
+            anchor="icu_intime",
+            step_hours=4,
+            horizon_hours=4,
+            transitions={"infection_start_hour": 0, "sepsis_start_hour": 4},
+            checkpoints=[
+                Checkpoint(t_hour=0, state_label="infection_suspect"),
+                Checkpoint(t_hour=4, state_label="trigger_sepsis_alert"),
+            ],
+            task_name="sepsis",
+            task_names=["sepsis"],
+            label_spaces={"sepsis": ["keep_monitoring", "infection_suspect", "trigger_sepsis_alert"]},
+        )
+        rollout = TrajectoryRollout(
+            trajectory_id="mimiciv_stay_1",
+            stay_id=30,
+            steps=[
+                StepRecord(
+                    step_index=0,
+                    t_hour=0,
+                    gt_action="infection_suspect",
+                    predicted_action="infection_suspect",
+                    resource_usage={
+                        "agent_calls": 1,
+                        "tool_calls": 1,
+                        "model_calls": 1,
+                        "prompt_tokens": 100,
+                        "completion_tokens": 20,
+                        "total_tokens": 120,
+                        "agent_runtime_sec": 0.2,
+                        "model_runtime_sec": 0.15,
+                        "tool_runtime_sec": 0.05,
+                        "step_runtime_sec": 0.27,
+                    },
+                ),
+                StepRecord(
+                    step_index=1,
+                    t_hour=4,
+                    gt_action="trigger_sepsis_alert",
+                    predicted_action="trigger_sepsis_alert",
+                    resource_usage={
+                        "agent_calls": 2,
+                        "tool_calls": 2,
+                        "model_calls": 2,
+                        "prompt_tokens": 160,
+                        "completion_tokens": 40,
+                        "total_tokens": 200,
+                        "agent_runtime_sec": 0.4,
+                        "model_runtime_sec": 0.3,
+                        "tool_runtime_sec": 0.1,
+                        "step_runtime_sec": 0.55,
+                    },
+                ),
+            ],
+            first_predicted_infection_hour=0,
+            first_predicted_alert_hour=4,
+        )
+        metrics = evaluate_rollouts([trajectory], [rollout], protocol="rolling_no_history")
+        resource_usage = metrics["resource_usage"]
+        self.assertEqual(resource_usage["totals"]["prompt_tokens"], 260)
+        self.assertEqual(resource_usage["totals"]["completion_tokens"], 60)
+        self.assertEqual(resource_usage["totals"]["total_tokens"], 320)
+        self.assertEqual(resource_usage["step_level"]["avg_total_tokens_per_step"], 160.0)
+        self.assertEqual(resource_usage["trajectory_level"]["avg_total_tokens_per_trajectory"], 320.0)
+        self.assertEqual(resource_usage["trajectory_level"]["avg_total_runtime_sec_per_trajectory"], 0.82)
 
     def test_run_command_rewrites_canonical_trajectory_output_from_rollouts(self):
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -1128,6 +1255,9 @@ class PipelineTest(unittest.TestCase):
             self.assertIn("metrics", payload)
             self.assertIn("infection_predictions_grounded_rate", payload["metrics"]["tool_grounding"])
             self.assertIn("alert_predictions_grounded_rate", payload["metrics"]["tool_grounding"])
+            self.assertIn("resource_usage", payload["metrics"])
+            self.assertIn("step_level", payload["metrics"]["resource_usage"])
+            self.assertIn("trajectory_level", payload["metrics"]["resource_usage"])
 
     def test_run_command_can_resume_from_existing_trajectory_output(self):
         with tempfile.TemporaryDirectory() as tmpdir:
