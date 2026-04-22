@@ -269,6 +269,13 @@ class PipelineTest(unittest.TestCase):
         self.assertEqual(response.tool_name, CODE_EXEC_TOOL_NAME)
         self.assertEqual(response.arguments, {"code": "RESULT = {'x': 1}"})
 
+    def test_zeroshot_python_response_rejects_open_python_block(self):
+        with self.assertRaises(ValueError):
+            _extract_zeroshot_response(
+                "```python\nRESULT = {'x': 1}",
+                allow_open_python=False,
+            )
+
     def test_zeroshot_response_accepts_fenced_sql_block_for_infection_only(self):
         response = _extract_zeroshot_response(
             "```sql\nSELECT TRUE AS has_suspected_infection\n```",
@@ -841,6 +848,50 @@ class PipelineTest(unittest.TestCase):
         self.assertEqual(agent.step_inputs[0]["max_step_interactions"], 6)
         self.assertEqual(agent.step_inputs[1]["rolling_history"][0]["step_index"], 0)
 
+    def test_environment_exposes_run_python_only_for_zeroshot_python_toolbox_protocol(self):
+        class CapturingAgent:
+            def __init__(self):
+                self.step_inputs = []
+
+            def next_response(self, step_input, history, available_tools):
+                self.step_inputs.append(step_input)
+                return ActionDecision(action="keep_monitoring")
+
+        class StubRuntime:
+            def execute(self, tool_name, arguments):
+                raise AssertionError("No tool execution expected in this test")
+
+        trajectory = Trajectory(
+            trajectory_id="mimiciv_stay_1",
+            stay_id=30,
+            subject_id=10,
+            hadm_id=20,
+            anchor="icu_intime",
+            step_hours=4,
+            horizon_hours=4,
+            transitions={"infection_start_hour": 4, "sepsis_start_hour": 8},
+            checkpoints=[
+                Checkpoint(t_hour=0, state_label="keep_monitoring"),
+                Checkpoint(t_hour=4, state_label="infection_suspect"),
+            ],
+            task_name="sepsis",
+            task_names=["sepsis"],
+            label_spaces={"sepsis": ["keep_monitoring", "infection_suspect", "trigger_sepsis_alert"]},
+        )
+        agent = CapturingAgent()
+        environment = BenchmarkEnvironment(
+            [trajectory],
+            StubRuntime(),
+            task_mode="single",
+            tool_backend="zeroshot_python",
+            protocol="rolling_toolbox_with_history",
+        )
+        environment.run_all(agent)
+        self.assertEqual(len(agent.step_inputs), 2)
+        self.assertEqual(agent.step_inputs[0]["available_tools"], [CODE_EXEC_TOOL_NAME])
+        self.assertEqual(agent.step_inputs[0]["max_step_interactions"], 4)
+        self.assertEqual(agent.step_inputs[1]["rolling_history"], [])
+
     def test_toolbox_protocol_evaluation_reports_efficiency_metrics(self):
         trajectory = Trajectory(
             trajectory_id="mimiciv_stay_1",
@@ -915,6 +966,71 @@ class PipelineTest(unittest.TestCase):
         self.assertEqual(toolbox["marginal_utility_of_call_rate"], 1.0)
         self.assertEqual(toolbox["tool_call_counts"]["query_suspicion_of_infection"], 1)
         self.assertEqual(toolbox["tool_call_counts"]["query_sofa"], 1)
+
+    def test_toolbox_protocol_evaluation_reports_execution_metrics_for_zeroshot_python(self):
+        trajectory = Trajectory(
+            trajectory_id="mimiciv_stay_1",
+            stay_id=30,
+            subject_id=10,
+            hadm_id=20,
+            anchor="icu_intime",
+            step_hours=4,
+            horizon_hours=4,
+            transitions={"infection_start_hour": 0, "sepsis_start_hour": 4},
+            checkpoints=[
+                Checkpoint(t_hour=0, state_label="infection_suspect"),
+                Checkpoint(t_hour=4, state_label="trigger_sepsis_alert"),
+            ],
+            task_name="sepsis",
+            task_names=["sepsis"],
+            label_spaces={"sepsis": ["keep_monitoring", "infection_suspect", "trigger_sepsis_alert"]},
+        )
+        rollout = TrajectoryRollout(
+            trajectory_id="mimiciv_stay_1",
+            stay_id=30,
+            steps=[
+                StepRecord(
+                    step_index=0,
+                    t_hour=0,
+                    gt_action="infection_suspect",
+                    predicted_action="infection_suspect",
+                    tool_calls=[{"tool_name": CODE_EXEC_TOOL_NAME, "arguments": {"code": "RESULT = {'seen': True}"}}],
+                    tool_outputs=[
+                        {
+                            "backend": "zeroshot_python",
+                            "ok": True,
+                            "stdout": "",
+                            "stderr": "",
+                            "result": {"kind": "dict", "preview": {"seen": True}},
+                        }
+                    ],
+                ),
+                StepRecord(
+                    step_index=1,
+                    t_hour=4,
+                    gt_action="trigger_sepsis_alert",
+                    predicted_action="trigger_sepsis_alert",
+                    tool_calls=[{"tool_name": CODE_EXEC_TOOL_NAME, "arguments": {"code": "RESULT = None"}}],
+                    tool_outputs=[
+                        {
+                            "backend": "zeroshot_python",
+                            "ok": False,
+                            "stdout": "",
+                            "stderr": "",
+                            "error_type": "SyntaxError",
+                            "error_message": "bad code",
+                            "result": None,
+                        }
+                    ],
+                ),
+            ],
+            first_predicted_infection_hour=0,
+            first_predicted_alert_hour=4,
+        )
+        metrics = evaluate_rollouts([trajectory], [rollout], protocol="rolling_toolbox_with_history")
+        toolbox = metrics["toolbox_efficiency"]
+        self.assertEqual(toolbox["execution_success_rate"], 0.5)
+        self.assertEqual(toolbox["execution_informative_rate"], 0.5)
 
     def test_run_command_rewrites_canonical_trajectory_output_from_rollouts(self):
         with tempfile.TemporaryDirectory() as tmpdir:

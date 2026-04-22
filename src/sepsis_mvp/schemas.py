@@ -57,6 +57,8 @@ TASK_MODES = (
 TOOL_BACKENDS = (
     "official",
     "autoformalized",
+    "zeroshot_python",
+    "zeroshot_sql",
     "zeroshot_raw",
 )
 

@@ -39,6 +39,16 @@ class JsonlSink:
             handle.flush()
 
 
+def _normalize_tool_backend(tool_backend: str) -> str:
+    if tool_backend == "zeroshot_raw":
+        print(
+            "Warning: --tool-backend zeroshot_raw is deprecated and now maps to zeroshot_sql.",
+            flush=True,
+        )
+        return "zeroshot_sql"
+    return tool_backend
+
+
 def _rollout_from_dict(payload: dict) -> TrajectoryRollout:
     return TrajectoryRollout(
         trajectory_id=payload["trajectory_id"],
@@ -130,14 +140,29 @@ def build_dataset_command(args: argparse.Namespace) -> int:
 
 
 def run_command(args: argparse.Namespace) -> int:
+    args.tool_backend = _normalize_tool_backend(args.tool_backend)
     trajectories = load_dataset_auto(args.dataset, strict_mvp=not args.include_out_of_scope)
     if args.sample_size is not None:
         trajectories = trajectories[: args.sample_size]
     all_target_trajectories = list(trajectories)
 
-    if args.tool_backend == "zeroshot_raw":
+    if args.tool_backend == "zeroshot_python":
         if args.agent != "qwen":
-            raise SystemExit("Zero-shot raw backend currently requires --agent qwen.")
+            raise SystemExit("Zero-shot python backend currently requires --agent qwen.")
+        unsupported = [
+            trajectory.trajectory_id
+            for trajectory in all_target_trajectories
+            if trajectory.is_multitask() or trajectory.primary_task_name() != "sepsis"
+        ]
+        if unsupported:
+            raise SystemExit(
+                "Zero-shot python backend currently supports only the single-task sepsis dataset. "
+                f"First unsupported trajectories: {unsupported[:5]}"
+            )
+
+    if args.tool_backend == "zeroshot_sql":
+        if args.agent != "qwen":
+            raise SystemExit("Zero-shot SQL backend currently requires --agent qwen.")
         unsupported = [
             trajectory.trajectory_id
             for trajectory in all_target_trajectories
@@ -145,7 +170,7 @@ def run_command(args: argparse.Namespace) -> int:
         ]
         if unsupported:
             raise SystemExit(
-                "Zero-shot raw backend currently supports only the single-task sepsis or infection-only dataset. "
+                "Zero-shot SQL backend currently supports only the single-task sepsis or infection-only dataset. "
                 f"First unsupported trajectories: {unsupported[:5]}"
             )
 
@@ -210,7 +235,7 @@ def run_command(args: argparse.Namespace) -> int:
             agent = HeuristicAgent(sofa_alert_threshold=args.sofa_alert_threshold)
         else:
             zeroshot_guideline_path = getattr(args, "zeroshot_guideline", None)
-            if args.tool_backend == "zeroshot_raw" and not zeroshot_guideline_path:
+            if args.tool_backend in {"zeroshot_python", "zeroshot_sql"} and not zeroshot_guideline_path:
                 default_guideline = (
                     "baseline/infection_only_guideline.yaml"
                     if trajectories[0].primary_task_name() == "infection_only"
@@ -328,9 +353,12 @@ def build_parser() -> argparse.ArgumentParser:
     )
     run_parser.add_argument(
         "--tool-backend",
-        choices=["official", "autoformalized", "zeroshot_raw"],
+        choices=["official", "autoformalized", "zeroshot_python", "zeroshot_sql", "zeroshot_raw"],
         default="official",
-        help="Choose whether visible tool outputs come from official derived concepts or generated functions.",
+        help=(
+            "Choose whether visible tool outputs come from official derived concepts, generated functions, "
+            "the new zero-shot Python session backend, or the legacy zero-shot SQL/raw backend."
+        ),
     )
     run_parser.add_argument(
         "--protocol",

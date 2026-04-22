@@ -40,6 +40,37 @@ logger = logging.getLogger(__name__)
 DEFAULT_DB_PATH = "/data/ossowski/MIMIC-IV/3.1/mimic4_duck_derived.db"
 MAX_OUTPUT_LENGTH = 8192
 
+SAFE_EXEC_BUILTINS: Dict[str, Any] = {
+    "abs": abs,
+    "all": all,
+    "any": any,
+    "bool": bool,
+    "dict": dict,
+    "enumerate": enumerate,
+    "Exception": Exception,
+    "float": float,
+    "int": int,
+    "isinstance": isinstance,
+    "len": len,
+    "list": list,
+    "max": max,
+    "min": min,
+    "next": next,
+    "print": print,
+    "range": range,
+    "repr": repr,
+    "reversed": reversed,
+    "round": round,
+    "set": set,
+    "sorted": sorted,
+    "str": str,
+    "sum": sum,
+    "tuple": tuple,
+    "TypeError": TypeError,
+    "ValueError": ValueError,
+    "zip": zip,
+}
+
 # ---------------------------------------------------------------------------
 # Time-bounded view templates
 # ---------------------------------------------------------------------------
@@ -334,6 +365,7 @@ class DuckDBCodeSession:
         stay_id: Optional[int] = None,
         visible_until: Optional[Any] = None,
         time_bounded_views: bool = False,
+        allowed_relations: Optional[set[tuple[str, str]]] = None,
     ):
         """Create a DuckDB-backed code execution session.
 
@@ -372,6 +404,7 @@ class DuckDBCodeSession:
         self.namespace: Dict[str, Any] = {}
         self._guidelines_dir = guidelines_dir
         self._functions_dir = functions_dir
+        self._allowed_relations = allowed_relations
 
         # Query timing stats
         self.query_count: int = 0
@@ -671,6 +704,7 @@ class DuckDBCodeSession:
             _CUTOFF_DATE = {f'"{_ns_cutoff_date}"' if _ns_cutoff_date else 'None'}
         """)
         exec(init_code, self.namespace)
+        self.namespace["__builtins__"] = SAFE_EXEC_BUILTINS
 
         # Inject lower-case aliases used by rolling-monitor prompts
         if _ns_stay_id is not None:
@@ -715,6 +749,12 @@ class DuckDBCodeSession:
             "WHERE table_catalog = 'source' "
             "  AND table_schema NOT IN ('information_schema', 'pg_catalog')"
         ).fetchall()
+        if self._allowed_relations is not None:
+            rows = [
+                (schema, table)
+                for schema, table in rows
+                if (schema, table) in self._allowed_relations
+            ]
 
         # Group by schema so we CREATE SCHEMA once per schema
         from collections import defaultdict as _dd

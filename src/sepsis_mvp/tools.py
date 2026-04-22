@@ -431,9 +431,16 @@ def build_tool_runtime(
 
         return AutoformalizedDuckDBToolRuntime(db_path=db_path, library_path=library_root)
 
-    if tool_backend == "zeroshot_raw":
+    if tool_backend == "zeroshot_python":
         if not db_path:
-            raise SystemExit("Zero-shot raw backend requires --db-path")
+            raise SystemExit("Zero-shot python backend requires --db-path")
+        from .zeroshot_python import ZeroShotPythonDuckDBRuntime
+
+        return ZeroShotPythonDuckDBRuntime(db_path=db_path)
+
+    if tool_backend in {"zeroshot_sql", "zeroshot_raw"}:
+        if not db_path:
+            raise SystemExit("Zero-shot SQL backend requires --db-path")
         from .zeroshot_raw import ZeroShotRawDuckDBRuntime
 
         return ZeroShotRawDuckDBRuntime(db_path=db_path)

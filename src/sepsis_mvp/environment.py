@@ -80,6 +80,7 @@ class BenchmarkEnvironment:
             step_rolling_history = (
                 list(rolling_history)
                 if self.protocol in {"rolling_with_history", "rolling_toolbox_with_history"}
+                and self.tool_backend != "zeroshot_python"
                 else []
             )
             step_max_interactions = self._max_step_interactions_for_protocol(available_tools)
@@ -226,7 +227,11 @@ class BenchmarkEnvironment:
                 step_index=step_index,
                 tool_outputs=tool_outputs,
             )
-            if history_entry is not None and self.protocol in {"rolling_with_history", "rolling_toolbox_with_history"}:
+            if (
+                history_entry is not None
+                and self.protocol in {"rolling_with_history", "rolling_toolbox_with_history"}
+                and self.tool_backend != "zeroshot_python"
+            ):
                 rolling_history.append(history_entry)
 
         rollout = TrajectoryRollout(
@@ -268,6 +273,12 @@ class BenchmarkEnvironment:
         return self.task_mode
 
     def _available_tools_for_protocol(self, trajectory: Trajectory) -> list[str]:
+        if self.tool_backend == "zeroshot_python":
+            return [CODE_EXEC_TOOL_NAME]
+        if self.tool_backend in {"zeroshot_sql", "zeroshot_raw"}:
+            if trajectory.primary_task_name() == "infection_only":
+                return [SQL_EXEC_TOOL_NAME]
+            return [CODE_EXEC_TOOL_NAME]
         if self.protocol == "rolling_toolbox_with_history":
             if trajectory.is_multitask() or trajectory.primary_task_name() != "sepsis":
                 raise ValueError(
@@ -353,7 +364,11 @@ def evaluate_single_task_rollouts(
             if step.gt_action == step.predicted_action:
                 correct_steps += 1
             confusion[(step.gt_action, step.predicted_action)] += 1
-            if use_history_aware_grounding and prior_state is not None:
+            has_exec_tool = any(
+                call["tool_name"] in {CODE_EXEC_TOOL_NAME, SQL_EXEC_TOOL_NAME}
+                for call in (step.tool_calls or [])
+            )
+            if use_history_aware_grounding and prior_state is not None and not has_exec_tool:
                 current_state = dict(prior_state)
                 for call_payload, output in zip(step.tool_calls or [], step.tool_outputs or []):
                     _update_toolbox_state_from_output(current_state, call_payload["tool_name"], output)
@@ -740,6 +755,14 @@ def _tool_call_has_marginal_utility(
     output: dict[str, Any],
     prior_state: dict[str, Any],
 ) -> bool:
+    if tool_name in {CODE_EXEC_TOOL_NAME, SQL_EXEC_TOOL_NAME}:
+        return bool(
+            output.get("ok")
+            and (
+                output.get("result") is not None
+                or bool(output.get("stdout"))
+            )
+        )
     if tool_name == "query_suspicion_of_infection":
         return (not prior_state["infection_assessed"]) or (
             not prior_state["infection_positive"] and bool(output.get("has_suspected_infection"))
@@ -771,6 +794,9 @@ def _tool_call_has_marginal_utility(
 def evaluate_sepsis_toolbox_efficiency(rollouts: list[TrajectoryRollout]) -> dict[str, Any]:
     total_steps = 0
     total_tool_calls = 0
+    execution_calls_total = 0
+    execution_calls_success = 0
+    execution_calls_with_result = 0
     steps_without_calls = 0
     repeated_tool_calls = 0
     infection_calls_total = 0
@@ -805,6 +831,12 @@ def evaluate_sepsis_toolbox_efficiency(rollouts: list[TrajectoryRollout]) -> dic
                 current_step_outputs[tool_name] = output
                 total_tool_calls += 1
                 call_counts_by_tool[tool_name] += 1
+                if tool_name in {CODE_EXEC_TOOL_NAME, SQL_EXEC_TOOL_NAME}:
+                    execution_calls_total += 1
+                    if output.get("ok"):
+                        execution_calls_success += 1
+                    if output.get("result") is not None or output.get("stdout"):
+                        execution_calls_with_result += 1
                 if tool_name in called_tools_seen:
                     repeated_tool_calls += 1
                 if tool_name == "query_suspicion_of_infection":
@@ -849,6 +881,8 @@ def evaluate_sepsis_toolbox_efficiency(rollouts: list[TrajectoryRollout]) -> dic
         "avg_tool_calls_per_step": round(total_tool_calls / total_steps, 4) if total_steps else 0.0,
         "steps_without_tool_calls_rate": _rate(steps_without_calls, total_steps),
         "repeated_tool_call_rate": _rate(repeated_tool_calls, total_tool_calls),
+        "execution_success_rate": _rate(execution_calls_success, execution_calls_total),
+        "execution_informative_rate": _rate(execution_calls_with_result, execution_calls_total),
         "repeated_infection_call_after_positive_rate": _rate(
             infection_calls_after_positive,
             infection_calls_total,
