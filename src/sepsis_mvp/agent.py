@@ -13,9 +13,7 @@ from .schemas import (
     CODE_EXEC_TOOL_NAME,
     SHARED_TOOLBOX_TOOL_NAMES,
     SQL_EXEC_TOOL_NAME,
-    TASK_BASELINE_ACTION,
     TASK_LABEL_SPACES,
-    TASK_TOOL_NAMES,
     ActionDecision,
     ToolCall,
 )
@@ -116,44 +114,6 @@ def _is_toolbox_protocol(step_input: dict[str, Any]) -> bool:
     return step_input.get("protocol") == "rolling_toolbox_with_history"
 
 
-def _required_tool_order(step_input: dict[str, Any], available_tools: list[str]) -> list[str]:
-    ordered: list[str] = []
-    for task_name in _resolved_task_names(step_input):
-        for tool_name in TASK_TOOL_NAMES.get(task_name, []):
-            if tool_name in available_tools and tool_name not in ordered:
-                ordered.append(tool_name)
-    return ordered
-
-
-def _toolbox_next_required_tool(
-    step_input: dict[str, Any],
-    history: list[dict[str, Any]],
-    available_tools: list[str],
-) -> str | None:
-    if not _is_toolbox_protocol(step_input):
-        return None
-    if _is_multitask_step(step_input):
-        return _next_missing_tool_for_step(step_input, history, available_tools)
-    return None
-
-
-def _next_missing_tool(history: list[dict[str, Any]], available_tools: list[str]) -> str | None:
-    return _next_missing_tool_for_step({}, history, available_tools)
-
-
-def _next_missing_tool_for_step(
-    step_input: dict[str, Any],
-    history: list[dict[str, Any]],
-    available_tools: list[str],
-) -> str | None:
-    seen_tools = [item["tool_name"] for item in history if item["type"] == "tool_call"]
-    seen_set = set(seen_tools)
-    for tool_name in _required_tool_order(step_input, available_tools):
-        if tool_name in available_tools and tool_name not in seen_set:
-            return tool_name
-    return None
-
-
 TASK_KEY_ALIASES = {
     "resp_support": "respiratory_support",
     "respiratory": "respiratory_support",
@@ -225,11 +185,11 @@ def _toolbox_evidence_requirements(task_names: list[str], step_input: dict[str, 
         "Call only effective tools. Avoid low-value repeated calls when earlier checkpoints already establish the same fact.",
     ]
     if _is_multitask_step(step_input):
-        required_tool_order = _required_tool_order(step_input, list(SHARED_TOOLBOX_TOOL_NAMES))
         requirements.extend(
             [
-                "For multitask surveillance, collect the core task tools for the current checkpoint before returning task_actions.",
-                f"Mandatory current-checkpoint core tools for this multitask step: {', '.join(required_tool_order)}.",
+                "For multitask surveillance, do not automatically call every core tool at every checkpoint.",
+                "If rolling_history already makes a task explicit and you are continuing that same task state, you may finalize without repeating that task's primary tool.",
+                "If a task is still unknown at this checkpoint, newly positive, or changing relative to the latest explicit rolling_history state, call that task's primary tool before finalizing.",
                 "Do not finalize multitask task_actions from sepsis evidence alone.",
                 "Do not leave AKI or respiratory support at baseline just because they were not checked.",
             ]
@@ -241,6 +201,15 @@ def _toolbox_evidence_requirements(task_names: list[str], step_input: dict[str, 
                 "Do not return trigger_sepsis_alert unless suspected infection is explicitly supported and SOFA alert evidence is explicitly supported by a current tool result or by earlier rolling_history.",
                 "If no earlier checkpoint explicitly established infection, query_suspicion_of_infection before making a positive sepsis decision.",
                 "If no earlier checkpoint explicitly established SOFA alert evidence, query_sofa before making trigger_sepsis_alert.",
+                "If rolling_history already explicitly established suspected infection and you are continuing infection_suspect, do not repeat query_suspicion_of_infection just to reconfirm it.",
+                "If rolling_history already explicitly established trigger_sepsis_alert, continue trigger_sepsis_alert directly unless the task definition specifically allows de-escalation.",
+                "Do not downgrade from trigger_sepsis_alert back to infection_suspect once rolling_history already established alert-level sepsis.",
+            ]
+        )
+    if "infection_only" in task_names:
+        requirements.extend(
+            [
+                "If rolling_history already explicitly established infection_suspect and you are continuing that same state, do not repeat query_suspicion_of_infection just to reconfirm it.",
             ]
         )
     if "aki" in task_names:
@@ -249,15 +218,22 @@ def _toolbox_evidence_requirements(task_names: list[str], step_input: dict[str, 
                 [
                     "For non-monotonic AKI, predict the current visible AKI state, not the worst historical state alone.",
                     "Use query_kdigo_stage before a non-baseline AKI decision unless the current AKI state is already explicit in rolling_history.",
+                    "If rolling_history already makes the current AKI state explicit and you are continuing that same current state, a final action without repeating query_kdigo_stage is acceptable.",
                 ]
             )
         else:
-            requirements.append(
-                "Use query_kdigo_stage before a positive AKI decision unless AKI evidence is already explicit in rolling_history."
+            requirements.extend(
+                [
+                    "Use query_kdigo_stage before a positive AKI decision unless AKI evidence is already explicit in rolling_history.",
+                    "If rolling_history already explicitly established the same AKI state you are continuing, do not repeat query_kdigo_stage just to reconfirm it.",
+                ]
             )
     if "respiratory_support" in task_names:
-        requirements.append(
-            "Use query_ventilation_status before escalating respiratory support unless support status is already explicit in rolling_history."
+        requirements.extend(
+            [
+                "Use query_ventilation_status before escalating respiratory support unless support status is already explicit in rolling_history.",
+                "If rolling_history already explicitly establishes the same respiratory-support state you are continuing, do not repeat query_ventilation_status just to reconfirm it.",
+            ]
         )
     return requirements
 
@@ -270,52 +246,42 @@ def _build_messages(
     if _is_toolbox_protocol(step_input):
         return _build_toolbox_messages(step_input, history, available_tools)
     task_names = _resolved_task_names(step_input)
-    next_tool = _next_missing_tool_for_step(step_input, history, available_tools)
-    required_tool_order = _required_tool_order(step_input, available_tools)
     protocol = step_input.get("protocol", "rolling_no_history")
     rolling_history = step_input.get("rolling_history") or []
     if _is_multitask_step(step_input):
-        seen_tools = {item["tool_name"] for item in history if item["type"] == "tool_call"}
-        remaining_tools = [tool_name for tool_name in required_tool_order if tool_name not in seen_tools]
         executed = _summarize_history(history)
         stay_id = int(step_input["stay_id"])
         t_hour = int(step_input["t_hour"])
+        example_tool = available_tools[0] if available_tools else "query_suspicion_of_infection"
         system_prompt = (
             "You are an ICU rolling multi-task surveillance agent.\n"
             f"Monitored tasks: {', '.join(task_names)}.\n"
             f"Tool backend: {step_input.get('tool_backend', 'official')}.\n"
             "At each checkpoint, you may either call exactly one tool or return final task decisions.\n"
-            "Use only the allowed tools and use them in the required order.\n"
+            "Use only the allowed tools, and only when they are clinically useful for the current checkpoint.\n"
             "Do not output reasoning, analysis, markdown, or <think> tags.\n"
             "Return exactly one JSON object and nothing else.\n\n"
             "Task semantics:\n"
         )
         for task_name in task_names:
             system_prompt += f"- {task_name}: {_task_description(task_name, step_input)}\n"
-        system_prompt += "\nTool semantics:\n"
-        for tool_name in required_tool_order:
+        system_prompt += "\nAvailable tools:\n"
+        for tool_name in available_tools:
             system_prompt += f"- {tool_name}: {TOOL_DESCRIPTIONS[tool_name]}\n"
         system_prompt += (
             "\n"
             + _clinical_guidance_text(task_names, step_input)
             + "\n"
             "\n"
-            "\nRecommended decision pattern:\n"
-            "1. Collect all required tool outputs for the current checkpoint.\n"
-            "2. Use the visible evidence to assign one decision per task.\n"
-            "3. Return one decision for every task in a fixed key order.\n\n"
             "Important:\n"
             "- Evidence may already be visible at t_hour=0 because some events can happen before ICU admission.\n"
             "- Do not assume keep_monitoring just because t_hour is small.\n"
             "- Do not omit any task.\n"
             "- The final JSON must contain exactly these keys in task_actions: "
             "sepsis, aki, respiratory_support.\n"
-            f"- Before returning task_actions, collect all required tool outputs for this checkpoint: {required_tool_order}.\n"
-            "- If any required tool is still missing, your next response must be a tool call for the first missing tool.\n"
-            "- Never repeat a completed tool call.\n"
-            "- Never guess a final decision before all required tool outputs are visible.\n\n"
+            "- Prefer fewer, higher-value tool calls over exhaustive checking.\n\n"
             "Tool call format:\n"
-            f'{{"tool_name":"query_kdigo_stage","arguments":{{"stay_id":{stay_id},"t_hour":{t_hour}}}}}\n\n'
+            f'{{"tool_name":"{example_tool}","arguments":{{"stay_id":{stay_id},"t_hour":{t_hour}}}}}\n\n'
             "Final decision format:\n"
             '{"task_actions":{"sepsis":"keep_monitoring","aki":"keep_monitoring","respiratory_support":"room_air_or_low_support"}}'
         )
@@ -324,13 +290,7 @@ def _build_messages(
                 "\n\nRolling-with-history protocol:\n"
                 "- Prior checkpoint summaries for this stay may be provided in rolling_history.\n"
                 "- Treat rolling_history as concise context from earlier checkpoints only.\n"
-                "- You still must collect the required tools for the current checkpoint before making final decisions."
-            )
-        if next_tool is not None:
-            system_prompt += f"\n\nCurrent requirement: the next response must be a tool call for `{next_tool}`."
-        else:
-            system_prompt += (
-                "\n\nCurrent requirement: all required tool outputs are available, so the next response must be final task_actions."
+                "- Use rolling_history to avoid redundant tool calls when the same state is already explicit."
             )
         user_payload = {
             "step_input": {
@@ -342,10 +302,8 @@ def _build_messages(
             "task_mode": step_input.get("task_mode"),
             "tool_backend": step_input.get("tool_backend"),
             "available_tools": available_tools,
-            "required_tool_order": remaining_tools,
             "already_called_tools": executed["tool_calls"],
             "tool_results_by_name": executed["tool_results"],
-            "next_required_tool": next_tool,
             "protocol": protocol,
             "rolling_history": rolling_history,
         }
@@ -354,19 +312,18 @@ def _build_messages(
         t_hour = int(step_input["t_hour"])
         task_name = task_names[0]
         label_space = _label_space_for_task(step_input, task_name)
-        seen_tools = {item["tool_name"] for item in history if item["type"] == "tool_call"}
-        remaining_tools = [tool_name for tool_name in required_tool_order if tool_name not in seen_tools]
+        example_tool = available_tools[0] if available_tools else "query_suspicion_of_infection"
         system_prompt = (
             f"You are an ICU rolling surveillance agent for task: {task_name}.\n"
             f"Tool backend: {step_input.get('tool_backend', 'official')}.\n"
-            "Use only the allowed tools and use them in the required order.\n"
+            "Use only the allowed tools, and only when they are clinically useful for the current checkpoint.\n"
             "Do not output reasoning, analysis, markdown, or <think> tags.\n"
             "Return exactly one JSON object and nothing else.\n"
             "Evidence may already be visible at t_hour=0.\n\n"
             f"Task semantics: {_task_description(task_name, step_input)}\n\n"
-            "Tool semantics:\n"
+            "Available tools:\n"
         )
-        for tool_name in required_tool_order:
+        for tool_name in available_tools:
             system_prompt += f"- {tool_name}: {TOOL_DESCRIPTIONS[tool_name]}\n"
         system_prompt += (
             "\n"
@@ -374,7 +331,7 @@ def _build_messages(
             + "\n"
             "\n"
             "\nTool call format:\n"
-            f'{{"tool_name":"{required_tool_order[0]}","arguments":{{"stay_id":{stay_id},"t_hour":{t_hour}}}}}\n\n'
+            f'{{"tool_name":"{example_tool}","arguments":{{"stay_id":{stay_id},"t_hour":{t_hour}}}}}\n\n'
             "Final action format:\n"
             '{"action":"keep_monitoring"}\n\n'
             "Valid final actions:\n"
@@ -387,12 +344,8 @@ def _build_messages(
                 "- Prior checkpoint summaries for this stay may be provided in rolling_history.\n"
                 "- This is a real longitudinal monitoring task, so rolling_history can include every earlier checkpoint summary.\n"
                 "- For sepsis, each rolling_history item may include step_index, t_hour, sofa_score, infection, and concise evidence.\n"
-                "- Use rolling_history as context, but still call the required tools for the current checkpoint."
+                "- Use rolling_history as context to avoid redundant tool calls when the same state is already explicit."
             )
-        if next_tool is not None:
-            system_prompt += f"\nCurrent requirement: the next response must be a tool call for `{next_tool}`."
-        else:
-            system_prompt += "\nCurrent requirement: all required tools are complete, so the next response must be a final action."
         user_payload = {
             "step_input": {
                 "trajectory_id": step_input["trajectory_id"],
@@ -405,7 +358,6 @@ def _build_messages(
             "tool_backend": step_input.get("tool_backend"),
             "protocol": protocol,
             "rolling_history": rolling_history,
-            "required_tool_order": remaining_tools,
             "history": history,
             "available_tools": available_tools,
         }
@@ -429,8 +381,6 @@ def _build_toolbox_messages(
     toolbox_tools = [tool_name for tool_name in SHARED_TOOLBOX_TOOL_NAMES if tool_name in available_tools]
     if not toolbox_tools:
         toolbox_tools = list(available_tools)
-    next_required_tool = _toolbox_next_required_tool(step_input, history, available_tools)
-    required_tool_order = _required_tool_order(step_input, available_tools)
     system_prompt = (
         "You are an ICU rolling surveillance agent.\n"
         "Protocol: rolling_toolbox_with_history.\n"
@@ -459,12 +409,14 @@ def _build_toolbox_messages(
         "- Use rolling_history to recognize what is already established longitudinally for this stay.\n"
         "- In rolling_history, null means not yet assessed at that checkpoint. Do not treat null as negative evidence.\n"
         "- Call only effective tools. Avoid low-value repeated calls when earlier checkpoints already establish the same fact.\n"
-        "- query_suspicion_of_infection and query_sofa are the highest-yield pair for sepsis decisions.\n"
-        "- query_kdigo_stage and query_urine_output_rate are the highest-yield pair for AKI decisions.\n"
-        "- query_ventilation_status is the primary respiratory-support tool.\n"
-        "- query_vasoactive_agent, query_vitalsign, query_bg, query_gcs, query_antibiotic, and query_invasive_line are contextual tools.\n\n"
+        "- Prefer a small number of high-value evidence checks over exhaustive tool use.\n"
+        "- Use contextual tools only when they can change the decision, not just add color.\n\n"
         "Evidence requirements:\n"
     )
+    if not _is_multitask_step(step_input):
+        system_prompt += (
+            "- If rolling_history already explicitly supports the same label you are continuing, a direct final action without a repeated primary tool call is acceptable.\n"
+        )
     for line in _toolbox_evidence_requirements(task_names, step_input):
         system_prompt += f"- {line}\n"
     system_prompt += (
@@ -477,17 +429,12 @@ def _build_toolbox_messages(
     if _is_multitask_step(step_input):
         system_prompt += (
             "The final JSON must contain task_actions with exactly these keys: sepsis, aki, respiratory_support.\n"
-            f"Before final multitask task_actions, complete these core current-checkpoint tools: {required_tool_order}.\n"
+            "Do not call every tool by default. Use only the evidence checks needed for the current decisions.\n"
         )
     else:
         system_prompt += "Valid final actions:\n"
         for action in _label_space_for_task(step_input, task_names[0]):
             system_prompt += f"- {action}\n"
-    if next_required_tool is not None:
-        system_prompt += (
-            f"\nCurrent requirement: the next response must be a tool call for `{next_required_tool}` "
-            "because multitask core tool coverage is still incomplete for this checkpoint.\n"
-        )
     user_payload = {
         "step_input": {
             "trajectory_id": step_input["trajectory_id"],
@@ -501,8 +448,6 @@ def _build_toolbox_messages(
         "tool_backend": step_input.get("tool_backend"),
         "protocol": step_input.get("protocol"),
         "available_tools": toolbox_tools,
-        "required_tool_order": required_tool_order,
-        "next_required_tool": next_required_tool,
         "already_called_tools": executed["tool_calls"],
         "tool_results_by_name": executed["tool_results"],
         "rolling_history": rolling_history,
@@ -987,30 +932,20 @@ def _build_repair_messages(
     messages.append({"role": "assistant", "content": bad_output})
     stay_id = int(step_input["stay_id"])
     t_hour = int(step_input["t_hour"])
-    next_tool = _next_missing_tool_for_step(step_input, history, available_tools)
+    example_tool = available_tools[0] if available_tools else "query_suspicion_of_infection"
     if _is_multitask_step(step_input):
-        if next_tool is not None:
-            repair_hint = (
-                "Your previous reply was invalid. Respond again with JSON only and no extra text. "
-                f'Call the required next tool now: {{"tool_name":"{next_tool}","arguments":{{"stay_id":{stay_id},"t_hour":{t_hour}}}}}'
-            )
-        else:
-            repair_hint = (
-                "Your previous reply was invalid. Respond again with JSON only and no extra text. "
-                'Return final task actions now as {"task_actions":{"sepsis":"keep_monitoring","aki":"keep_monitoring","respiratory_support":"room_air_or_low_support"}}.'
-            )
+        repair_hint = (
+            "Your previous reply was invalid. Respond again with JSON only and no extra text. "
+            f'Return either one tool call such as {{"tool_name":"{example_tool}","arguments":{{"stay_id":{stay_id},"t_hour":{t_hour}}}}} '
+            'or final task actions such as {"task_actions":{"sepsis":"keep_monitoring","aki":"keep_monitoring","respiratory_support":"room_air_or_low_support"}}.'
+        )
     else:
-        if next_tool is not None:
-            repair_hint = (
-                "Your previous reply was invalid because it was not exactly one JSON object. "
-                "Respond again with JSON only and no extra text. "
-                f'Call the required next tool now: {{"tool_name":"{next_tool}","arguments":{{"stay_id":{stay_id},"t_hour":{t_hour}}}}}.'
-            )
-        else:
-            repair_hint = (
-                "Your previous reply was invalid because it was not exactly one JSON object. "
-                'Respond again with JSON only and no extra text. Use {"action":"keep_monitoring"} style.'
-            )
+        repair_hint = (
+            "Your previous reply was invalid because it was not exactly one JSON object. "
+            "Respond again with JSON only and no extra text. "
+            f'Return either one tool call such as {{"tool_name":"{example_tool}","arguments":{{"stay_id":{stay_id},"t_hour":{t_hour}}}}} '
+            'or a final action such as {"action":"keep_monitoring"}.'
+        )
     messages.append({"role": "user", "content": repair_hint})
     return messages
 
@@ -1025,20 +960,13 @@ def _build_toolbox_repair_messages(
     messages.append({"role": "assistant", "content": bad_output})
     stay_id = int(step_input["stay_id"])
     t_hour = int(step_input["t_hour"])
-    next_required_tool = _toolbox_next_required_tool(step_input, history, available_tools)
-    if next_required_tool is not None:
-        repair_hint = (
-            "Your previous reply was invalid. Respond again with JSON only and no extra text. "
-            f'Call the required multitask core tool now: {{"tool_name":"{next_required_tool}","arguments":{{"stay_id":{stay_id},"t_hour":{t_hour}}}}}.'
-        )
-    else:
-        repair_hint = (
-            "Your previous reply was invalid. Respond again with JSON only and no extra text. "
-            "Return either one allowed tool call or one final action. "
-            f"Allowed tools: {', '.join(tool_name for tool_name in available_tools if tool_name in SHARED_TOOLBOX_TOOL_NAMES)}. "
-            f'Example tool call: {{"tool_name":"query_sofa","arguments":{{"stay_id":{stay_id},"t_hour":{t_hour}}}}}. '
-            f"Example final action: {_toolbox_final_response_example(step_input)}."
-        )
+    repair_hint = (
+        "Your previous reply was invalid. Respond again with JSON only and no extra text. "
+        "Return either one allowed tool call or one final action. "
+        f"Allowed tools: {', '.join(tool_name for tool_name in available_tools if tool_name in SHARED_TOOLBOX_TOOL_NAMES)}. "
+        f'Example tool call: {{"tool_name":"query_sofa","arguments":{{"stay_id":{stay_id},"t_hour":{t_hour}}}}}. '
+        f"Example final action: {_toolbox_final_response_example(step_input)}."
+    )
     messages.append({"role": "user", "content": repair_hint})
     return messages
 
@@ -1473,7 +1401,6 @@ class QwenChatAgent:
             "step_index": int(step_input["step_index"]),
             "t_hour": int(step_input["t_hour"]),
         }
-        next_tool = _next_missing_tool_for_step(step_input, history, available_tools)
         messages = _build_messages(step_input, history, available_tools)
         content = self._generate_with_metrics(messages)
         if self.trace_callback is not None:
@@ -1491,52 +1418,6 @@ class QwenChatAgent:
             if self.trace_callback is not None:
                 self.trace_callback({"event_type": "model_output_repair", **context, "output": repaired})
             response = _coerce_agent_output(_extract_json_object(repaired))
-
-        if next_tool is None and isinstance(response, ToolCall):
-            original_max_tokens = self.client.max_new_tokens
-            repair_messages = _build_repair_messages(step_input, history, available_tools, content)
-            self.client.max_new_tokens = self.repair_max_new_tokens
-            try:
-                repaired = self._generate_with_metrics(repair_messages)
-            finally:
-                self.client.max_new_tokens = original_max_tokens
-            if self.trace_callback is not None:
-                self.trace_callback(
-                    {
-                        "event_type": "model_output_repair_final_decision",
-                        **context,
-                        "output": repaired,
-                    }
-                )
-            response = _coerce_agent_output(_extract_json_object(repaired))
-
-        if next_tool is not None and (
-            not isinstance(response, ToolCall) or response.tool_name != next_tool
-        ):
-            if self.trace_callback is not None:
-                self.trace_callback(
-                    {
-                        "event_type": "model_output_forced_tool",
-                        **context,
-                        "required_tool_name": next_tool,
-                        "original_response": (
-                            {"task_actions": response.task_actions}
-                            if isinstance(response, ActionDecision) and response.task_actions is not None
-                            else {"action": response.action}
-                            if isinstance(response, ActionDecision)
-                            else {"tool_name": response.tool_name, "arguments": response.arguments}
-                        ),
-                    }
-                )
-            return ToolCall(
-                tool_name=next_tool,
-                arguments={"stay_id": int(step_input["stay_id"]), "t_hour": int(step_input["t_hour"])},
-            )
-        if next_tool is not None and isinstance(response, ToolCall):
-            return ToolCall(
-                tool_name=next_tool,
-                arguments={"stay_id": int(step_input["stay_id"]), "t_hour": int(step_input["t_hour"])},
-            )
         return response
 
     def _next_toolbox_response(
@@ -1551,7 +1432,6 @@ class QwenChatAgent:
             "step_index": int(step_input["step_index"]),
             "t_hour": int(step_input["t_hour"]),
         }
-        next_required_tool = _toolbox_next_required_tool(step_input, history, available_tools)
         messages = _build_toolbox_messages(step_input, history, available_tools)
         content = self._generate_with_metrics(messages)
         if self.trace_callback is not None:
@@ -1576,28 +1456,6 @@ class QwenChatAgent:
                 _coerce_agent_output(_extract_json_object(repaired)),
                 step_input=step_input,
                 available_tools=available_tools,
-            )
-        if next_required_tool is not None and (
-            not isinstance(response, ToolCall) or response.tool_name != next_required_tool
-        ):
-            if self.trace_callback is not None:
-                self.trace_callback(
-                    {
-                        "event_type": "model_output_forced_tool",
-                        **context,
-                        "required_tool_name": next_required_tool,
-                        "original_response": (
-                            {"task_actions": response.task_actions}
-                            if isinstance(response, ActionDecision) and response.task_actions is not None
-                            else {"action": response.action}
-                            if isinstance(response, ActionDecision)
-                            else {"tool_name": response.tool_name, "arguments": response.arguments}
-                        ),
-                    }
-                )
-            return ToolCall(
-                tool_name=next_required_tool,
-                arguments={"stay_id": int(step_input["stay_id"]), "t_hour": int(step_input["t_hour"])},
             )
         return response
 

@@ -216,12 +216,12 @@ class PipelineTest(unittest.TestCase):
         self.assertIn("query_sofa", system_prompt)
         self.assertIn("query_kdigo_stage", system_prompt)
         self.assertIn("query_ventilation_status", system_prompt)
-        self.assertIn("query_urine_output_rate", system_prompt)
-        self.assertIn("query_vasoactive_agent", system_prompt)
         self.assertIn("real longitudinal monitoring task", system_prompt.lower())
         self.assertIn("null means not yet assessed", system_prompt.lower())
         self.assertIn("do not return infection_suspect unless suspected infection is explicitly supported", system_prompt.lower())
-        self.assertIn("query_kdigo_stage and query_urine_output_rate are the highest-yield pair for AKI decisions", system_prompt)
+        self.assertIn("do not repeat query_suspicion_of_infection just to reconfirm it", system_prompt.lower())
+        self.assertIn("do not downgrade from trigger_sepsis_alert back to infection_suspect", system_prompt.lower())
+        self.assertIn("prefer a small number of high-value evidence checks", system_prompt.lower())
         self.assertEqual(user_payload["protocol"], "rolling_toolbox_with_history")
         self.assertEqual(len(user_payload["rolling_history"]), 2)
         self.assertEqual(user_payload["available_tools"], [
@@ -253,13 +253,9 @@ class PipelineTest(unittest.TestCase):
         self.assertIn("task_actions", system_prompt)
         self.assertIn("sepsis, aki, respiratory_support", system_prompt)
         self.assertIn("Do not finalize multitask task_actions from sepsis evidence alone", system_prompt)
-        self.assertIn("Before final multitask task_actions, complete these core current-checkpoint tools", system_prompt)
+        self.assertIn("do not automatically call every core tool at every checkpoint", system_prompt.lower())
+        self.assertIn("If rolling_history already makes a task explicit", system_prompt)
         self.assertEqual(user_payload["step_input"]["task_names"], ["sepsis", "aki", "respiratory_support"])
-        self.assertEqual(
-            user_payload["required_tool_order"],
-            ["query_suspicion_of_infection", "query_sofa", "query_kdigo_stage", "query_ventilation_status"],
-        )
-        self.assertEqual(user_payload["next_required_tool"], "query_suspicion_of_infection")
 
     def test_toolbox_prompt_supports_non_monotonic_aki(self):
         step_input = {
@@ -281,6 +277,7 @@ class PipelineTest(unittest.TestCase):
         system_prompt = messages[0]["content"]
         self.assertIn("current visible AKI state", system_prompt)
         self.assertIn("query_kdigo_stage before a non-baseline AKI decision", system_prompt)
+        self.assertIn("continuing that same current state", system_prompt)
 
     def test_infection_only_zeroshot_prompt_uses_overlap_windows_without_sofa_label(self):
         step_input = {
@@ -342,7 +339,7 @@ class PipelineTest(unittest.TestCase):
         )
         self.assertEqual(response.action, "infection_suspect")
 
-    def test_qwen_agent_forces_next_required_tool_when_model_skips_tool_use(self):
+    def test_qwen_agent_preserves_multitask_final_actions_without_forcing_tools(self):
         class FakeClient:
             def __init__(self):
                 self.max_new_tokens = 250
@@ -370,11 +367,17 @@ class PipelineTest(unittest.TestCase):
                 "query_ventilation_status",
             ],
         )
-        self.assertEqual(response.tool_name, "query_suspicion_of_infection")
-        self.assertEqual(response.arguments, {"stay_id": 30, "t_hour": 4})
-        self.assertTrue(any(event["event_type"] == "model_output_forced_tool" for event in trace_events))
+        self.assertEqual(
+            response.task_actions,
+            {
+                "sepsis": "keep_monitoring",
+                "aki": "keep_monitoring",
+                "respiratory_support": "room_air_or_low_support",
+            },
+        )
+        self.assertFalse(any(event["event_type"] == "model_output_forced_tool" for event in trace_events))
 
-    def test_qwen_agent_forces_next_required_tool_when_model_repeats_prior_tool(self):
+    def test_qwen_agent_preserves_repeated_tool_call_choice(self):
         class FakeClient:
             def __init__(self):
                 self.max_new_tokens = 250
@@ -414,10 +417,10 @@ class PipelineTest(unittest.TestCase):
                 "query_ventilation_status",
             ],
         )
-        self.assertEqual(response.tool_name, "query_sofa")
+        self.assertEqual(response.tool_name, "query_suspicion_of_infection")
         self.assertEqual(response.arguments, {"stay_id": 30, "t_hour": 4})
 
-    def test_qwen_agent_repairs_to_final_decision_after_all_tools_are_done(self):
+    def test_qwen_agent_preserves_tool_call_after_prior_tools_exist(self):
         class FakeClient:
             def __init__(self):
                 self.max_new_tokens = 250
@@ -469,14 +472,8 @@ class PipelineTest(unittest.TestCase):
                 "query_ventilation_status",
             ],
         )
-        self.assertEqual(
-            response.task_actions,
-            {
-                "sepsis": "infection_suspect",
-                "aki": "suspect_aki",
-                "respiratory_support": "high_flow_or_noninvasive_support",
-            },
-        )
+        self.assertEqual(response.tool_name, "query_ventilation_status")
+        self.assertEqual(response.arguments, {"stay_id": 30, "t_hour": 4})
 
     def test_qwen_agent_zeroshot_returns_python_then_final_action(self):
         class FakeClient:
@@ -635,7 +632,7 @@ class PipelineTest(unittest.TestCase):
         self.assertEqual(response.action, "infection_suspect")
         self.assertFalse(any(event["event_type"] == "model_output_forced_tool" for event in trace_events))
 
-    def test_qwen_agent_toolbox_protocol_forces_multitask_core_tool_before_final_actions(self):
+    def test_qwen_agent_toolbox_protocol_preserves_multitask_final_actions(self):
         class FakeClient:
             def __init__(self):
                 self.max_new_tokens = 250
@@ -664,9 +661,15 @@ class PipelineTest(unittest.TestCase):
             history=[],
             available_tools=list(SHARED_TOOLBOX_TOOL_NAMES),
         )
-        self.assertEqual(response.tool_name, "query_suspicion_of_infection")
-        self.assertEqual(response.arguments, {"stay_id": 30, "t_hour": 4})
-        self.assertTrue(any(event["event_type"] == "model_output_forced_tool" for event in trace_events))
+        self.assertEqual(
+            response.task_actions,
+            {
+                "sepsis": "keep_monitoring",
+                "aki": "keep_monitoring",
+                "respiratory_support": "room_air_or_low_support",
+            },
+        )
+        self.assertFalse(any(event["event_type"] == "model_output_forced_tool" for event in trace_events))
 
     def test_multitask_eval_uses_zero_f1_for_empty_class(self):
         trajectory = Trajectory(
