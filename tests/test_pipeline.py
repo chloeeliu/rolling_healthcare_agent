@@ -226,11 +226,14 @@ class PipelineTest(unittest.TestCase):
         self.assertIn("do not treat infection_suspect as a terminal resting state", system_prompt.lower())
         self.assertIn("do not downgrade from trigger_sepsis_alert back to infection_suspect", system_prompt.lower())
         self.assertIn("prefer a small number of high-value evidence checks", system_prompt.lower())
+        self.assertIn("current checkpoint focus", system_prompt.lower())
+        self.assertIn("key unresolved question now is whether current visible organ dysfunction supports sofa >= 2", system_prompt.lower())
+        self.assertIn('{"tool_name":"query_sofa"', system_prompt)
         self.assertEqual(user_payload["protocol"], "rolling_toolbox_with_history")
         self.assertEqual(len(user_payload["rolling_history"]), 2)
         self.assertEqual(user_payload["available_tools"], [
-            "query_suspicion_of_infection",
             "query_sofa",
+            "query_suspicion_of_infection",
             "query_kdigo_stage",
             "query_ventilation_status",
         ])

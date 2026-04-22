@@ -69,8 +69,8 @@ ZEROSHOT_EXEC_TOOL_NAMES = {CODE_EXEC_TOOL_NAME, SQL_EXEC_TOOL_NAME}
 CLINICAL_GUIDANCE = {
     "sepsis": [
         "Sepsis in this benchmark follows a rolling Sepsis-3 style definition: suspected infection plus acute organ dysfunction consistent with SOFA >= 2 at the current visible checkpoint.",
-        "Treat infection evidence and organ-dysfunction evidence as jointly necessary for trigger_sepsis_alert.",
-        "Use infection_suspect only for the intermediate state where infection is visible but current alert-level organ dysfunction is not yet established.",
+        "Let's check infection first, if met, then check sofa score using available tool calling function.",
+        "Make decision infection_suspect only for the intermediate state where infection is visible but current alert-level organ dysfunction is not yet established.",
         "If suspected infection is not visible yet, prefer keep_monitoring.",
         "If suspected infection is visible but alert-level organ dysfunction is not yet visible, prefer infection_suspect.",
         "If suspected infection is visible and SOFA is 2 or higher, this is usually alert-level evidence for trigger_sepsis_alert.",
@@ -184,11 +184,7 @@ def _toolbox_final_response_example(step_input: dict[str, Any]) -> str:
 
 
 def _toolbox_evidence_requirements(task_names: list[str], step_input: dict[str, Any]) -> list[str]:
-    requirements = [
-        "Use rolling_history to recognize what is already established longitudinally for this stay.",
-        "In rolling_history, null means not yet assessed at that checkpoint. Do not treat null as negative evidence.",
-        "Call only effective tools. Avoid low-value repeated calls when earlier checkpoints already establish the same fact.",
-    ]
+    requirements: list[str] = []
     if _is_multitask_step(step_input):
         requirements.extend(
             [
@@ -243,6 +239,62 @@ def _toolbox_evidence_requirements(task_names: list[str], step_input: dict[str, 
             ]
         )
     return requirements
+
+
+def _latest_relevant_history(step_input: dict[str, Any], task_name: str) -> dict[str, Any]:
+    rolling_history = step_input.get("rolling_history") or []
+    for item in reversed(rolling_history):
+        if item.get("task_name") in {task_name, "multitask"}:
+            return item
+    return {}
+
+
+def _single_task_prompt_focus(
+    step_input: dict[str, Any],
+    available_tools: list[str],
+) -> tuple[list[str], str | None, str]:
+    task_name = _single_task_name(step_input)
+    latest = _latest_relevant_history(step_input, task_name)
+
+    priority: list[str]
+    focus_note: str | None = None
+
+    if task_name == "sepsis":
+        infection = latest.get("infection")
+        if infection is True:
+            priority = ["query_sofa", "query_suspicion_of_infection"]
+            focus_note = (
+                "Current rolling history already suggests suspected infection is established. "
+                "The key unresolved question now is whether current visible organ dysfunction supports SOFA >= 2."
+            )
+        else:
+            priority = ["query_suspicion_of_infection", "query_sofa"]
+            focus_note = (
+                "Current rolling history does not yet establish suspected infection. "
+                "Infection evidence is the key unresolved question before any sepsis alert decision."
+            )
+    elif task_name == "infection_only":
+        priority = ["query_suspicion_of_infection"]
+        focus_note = (
+            "This task is only about suspected infection. Focus on whether infection evidence is visible at the current checkpoint."
+        )
+    elif task_name == "aki":
+        priority = ["query_kdigo_stage"]
+        focus_note = (
+            "This task is about current visible AKI severity at the checkpoint. KDIGO staging is the primary evidence source."
+        )
+    elif task_name == "respiratory_support":
+        priority = ["query_ventilation_status"]
+        focus_note = (
+            "This task is about current visible respiratory support at the checkpoint. Ventilation status is the primary evidence source."
+        )
+    else:
+        priority = list(available_tools)
+
+    ordered = [tool for tool in priority if tool in available_tools]
+    ordered.extend(tool for tool in available_tools if tool not in ordered)
+    example_tool = ordered[0] if ordered else "query_suspicion_of_infection"
+    return ordered, focus_note, example_tool
 
 
 def _build_messages(
@@ -319,7 +371,7 @@ def _build_messages(
         t_hour = int(step_input["t_hour"])
         task_name = task_names[0]
         label_space = _label_space_for_task(step_input, task_name)
-        example_tool = available_tools[0] if available_tools else "query_suspicion_of_infection"
+        ordered_tools, focus_note, example_tool = _single_task_prompt_focus(step_input, available_tools)
         system_prompt = (
             f"You are an ICU rolling surveillance agent for task: {task_name}.\n"
             f"Tool backend: {step_input.get('tool_backend', 'official')}.\n"
@@ -330,12 +382,16 @@ def _build_messages(
             f"Task semantics: {_task_description(task_name, step_input)}\n\n"
             "Available tools:\n"
         )
-        for tool_name in available_tools:
+        for tool_name in ordered_tools:
             system_prompt += f"- {tool_name}: {TOOL_DESCRIPTIONS[tool_name]}\n"
         system_prompt += (
             "\n"
             + _clinical_guidance_text([task_name], step_input)
             + "\n"
+        )
+        if focus_note:
+            system_prompt += f"\nCurrent checkpoint focus:\n- {focus_note}\n"
+        system_prompt += (
             "\n"
             "\nTool call format:\n"
             f'{{"tool_name":"{example_tool}","arguments":{{"stay_id":{stay_id},"t_hour":{t_hour}}}}}\n\n'
@@ -366,7 +422,7 @@ def _build_messages(
             "protocol": protocol,
             "rolling_history": rolling_history,
             "history": history,
-            "available_tools": available_tools,
+            "available_tools": ordered_tools,
         }
     user_prompt = json.dumps(user_payload, indent=2)
     return [
@@ -388,6 +444,12 @@ def _build_toolbox_messages(
     toolbox_tools = [tool_name for tool_name in SHARED_TOOLBOX_TOOL_NAMES if tool_name in available_tools]
     if not toolbox_tools:
         toolbox_tools = list(available_tools)
+    single_task_tools: list[str] | None = None
+    focus_note: str | None = None
+    example_tool = "query_suspicion_of_infection"
+    if not _is_multitask_step(step_input):
+        single_task_tools, focus_note, example_tool = _single_task_prompt_focus(step_input, toolbox_tools)
+        toolbox_tools = single_task_tools
     system_prompt = (
         "You are an ICU rolling surveillance agent.\n"
         "Protocol: rolling_toolbox_with_history.\n"
@@ -426,10 +488,12 @@ def _build_toolbox_messages(
         )
     for line in _toolbox_evidence_requirements(task_names, step_input):
         system_prompt += f"- {line}\n"
+    if focus_note:
+        system_prompt += f"\nCurrent checkpoint focus:\n- {focus_note}\n"
     system_prompt += (
         "\n"
         "Tool call format:\n"
-        f'{{"tool_name":"query_suspicion_of_infection","arguments":{{"stay_id":{stay_id},"t_hour":{t_hour}}}}}\n\n'
+        f'{{"tool_name":"{example_tool}","arguments":{{"stay_id":{stay_id},"t_hour":{t_hour}}}}}\n\n'
         "Final action format:\n"
         f"{_toolbox_final_response_example(step_input)}\n\n"
     )
