@@ -252,7 +252,14 @@ class PipelineTest(unittest.TestCase):
         user_payload = json.loads(messages[1]["content"])
         self.assertIn("task_actions", system_prompt)
         self.assertIn("sepsis, aki, respiratory_support", system_prompt)
+        self.assertIn("Do not finalize multitask task_actions from sepsis evidence alone", system_prompt)
+        self.assertIn("Before final multitask task_actions, complete these core current-checkpoint tools", system_prompt)
         self.assertEqual(user_payload["step_input"]["task_names"], ["sepsis", "aki", "respiratory_support"])
+        self.assertEqual(
+            user_payload["required_tool_order"],
+            ["query_suspicion_of_infection", "query_sofa", "query_kdigo_stage", "query_ventilation_status"],
+        )
+        self.assertEqual(user_payload["next_required_tool"], "query_suspicion_of_infection")
 
     def test_toolbox_prompt_supports_non_monotonic_aki(self):
         step_input = {
@@ -627,6 +634,98 @@ class PipelineTest(unittest.TestCase):
         )
         self.assertEqual(response.action, "infection_suspect")
         self.assertFalse(any(event["event_type"] == "model_output_forced_tool" for event in trace_events))
+
+    def test_qwen_agent_toolbox_protocol_forces_multitask_core_tool_before_final_actions(self):
+        class FakeClient:
+            def __init__(self):
+                self.max_new_tokens = 250
+
+            def generate(self, messages):
+                return '{"task_actions":{"sepsis":"keep_monitoring","aki":"keep_monitoring","respiratory_support":"room_air_or_low_support"}}'
+
+        trace_events = []
+        agent = object.__new__(QwenChatAgent)
+        agent.model = "fake"
+        agent.temperature = 0.0
+        agent.top_p = 0.95
+        agent.max_new_tokens = 250
+        agent.repair_max_new_tokens = 120
+        agent.trace_callback = trace_events.append
+        agent.client = FakeClient()
+
+        step_input = self._multitask_step_input() | {
+            "task_mode": "multitask",
+            "tool_backend": "official",
+            "protocol": "rolling_toolbox_with_history",
+            "rolling_history": [],
+        }
+        response = agent.next_response(
+            step_input,
+            history=[],
+            available_tools=list(SHARED_TOOLBOX_TOOL_NAMES),
+        )
+        self.assertEqual(response.tool_name, "query_suspicion_of_infection")
+        self.assertEqual(response.arguments, {"stay_id": 30, "t_hour": 4})
+        self.assertTrue(any(event["event_type"] == "model_output_forced_tool" for event in trace_events))
+
+    def test_multitask_eval_uses_zero_f1_for_empty_class(self):
+        trajectory = Trajectory(
+            trajectory_id="traj-1",
+            stay_id=1,
+            subject_id=1,
+            hadm_id=1,
+            anchor="2020-01-01 00:00:00",
+            step_hours=4,
+            horizon_hours=4,
+            transitions={},
+            task_name="sepsis",
+            task_variant="multitask",
+            task_names=["sepsis", "aki", "respiratory_support"],
+            label_spaces={
+                "sepsis": ["keep_monitoring", "infection_suspect", "trigger_sepsis_alert"],
+                "aki": ["keep_monitoring", "suspect_aki", "trigger_aki_alert"],
+                "respiratory_support": [
+                    "room_air_or_low_support",
+                    "high_flow_or_noninvasive_support",
+                    "invasive_vent_required",
+                ],
+            },
+            checkpoints=[
+                Checkpoint(
+                    t_hour=0,
+                    task_labels={
+                        "sepsis": "keep_monitoring",
+                        "aki": "keep_monitoring",
+                        "respiratory_support": "room_air_or_low_support",
+                    },
+                )
+            ],
+        )
+        rollout = TrajectoryRollout(
+            trajectory_id="traj-1",
+            stay_id=1,
+            steps=[
+                StepRecord(
+                    step_index=0,
+                    t_hour=0,
+                    gt_task_actions={
+                        "sepsis": "keep_monitoring",
+                        "aki": "keep_monitoring",
+                        "respiratory_support": "room_air_or_low_support",
+                    },
+                    predicted_task_actions={
+                        "sepsis": "keep_monitoring",
+                        "aki": "keep_monitoring",
+                        "respiratory_support": "room_air_or_low_support",
+                    },
+                )
+            ],
+        )
+        metrics = evaluate_rollouts([trajectory], [rollout], protocol="rolling_toolbox_with_history")
+        self.assertEqual(
+            metrics["per_task"]["respiratory_support"]["per_class"]["high_flow_or_noninvasive_support"]["f1"],
+            0.0,
+        )
 
     def test_zeroshot_runtime_blocks_direct_source_access_in_sql(self):
         runtime = object.__new__(ZeroShotRawDuckDBRuntime)

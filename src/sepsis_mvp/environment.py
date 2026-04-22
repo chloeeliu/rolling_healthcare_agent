@@ -317,7 +317,7 @@ class BenchmarkEnvironment:
 
 def _f1(tp: int, fp: int, fn: int) -> float:
     if tp == 0 and fp == 0 and fn == 0:
-        return 1.0
+        return 0.0
     precision = tp / (tp + fp) if tp + fp else 0.0
     recall = tp / (tp + fn) if tp + fn else 0.0
     if precision + recall == 0:

@@ -125,6 +125,18 @@ def _required_tool_order(step_input: dict[str, Any], available_tools: list[str])
     return ordered
 
 
+def _toolbox_next_required_tool(
+    step_input: dict[str, Any],
+    history: list[dict[str, Any]],
+    available_tools: list[str],
+) -> str | None:
+    if not _is_toolbox_protocol(step_input):
+        return None
+    if _is_multitask_step(step_input):
+        return _next_missing_tool_for_step(step_input, history, available_tools)
+    return None
+
+
 def _next_missing_tool(history: list[dict[str, Any]], available_tools: list[str]) -> str | None:
     return _next_missing_tool_for_step({}, history, available_tools)
 
@@ -212,6 +224,16 @@ def _toolbox_evidence_requirements(task_names: list[str], step_input: dict[str, 
         "In rolling_history, null means not yet assessed at that checkpoint. Do not treat null as negative evidence.",
         "Call only effective tools. Avoid low-value repeated calls when earlier checkpoints already establish the same fact.",
     ]
+    if _is_multitask_step(step_input):
+        required_tool_order = _required_tool_order(step_input, list(SHARED_TOOLBOX_TOOL_NAMES))
+        requirements.extend(
+            [
+                "For multitask surveillance, collect the core task tools for the current checkpoint before returning task_actions.",
+                f"Mandatory current-checkpoint core tools for this multitask step: {', '.join(required_tool_order)}.",
+                "Do not finalize multitask task_actions from sepsis evidence alone.",
+                "Do not leave AKI or respiratory support at baseline just because they were not checked.",
+            ]
+        )
     if "sepsis" in task_names:
         requirements.extend(
             [
@@ -407,6 +429,8 @@ def _build_toolbox_messages(
     toolbox_tools = [tool_name for tool_name in SHARED_TOOLBOX_TOOL_NAMES if tool_name in available_tools]
     if not toolbox_tools:
         toolbox_tools = list(available_tools)
+    next_required_tool = _toolbox_next_required_tool(step_input, history, available_tools)
+    required_tool_order = _required_tool_order(step_input, available_tools)
     system_prompt = (
         "You are an ICU rolling surveillance agent.\n"
         "Protocol: rolling_toolbox_with_history.\n"
@@ -451,11 +475,19 @@ def _build_toolbox_messages(
         f"{_toolbox_final_response_example(step_input)}\n\n"
     )
     if _is_multitask_step(step_input):
-        system_prompt += "The final JSON must contain task_actions with exactly these keys: sepsis, aki, respiratory_support.\n"
+        system_prompt += (
+            "The final JSON must contain task_actions with exactly these keys: sepsis, aki, respiratory_support.\n"
+            f"Before final multitask task_actions, complete these core current-checkpoint tools: {required_tool_order}.\n"
+        )
     else:
         system_prompt += "Valid final actions:\n"
         for action in _label_space_for_task(step_input, task_names[0]):
             system_prompt += f"- {action}\n"
+    if next_required_tool is not None:
+        system_prompt += (
+            f"\nCurrent requirement: the next response must be a tool call for `{next_required_tool}` "
+            "because multitask core tool coverage is still incomplete for this checkpoint.\n"
+        )
     user_payload = {
         "step_input": {
             "trajectory_id": step_input["trajectory_id"],
@@ -469,6 +501,8 @@ def _build_toolbox_messages(
         "tool_backend": step_input.get("tool_backend"),
         "protocol": step_input.get("protocol"),
         "available_tools": toolbox_tools,
+        "required_tool_order": required_tool_order,
+        "next_required_tool": next_required_tool,
         "already_called_tools": executed["tool_calls"],
         "tool_results_by_name": executed["tool_results"],
         "rolling_history": rolling_history,
@@ -991,13 +1025,20 @@ def _build_toolbox_repair_messages(
     messages.append({"role": "assistant", "content": bad_output})
     stay_id = int(step_input["stay_id"])
     t_hour = int(step_input["t_hour"])
-    repair_hint = (
-        "Your previous reply was invalid. Respond again with JSON only and no extra text. "
-        "Return either one allowed tool call or one final action. "
-        f"Allowed tools: {', '.join(tool_name for tool_name in available_tools if tool_name in SHARED_TOOLBOX_TOOL_NAMES)}. "
-        f'Example tool call: {{"tool_name":"query_sofa","arguments":{{"stay_id":{stay_id},"t_hour":{t_hour}}}}}. '
-        f"Example final action: {_toolbox_final_response_example(step_input)}."
-    )
+    next_required_tool = _toolbox_next_required_tool(step_input, history, available_tools)
+    if next_required_tool is not None:
+        repair_hint = (
+            "Your previous reply was invalid. Respond again with JSON only and no extra text. "
+            f'Call the required multitask core tool now: {{"tool_name":"{next_required_tool}","arguments":{{"stay_id":{stay_id},"t_hour":{t_hour}}}}}.'
+        )
+    else:
+        repair_hint = (
+            "Your previous reply was invalid. Respond again with JSON only and no extra text. "
+            "Return either one allowed tool call or one final action. "
+            f"Allowed tools: {', '.join(tool_name for tool_name in available_tools if tool_name in SHARED_TOOLBOX_TOOL_NAMES)}. "
+            f'Example tool call: {{"tool_name":"query_sofa","arguments":{{"stay_id":{stay_id},"t_hour":{t_hour}}}}}. '
+            f"Example final action: {_toolbox_final_response_example(step_input)}."
+        )
     messages.append({"role": "user", "content": repair_hint})
     return messages
 
@@ -1510,6 +1551,7 @@ class QwenChatAgent:
             "step_index": int(step_input["step_index"]),
             "t_hour": int(step_input["t_hour"]),
         }
+        next_required_tool = _toolbox_next_required_tool(step_input, history, available_tools)
         messages = _build_toolbox_messages(step_input, history, available_tools)
         content = self._generate_with_metrics(messages)
         if self.trace_callback is not None:
@@ -1534,6 +1576,28 @@ class QwenChatAgent:
                 _coerce_agent_output(_extract_json_object(repaired)),
                 step_input=step_input,
                 available_tools=available_tools,
+            )
+        if next_required_tool is not None and (
+            not isinstance(response, ToolCall) or response.tool_name != next_required_tool
+        ):
+            if self.trace_callback is not None:
+                self.trace_callback(
+                    {
+                        "event_type": "model_output_forced_tool",
+                        **context,
+                        "required_tool_name": next_required_tool,
+                        "original_response": (
+                            {"task_actions": response.task_actions}
+                            if isinstance(response, ActionDecision) and response.task_actions is not None
+                            else {"action": response.action}
+                            if isinstance(response, ActionDecision)
+                            else {"tool_name": response.tool_name, "arguments": response.arguments}
+                        ),
+                    }
+                )
+            return ToolCall(
+                tool_name=next_required_tool,
+                arguments={"stay_id": int(step_input["stay_id"]), "t_hour": int(step_input["t_hour"])},
             )
         return response
 
