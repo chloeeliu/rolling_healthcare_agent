@@ -10,7 +10,7 @@ from .schemas import (
     ActionDecision,
     AgentStepInput,
     CODE_EXEC_TOOL_NAME,
-    SEPSIS_TOOLBOX_TOOL_NAMES,
+    SHARED_TOOLBOX_TOOL_NAMES,
     SQL_EXEC_TOOL_NAME,
     TASK_BASELINE_ACTION,
     TASK_LABEL_SPACES,
@@ -295,11 +295,7 @@ class BenchmarkEnvironment:
                 return [SQL_EXEC_TOOL_NAME]
             return [CODE_EXEC_TOOL_NAME]
         if self.protocol == "rolling_toolbox_with_history":
-            if trajectory.is_multitask() or trajectory.primary_task_name() != "sepsis":
-                raise ValueError(
-                    "Protocol 'rolling_toolbox_with_history' currently supports only the single-task sepsis dataset."
-                )
-            return list(SEPSIS_TOOLBOX_TOOL_NAMES)
+            return list(SHARED_TOOLBOX_TOOL_NAMES)
         return trajectory.resolved_tool_names()
 
     def _max_step_interactions_for_protocol(self, available_tools: list[str]) -> int:
@@ -339,12 +335,11 @@ def evaluate_rollouts(
         metrics = evaluate_multitask_rollouts(trajectories, rollouts)
     else:
         metrics = evaluate_single_task_rollouts(trajectories, rollouts, protocol=protocol)
-        if (
-            protocol == "rolling_toolbox_with_history"
-            and trajectories
-            and trajectories[0].primary_task_name() == "sepsis"
-        ):
+    if protocol == "rolling_toolbox_with_history" and trajectories:
+        if not trajectories[0].is_multitask() and trajectories[0].primary_task_name() == "sepsis":
             metrics["toolbox_efficiency"] = evaluate_sepsis_toolbox_efficiency(rollouts)
+        else:
+            metrics["toolbox_efficiency"] = evaluate_generic_toolbox_efficiency(rollouts)
     metrics["resource_usage"] = evaluate_resource_usage(rollouts)
     return metrics
 
@@ -919,7 +914,91 @@ def _tool_call_has_marginal_utility(
             rank is not None
             and (prior_state["max_support_rank"] is None or rank > prior_state["max_support_rank"])
         )
+    if tool_name == "query_urine_output_rate":
+        return bool(
+            output.get("min_6hr_rate_mL_kg_hr") is not None
+            or output.get("has_oliguria")
+            or output.get("has_severe_oliguria")
+        )
+    if tool_name == "query_vasoactive_agent":
+        return bool(output.get("received_vasoactive") or output.get("active_agents"))
+    if tool_name == "query_vitalsign":
+        return bool(
+            output.get("latest_charttime") is not None
+            or output.get("has_tachycardia")
+            or output.get("has_hypotension")
+        )
+    if tool_name == "query_bg":
+        return bool(
+            output.get("peak_lactate") is not None
+            or output.get("min_pH") is not None
+            or output.get("worst_pao2fio2ratio") is not None
+        )
+    if tool_name == "query_gcs":
+        return bool(output.get("min_gcs") is not None or output.get("has_severe_impairment"))
+    if tool_name == "query_antibiotic":
+        return bool(output.get("received_antibiotics") or output.get("distinct_antibiotic_count"))
+    if tool_name == "query_invasive_line":
+        return bool(output.get("has_invasive_line") or output.get("lines_present"))
     return False
+
+
+def evaluate_generic_toolbox_efficiency(rollouts: list[TrajectoryRollout]) -> dict[str, Any]:
+    total_steps = 0
+    total_tool_calls = 0
+    execution_calls_total = 0
+    execution_calls_success = 0
+    execution_calls_with_result = 0
+    steps_without_calls = 0
+    repeated_tool_calls = 0
+    marginal_utility_total = 0
+    marginal_utility_positive = 0
+    call_counts_by_tool = Counter()
+    useful_call_counts_by_tool = Counter()
+
+    for rollout in rollouts:
+        prior_state = _empty_toolbox_state()
+        called_tools_seen: set[str] = set()
+        for step in rollout.steps:
+            total_steps += 1
+            tool_calls = step.tool_calls or []
+            tool_outputs = step.tool_outputs or []
+            if not tool_calls:
+                steps_without_calls += 1
+            for call_payload, output in zip(tool_calls, tool_outputs):
+                tool_name = call_payload["tool_name"]
+                pre_call_state = dict(prior_state)
+                total_tool_calls += 1
+                call_counts_by_tool[tool_name] += 1
+                if tool_name in {CODE_EXEC_TOOL_NAME, SQL_EXEC_TOOL_NAME}:
+                    execution_calls_total += 1
+                    if output.get("ok"):
+                        execution_calls_success += 1
+                    if output.get("result") is not None or output.get("stdout"):
+                        execution_calls_with_result += 1
+                if tool_name in called_tools_seen:
+                    repeated_tool_calls += 1
+                is_useful = _tool_call_has_marginal_utility(tool_name, output, pre_call_state)
+                marginal_utility_total += 1
+                if is_useful:
+                    marginal_utility_positive += 1
+                    useful_call_counts_by_tool[tool_name] += 1
+                _update_toolbox_state_from_output(prior_state, tool_name, output)
+                called_tools_seen.add(tool_name)
+
+    return {
+        "avg_tool_calls_per_step": round(total_tool_calls / total_steps, 4) if total_steps else 0.0,
+        "steps_without_tool_calls_rate": _rate(steps_without_calls, total_steps),
+        "repeated_tool_call_rate": _rate(repeated_tool_calls, total_tool_calls),
+        "execution_success_rate": _rate(execution_calls_success, execution_calls_total),
+        "execution_informative_rate": _rate(execution_calls_with_result, execution_calls_total),
+        "marginal_utility_of_call_rate": _rate(marginal_utility_positive, marginal_utility_total),
+        "tool_call_counts": dict(call_counts_by_tool),
+        "tool_marginal_utility_rate": {
+            tool_name: _rate(useful_call_counts_by_tool[tool_name], call_counts_by_tool[tool_name])
+            for tool_name in sorted(call_counts_by_tool)
+        },
+    }
 
 
 def evaluate_sepsis_toolbox_efficiency(rollouts: list[TrajectoryRollout]) -> dict[str, Any]:
@@ -1176,6 +1255,81 @@ def _compact_sofa_history(output: dict[str, Any] | None) -> dict[str, Any] | Non
     }
 
 
+def _compact_aki_history(output: dict[str, Any] | None) -> dict[str, Any] | None:
+    if output is None:
+        return None
+    return {
+        "current_aki_state_label": output.get("current_aki_state_label"),
+        "current_aki_state_stage": output.get("current_aki_state_stage"),
+        "max_aki_stage_smoothed_so_far": output.get("max_aki_stage_smoothed_so_far"),
+        "has_stage2_or_higher": output.get("has_stage2_or_higher"),
+        "has_stage3_or_crrt": output.get("has_stage3_or_crrt"),
+    }
+
+
+def _compact_vent_history(output: dict[str, Any] | None) -> dict[str, Any] | None:
+    if output is None:
+        return None
+    return {
+        "current_support_level": output.get("current_support_level"),
+        "highest_support_level_so_far": output.get("highest_support_level_so_far"),
+        "has_medium_support": output.get("has_medium_support"),
+        "has_invasive_support": output.get("has_invasive_support"),
+    }
+
+
+def _compact_contextual_tool_history(tool_outputs: list[dict[str, Any]]) -> dict[str, Any]:
+    contextual: dict[str, Any] = {}
+    urine = _latest_step_tool_output(tool_outputs, "min_6hr_rate_mL_kg_hr")
+    if urine is not None:
+        contextual["urine_output_rate"] = {
+            "min_6hr_rate_mL_kg_hr": urine.get("min_6hr_rate_mL_kg_hr"),
+            "has_oliguria": urine.get("has_oliguria"),
+            "has_severe_oliguria": urine.get("has_severe_oliguria"),
+        }
+    vaso = _latest_step_tool_output(tool_outputs, "received_vasoactive")
+    if vaso is not None:
+        contextual["vasoactive_agent"] = {
+            "received_vasoactive": vaso.get("received_vasoactive"),
+            "active_agents": vaso.get("active_agents"),
+        }
+    vitals = _latest_step_tool_output(tool_outputs, "has_tachycardia")
+    if vitals is not None:
+        contextual["vitalsign"] = {
+            "latest_heart_rate": vitals.get("latest_heart_rate"),
+            "latest_mbp": vitals.get("latest_mbp"),
+            "has_tachycardia": vitals.get("has_tachycardia"),
+            "has_hypotension": vitals.get("has_hypotension"),
+        }
+    bg = _latest_step_tool_output(tool_outputs, "peak_lactate")
+    if bg is not None:
+        contextual["bg"] = {
+            "peak_lactate": bg.get("peak_lactate"),
+            "min_pH": bg.get("min_pH"),
+            "has_elevated_lactate": bg.get("has_elevated_lactate"),
+            "has_acidosis": bg.get("has_acidosis"),
+        }
+    gcs = _latest_step_tool_output(tool_outputs, "min_gcs")
+    if gcs is not None:
+        contextual["gcs"] = {
+            "min_gcs": gcs.get("min_gcs"),
+            "has_severe_impairment": gcs.get("has_severe_impairment"),
+        }
+    antibiotic = _latest_step_tool_output(tool_outputs, "received_antibiotics")
+    if antibiotic is not None:
+        contextual["antibiotic"] = {
+            "received_antibiotics": antibiotic.get("received_antibiotics"),
+            "distinct_antibiotic_count": antibiotic.get("distinct_antibiotic_count"),
+        }
+    invasive_line = _latest_step_tool_output(tool_outputs, "has_invasive_line")
+    if invasive_line is not None:
+        contextual["invasive_line"] = {
+            "has_invasive_line": invasive_line.get("has_invasive_line"),
+            "lines_present": invasive_line.get("lines_present"),
+        }
+    return contextual
+
+
 def _build_rolling_history_entry(
     *,
     trajectory: Trajectory,
@@ -1184,22 +1338,53 @@ def _build_rolling_history_entry(
     tool_outputs: list[dict[str, Any]],
 ) -> dict[str, Any] | None:
     task_name = trajectory.primary_task_name()
+    infection = _compact_infection_history(
+        _latest_step_tool_output(tool_outputs, "has_suspected_infection")
+    ) or {
+        "infection": None,
+        "infection_first_visible_hour": None,
+        "infection_first_visible_time": None,
+        "evidence": [],
+    }
+    sofa = _compact_sofa_history(
+        _latest_step_tool_output(tool_outputs, "latest_sofa_24hours")
+    ) or {
+        "sofa_score": None,
+        "sofa_hr": None,
+        "max_sofa_score_so_far": None,
+    }
+    aki = _compact_aki_history(
+        _latest_step_tool_output(tool_outputs, "current_aki_state_label")
+    ) or {
+        "current_aki_state_label": None,
+        "current_aki_state_stage": None,
+        "max_aki_stage_smoothed_so_far": None,
+        "has_stage2_or_higher": None,
+        "has_stage3_or_crrt": None,
+    }
+    vent = _compact_vent_history(
+        _latest_step_tool_output(tool_outputs, "current_support_level")
+    ) or {
+        "current_support_level": None,
+        "highest_support_level_so_far": None,
+        "has_medium_support": None,
+        "has_invasive_support": None,
+    }
+    contextual = _compact_contextual_tool_history(tool_outputs)
+    if trajectory.is_multitask():
+        return {
+            "task_name": "multitask",
+            "step_index": step_index,
+            "t_hour": checkpoint.t_hour,
+            "infection": infection["infection"],
+            "sofa_score": sofa["sofa_score"],
+            "current_aki_state_label": aki["current_aki_state_label"],
+            "max_aki_stage_smoothed_so_far": aki["max_aki_stage_smoothed_so_far"],
+            "current_support_level": vent["current_support_level"],
+            "highest_support_level_so_far": vent["highest_support_level_so_far"],
+            "contextual_tools": contextual,
+        }
     if task_name == "sepsis":
-        infection = _compact_infection_history(
-            _latest_step_tool_output(tool_outputs, "has_suspected_infection")
-        ) or {
-            "infection": None,
-            "infection_first_visible_hour": None,
-            "infection_first_visible_time": None,
-            "evidence": [],
-        }
-        sofa = _compact_sofa_history(
-            _latest_step_tool_output(tool_outputs, "latest_sofa_24hours")
-        ) or {
-            "sofa_score": None,
-            "sofa_hr": None,
-            "max_sofa_score_so_far": None,
-        }
         return {
             "task_name": task_name,
             "step_index": step_index,
@@ -1211,16 +1396,9 @@ def _build_rolling_history_entry(
             "infection_first_visible_hour": infection["infection_first_visible_hour"],
             "infection_first_visible_time": infection["infection_first_visible_time"],
             "evidence": infection["evidence"],
+            "contextual_tools": contextual,
         }
     if task_name == "infection_only":
-        infection = _compact_infection_history(
-            _latest_step_tool_output(tool_outputs, "has_suspected_infection")
-        ) or {
-            "infection": None,
-            "infection_first_visible_hour": None,
-            "infection_first_visible_time": None,
-            "evidence": [],
-        }
         return {
             "task_name": task_name,
             "step_index": step_index,
@@ -1229,5 +1407,29 @@ def _build_rolling_history_entry(
             "infection_first_visible_hour": infection["infection_first_visible_hour"],
             "infection_first_visible_time": infection["infection_first_visible_time"],
             "evidence": infection["evidence"],
+            "contextual_tools": contextual,
+        }
+    if task_name == "aki":
+        return {
+            "task_name": task_name,
+            "step_index": step_index,
+            "t_hour": checkpoint.t_hour,
+            "current_aki_state_label": aki["current_aki_state_label"],
+            "current_aki_state_stage": aki["current_aki_state_stage"],
+            "max_aki_stage_smoothed_so_far": aki["max_aki_stage_smoothed_so_far"],
+            "has_stage2_or_higher": aki["has_stage2_or_higher"],
+            "has_stage3_or_crrt": aki["has_stage3_or_crrt"],
+            "contextual_tools": contextual,
+        }
+    if task_name == "respiratory_support":
+        return {
+            "task_name": task_name,
+            "step_index": step_index,
+            "t_hour": checkpoint.t_hour,
+            "current_support_level": vent["current_support_level"],
+            "highest_support_level_so_far": vent["highest_support_level_so_far"],
+            "has_medium_support": vent["has_medium_support"],
+            "has_invasive_support": vent["has_invasive_support"],
+            "contextual_tools": contextual,
         }
     return None

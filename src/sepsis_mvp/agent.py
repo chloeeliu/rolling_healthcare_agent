@@ -11,7 +11,7 @@ from typing import Any, Callable, Protocol
 from .schemas import (
     ACTIONS,
     CODE_EXEC_TOOL_NAME,
-    SEPSIS_TOOLBOX_TOOL_NAMES,
+    SHARED_TOOLBOX_TOOL_NAMES,
     SQL_EXEC_TOOL_NAME,
     TASK_BASELINE_ACTION,
     TASK_LABEL_SPACES,
@@ -44,6 +44,13 @@ TOOL_DESCRIPTIONS = {
         "use current_aki_state_label as the primary decision field"
     ),
     "query_ventilation_status": "current and highest visible respiratory support up to this checkpoint",
+    "query_urine_output_rate": "rolling urine output context up to this checkpoint; useful for AKI staging support",
+    "query_vasoactive_agent": "vasopressor or inotrope exposure visible by this checkpoint",
+    "query_vitalsign": "latest and abnormal vital-sign context up to this checkpoint",
+    "query_bg": "blood gas, lactate, acidosis, and oxygenation context visible by this checkpoint",
+    "query_gcs": "neurologic status context up to this checkpoint",
+    "query_antibiotic": "raw antibiotic exposure context visible by this checkpoint",
+    "query_invasive_line": "active or prior invasive line context visible by this checkpoint",
 }
 
 ZEROSHOT_RAW_TABLES = [
@@ -187,6 +194,50 @@ def _guidance_for_task(task_name: str, step_input: dict[str, Any] | None) -> lis
 
 def _task_description(task_name: str, step_input: dict[str, Any]) -> str:
     return " | ".join(_label_space_for_task(step_input, task_name))
+
+
+def _toolbox_final_response_example(step_input: dict[str, Any]) -> str:
+    if _is_multitask_step(step_input):
+        return (
+            '{"task_actions":{"sepsis":"keep_monitoring","aki":"keep_monitoring",'
+            '"respiratory_support":"room_air_or_low_support"}}'
+        )
+    task_name = _single_task_name(step_input)
+    return json.dumps({"action": _label_space_for_task(step_input, task_name)[0]})
+
+
+def _toolbox_evidence_requirements(task_names: list[str], step_input: dict[str, Any]) -> list[str]:
+    requirements = [
+        "Use rolling_history to recognize what is already established longitudinally for this stay.",
+        "In rolling_history, null means not yet assessed at that checkpoint. Do not treat null as negative evidence.",
+        "Call only effective tools. Avoid low-value repeated calls when earlier checkpoints already establish the same fact.",
+    ]
+    if "sepsis" in task_names:
+        requirements.extend(
+            [
+                "Do not return infection_suspect unless suspected infection is explicitly supported by a current tool result or by an earlier positive rolling_history entry.",
+                "Do not return trigger_sepsis_alert unless suspected infection is explicitly supported and SOFA alert evidence is explicitly supported by a current tool result or by earlier rolling_history.",
+                "If no earlier checkpoint explicitly established infection, query_suspicion_of_infection before making a positive sepsis decision.",
+                "If no earlier checkpoint explicitly established SOFA alert evidence, query_sofa before making trigger_sepsis_alert.",
+            ]
+        )
+    if "aki" in task_names:
+        if _is_non_monotonic_aki_step(step_input, "aki"):
+            requirements.extend(
+                [
+                    "For non-monotonic AKI, predict the current visible AKI state, not the worst historical state alone.",
+                    "Use query_kdigo_stage before a non-baseline AKI decision unless the current AKI state is already explicit in rolling_history.",
+                ]
+            )
+        else:
+            requirements.append(
+                "Use query_kdigo_stage before a positive AKI decision unless AKI evidence is already explicit in rolling_history."
+            )
+    if "respiratory_support" in task_names:
+        requirements.append(
+            "Use query_ventilation_status before escalating respiratory support unless support status is already explicit in rolling_history."
+        )
+    return requirements
 
 
 def _build_messages(
@@ -348,16 +399,16 @@ def _build_toolbox_messages(
     history: list[dict[str, Any]],
     available_tools: list[str],
 ) -> list[dict[str, str]]:
-    task_name = _single_task_name(step_input)
-    if _is_multitask_step(step_input) or task_name != "sepsis":
-        raise ValueError("rolling_toolbox_with_history currently supports only the single-task sepsis task.")
+    task_names = _resolved_task_names(step_input)
     stay_id = int(step_input["stay_id"])
     t_hour = int(step_input["t_hour"])
     rolling_history = step_input.get("rolling_history") or []
     executed = _summarize_history(history)
-    toolbox_tools = [tool_name for tool_name in SEPSIS_TOOLBOX_TOOL_NAMES if tool_name in available_tools]
+    toolbox_tools = [tool_name for tool_name in SHARED_TOOLBOX_TOOL_NAMES if tool_name in available_tools]
+    if not toolbox_tools:
+        toolbox_tools = list(available_tools)
     system_prompt = (
-        "You are an ICU rolling surveillance agent for task: sepsis.\n"
+        "You are an ICU rolling surveillance agent.\n"
         "Protocol: rolling_toolbox_with_history.\n"
         "This is a real longitudinal monitoring task for one stay across repeated checkpoints.\n"
         "rolling_history contains concise summaries from every earlier checkpoint for this same patient.\n"
@@ -366,45 +417,53 @@ def _build_toolbox_messages(
         "Do not output reasoning, analysis, markdown, or <think> tags.\n"
         "Return exactly one JSON object and nothing else.\n"
         "Evidence may already be visible at t_hour=0 because hospital events can precede ICU admission.\n\n"
-        f"Task semantics: {_task_description(task_name, step_input)}\n\n"
+        "Task semantics:\n"
+    )
+    for task_name in task_names:
+        system_prompt += f"- {task_name}: {_task_description(task_name, step_input)}\n"
+    system_prompt += (
+        "\n"
         "Available toolbox tools:\n"
     )
     for tool_name in toolbox_tools:
         system_prompt += f"- {tool_name}: {TOOL_DESCRIPTIONS[tool_name]}\n"
     system_prompt += (
         "\n"
-        + _clinical_guidance_text([task_name], step_input)
+        + _clinical_guidance_text(task_names, step_input)
         + "\n\n"
         "Tool-use guidance:\n"
         "- Use rolling_history to recognize what is already established longitudinally for this stay.\n"
         "- In rolling_history, null means not yet assessed at that checkpoint. Do not treat null as negative evidence.\n"
         "- Call only effective tools. Avoid low-value repeated calls when earlier checkpoints already establish the same fact.\n"
-        "- query_suspicion_of_infection is high yield when infection status is still uncertain at the current checkpoint.\n"
-        "- query_sofa is high yield when infection is visible or plausible and you need current organ-dysfunction evidence.\n"
-        "- query_kdigo_stage and query_ventilation_status are optional contextual tools; they can support understanding severity but do not replace infection plus SOFA for the sepsis label.\n"
-        "- If infection is already clearly established in rolling_history, repeated infection calls should be rare and should only happen when you need current-step confirmation.\n\n"
+        "- query_suspicion_of_infection and query_sofa are the highest-yield pair for sepsis decisions.\n"
+        "- query_kdigo_stage and query_urine_output_rate are the highest-yield pair for AKI decisions.\n"
+        "- query_ventilation_status is the primary respiratory-support tool.\n"
+        "- query_vasoactive_agent, query_vitalsign, query_bg, query_gcs, query_antibiotic, and query_invasive_line are contextual tools.\n\n"
         "Evidence requirements:\n"
-        "- Do not return infection_suspect unless suspected infection is explicitly supported by a current tool result or by an earlier positive rolling_history entry.\n"
-        "- Do not return trigger_sepsis_alert unless suspected infection is explicitly supported and SOFA alert evidence is explicitly supported by a current tool result or by earlier rolling_history.\n"
-        "- If no earlier checkpoint explicitly established infection, query_suspicion_of_infection before making a positive decision.\n"
-        "- If no earlier checkpoint explicitly established SOFA alert evidence, query_sofa before making trigger_sepsis_alert.\n"
-        "- Do not default to infection_suspect or trigger_sepsis_alert just because time has advanced.\n\n"
+    )
+    for line in _toolbox_evidence_requirements(task_names, step_input):
+        system_prompt += f"- {line}\n"
+    system_prompt += (
+        "\n"
         "Tool call format:\n"
         f'{{"tool_name":"query_suspicion_of_infection","arguments":{{"stay_id":{stay_id},"t_hour":{t_hour}}}}}\n\n'
         "Final action format:\n"
-        '{"action":"keep_monitoring"}\n\n'
-        "Valid final actions:\n"
-        "- keep_monitoring\n"
-        "- infection_suspect\n"
-        "- trigger_sepsis_alert\n"
+        f"{_toolbox_final_response_example(step_input)}\n\n"
     )
+    if _is_multitask_step(step_input):
+        system_prompt += "The final JSON must contain task_actions with exactly these keys: sepsis, aki, respiratory_support.\n"
+    else:
+        system_prompt += "Valid final actions:\n"
+        for action in _label_space_for_task(step_input, task_names[0]):
+            system_prompt += f"- {action}\n"
     user_payload = {
         "step_input": {
             "trajectory_id": step_input["trajectory_id"],
             "stay_id": stay_id,
             "step_index": step_input["step_index"],
             "t_hour": t_hour,
-            "task_name": task_name,
+            "task_name": task_names[0] if len(task_names) == 1 else None,
+            "task_names": task_names,
         },
         "task_mode": step_input.get("task_mode"),
         "tool_backend": step_input.get("tool_backend"),
@@ -935,9 +994,9 @@ def _build_toolbox_repair_messages(
     repair_hint = (
         "Your previous reply was invalid. Respond again with JSON only and no extra text. "
         "Return either one allowed tool call or one final action. "
-        f"Allowed tools: {', '.join(tool_name for tool_name in available_tools if tool_name in SEPSIS_TOOLBOX_TOOL_NAMES)}. "
+        f"Allowed tools: {', '.join(tool_name for tool_name in available_tools if tool_name in SHARED_TOOLBOX_TOOL_NAMES)}. "
         f'Example tool call: {{"tool_name":"query_sofa","arguments":{{"stay_id":{stay_id},"t_hour":{t_hour}}}}}. '
-        'Example final action: {"action":"infection_suspect"}.'
+        f"Example final action: {_toolbox_final_response_example(step_input)}."
     )
     messages.append({"role": "user", "content": repair_hint})
     return messages
@@ -1001,8 +1060,12 @@ def _normalize_toolbox_response(
     available_tools: list[str],
 ) -> ToolCall | ActionDecision:
     if isinstance(response, ActionDecision):
+        if _is_multitask_step(step_input):
+            if response.task_actions is None:
+                raise ValueError("rolling_toolbox_with_history expects task_actions for multitask toolboxes.")
+            return response
         if response.task_actions is not None:
-            raise ValueError("rolling_toolbox_with_history expects a single final action, not task_actions.")
+            raise ValueError("rolling_toolbox_with_history expects a single final action for single-task toolboxes.")
         return response
     if response.tool_name not in available_tools:
         raise ValueError(f"Tool '{response.tool_name}' is not available in rolling_toolbox_with_history.")

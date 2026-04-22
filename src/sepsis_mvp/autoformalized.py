@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import timedelta
+import inspect
 from pathlib import Path
 from types import MappingProxyType
 from typing import Any, Callable
@@ -13,6 +14,13 @@ AUTOFORM_TOOL_TO_FUNCTION = MappingProxyType(
         "query_sofa": "sofa",
         "query_kdigo_stage": "kdigo_stages",
         "query_ventilation_status": "ventilation",
+        "query_urine_output_rate": "urine_output_rate",
+        "query_vasoactive_agent": "vasoactive_agent",
+        "query_vitalsign": "vitalsign",
+        "query_bg": "bg",
+        "query_gcs": "gcs",
+        "query_antibiotic": "antibiotic",
+        "query_invasive_line": "invasive_line",
     }
 )
 
@@ -74,6 +82,7 @@ class AutoformalizedDuckDBToolRuntime:
             "mimiciv_hosp.prescriptions",
             "mimiciv_hosp.procedures_icd",
             "mimiciv_hosp.labevents",
+            "mimiciv_hosp.d_labitems",
         }
         rows = self.connection.execute(
             """
@@ -181,6 +190,7 @@ class AutoformalizedDuckDBToolRuntime:
               AND charttime <= {visible_until}
             """
         )
+        conn.execute("CREATE VIEW mimiciv_hosp.d_labitems AS SELECT * FROM source.mimiciv_hosp.d_labitems")
         conn.execute(
             f"""
             CREATE VIEW mimiciv_hosp.microbiologyevents AS
@@ -234,7 +244,16 @@ class AutoformalizedDuckDBToolRuntime:
         conn = self._checkpoint_connection(context)
         try:
             namespace["query_db"] = lambda sql: conn.execute(sql).fetchdf()
-            result = namespace["FINAL_FUNCTION"](stay_id)
+            final_function = namespace["FINAL_FUNCTION"]
+            kwargs: dict[str, Any] = {}
+            for param_name in inspect.signature(final_function).parameters:
+                if param_name == "stay_id":
+                    kwargs[param_name] = stay_id
+                elif param_name == "subject_id":
+                    kwargs[param_name] = context.subject_id
+                elif param_name == "hadm_id":
+                    kwargs[param_name] = context.hadm_id
+            result = final_function(**kwargs)
         finally:
             conn.close()
         if not isinstance(result, dict):
@@ -376,6 +395,129 @@ class AutoformalizedDuckDBToolRuntime:
             "has_invasive_support": level == "invasive_vent_required",
         }
 
+    def query_urine_output_rate(self, stay_id: int, t_hour: int) -> dict[str, Any]:
+        result, context = self._run_function("query_urine_output_rate", stay_id, t_hour)
+        return {
+            "stay_id": stay_id,
+            "t_hour": t_hour,
+            "backend": "autoformalized",
+            "latest_charttime": self._iso_or_none(context.visible_until),
+            "weight_kg": result.get("weight_kg"),
+            "min_6hr_rate_mL_kg_hr": result.get("min_6hr_rate_mL_kg_hr"),
+            "min_12hr_rate_mL_kg_hr": None,
+            "min_24hr_rate_mL_kg_hr": None,
+            "has_oliguria": bool(result.get("has_oliguria")),
+            "has_severe_oliguria": bool(result.get("has_severe_oliguria")),
+        }
+
+    def query_vasoactive_agent(self, stay_id: int, t_hour: int) -> dict[str, Any]:
+        result, _context = self._run_function("query_vasoactive_agent", stay_id, t_hour)
+        details = result.get("agent_details") or {}
+        active_agents = []
+        for agent_name, detail in details.items():
+            last_time = self._to_datetime_or_none(detail.get("last_time"))
+            if last_time is None or last_time >= _context.visible_until:
+                active_agents.append(agent_name)
+        return {
+            "stay_id": stay_id,
+            "t_hour": t_hour,
+            "backend": "autoformalized",
+            "received_vasoactive": bool(result.get("received_vasoactive")),
+            "agents_received": sorted(result.get("agents_received") or []),
+            "active_agents": sorted(active_agents),
+            "first_vasoactive_time": self._iso_or_none(result.get("first_time")),
+            "latest_vasoactive_endtime": self._iso_or_none(result.get("last_time")),
+        }
+
+    def query_vitalsign(self, stay_id: int, t_hour: int) -> dict[str, Any]:
+        result, context = self._run_function("query_vitalsign", stay_id, t_hour)
+        vital_df = result.get("vital_signs_data")
+        latest_row = None
+        if vital_df is not None and hasattr(vital_df, "empty") and not vital_df.empty:
+            latest_row = vital_df.sort_values("charttime").iloc[-1]
+        return {
+            "stay_id": stay_id,
+            "t_hour": t_hour,
+            "backend": "autoformalized",
+            "latest_charttime": self._iso_or_none(latest_row["charttime"]) if latest_row is not None else self._iso_or_none(context.visible_until),
+            "latest_heart_rate": latest_row["valuenum"] if latest_row is not None and latest_row.get("vital_type") == "heart_rate" else None,
+            "latest_mbp": None,
+            "latest_resp_rate": None,
+            "latest_temperature": None,
+            "latest_spo2": None,
+            "has_tachycardia": bool(result.get("has_tachycardia")),
+            "has_hypotension": bool(result.get("has_hypotension")),
+        }
+
+    def query_bg(self, stay_id: int, t_hour: int) -> dict[str, Any]:
+        result, context = self._run_function("query_bg", stay_id, t_hour)
+        measurements = result.get("all_measurements")
+        latest_charttime = None
+        worst_pf = None
+        if measurements is not None and hasattr(measurements, "empty") and not measurements.empty:
+            latest_charttime = measurements["charttime"].max()
+        return {
+            "stay_id": stay_id,
+            "t_hour": t_hour,
+            "backend": "autoformalized",
+            "latest_charttime": self._iso_or_none(latest_charttime) or self._iso_or_none(context.visible_until),
+            "peak_lactate": result.get("peak_lactate"),
+            "min_pH": result.get("min_pH"),
+            "max_pH": result.get("max_pH"),
+            "has_elevated_lactate": bool(result.get("has_elevated_lactate")),
+            "has_acidosis": bool(result.get("has_acidosis")),
+            "has_severe_acidosis": bool(result.get("has_severe_acidosis")),
+            "worst_pao2fio2ratio": worst_pf,
+        }
+
+    def query_gcs(self, stay_id: int, t_hour: int) -> dict[str, Any]:
+        result, _context = self._run_function("query_gcs", stay_id, t_hour)
+        return {
+            "stay_id": stay_id,
+            "t_hour": t_hour,
+            "backend": "autoformalized",
+            "latest_charttime": self._iso_or_none(result.get("last_gcs_time")),
+            "min_gcs": result.get("min_gcs"),
+            "min_gcs_all": result.get("min_gcs_all"),
+            "max_gcs": result.get("max_gcs"),
+            "has_severe_impairment": bool(result.get("has_severe_impairment")),
+            "has_verbal_unresponsive": bool(result.get("has_verbal_unresponsive")),
+        }
+
+    def query_antibiotic(self, stay_id: int, t_hour: int) -> dict[str, Any]:
+        result, _context = self._run_function("query_antibiotic", stay_id, t_hour)
+        antibiotic_df = result.get("antibiotic_administrations")
+        first_time = None
+        if antibiotic_df is not None and hasattr(antibiotic_df, "empty") and not antibiotic_df.empty:
+            first_time = antibiotic_df["admin_time"].min()
+        return {
+            "stay_id": stay_id,
+            "t_hour": t_hour,
+            "backend": "autoformalized",
+            "received_antibiotics": bool(result.get("received_antibiotics")),
+            "distinct_antibiotic_count": int(result.get("distinct_antibiotic_count") or 0),
+            "distinct_antibiotics": sorted(result.get("distinct_antibiotics") or []),
+            "first_antibiotic_time": self._iso_or_none(first_time),
+        }
+
+    def query_invasive_line(self, stay_id: int, t_hour: int) -> dict[str, Any]:
+        result, _context = self._run_function("query_invasive_line", stay_id, t_hour)
+        first_times = [
+            detail.get("first_seen")
+            for detail in (result.get("line_details") or {}).values()
+            if detail.get("first_seen")
+        ]
+        first_line_time = min(first_times) if first_times else None
+        return {
+            "stay_id": stay_id,
+            "t_hour": t_hour,
+            "backend": "autoformalized",
+            "has_invasive_line": bool(result.get("lines_present")),
+            "lines_present": sorted(result.get("lines_present") or []),
+            "first_line_time": self._iso_or_none(first_line_time),
+            "line_details": result.get("line_details") or {},
+        }
+
     def execute(self, tool_name: str, arguments: dict[str, Any]) -> dict[str, Any]:
         if tool_name == "query_suspicion_of_infection":
             return self.query_suspicion_of_infection(**arguments)
@@ -385,4 +527,18 @@ class AutoformalizedDuckDBToolRuntime:
             return self.query_kdigo_stage(**arguments)
         if tool_name == "query_ventilation_status":
             return self.query_ventilation_status(**arguments)
+        if tool_name == "query_urine_output_rate":
+            return self.query_urine_output_rate(**arguments)
+        if tool_name == "query_vasoactive_agent":
+            return self.query_vasoactive_agent(**arguments)
+        if tool_name == "query_vitalsign":
+            return self.query_vitalsign(**arguments)
+        if tool_name == "query_bg":
+            return self.query_bg(**arguments)
+        if tool_name == "query_gcs":
+            return self.query_gcs(**arguments)
+        if tool_name == "query_antibiotic":
+            return self.query_antibiotic(**arguments)
+        if tool_name == "query_invasive_line":
+            return self.query_invasive_line(**arguments)
         raise ValueError(f"Unknown tool: {tool_name}")

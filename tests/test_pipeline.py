@@ -33,6 +33,7 @@ from sepsis_mvp.schemas import (
     SQL_EXEC_TOOL_NAME,
     ActionDecision,
     Checkpoint,
+    SHARED_TOOLBOX_TOOL_NAMES,
     StepRecord,
     ToolCall,
     Trajectory,
@@ -215,21 +216,64 @@ class PipelineTest(unittest.TestCase):
         self.assertIn("query_sofa", system_prompt)
         self.assertIn("query_kdigo_stage", system_prompt)
         self.assertIn("query_ventilation_status", system_prompt)
+        self.assertIn("query_urine_output_rate", system_prompt)
+        self.assertIn("query_vasoactive_agent", system_prompt)
         self.assertIn("real longitudinal monitoring task", system_prompt.lower())
         self.assertIn("null means not yet assessed", system_prompt.lower())
         self.assertIn("do not return infection_suspect unless suspected infection is explicitly supported", system_prompt.lower())
-        self.assertIn("do not default to infection_suspect", system_prompt.lower())
+        self.assertIn("query_kdigo_stage and query_urine_output_rate are the highest-yield pair for AKI decisions", system_prompt)
         self.assertEqual(user_payload["protocol"], "rolling_toolbox_with_history")
         self.assertEqual(len(user_payload["rolling_history"]), 2)
-        self.assertEqual(
-            user_payload["available_tools"],
-            [
-                "query_suspicion_of_infection",
-                "query_sofa",
-                "query_kdigo_stage",
-                "query_ventilation_status",
+        self.assertEqual(user_payload["available_tools"], [
+            "query_suspicion_of_infection",
+            "query_sofa",
+            "query_kdigo_stage",
+            "query_ventilation_status",
+        ])
+
+    def test_toolbox_prompt_supports_multitask(self):
+        step_input = self._multitask_step_input() | {
+            "task_mode": "multitask",
+            "tool_backend": "official",
+            "protocol": "rolling_toolbox_with_history",
+            "rolling_history": [
+                {
+                    "task_name": "multitask",
+                    "step_index": 0,
+                    "t_hour": 0,
+                    "infection": False,
+                    "current_aki_state_label": "no_aki",
+                    "current_support_level": "room_air_or_low_support",
+                }
             ],
-        )
+        }
+        messages = _build_messages(step_input, history=[], available_tools=list(SHARED_TOOLBOX_TOOL_NAMES))
+        system_prompt = messages[0]["content"]
+        user_payload = json.loads(messages[1]["content"])
+        self.assertIn("task_actions", system_prompt)
+        self.assertIn("sepsis, aki, respiratory_support", system_prompt)
+        self.assertEqual(user_payload["step_input"]["task_names"], ["sepsis", "aki", "respiratory_support"])
+
+    def test_toolbox_prompt_supports_non_monotonic_aki(self):
+        step_input = {
+            "trajectory_id": "mimiciv_stay_1",
+            "stay_id": 30,
+            "step_index": 1,
+            "t_hour": 8,
+            "task_names": ["aki"],
+            "task_variant": "non_monotonic_current_state",
+            "label_spaces": {"aki": ["no_aki", "aki_stage_1", "aki_stage_2", "aki_stage_3"]},
+            "task_mode": "single",
+            "tool_backend": "official",
+            "protocol": "rolling_toolbox_with_history",
+            "rolling_history": [
+                {"task_name": "aki", "step_index": 0, "t_hour": 4, "current_aki_state_label": "aki_stage_1"}
+            ],
+        }
+        messages = _build_messages(step_input, history=[], available_tools=list(SHARED_TOOLBOX_TOOL_NAMES))
+        system_prompt = messages[0]["content"]
+        self.assertIn("current visible AKI state", system_prompt)
+        self.assertIn("query_kdigo_stage before a non-baseline AKI decision", system_prompt)
 
     def test_infection_only_zeroshot_prompt_uses_overlap_windows_without_sofa_label(self):
         step_input = {
@@ -837,16 +881,57 @@ class PipelineTest(unittest.TestCase):
         self.assertEqual(len(agent.step_inputs), 2)
         self.assertEqual(
             agent.step_inputs[0]["available_tools"],
-            [
-                "query_suspicion_of_infection",
-                "query_sofa",
-                "query_kdigo_stage",
-                "query_ventilation_status",
-            ],
+            list(SHARED_TOOLBOX_TOOL_NAMES),
         )
         self.assertEqual(agent.step_inputs[0]["protocol"], "rolling_toolbox_with_history")
-        self.assertEqual(agent.step_inputs[0]["max_step_interactions"], 6)
+        self.assertEqual(agent.step_inputs[0]["max_step_interactions"], len(SHARED_TOOLBOX_TOOL_NAMES) + 2)
         self.assertEqual(agent.step_inputs[1]["rolling_history"][0]["step_index"], 0)
+
+    def test_environment_exposes_shared_toolbox_for_multitask_protocol(self):
+        class CapturingAgent:
+            def __init__(self):
+                self.step_inputs = []
+
+            def next_response(self, step_input, history, available_tools):
+                self.step_inputs.append(step_input)
+                return ActionDecision(
+                    task_actions={
+                        "sepsis": "keep_monitoring",
+                        "aki": "keep_monitoring",
+                        "respiratory_support": "room_air_or_low_support",
+                    }
+                )
+
+        class StubRuntime:
+            def execute(self, tool_name, arguments):
+                raise AssertionError("No tool execution expected in this test")
+
+        trajectory = Trajectory(
+            trajectory_id="mimiciv_stay_1",
+            stay_id=30,
+            subject_id=10,
+            hadm_id=20,
+            anchor="icu_intime",
+            step_hours=4,
+            horizon_hours=4,
+            transitions={},
+            checkpoints=[Checkpoint(t_hour=0, task_labels={"sepsis": "keep_monitoring", "aki": "keep_monitoring", "respiratory_support": "room_air_or_low_support"})],
+            task_name="multitask",
+            task_names=["sepsis", "aki", "respiratory_support"],
+            label_spaces={
+                "sepsis": ["keep_monitoring", "infection_suspect", "trigger_sepsis_alert"],
+                "aki": ["keep_monitoring", "suspect_aki", "trigger_aki_alert"],
+                "respiratory_support": ["room_air_or_low_support", "high_flow_or_noninvasive_support", "invasive_vent_required"],
+            },
+        )
+        environment = BenchmarkEnvironment(
+            [trajectory],
+            StubRuntime(),
+            task_mode="multitask",
+            protocol="rolling_toolbox_with_history",
+        )
+        environment.run_all(CapturingAgent())
+        self.assertEqual(environment._available_tools_for_protocol(trajectory), list(SHARED_TOOLBOX_TOOL_NAMES))
 
     def test_environment_exposes_run_python_only_for_zeroshot_python_toolbox_protocol(self):
         class CapturingAgent:
@@ -1646,40 +1731,17 @@ mimiciv_stay_1,infection_only,10,20,30,2150-01-01T00:00:00,2150-01-02T00:00:00,2
         self.assertFalse(agent.snapshots[1][0]["infection"])
         self.assertEqual(agent.snapshots[2][1]["infection"], True)
         self.assertEqual(agent.snapshots[2][1]["sofa_score"], 1)
+        self.assertEqual(agent.snapshots[2][0]["evidence"], [])
+        self.assertEqual(agent.snapshots[2][0]["contextual_tools"], {})
         self.assertEqual(
-            agent.snapshots[2],
+            agent.snapshots[2][1]["evidence"],
             [
                 {
-                    "task_name": "sepsis",
-                    "step_index": 0,
-                    "t_hour": 0,
-                    "sofa_score": None,
-                    "sofa_hr": None,
-                    "max_sofa_score_so_far": None,
-                    "infection": False,
-                    "infection_first_visible_hour": None,
-                    "infection_first_visible_time": None,
-                    "evidence": [],
-                },
-                {
-                    "task_name": "sepsis",
-                    "step_index": 1,
-                    "t_hour": 4,
-                    "sofa_score": 1,
-                    "sofa_hr": 4,
-                    "max_sofa_score_so_far": 1,
-                    "infection": True,
-                    "infection_first_visible_hour": 4,
-                    "infection_first_visible_time": "2150-01-01T04:00:00",
-                    "evidence": [
-                        {
-                            "antibiotic": "cefepime",
-                            "antibiotic_time": "2150-01-01T04:00:00",
-                            "culture_time": "2150-01-01T05:00:00",
-                            "specimen": "blood",
-                        }
-                    ],
-                },
+                    "antibiotic": "cefepime",
+                    "antibiotic_time": "2150-01-01T04:00:00",
+                    "culture_time": "2150-01-01T05:00:00",
+                    "specimen": "blood",
+                }
             ],
         )
 

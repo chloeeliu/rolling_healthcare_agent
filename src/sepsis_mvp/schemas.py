@@ -70,12 +70,21 @@ DEFAULT_TOOL_NAMES = [
     "query_sofa",
 ]
 
-SEPSIS_TOOLBOX_TOOL_NAMES = [
+SHARED_TOOLBOX_TOOL_NAMES = [
     "query_suspicion_of_infection",
     "query_sofa",
     "query_kdigo_stage",
     "query_ventilation_status",
+    "query_urine_output_rate",
+    "query_vasoactive_agent",
+    "query_vitalsign",
+    "query_bg",
+    "query_gcs",
+    "query_antibiotic",
+    "query_invasive_line",
 ]
+
+SEPSIS_TOOLBOX_TOOL_NAMES = list(SHARED_TOOLBOX_TOOL_NAMES)
 
 MULTITASK_TOOL_NAMES = [
     "query_suspicion_of_infection",

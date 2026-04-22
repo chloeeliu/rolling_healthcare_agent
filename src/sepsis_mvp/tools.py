@@ -24,6 +24,14 @@ RESP_SUPPORT_LABELS = {
 }
 
 
+def _iso_or_none(value: Any) -> str | None:
+    if value is None:
+        return None
+    if hasattr(value, "isoformat"):
+        return value.isoformat()
+    return str(value)
+
+
 def _aki_state_label_from_stage(stage: int | None) -> str | None:
     if stage is None:
         return None
@@ -126,6 +134,110 @@ class ConceptToolRuntime:
             return self.query_suspicion_of_infection(**arguments)
         if tool_name == "query_sofa":
             return self.query_sofa(**arguments)
+        if tool_name == "query_kdigo_stage":
+            return {
+                "stay_id": arguments["stay_id"],
+                "t_hour": arguments["t_hour"],
+                "latest_charttime": None,
+                "latest_aki_stage": None,
+                "latest_aki_stage_smoothed": None,
+                "current_aki_state_label": None,
+                "current_aki_state_stage": None,
+                "current_aki_state_source": "latest_aki_stage_smoothed",
+                "max_aki_stage_so_far": None,
+                "max_aki_stage_smoothed_so_far": None,
+                "has_stage1_or_higher": False,
+                "has_stage2_or_higher": False,
+                "has_stage3_or_crrt": False,
+            }
+        if tool_name == "query_ventilation_status":
+            return {
+                "stay_id": arguments["stay_id"],
+                "t_hour": arguments["t_hour"],
+                "current_status_raw": None,
+                "current_support_level": "room_air_or_low_support",
+                "highest_support_level_so_far": "room_air_or_low_support",
+                "first_medium_support_time": None,
+                "first_invasive_support_time": None,
+                "has_medium_support": False,
+                "has_invasive_support": False,
+            }
+        if tool_name == "query_urine_output_rate":
+            return {
+                "stay_id": arguments["stay_id"],
+                "t_hour": arguments["t_hour"],
+                "latest_charttime": None,
+                "weight_kg": None,
+                "min_6hr_rate_mL_kg_hr": None,
+                "min_12hr_rate_mL_kg_hr": None,
+                "min_24hr_rate_mL_kg_hr": None,
+                "has_oliguria": False,
+                "has_severe_oliguria": False,
+            }
+        if tool_name == "query_vasoactive_agent":
+            return {
+                "stay_id": arguments["stay_id"],
+                "t_hour": arguments["t_hour"],
+                "received_vasoactive": False,
+                "agents_received": [],
+                "active_agents": [],
+                "first_vasoactive_time": None,
+                "latest_vasoactive_endtime": None,
+            }
+        if tool_name == "query_vitalsign":
+            return {
+                "stay_id": arguments["stay_id"],
+                "t_hour": arguments["t_hour"],
+                "latest_charttime": None,
+                "latest_heart_rate": None,
+                "latest_mbp": None,
+                "latest_resp_rate": None,
+                "latest_temperature": None,
+                "latest_spo2": None,
+                "has_tachycardia": False,
+                "has_hypotension": False,
+            }
+        if tool_name == "query_bg":
+            return {
+                "stay_id": arguments["stay_id"],
+                "t_hour": arguments["t_hour"],
+                "latest_charttime": None,
+                "peak_lactate": None,
+                "min_pH": None,
+                "max_pH": None,
+                "has_elevated_lactate": False,
+                "has_acidosis": False,
+                "has_severe_acidosis": False,
+                "worst_pao2fio2ratio": None,
+            }
+        if tool_name == "query_gcs":
+            return {
+                "stay_id": arguments["stay_id"],
+                "t_hour": arguments["t_hour"],
+                "latest_charttime": None,
+                "min_gcs": None,
+                "min_gcs_all": None,
+                "max_gcs": None,
+                "has_severe_impairment": False,
+                "has_verbal_unresponsive": False,
+            }
+        if tool_name == "query_antibiotic":
+            return {
+                "stay_id": arguments["stay_id"],
+                "t_hour": arguments["t_hour"],
+                "received_antibiotics": False,
+                "distinct_antibiotic_count": 0,
+                "distinct_antibiotics": [],
+                "first_antibiotic_time": None,
+            }
+        if tool_name == "query_invasive_line":
+            return {
+                "stay_id": arguments["stay_id"],
+                "t_hour": arguments["t_hour"],
+                "has_invasive_line": False,
+                "lines_present": [],
+                "first_line_time": None,
+            }
         raise ValueError(f"Unknown tool: {tool_name}")
 
 
@@ -146,6 +258,13 @@ class DuckDBConceptToolRuntime:
             "mimiciv_derived.sofa",
             "mimiciv_derived.kdigo_stages",
             "mimiciv_derived.ventilation",
+            "mimiciv_derived.urine_output_rate",
+            "mimiciv_derived.vasoactive_agent",
+            "mimiciv_derived.vitalsign",
+            "mimiciv_derived.bg",
+            "mimiciv_derived.gcs",
+            "mimiciv_derived.antibiotic",
+            "mimiciv_derived.invasive_line",
         }
         rows = self.connection.execute(
             """
@@ -387,10 +506,320 @@ class DuckDBConceptToolRuntime:
             "current_status_raw": current_status,
             "current_support_level": RESP_SUPPORT_LABELS[current_rank],
             "highest_support_level_so_far": RESP_SUPPORT_LABELS[highest_rank],
-            "first_medium_support_time": first_medium_time.isoformat() if first_medium_time else None,
-            "first_invasive_support_time": first_invasive_time.isoformat() if first_invasive_time else None,
+            "first_medium_support_time": _iso_or_none(first_medium_time),
+            "first_invasive_support_time": _iso_or_none(first_invasive_time),
             "has_medium_support": bool(first_medium_time is not None),
             "has_invasive_support": bool(first_invasive_time is not None),
+        }
+
+    def query_urine_output_rate(self, stay_id: int, t_hour: int) -> dict[str, Any]:
+        visible_until = self._visible_until(stay_id, t_hour)
+        latest = self.connection.execute(
+            """
+            SELECT
+                charttime,
+                weight,
+                uo_mlkghr_6hr,
+                uo_mlkghr_12hr,
+                uo_mlkghr_24hr
+            FROM mimiciv_derived.urine_output_rate
+            WHERE stay_id = ?
+              AND charttime <= ?
+            ORDER BY charttime DESC
+            LIMIT 1
+            """,
+            [stay_id, visible_until],
+        ).fetchone()
+        if latest is None:
+            return {
+                "stay_id": stay_id,
+                "t_hour": t_hour,
+                "latest_charttime": None,
+                "weight_kg": None,
+                "min_6hr_rate_mL_kg_hr": None,
+                "min_12hr_rate_mL_kg_hr": None,
+                "min_24hr_rate_mL_kg_hr": None,
+                "has_oliguria": False,
+                "has_severe_oliguria": False,
+            }
+        mins = self.connection.execute(
+            """
+            SELECT
+                MIN(uo_mlkghr_6hr),
+                MIN(uo_mlkghr_12hr),
+                MIN(uo_mlkghr_24hr)
+            FROM mimiciv_derived.urine_output_rate
+            WHERE stay_id = ?
+              AND charttime <= ?
+            """,
+            [stay_id, visible_until],
+        ).fetchone()
+        min_6hr, min_12hr, min_24hr = mins
+        severe_values = [value for value in (min_6hr, min_12hr, min_24hr) if value is not None]
+        return {
+            "stay_id": stay_id,
+            "t_hour": t_hour,
+            "latest_charttime": _iso_or_none(latest[0]),
+            "weight_kg": latest[1],
+            "min_6hr_rate_mL_kg_hr": min_6hr,
+            "min_12hr_rate_mL_kg_hr": min_12hr,
+            "min_24hr_rate_mL_kg_hr": min_24hr,
+            "has_oliguria": bool(any(value is not None and value < 0.5 for value in severe_values)),
+            "has_severe_oliguria": bool(any(value is not None and value < 0.3 for value in severe_values)),
+        }
+
+    def query_vasoactive_agent(self, stay_id: int, t_hour: int) -> dict[str, Any]:
+        visible_until = self._visible_until(stay_id, t_hour)
+        rows = self.connection.execute(
+            """
+            SELECT starttime, endtime, dopamine, epinephrine, norepinephrine, phenylephrine, vasopressin, dobutamine, milrinone
+            FROM mimiciv_derived.vasoactive_agent
+            WHERE stay_id = ?
+              AND starttime <= ?
+            ORDER BY starttime
+            """,
+            [stay_id, visible_until],
+        ).fetchall()
+        agent_names = [
+            "dopamine",
+            "epinephrine",
+            "norepinephrine",
+            "phenylephrine",
+            "vasopressin",
+            "dobutamine",
+            "milrinone",
+        ]
+        received_agents: set[str] = set()
+        active_agents: set[str] = set()
+        first_time = None
+        latest_endtime = None
+        for row in rows:
+            starttime, endtime, *rates = row
+            present = [agent_names[idx] for idx, rate in enumerate(rates) if rate is not None and rate > 0]
+            if not present:
+                continue
+            received_agents.update(present)
+            if first_time is None:
+                first_time = starttime
+            if latest_endtime is None or (endtime is not None and endtime > latest_endtime):
+                latest_endtime = endtime
+            if starttime <= visible_until and (endtime is None or endtime >= visible_until):
+                active_agents.update(present)
+        return {
+            "stay_id": stay_id,
+            "t_hour": t_hour,
+            "received_vasoactive": bool(received_agents),
+            "agents_received": sorted(received_agents),
+            "active_agents": sorted(active_agents),
+            "first_vasoactive_time": _iso_or_none(first_time),
+            "latest_vasoactive_endtime": _iso_or_none(latest_endtime),
+        }
+
+    def query_vitalsign(self, stay_id: int, t_hour: int) -> dict[str, Any]:
+        visible_until = self._visible_until(stay_id, t_hour)
+        latest = self.connection.execute(
+            """
+            SELECT charttime, heart_rate, mbp, resp_rate, temperature, spo2
+            FROM mimiciv_derived.vitalsign
+            WHERE stay_id = ?
+              AND charttime <= ?
+            ORDER BY charttime DESC
+            LIMIT 1
+            """,
+            [stay_id, visible_until],
+        ).fetchone()
+        if latest is None:
+            return {
+                "stay_id": stay_id,
+                "t_hour": t_hour,
+                "latest_charttime": None,
+                "latest_heart_rate": None,
+                "latest_mbp": None,
+                "latest_resp_rate": None,
+                "latest_temperature": None,
+                "latest_spo2": None,
+                "has_tachycardia": False,
+                "has_hypotension": False,
+            }
+        has_tachycardia, has_hypotension = self.connection.execute(
+            """
+            SELECT
+                MAX(CASE WHEN heart_rate > 100 THEN 1 ELSE 0 END),
+                MAX(CASE WHEN mbp < 65 THEN 1 ELSE 0 END)
+            FROM mimiciv_derived.vitalsign
+            WHERE stay_id = ?
+              AND charttime <= ?
+            """,
+            [stay_id, visible_until],
+        ).fetchone()
+        return {
+            "stay_id": stay_id,
+            "t_hour": t_hour,
+            "latest_charttime": _iso_or_none(latest[0]),
+            "latest_heart_rate": latest[1],
+            "latest_mbp": latest[2],
+            "latest_resp_rate": latest[3],
+            "latest_temperature": latest[4],
+            "latest_spo2": latest[5],
+            "has_tachycardia": bool(has_tachycardia),
+            "has_hypotension": bool(has_hypotension),
+        }
+
+    def query_bg(self, stay_id: int, t_hour: int) -> dict[str, Any]:
+        visible_until = self._visible_until(stay_id, t_hour)
+        latest = self.connection.execute(
+            """
+            SELECT charttime, lactate, ph, pao2fio2ratio
+            FROM mimiciv_derived.bg
+            WHERE subject_id = (SELECT subject_id FROM mimiciv_icu.icustays WHERE stay_id = ?)
+              AND hadm_id = (SELECT hadm_id FROM mimiciv_icu.icustays WHERE stay_id = ?)
+              AND charttime <= ?
+            ORDER BY charttime DESC
+            LIMIT 1
+            """,
+            [stay_id, stay_id, visible_until],
+        ).fetchone()
+        if latest is None:
+            return {
+                "stay_id": stay_id,
+                "t_hour": t_hour,
+                "latest_charttime": None,
+                "peak_lactate": None,
+                "min_pH": None,
+                "max_pH": None,
+                "has_elevated_lactate": False,
+                "has_acidosis": False,
+                "has_severe_acidosis": False,
+                "worst_pao2fio2ratio": None,
+            }
+        peak_lactate, min_ph, max_ph, worst_pf = self.connection.execute(
+            """
+            SELECT MAX(lactate), MIN(ph), MAX(ph), MIN(pao2fio2ratio)
+            FROM mimiciv_derived.bg
+            WHERE subject_id = (SELECT subject_id FROM mimiciv_icu.icustays WHERE stay_id = ?)
+              AND hadm_id = (SELECT hadm_id FROM mimiciv_icu.icustays WHERE stay_id = ?)
+              AND charttime <= ?
+            """,
+            [stay_id, stay_id, visible_until],
+        ).fetchone()
+        return {
+            "stay_id": stay_id,
+            "t_hour": t_hour,
+            "latest_charttime": _iso_or_none(latest[0]),
+            "peak_lactate": peak_lactate,
+            "min_pH": min_ph,
+            "max_pH": max_ph,
+            "has_elevated_lactate": bool(peak_lactate is not None and peak_lactate >= 2),
+            "has_acidosis": bool(min_ph is not None and min_ph < 7.35),
+            "has_severe_acidosis": bool(min_ph is not None and min_ph <= 7.20),
+            "worst_pao2fio2ratio": worst_pf,
+        }
+
+    def query_gcs(self, stay_id: int, t_hour: int) -> dict[str, Any]:
+        visible_until = self._visible_until(stay_id, t_hour)
+        latest = self.connection.execute(
+            """
+            SELECT charttime, gcs, gcs_motor, gcs_verbal, gcs_eyes
+            FROM mimiciv_derived.gcs
+            WHERE stay_id = ?
+              AND charttime <= ?
+            ORDER BY charttime DESC
+            LIMIT 1
+            """,
+            [stay_id, visible_until],
+        ).fetchone()
+        if latest is None:
+            return {
+                "stay_id": stay_id,
+                "t_hour": t_hour,
+                "latest_charttime": None,
+                "min_gcs": None,
+                "min_gcs_all": None,
+                "max_gcs": None,
+                "has_severe_impairment": False,
+                "has_verbal_unresponsive": False,
+            }
+        min_gcs, max_gcs, has_verbal = self.connection.execute(
+            """
+            SELECT MIN(gcs), MAX(gcs), MAX(CASE WHEN gcs_verbal = 1 THEN 1 ELSE 0 END)
+            FROM mimiciv_derived.gcs
+            WHERE stay_id = ?
+              AND charttime <= ?
+            """,
+            [stay_id, visible_until],
+        ).fetchone()
+        return {
+            "stay_id": stay_id,
+            "t_hour": t_hour,
+            "latest_charttime": _iso_or_none(latest[0]),
+            "min_gcs": min_gcs,
+            "min_gcs_all": min_gcs,
+            "max_gcs": max_gcs,
+            "latest_components": {
+                "gcs_motor": latest[2],
+                "gcs_verbal": latest[3],
+                "gcs_eyes": latest[4],
+            },
+            "has_severe_impairment": bool(min_gcs is not None and min_gcs <= 8),
+            "has_verbal_unresponsive": bool(has_verbal),
+        }
+
+    def query_antibiotic(self, stay_id: int, t_hour: int) -> dict[str, Any]:
+        visible_until = self._visible_until(stay_id, t_hour)
+        rows = self.connection.execute(
+            """
+            SELECT antibiotic, route, starttime, stoptime
+            FROM mimiciv_derived.antibiotic
+            WHERE stay_id = ?
+              AND starttime <= ?
+            ORDER BY starttime
+            """,
+            [stay_id, visible_until],
+        ).fetchall()
+        antibiotics = []
+        first_time = None
+        for antibiotic, route, starttime, stoptime in rows:
+            antibiotics.append({"antibiotic": antibiotic, "route": route, "starttime": _iso_or_none(starttime), "stoptime": _iso_or_none(stoptime)})
+            if first_time is None:
+                first_time = starttime
+        return {
+            "stay_id": stay_id,
+            "t_hour": t_hour,
+            "received_antibiotics": bool(rows),
+            "distinct_antibiotic_count": len({row[0] for row in rows if row[0]}),
+            "distinct_antibiotics": sorted({row[0] for row in rows if row[0]}),
+            "first_antibiotic_time": _iso_or_none(first_time),
+            "antibiotics": antibiotics[:5],
+        }
+
+    def query_invasive_line(self, stay_id: int, t_hour: int) -> dict[str, Any]:
+        visible_until = self._visible_until(stay_id, t_hour)
+        rows = self.connection.execute(
+            """
+            SELECT line_type, line_site, starttime, endtime
+            FROM mimiciv_derived.invasive_line
+            WHERE stay_id = ?
+              AND starttime <= ?
+            ORDER BY starttime
+            """,
+            [stay_id, visible_until],
+        ).fetchall()
+        first_time = rows[0][2] if rows else None
+        return {
+            "stay_id": stay_id,
+            "t_hour": t_hour,
+            "has_invasive_line": bool(rows),
+            "lines_present": sorted({row[0] for row in rows if row[0]}),
+            "first_line_time": _iso_or_none(first_time),
+            "line_details": [
+                {
+                    "line_type": line_type,
+                    "line_site": line_site,
+                    "starttime": _iso_or_none(starttime),
+                    "endtime": _iso_or_none(endtime),
+                }
+                for line_type, line_site, starttime, endtime in rows[:5]
+            ],
         }
 
     def execute(self, tool_name: str, arguments: dict[str, Any]) -> dict[str, Any]:
@@ -402,6 +831,20 @@ class DuckDBConceptToolRuntime:
             return self.query_kdigo_stage(**arguments)
         if tool_name == "query_ventilation_status":
             return self.query_ventilation_status(**arguments)
+        if tool_name == "query_urine_output_rate":
+            return self.query_urine_output_rate(**arguments)
+        if tool_name == "query_vasoactive_agent":
+            return self.query_vasoactive_agent(**arguments)
+        if tool_name == "query_vitalsign":
+            return self.query_vitalsign(**arguments)
+        if tool_name == "query_bg":
+            return self.query_bg(**arguments)
+        if tool_name == "query_gcs":
+            return self.query_gcs(**arguments)
+        if tool_name == "query_antibiotic":
+            return self.query_antibiotic(**arguments)
+        if tool_name == "query_invasive_line":
+            return self.query_invasive_line(**arguments)
         raise ValueError(f"Unknown tool: {tool_name}")
 
 
