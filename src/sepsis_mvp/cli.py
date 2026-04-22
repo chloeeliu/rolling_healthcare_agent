@@ -49,6 +49,16 @@ def _normalize_tool_backend(tool_backend: str) -> str:
     return tool_backend
 
 
+def _default_guideline_path_for_run(*, task_name: str, tool_backend: str) -> str | None:
+    if tool_backend not in {"zeroshot_python", "zeroshot_sql", "zeroshot_raw"}:
+        return None
+    if task_name == "infection_only":
+        return "baseline/infection_only_raw_tables_guideline.yaml"
+    if task_name == "sepsis":
+        return "baseline/sepsis_raw_tables_guideline.yaml"
+    return None
+
+
 def _rollout_from_dict(payload: dict) -> TrajectoryRollout:
     return TrajectoryRollout(
         trajectory_id=payload["trajectory_id"],
@@ -235,13 +245,11 @@ def run_command(args: argparse.Namespace) -> int:
             agent = HeuristicAgent(sofa_alert_threshold=args.sofa_alert_threshold)
         else:
             zeroshot_guideline_path = getattr(args, "zeroshot_guideline", None)
-            if args.tool_backend in {"zeroshot_python", "zeroshot_sql"} and not zeroshot_guideline_path:
-                default_guideline = (
-                    "baseline/infection_only_guideline.yaml"
-                    if trajectories[0].primary_task_name() == "infection_only"
-                    else "baseline/sepsis_guideline.yaml"
+            if not zeroshot_guideline_path:
+                zeroshot_guideline_path = _default_guideline_path_for_run(
+                    task_name=trajectories[0].primary_task_name(),
+                    tool_backend=args.tool_backend,
                 )
-                zeroshot_guideline_path = default_guideline
             agent = QwenChatAgent(
                 model=args.model,
                 temperature=args.temperature,

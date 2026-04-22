@@ -1265,10 +1265,12 @@ class LocalQwenChat:
 
 
 def _default_zeroshot_guideline_path() -> Path:
-    return Path(__file__).resolve().parents[2] / "baseline" / "sepsis_guideline.yaml"
+    return Path(__file__).resolve().parents[2] / "baseline" / "sepsis_raw_tables_guideline.yaml"
 
 
 def _load_zeroshot_guideline_text(path: str | None) -> str:
+    if path is None:
+        return ""
     guideline_path = Path(path) if path else _default_zeroshot_guideline_path()
     if not guideline_path.is_absolute():
         guideline_path = Path.cwd() / guideline_path

@@ -1,0 +1,35 @@
+sepsis_monitoring_guideline:
+  task:
+    name: "rolling_sepsis_monitoring_derived_tables"
+    objective: "At each ICU checkpoint, assign the current visible sepsis surveillance state from derived sepsis concept tables."
+    labels:
+      - "keep_monitoring"
+      - "infection_suspect"
+      - "trigger_sepsis_alert"
+    label_meaning:
+      keep_monitoring: "No visible suspected infection yet, or evidence is too weak to leave the baseline state."
+      infection_suspect: "Visible suspected infection is present, but visible organ dysfunction is not yet strong enough for sepsis alerting."
+      trigger_sepsis_alert: "Visible suspected infection is present and visible organ-dysfunction evidence is sufficient for SOFA-style sepsis alerting."
+
+  derived_tables:
+    primary:
+      - "mimiciv_derived.suspicion_of_infection"
+      - "mimiciv_derived.sofa"
+    usage:
+      - "Use mimiciv_derived.suspicion_of_infection as the derived infection concept."
+      - "Use mimiciv_derived.sofa as the derived organ-dysfunction concept."
+
+  decision_logic:
+    - "If visible suspected infection is absent, prefer keep_monitoring."
+    - "If visible suspected infection is present but visible SOFA alert evidence is not yet sufficient, prefer infection_suspect."
+    - "If visible suspected infection is present and visible SOFA is 2 or higher, prefer trigger_sepsis_alert."
+
+  timing_scope:
+    anchor: "mimiciv_icu.icustays.intime"
+    visible_until: "icu_intime + t_hour hours"
+    important_note: "This benchmark is rolling monitoring, not future forecasting."
+
+  usage_notes:
+    - "This is still a zero-shot prompt variant, but it assumes the model is reasoning over derived concept tables rather than raw tables."
+    - "Do not re-derive infection logic from raw antibiotics/cultures when these derived tables are already available."
+    - "Do not re-derive SOFA from raw labs/vitals when the derived SOFA summary is already available."

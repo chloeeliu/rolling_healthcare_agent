@@ -1,0 +1,36 @@
+infection_only_monitoring_guideline:
+  task:
+    name: "rolling_infection_only_monitoring_raw_tables"
+    objective: "At each checkpoint, decide whether suspected infection is already visible from raw hospital admission tables."
+    labels:
+      - "keep_monitoring"
+      - "infection_suspect"
+
+  rule:
+    summary: "Use only the antibiotic-culture timing rule on raw tables."
+    keep_monitoring: "No qualifying antibiotic-culture pair is visible yet."
+    infection_suspect: "At least one qualifying antibiotic-culture pair is already visible."
+
+  time_scope:
+    anchor: "mimiciv_icu.icustays.intime"
+    visible_until: "icu_intime + t_hour hours"
+    important_note: "This benchmark is rolling monitoring, not future forecasting."
+    pre_icu_visibility: "Same-admission hospital rows before ICU admission may already be visible at t=0."
+
+  raw_tables:
+    - "mimiciv_hosp.prescriptions"
+    - "mimiciv_hosp.microbiologyevents"
+
+  clinical_definition:
+    antibiotic_time: "Define antibiotic_time as mimiciv_hosp.prescriptions.starttime."
+    culture_time: "Use COALESCE(mimiciv_hosp.microbiologyevents.charttime, CAST(chartdate AS TIMESTAMP)) as culture_time."
+    antibiotic_first: "If antibiotics are first, a culture must occur within the next 24 hours."
+    culture_first: "If the culture is first, antibiotics must occur within the next 72 hours."
+    suspicion_time: "Use the earlier event in the qualifying pair: culture time when culture is first, otherwise antibiotic time."
+
+  interpretation:
+    - "Use only rows from the current admission that are visible at the checkpoint."
+    - "Positive culture is not required."
+    - "Do not use organism identity, susceptibilities, or final culture status."
+    - "Do not add SOFA or any organ dysfunction rule."
+    - "Do not use mimiciv_derived tables in this raw-table zero-shot variant."
