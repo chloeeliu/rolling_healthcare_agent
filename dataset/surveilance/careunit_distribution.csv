@@ -1,0 +1,17 @@
+first_careunit,stays,pct_stays
+Medical Intensive Care Unit (MICU),9837,21.23
+Cardiac Vascular Intensive Care Unit (CVICU),7353,15.87
+Medical/Surgical Intensive Care Unit (MICU/SICU),6667,14.39
+Surgical Intensive Care Unit (SICU),6434,13.89
+Coronary Care Unit (CCU),5433,11.72
+Trauma SICU (TSICU),4944,10.67
+Neuro Intermediate,3702,7.99
+Neuro Surgical Intensive Care Unit (Neuro SICU),955,2.06
+Neuro Stepdown,761,1.64
+Surgery/Vascular/Intermediate,138,0.3
+PACU,61,0.13
+Intensive Care Unit (ICU),26,0.06
+Medicine,15,0.03
+Surgery/Trauma,9,0.02
+Medicine/Cardiology Intermediate,1,0.0
+Neurology,1,0.0

@@ -1,0 +1,12 @@
+task_name,benchmark_status,trajectory_function_targets,step_tool_name,auto_runtime_status,notes
+infection,core_v1,suspicion_of_infection,query_suspicion_of_infection,ready,Direct autoformalized head with treatment-pattern logic.
+sepsis,core_v1,"suspicion_of_infection; sofa","query_suspicion_of_infection; query_sofa",composed_task,Build as infection-plus-SOFA rather than direct sepsis3.py.
+aki,core_v1,kdigo_stages,query_kdigo_stage,ready,Use frozen KDIGO-style contract on top of autoformalized stage outputs.
+oliguria,core_v1,urine_output_rate,query_urine_output_rate,ready,Use frozen urine-output-rate contract rather than official derived SQL.
+respiratory_support,core_v1,ventilation,query_ventilation_status,ready,Support-escalation head rather than disease etiology.
+vasoactive_support,core_v1,vasoactive_agent,query_vasoactive_agent,ready,Use support exposure rather than stronger shock semantics in v1.
+neurologic_deterioration,core_v1,gcs,query_gcs,ready,Document sedation and intubation caveat.
+hyperlactatemia,core_v1,bg,query_bg,ready,Threshold task based on blood-gas source family.
+severe_acidemia,core_v1,bg,query_bg,ready,Threshold task based on blood-gas source family.
+coagulopathy,core_v1,coagulation,query_coagulation,adapter_needed,Add adapter and freeze INR-based contract.
+crrt,optional_v1,crrt,query_crrt,optional_adapter,Keep outside the core 10 for the first package.

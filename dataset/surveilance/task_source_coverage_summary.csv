@@ -1,0 +1,12 @@
+task_name,auto_function,runtime_status,source_signal_by_24h,source_signal_by_48h,positive_proxy_by_24h,positive_proxy_by_48h,notes
+infection,suspicion_of_infection,ready,35003,37380,29712,32646,Positive proxy uses non-screening cultures or non-prophylaxis antibiotic treatment pattern.
+sepsis,suspicion_of_infection + sofa,composed_task,35003,37380,NULL,NULL,Composed head. Final label builder should combine infection and sofa contracts rather than direct sepsis3.py.
+aki,kdigo_stages,ready,46281,46319,NULL,NULL,"Stage label should come from frozen autoformalized KDIGO contract, not direct source presence."
+oliguria,urine_output_rate,ready,18994,25929,NULL,NULL,Source coverage requires both urine output and weight; final label should use frozen urine-output-rate contract.
+respiratory_support,ventilation,ready,39855,40997,25342,26847,"Positive proxy corresponds to HFNC, NIV, or invasive support evidence used by the function."
+vasoactive_support,vasoactive_agent,ready,16644,17919,16644,17919,Positive proxy is direct vasoactive/inotrope exposure.
+neurologic_deterioration,gcs,ready,46250,46271,20233,21971,Positive proxy uses GCS total <= 8 from raw component rows.
+hyperlactatemia,bg,ready,33751,35492,5634,6106,Positive proxy uses lactate >= 4.0 from chart or lab blood-gas sources.
+severe_acidemia,bg,ready,33751,35492,3855,4434,Positive proxy uses minimum pH <= 7.20 from chart or lab blood-gas sources.
+coagulopathy,coagulation,adapter_needed,40362,42665,6245,7170,Positive proxy uses INR >= 2.0 from the raw ICU coagulation sources used by the autoformalized function.
+crrt,crrt,optional_adapter,885,1383,885,1383,Optional advanced-support head. Positive proxy equals observed CRRT mode data.
