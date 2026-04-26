@@ -1,0 +1,7 @@
+split,sampling_layer,stays,mean_core_family_count_24h,mean_max_active_family_count_any_checkpoint,stays_with_any_alert_by48h,stays_with_any_rare_alert,low_signal_stays,aki_stage3_stays,septic_shock_stays,shock_hypoperfusion_stays,hypoxemia_pf_lt_100_stays,gcs_severe_stays,severe_acidemia_stays,coagulopathy_alert_stays,vaso_multi_stays,hfnc_niv_stays,crrt_stays
+dev,alert_enrichment,120,5.23,6.0,120,120,0,76,72,64,57,33,58,57,66,7,46
+dev,core_diversity,240,3.0,3.6,231,0,0,0,0,0,0,0,0,0,0,11,0
+dev,low_signal,40,0.57,1.3,24,10,40,4,0,0,1,2,0,1,2,1,0
+test,alert_enrichment,480,4.82,5.53,480,480,0,228,278,216,183,88,153,174,217,25,82
+test,core_diversity,960,2.98,3.54,915,0,0,0,0,0,0,0,0,0,0,53,0
+test,low_signal,160,0.68,1.38,113,36,160,17,0,0,5,5,1,8,0,7,0

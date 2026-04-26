@@ -2,6 +2,26 @@
 
 Date: 2026-04-23
 
+## Design Update
+
+This report should now be read together with the revised surveillance benchmark design:
+
+- [general_icu_surveillance_dataset_design_2026-04-25.md](/Users/chloe/Documents/New project/docs/surveilance/general_icu_surveillance_dataset_design_2026-04-25.md)
+
+Important update:
+
+- this phase-1 report remains the cohort and source-feasibility foundation
+- but it no longer defines the final benchmark task space or ground-truth philosophy by itself
+- the finalized cohort decision and official derived-SQL cohort audit are now documented in:
+  - [surveillance_dataset_cohort_audit_2026-04-25.md](/Users/chloe/Documents/New project/docs/surveilance/surveillance_dataset_cohort_audit_2026-04-25.md)
+
+The revised benchmark contract is:
+
+- MIMIC-derived SQL ground truth
+- search-based discovery of guidelines and autoformalized functions
+- compressed rolling memory
+- larger multi-label ICU decision space
+
 ## Scope
 
 This report covers the first dataset-curation phase for the general ICU surveillance benchmark.
@@ -18,7 +38,7 @@ Artifacts are stored under:
 
 - [dataset/surveilance](/Users/chloe/Documents/New project/dataset/surveilance)
 
-This phase follows the autoformalized-first benchmark design in:
+This phase originally followed the earlier autoformalized-first design notes in:
 
 - [autoformalized_general_icu_monitoring_benchmark_design_2026-04-23.md](/Users/chloe/Documents/New project/docs/autoformalized_general_icu_monitoring_benchmark_design_2026-04-23.md)
 - [autoformalized_dataset_curation_task_audit_2026-04-23.md](/Users/chloe/Documents/New project/docs/autoformalized_dataset_curation_task_audit_2026-04-23.md)
@@ -56,38 +76,30 @@ This phase locks three important decisions:
 
 1. the benchmark cohort uses ICU stays with `LOS >= 48h`
 2. the checkpoint grid is every `4` hours from `0` to `48`
-3. the core task list is the finalized autoformalized-native `10` task set:
-   - `infection`
-   - `sepsis`
-   - `aki`
-   - `oliguria`
-   - `respiratory_support`
-   - `vasoactive_support`
-   - `neurologic_deterioration`
-   - `hyperlactatemia`
-   - `severe_acidemia`
-   - `coagulopathy`
-
-Optional reserve task:
-
-- `crrt`
+3. the cohort and overlap analysis are strong enough to support a larger surveillance decision space in the revised design
 
 ## Important Interpretation
 
-The source-coverage summary is not yet the final gold-label table.
+The source-coverage summary is not the final gold-label table.
 
-Instead, it answers:
+Instead, in the revised benchmark design, it answers:
 
 - do the raw source families used by the autoformalized functions appear often enough in the cohort?
-- do the easier threshold-style tasks have workable raw positive proxies?
-- where do we still need a frozen benchmark contract beyond simple adapter logic?
+- which ICU surveillance situations are likely to be easier or harder for discovery-based agents?
+- how broad is the cohort support if we later expand to a larger decision catalog?
 
-The most important consequence is:
+The most important consequence is now:
 
-- the dataset can remain fully autoformalized-native
-- but the gold-label build still needs frozen task contracts on top of the function outputs
+- the cohort remains a good foundation
+- but final labels should come from MIMIC-derived SQL decision builders, not from autoformalized outputs
 
-The main example is `sepsis`, which should be built from infection plus SOFA rather than direct `sepsis3.py`.
+So this report is best interpreted as:
+
+- cohort coverage proof
+- source-feasibility proof
+- overlap analysis for surveillance realism
+
+not as the final task-definition document.
 
 ## Cohort Results
 
@@ -220,6 +232,12 @@ The raw task coverage summary is in:
 
 This table uses the raw source families and item patterns from the autoformalized functions, not the official derived tables.
 
+In the revised benchmark design, that is still valuable because:
+
+- it tells us what the search-and-load agent is likely able to observe
+- it helps explain success and failure modes later
+- it does not constrain the official ground-truth decision space
+
 ### Headline findings by 24 hours
 
 Strong source coverage:
@@ -247,11 +265,11 @@ These numbers support three conclusions.
 
 First:
 
-- the finalized core 10-task list is feasible inside the autoformalized source family
+- the cohort supports a broad surveillance task family even before the final decision registry is expanded
 
 Second:
 
-- the threshold-style tasks are especially strong benchmark candidates because their raw positive proxies are already clean and common enough
+- the threshold-style tasks are likely to be the easiest discovery targets for the raw agent because their source signatures are relatively clean
 
 Those strongest threshold-style heads are:
 
@@ -264,13 +282,9 @@ Those strongest threshold-style heads are:
 
 Third:
 
-- `aki`, `oliguria`, and `sepsis` remain good benchmark tasks, but they are exactly the tasks where we should resist a naive "adapter-only equals gold label" shortcut
+- `aki`, `oliguria`, `sepsis`, and future richer decisions are exactly where we should expect a gap between derived-SQL truth and discovered autoformalized performance
 
-That is why the next phase still needs frozen task contracts for:
-
-- KDIGO staging
-- urine-output-rate interpretation
-- infection-plus-SOFA composition for sepsis
+That gap is now a feature of the benchmark rather than a reason to shrink the task list.
 
 ## Multitask Coverage Distribution
 
@@ -451,23 +465,22 @@ Ready now:
 
 Not built yet:
 
-- checkpoint labels per task
-- the composed sepsis label builder
-- the adapter for `query_coagulation`
-- optional `query_crrt`
+- the decision registry for the larger surveillance catalog
+- checkpoint labels per decision
+- the derived-SQL builders for alert and state decisions
+- the exact scoring contract for `suspected_conditions` and `alerts`
 
 ## Recommended Next Step
 
 The next dataset step should be:
 
-1. define one frozen task spec file per core task
-2. implement the first offline label builders for:
-   - `infection`
-   - `sepsis`
-   - `aki`
-   - `respiratory_support`
-3. extend the runtime with `query_coagulation`
-4. then export the first labeled multitask checkpoint dataset under this same package
+1. define the full surveillance decision registry
+2. map each decision to MIMIC-derived SQL or transparent derived extensions
+3. specify which decisions belong in:
+   - `suspected_conditions`
+   - `alerts`
+   - or both
+4. then export the first labeled checkpoint dataset under this same package
 
 ## Bottom Line
 

@@ -1,0 +1,4 @@
+cohort_name,min_los_hours,eligible_stays,stays_with_ge1_core_family_by24h,pct_ge1_core_family_by24h,stays_with_ge3_core_families_by24h,pct_ge3_core_families_by24h,median_los_hours
+los_ge_24h,24,74829,66165,88.42,42900,57.33,60.11
+los_ge_48h,48,46337,42395,91.49,30167,65.1,94.02
+los_ge_72h,72,31178,29027,93.1,21846,70.07,128.73
