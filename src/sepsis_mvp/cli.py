@@ -60,7 +60,7 @@ def _default_guideline_path_for_run(*, task_name: str, tool_backend: str) -> str
 
 
 def _default_guidelines_dir_for_run(*, task_name: str, tool_backend: str) -> str | None:
-    if tool_backend != "zeroshot_python":
+    if tool_backend not in {"zeroshot_python", "session_tools"}:
         return None
     if task_name == "general_icu_surveillance":
         return "guidelines/general_icu_autoformalized/txt"
@@ -187,6 +187,19 @@ def run_command(args: argparse.Namespace) -> int:
         if unsupported:
             raise SystemExit(
                 "Zero-shot python backend currently supports only the single-task sepsis or general ICU surveillance datasets. "
+                f"First unsupported trajectories: {unsupported[:5]}"
+            )
+
+    if args.tool_backend == "session_tools":
+        if args.agent != "qwen":
+            raise SystemExit("Session-tools backend currently requires --agent qwen.")
+        unsupported = []
+        for trajectory in all_target_trajectories:
+            if trajectory.is_multitask() or trajectory.primary_task_name() != "general_icu_surveillance":
+                unsupported.append(trajectory.trajectory_id)
+        if unsupported:
+            raise SystemExit(
+                "Session-tools backend currently supports only the general ICU surveillance dataset. "
                 f"First unsupported trajectories: {unsupported[:5]}"
             )
 
@@ -401,11 +414,11 @@ def build_parser() -> argparse.ArgumentParser:
     )
     run_parser.add_argument(
         "--tool-backend",
-        choices=["official", "autoformalized", "zeroshot_python", "zeroshot_sql", "zeroshot_raw"],
+        choices=["official", "autoformalized", "session_tools", "zeroshot_python", "zeroshot_sql", "zeroshot_raw"],
         default="official",
         help=(
             "Choose whether visible tool outputs come from official derived concepts, generated functions, "
-            "the new zero-shot Python session backend, or the legacy zero-shot SQL/raw backend."
+            "the session-tools backend, the zero-shot Python session backend, or the legacy zero-shot SQL/raw backend."
         ),
     )
     run_parser.add_argument(

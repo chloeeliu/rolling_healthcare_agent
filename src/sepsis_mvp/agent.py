@@ -60,6 +60,12 @@ TOOL_DESCRIPTIONS = {
     "query_gcs": "neurologic status context up to this checkpoint",
     "query_antibiotic": "raw antibiotic exposure context visible by this checkpoint",
     "query_invasive_line": "active or prior invasive line context visible by this checkpoint",
+    "search_guidelines": "search available guideline files by keyword",
+    "get_guideline": "retrieve the full text of a guideline file by name",
+    "search_functions": "search available autoformalized function files by keyword",
+    "get_function_info": "inspect a function file's exported functions, signatures, and docstrings",
+    "load_function": "load one function file into the current checkpoint session",
+    "call_function": "call a function in the current checkpoint session; auto-load its owner file if needed",
 }
 
 ZEROSHOT_RAW_TABLES = [
@@ -1105,6 +1111,87 @@ def _build_surveillance_summary_messages(
     ]
 
 
+def _build_surveillance_session_tools_messages(
+    step_input: dict[str, Any],
+    history: list[dict[str, Any]],
+    available_tools: list[str],
+) -> list[dict[str, str]]:
+    stay_id = int(step_input["stay_id"])
+    t_hour = int(step_input["t_hour"])
+    rolling_history = _normalize_surveillance_summary_history(step_input.get("rolling_history"))
+    executed = _summarize_history(history)
+    system_prompt = (
+        "You are a general ICU rolling surveillance agent operating in a checkpoint-scoped session-tools mode.\n"
+        "This is a rolling monitoring task, not a forecasting task.\n"
+        "At each checkpoint, visible data already contain only information available by that checkpoint.\n"
+        "Default to returning one final surveillance decision when the current summaries and checkpoint evidence are already sufficient.\n"
+        "Call one tool only when additional guideline, function, or patient-state evidence is needed.\n"
+        "Do not output reasoning outside the required JSON fields.\n"
+        "Return exactly one JSON response and nothing else.\n\n"
+        "Monitored surveillance families:\n"
+        "- infection and sepsis\n"
+        "- renal injury and urine-output failure, including CRRT when relevant\n"
+        "- respiratory support escalation and hypoxemia\n"
+        "- hemodynamic instability, vasoactive support, and shock\n"
+        "- neurologic deterioration\n"
+        "- metabolic failure, including lactate elevation and acidemia\n"
+        "- coagulation abnormality\n\n"
+        "Decision semantics:\n"
+        "- suspected_conditions means clinically meaningful concern that should keep monitoring focused on that condition family.\n"
+        "- alerts means higher-acuity or higher-confidence states that justify escalation now.\n"
+        "- global_action must be exactly one of: continue_monitoring, escalate.\n"
+        "- priority must be exactly one of: low, medium, high.\n"
+        "- Do not generate the rolling memory summary here; a separate summarizer call will write that summary after your decision.\n\n"
+        "Preferred tool-use order:\n"
+        "- First, search guideline files when you need condition definitions or surveillance criteria.\n"
+        "- Second, search the autoformalized function library for relevant reusable patient-state functions.\n"
+        "- Third, inspect function info to find the right exported entrypoint.\n"
+        "- Fourth, call the function you need. call_function auto-loads the owning file if needed.\n"
+        "- load_function is optional and mainly useful when you want to inspect or reuse a file explicitly before calling.\n"
+        "- If a function name could come from more than one file, explicitly load the file you want before calling it.\n\n"
+        "Available tools:\n"
+    )
+    for tool_name in available_tools:
+        system_prompt += f"- {tool_name}: {TOOL_DESCRIPTIONS.get(tool_name, tool_name)}\n"
+    system_prompt += (
+        "\n"
+        "Tool-call format:\n"
+        '{"tool_name":"search_functions","arguments":{"keyword":"sofa"}}\n'
+        '{"tool_name":"get_function_info","arguments":{"name":"sofa"}}\n'
+        '{"tool_name":"call_function","arguments":{"function_name":"compute_sofa_score","arguments":{"stay_id":123}}}\n\n'
+        "Final decision JSON contract:\n"
+        '{'
+        '"global_action":"continue_monitoring|escalate",'
+        '"suspected_conditions":["..."],'
+        '"alerts":["..."],'
+        '"priority":"low|medium|high",'
+        '"recommended_next_tools":["..."],'
+        '"rationale":"..."'
+        '}\n'
+        "- recommended_next_tools should name likely next tools or function-search directions, not external tools.\n"
+        "- suspected_conditions and alerts must be arrays; use [] when empty.\n"
+        "- If no action-level state is active, return continue_monitoring with empty alerts.\n"
+    )
+    user_payload = {
+        "step_input": {
+            "trajectory_id": step_input["trajectory_id"],
+            "stay_id": stay_id,
+            "step_index": step_input["step_index"],
+            "t_hour": t_hour,
+            "task_name": "general_icu_surveillance",
+        },
+        "tool_backend": step_input.get("tool_backend"),
+        "available_tools": available_tools,
+        "already_called_tools": executed["tool_calls"],
+        "tool_results_by_name": executed["tool_results"],
+        "rolling_history": rolling_history,
+    }
+    return [
+        {"role": "system", "content": system_prompt},
+        {"role": "user", "content": json.dumps(user_payload, indent=2)},
+    ]
+
+
 def _sanitize_model_text(text: str) -> str:
     return re.sub(r"<think>.*?</think>", "", text, flags=re.DOTALL | re.IGNORECASE).strip()
 
@@ -1353,6 +1440,22 @@ def _coerce_checkpoint_summary_output(payload: dict[str, Any]) -> str:
     if not summary:
         raise ValueError("checkpoint_summary must be non-empty.")
     return summary
+
+
+def _coerce_surveillance_tool_or_decision(
+    payload: dict[str, Any],
+    *,
+    available_tools: list[str],
+) -> ToolCall | ActionDecision:
+    if "tool_name" in payload:
+        tool_name = payload["tool_name"]
+        if tool_name not in available_tools:
+            raise ValueError(f"Tool '{tool_name}' is not available.")
+        arguments = payload.get("arguments", {})
+        if not isinstance(arguments, dict):
+            raise ValueError("Tool arguments must be a JSON object.")
+        return ToolCall(tool_name=tool_name, arguments=arguments)
+    return _coerce_surveillance_output(payload)
 
 
 def _normalize_toolbox_response(
@@ -1784,6 +1887,8 @@ class QwenChatAgent:
         available_tools: list[str],
     ) -> ToolCall | ActionDecision:
         self._reset_last_response_metrics()
+        if step_input.get("tool_backend") == "session_tools" and _is_surveillance_step(step_input):
+            return self._next_surveillance_session_tools_response(step_input, history, available_tools)
         if step_input.get("tool_backend") == "zeroshot_python":
             return self._next_zeroshot_python_response(step_input, history)
         if step_input.get("tool_backend") in {"zeroshot_sql", "zeroshot_raw"}:
@@ -2093,4 +2198,52 @@ class QwenChatAgent:
                     }
                 )
             response = _coerce_surveillance_output(_extract_json_object(repaired))
+        return response
+
+    def _next_surveillance_session_tools_response(
+        self,
+        step_input: dict[str, Any],
+        history: list[dict[str, Any]],
+        available_tools: list[str],
+    ) -> ToolCall | ActionDecision:
+        context = {
+            "trajectory_id": step_input["trajectory_id"],
+            "stay_id": int(step_input["stay_id"]),
+            "step_index": int(step_input["step_index"]),
+            "t_hour": int(step_input["t_hour"]),
+        }
+        messages = _build_surveillance_session_tools_messages(step_input, history, available_tools)
+        content = self._generate_with_metrics(messages)
+        if self.trace_callback is not None:
+            self.trace_callback({"event_type": "model_output_raw", **context, "output": content})
+        try:
+            response = _coerce_surveillance_tool_or_decision(
+                _extract_json_object(content),
+                available_tools=available_tools,
+            )
+        except (ValueError, json.JSONDecodeError):
+            original_max_tokens = self.client.max_new_tokens
+            repair_messages = list(messages)
+            repair_messages.append({"role": "assistant", "content": content})
+            repair_messages.append(
+                {
+                    "role": "user",
+                    "content": (
+                        "Your previous reply was invalid. Respond again with JSON only and no extra text. "
+                        "Return either one allowed tool call or one final surveillance decision with keys "
+                        "global_action, suspected_conditions, alerts, priority, recommended_next_tools, rationale."
+                    ),
+                }
+            )
+            self.client.max_new_tokens = self.repair_max_new_tokens
+            try:
+                repaired = self._generate_with_metrics(repair_messages)
+            finally:
+                self.client.max_new_tokens = original_max_tokens
+            if self.trace_callback is not None:
+                self.trace_callback({"event_type": "model_output_repair", **context, "output": repaired})
+            response = _coerce_surveillance_tool_or_decision(
+                _extract_json_object(repaired),
+                available_tools=available_tools,
+            )
         return response

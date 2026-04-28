@@ -59,6 +59,7 @@ TASK_MODES = (
 TOOL_BACKENDS = (
     "official",
     "autoformalized",
+    "session_tools",
     "zeroshot_python",
     "zeroshot_sql",
     "zeroshot_raw",
@@ -77,6 +78,15 @@ SURVEILLANCE_PRIORITY_LEVELS = (
 
 CODE_EXEC_TOOL_NAME = "run_python"
 SQL_EXEC_TOOL_NAME = "run_sql"
+
+SESSION_TOOL_NAMES = [
+    "search_guidelines",
+    "get_guideline",
+    "search_functions",
+    "get_function_info",
+    "load_function",
+    "call_function",
+]
 
 DEFAULT_TOOL_NAMES = [
     "query_suspicion_of_infection",

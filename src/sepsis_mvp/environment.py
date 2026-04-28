@@ -10,6 +10,7 @@ from .schemas import (
     ActionDecision,
     AgentStepInput,
     CODE_EXEC_TOOL_NAME,
+    SESSION_TOOL_NAMES,
     SHARED_TOOLBOX_TOOL_NAMES,
     SQL_EXEC_TOOL_NAME,
     TASK_BASELINE_ACTION,
@@ -159,7 +160,10 @@ class BenchmarkEnvironment:
                     _merge_agent_response_metrics(step_resource_usage, _pop_agent_response_metrics(agent))
                     if isinstance(response, ToolCall):
                         arguments = dict(response.arguments)
-                        if response.tool_name in {CODE_EXEC_TOOL_NAME, SQL_EXEC_TOOL_NAME} and step_session_id is not None:
+                        if (
+                            response.tool_name in {CODE_EXEC_TOOL_NAME, SQL_EXEC_TOOL_NAME}
+                            or self.tool_backend == "session_tools"
+                        ) and step_session_id is not None:
                             arguments["session_id"] = step_session_id
                         tool_call_started = time.perf_counter()
                         output = self.tool_runtime.execute(response.tool_name, arguments)
@@ -345,6 +349,8 @@ class BenchmarkEnvironment:
     def _available_tools_for_protocol(self, trajectory: Trajectory) -> list[str]:
         if self.tool_backend == "zeroshot_python":
             return [CODE_EXEC_TOOL_NAME]
+        if self.tool_backend == "session_tools":
+            return list(SESSION_TOOL_NAMES)
         if self.tool_backend in {"zeroshot_sql", "zeroshot_raw"}:
             if trajectory.primary_task_name() == "infection_only":
                 return [SQL_EXEC_TOOL_NAME]
@@ -360,6 +366,13 @@ class BenchmarkEnvironment:
 
     def _instruction_for_trajectory(self, trajectory: Trajectory) -> str:
         if self._is_surveillance_trajectory(trajectory):
+            if self.tool_backend == "session_tools":
+                return (
+                    "Use the checkpoint-scoped session tools to gather evidence if needed. "
+                    "Search guidelines or function files first, then inspect or call relevant functions. "
+                    "Then return one final surveillance decision with global_action, suspected_conditions, alerts, priority, "
+                    "recommended_next_tools, and rationale."
+                )
             return (
                 "Use the checkpoint-scoped DuckDB session to gather evidence if needed. "
                 "Then return one final surveillance decision with global_action, suspected_conditions, alerts, priority, "

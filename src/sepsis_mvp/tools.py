@@ -877,6 +877,18 @@ def build_tool_runtime(
 
         return AutoformalizedDuckDBToolRuntime(db_path=db_path, library_path=library_root)
 
+    if tool_backend == "session_tools":
+        if not db_path:
+            raise SystemExit("Session-tools backend requires --db-path")
+        from .session_tools_runtime import SessionToolsDuckDBRuntime
+
+        return SessionToolsDuckDBRuntime(
+            db_path=db_path,
+            guidelines_dir=guidelines_dir,
+            functions_dir=functions_dir,
+            session_profile=zeroshot_session_profile,
+        )
+
     if tool_backend == "zeroshot_python":
         if not db_path:
             raise SystemExit("Zero-shot python backend requires --db-path")

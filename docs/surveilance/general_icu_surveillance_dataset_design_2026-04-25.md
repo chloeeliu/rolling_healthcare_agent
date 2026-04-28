@@ -36,9 +36,13 @@ Instead:
 
 ## Available Tools
 
-The intended session interface is the DuckDB code session plus its native retrieval helpers.
+The benchmark now supports two runnable interfaces over the same checkpoint-scoped DuckDB session substrate.
 
-The key available helpers are:
+### Mode A: Python-session mode
+
+This is the original `zeroshot_python` path.
+
+The model can execute short Python snippets inside a checkpoint-scoped DuckDB session and use native session helpers:
 
 - `search_guidelines(keyword)`
 - `get_guideline(name)`
@@ -47,12 +51,27 @@ The key available helpers are:
 - `load_function(name)`
 - `query_db(sql)`
 
-Important design rule:
+### Mode B: Tool-first session mode
+
+This is the new `session_tools` path.
+
+The model does not need to write Python just to do retrieval or call a discovered function. The outer tools are:
+
+- `search_guidelines(keyword)`
+- `get_guideline(name)`
+- `search_functions(keyword)`
+- `get_function_info(name)`
+- `load_function(name)`
+- `call_function(function_name, arguments)`
+
+Important design rules:
 
 - the agent may discover additional functions through `search_functions`
-- but the full library should not be pre-exposed as a ready-made benchmark toolbox
+- the full library should not be pre-exposed as a ready-made benchmark toolbox
+- `call_function(...)` should auto-load the owner file when the requested function is not yet loaded
+- if a function name is ambiguous across files, the model can disambiguate by explicitly using `load_function(name)` first
 
-This keeps the benchmark faithful to the original discovery problem.
+This keeps the benchmark faithful to the original discovery problem while allowing both a Python-first and a tool-first interface.
 
 ## Retrieval Logic
 
@@ -69,11 +88,12 @@ There is no embedding-based retrieval and no benchmark-specific re-ranking layer
 
 ### Function retrieval
 
-Functions are retrieved through the DuckDB session helpers:
+Functions are retrieved through lightweight helpers:
 
 - search by filename keyword
 - inspect signature/docstring via `get_function_info`
-- load selected functions into the session namespace with `load_function`
+- either load selected files explicitly with `load_function`
+- or call the desired exported function directly with `call_function`, which auto-loads its owner file if needed
 
 There is no benchmark-side shortlist of “good functions” passed to the agent up front.
 
@@ -181,11 +201,82 @@ Recommended minimal wording:
 - the prompt should state a preferred tool-use order:
   - search guidelines first for definitions
   - search functions next for reusable logic
-  - inspect and load relevant functions before deciding
-  - use `query_db` when direct checkpoint evidence inspection is needed
-- the prompt should make clear that Python execution is a fallback evidence-gathering path, not the default first move
+  - inspect function info before calling or loading
+  - in tool-first mode, call functions directly and let `call_function` auto-load when possible
+  - use `load_function` explicitly when you want to pin a particular file or resolve ambiguity
+  - in Python-session mode, use `query_db` when direct checkpoint evidence inspection is needed
+- the prompt should make clear that Python execution is a fallback evidence-gathering path in the Python-session mode, not the default first move
 
 That is enough to anchor the decision interface while still requiring the agent to search guidelines for condition-specific detail.
+
+## Prompt Modes
+
+The benchmark now has two prompt-facing runtime modes.
+
+### `zeroshot_python`
+
+This mode uses a checkpoint-scoped DuckDB Python session.
+
+The decision prompt should:
+
+- describe the task as rolling surveillance rather than forecasting
+- explicitly name the monitored surveillance families
+- define the structured decision fields briefly
+- carry only summary-memory from prior checkpoints
+- expose the session helpers in the prompt payload:
+  - `search_guidelines`
+  - `get_guideline`
+  - `search_functions`
+  - `get_function_info`
+  - `load_function`
+  - `query_db`
+- frame Python execution as fallback evidence gathering
+- enforce a remaining-execution budget
+
+The model may respond with either:
+
+- one short Python snippet
+- or one final surveillance decision JSON
+
+### `session_tools`
+
+This mode uses outer tools over the same hidden checkpoint-scoped session substrate.
+
+The decision prompt should:
+
+- describe the task as rolling surveillance rather than forecasting
+- explicitly name the monitored surveillance families
+- define the structured decision fields briefly
+- carry only summary-memory from prior checkpoints
+- expose the currently available tools in the prompt payload:
+  - `search_guidelines`
+  - `get_guideline`
+  - `search_functions`
+  - `get_function_info`
+  - `load_function`
+  - `call_function`
+- prefer direct tool use over Python
+- explain that `call_function` auto-loads the owner file when possible
+- explain that `load_function` is optional and useful for explicit file pinning or ambiguity resolution
+
+The model may respond with either:
+
+- one tool-call JSON object
+- or one final surveillance decision JSON
+
+### Shared summary prompt
+
+Both modes use the same separate summarizer step after each checkpoint decision.
+
+That summarizer prompt should:
+
+- see only the current checkpoint metadata, final decision, and compact current-step history
+- write one very short summary
+- return exactly `{"checkpoint_summary":"..."}` for the next checkpoint memory
+
+The exact implemented prompt contracts for both modes are documented in:
+
+- [general_icu_surveillance_pipeline_runbook_2026-04-27.md](/Users/chloe/Documents/New project/docs/surveilance/general_icu_surveillance_pipeline_runbook_2026-04-27.md)
 
 ## Decision Space Design
 
