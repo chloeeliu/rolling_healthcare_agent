@@ -158,11 +158,13 @@ The key system instructions are:
   - metabolic failure, including lactate elevation and acidemia
   - coagulation abnormality
 - discover guideline text and functions yourself
+- default to direct decision when the current summaries and evidence are already sufficient
 - prefer this tool order:
   - search guideline files for definitions
   - search function files for reusable logic
   - inspect and load relevant functions
   - use `query_db` when direct checkpoint evidence inspection is needed
+- treat Python execution as fallback evidence gathering rather than the default first move
 - return either one short Python snippet or one final surveillance decision
 - do not write the memory summary in the decision response
 

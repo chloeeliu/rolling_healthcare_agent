@@ -183,6 +183,7 @@ Recommended minimal wording:
   - search functions next for reusable logic
   - inspect and load relevant functions before deciding
   - use `query_db` when direct checkpoint evidence inspection is needed
+- the prompt should make clear that Python execution is a fallback evidence-gathering path, not the default first move
 
 That is enough to anchor the decision interface while still requiring the agent to search guidelines for condition-specific detail.
 

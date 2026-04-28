@@ -134,6 +134,33 @@ def _is_toolbox_protocol(step_input: dict[str, Any]) -> bool:
     return step_input.get("protocol") == "rolling_toolbox_with_history"
 
 
+def _normalize_surveillance_summary_history(rolling_history: Any) -> dict[str, str]:
+    if not rolling_history:
+        return {}
+    if isinstance(rolling_history, dict):
+        normalized: dict[str, str] = {}
+        for key, value in sorted(
+            rolling_history.items(),
+            key=lambda item: int(item[0]) if isinstance(item[0], str) else int(item[0]),
+        ):
+            if value is None:
+                continue
+            normalized[str(key)] = str(value)
+        return normalized
+    if isinstance(rolling_history, list):
+        normalized = {}
+        for idx, item in enumerate(rolling_history):
+            if isinstance(item, dict):
+                step_index = item.get("step_index", idx)
+                summary = item.get("summary")
+                if summary:
+                    normalized[str(step_index)] = str(summary)
+            elif item is not None:
+                normalized[str(idx)] = str(item)
+        return normalized
+    return {"0": str(rolling_history)}
+
+
 TASK_KEY_ALIASES = {
     "resp_support": "respiratory_support",
     "respiratory": "respiratory_support",
@@ -859,7 +886,7 @@ def _build_surveillance_zeroshot_python_messages(
     max_interactions = int(step_input.get("max_step_interactions") or 6)
     exec_calls_used = _zeroshot_exec_calls_used(history)
     remaining_exec_calls = max(0, max_interactions - exec_calls_used)
-    rolling_history = step_input.get("rolling_history") or []
+    rolling_history = _normalize_surveillance_summary_history(step_input.get("rolling_history"))
     session_helpers = [
         "search_guidelines(keyword='')",
         "get_guideline(name)",
@@ -872,7 +899,8 @@ def _build_surveillance_zeroshot_python_messages(
         "You are a general ICU rolling surveillance agent operating in a checkpoint-scoped DuckDB Python session.\n"
         "This is a rolling monitoring task, not a forecasting task.\n"
         "At each checkpoint, visible tables already contain only data available by that checkpoint.\n"
-        "You may either execute exactly one short Python snippet or return one final surveillance decision.\n"
+        "Default to returning one final surveillance decision when the current summaries and checkpoint evidence are already sufficient.\n"
+        "Use one short Python snippet only when additional guideline, function, or patient-state evidence is needed.\n"
         "The Python session persists within the current checkpoint only.\n"
         "Do not output reasoning outside the required JSON fields.\n"
         "Return exactly one response and nothing else.\n\n"
@@ -890,17 +918,21 @@ def _build_surveillance_zeroshot_python_messages(
         "- global_action must be exactly one of: continue_monitoring, escalate.\n"
         "- priority must be exactly one of: low, medium, high.\n"
         "- Do not generate the rolling memory summary here; a separate summarizer call will write that summary after your decision.\n\n"
+        "Execution policy:\n"
+        "- Treat Python execution as evidence-gathering fallback, not the default first move.\n"
+        "- If the current rolling summaries and already gathered checkpoint evidence are enough, decide directly.\n"
+        "- Execute Python only when you need to search guidelines, search/load functions, or inspect additional patient evidence.\n\n"
         "Preferred tool-use order:\n"
         "- First, search guideline files when you need condition definitions or surveillance criteria.\n"
         "- Second, search the autoformalized function library for relevant reusable patient-state functions.\n"
         "- Third, inspect and load the most relevant function files before deciding.\n"
         "- Use query_db when direct evidence inspection is needed inside the current checkpoint-scoped session.\n\n"
-        "Available session helpers inside Python:\n"
+        "If you choose execution, these session helpers are available inside Python:\n"
         "- search_guidelines / get_guideline for lightweight filename-based guideline retrieval.\n"
         "- search_functions / get_function_info / load_function for discovering the autoformalized function library.\n"
         "- query_db for checkpoint-scoped SQL queries.\n"
         "- The full function library is not prelisted; discover relevant functions yourself.\n\n"
-        "Python execution contract:\n"
+        "Python execution contract for the fallback execution path:\n"
         "- Use query_db(sql, params=None) for database access.\n"
         "- Use the search_* and load_* helpers directly from the session when needed.\n"
         "- Preloaded variables: stay_id, subject_id, hadm_id, visible_until, pd, np, datetime, timedelta.\n"
@@ -936,10 +968,7 @@ def _build_surveillance_zeroshot_python_messages(
         "tool_backend": step_input.get("tool_backend"),
         "session_helpers": session_helpers,
         "remaining_python_executions": remaining_exec_calls,
-        "rolling_history": {
-            str(index): summary
-            for index, summary in sorted(rolling_history.items(), key=lambda item: int(item[0]) if isinstance(item[0], str) else int(item[0]))
-        },
+        "rolling_history": rolling_history,
         "history": _summarize_zeroshot_history(history),
     }
     return [
