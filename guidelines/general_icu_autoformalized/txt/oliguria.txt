@@ -1,0 +1,7 @@
+ICU oliguria surveillance guidance.
+
+- Oliguria is a time-windowed low urine-output state, not just a single low output value.
+- Use recent urine-output rate evidence and pay attention to sustained low output across the last several hours.
+- suspected_conditions may include oliguria when low output is present but not extreme.
+- alerts are more appropriate for severe oliguria, anuria, or oliguria that coexists with worsening AKI or shock.
+- Search terms that may help: urine_output, urine_output_rate, kdigo_uo, oliguria.

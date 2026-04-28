@@ -50,6 +50,10 @@ class BenchmarkEnvironment:
             )
         self.protocol = protocol
 
+    @staticmethod
+    def _is_surveillance_trajectory(trajectory: Trajectory) -> bool:
+        return trajectory.primary_task_name() == "general_icu_surveillance"
+
     def _emit(self, event: dict[str, Any]) -> None:
         if self.event_callback is not None:
             self.event_callback(event)
@@ -75,14 +79,17 @@ class BenchmarkEnvironment:
 
         available_tools = self._available_tools_for_protocol(trajectory)
         rolling_history: list[dict[str, Any]] = []
+        use_rolling_history = (
+            self.protocol in {"rolling_with_history", "rolling_toolbox_with_history"}
+            and (self.tool_backend != "zeroshot_python" or self._is_surveillance_trajectory(trajectory))
+        )
 
         for step_index, checkpoint in enumerate(trajectory.checkpoints):
             step_started = time.perf_counter()
             instruction = self._instruction_for_trajectory(trajectory)
             step_rolling_history = (
                 list(rolling_history)
-                if self.protocol in {"rolling_with_history", "rolling_toolbox_with_history"}
-                and self.tool_backend != "zeroshot_python"
+                if use_rolling_history
                 else []
             )
             step_max_interactions = self._max_step_interactions_for_protocol(available_tools)
@@ -109,6 +116,7 @@ class BenchmarkEnvironment:
             primary_task = trajectory.primary_task_name()
             predicted_action: str | None = TASK_BASELINE_ACTION.get(primary_task)
             predicted_task_actions: dict[str, str] | None = None
+            predicted_surveillance: dict[str, Any] | None = None
             step_session_id = None
             if hasattr(self.tool_runtime, "start_step_session"):
                 step_session_id = self.tool_runtime.start_step_session(
@@ -181,6 +189,7 @@ class BenchmarkEnvironment:
                     if isinstance(response, ActionDecision):
                         predicted_action = response.action
                         predicted_task_actions = response.task_actions
+                        predicted_surveillance = response.surveillance
                         self._emit(
                             {
                                 "event_type": "action",
@@ -190,8 +199,10 @@ class BenchmarkEnvironment:
                                 "t_hour": checkpoint.t_hour,
                                 "gt_action": checkpoint.state_label,
                                 "gt_task_actions": checkpoint.task_labels,
+                                "gt_surveillance": checkpoint.surveillance_labels,
                                 "predicted_action": predicted_action,
                                 "predicted_task_actions": predicted_task_actions,
+                                "predicted_surveillance": predicted_surveillance,
                             }
                         )
                         break
@@ -200,7 +211,9 @@ class BenchmarkEnvironment:
                 if hasattr(self.tool_runtime, "close_step_session"):
                     self.tool_runtime.close_step_session(step_session_id)
 
-            if not trajectory.is_multitask():
+            if self._is_surveillance_trajectory(trajectory):
+                predicted_action = (predicted_surveillance or {}).get("global_action", predicted_action)
+            elif not trajectory.is_multitask():
                 if (
                     predicted_action is not None
                     and predicted_action != TASK_BASELINE_ACTION.get(primary_task)
@@ -227,6 +240,8 @@ class BenchmarkEnvironment:
                     predicted_action=predicted_action,
                     gt_task_actions=checkpoint.task_labels,
                     predicted_task_actions=predicted_task_actions,
+                    gt_surveillance=checkpoint.surveillance_labels,
+                    predicted_surveillance=predicted_surveillance,
                     tool_calls=tool_calls,
                     tool_outputs=tool_outputs,
                     resource_usage=_finalize_step_resource_usage(
@@ -240,11 +255,11 @@ class BenchmarkEnvironment:
                 checkpoint=checkpoint,
                 step_index=step_index,
                 tool_outputs=tool_outputs,
+                predicted_surveillance=predicted_surveillance,
             )
             if (
                 history_entry is not None
-                and self.protocol in {"rolling_with_history", "rolling_toolbox_with_history"}
-                and self.tool_backend != "zeroshot_python"
+                and use_rolling_history
             ):
                 rolling_history.append(history_entry)
 
@@ -277,7 +292,10 @@ class BenchmarkEnvironment:
         return [self.run_trajectory(trajectory, agent) for trajectory in self.trajectories]
 
     def _resolve_task_mode(self, trajectory: Trajectory) -> str:
-        inferred = "multitask" if trajectory.is_multitask() else "single"
+        if self._is_surveillance_trajectory(trajectory):
+            inferred = "surveillance"
+        else:
+            inferred = "multitask" if trajectory.is_multitask() else "single"
         if self.task_mode == "auto":
             return inferred
         if self.task_mode != inferred:
@@ -304,6 +322,12 @@ class BenchmarkEnvironment:
         return self.max_tool_calls_per_step
 
     def _instruction_for_trajectory(self, trajectory: Trajectory) -> str:
+        if self._is_surveillance_trajectory(trajectory):
+            return (
+                "Use the checkpoint-scoped DuckDB session to gather evidence if needed. "
+                "Then return one final surveillance decision with global_action, suspected_conditions, alerts, priority, "
+                "recommended_next_tools, rationale, and checkpoint_summary."
+            )
         if trajectory.is_multitask():
             return "Use tools if needed. Then output one decision for each monitored task."
         task_name = trajectory.primary_task_name()
@@ -331,7 +355,9 @@ def evaluate_rollouts(
     *,
     protocol: str | None = None,
 ) -> dict[str, Any]:
-    if trajectories and trajectories[0].is_multitask():
+    if trajectories and trajectories[0].primary_task_name() == "general_icu_surveillance":
+        metrics = evaluate_surveillance_rollouts(trajectories, rollouts)
+    elif trajectories and trajectories[0].is_multitask():
         metrics = evaluate_multitask_rollouts(trajectories, rollouts)
     else:
         metrics = evaluate_single_task_rollouts(trajectories, rollouts, protocol=protocol)
@@ -342,6 +368,109 @@ def evaluate_rollouts(
             metrics["toolbox_efficiency"] = evaluate_generic_toolbox_efficiency(rollouts)
     metrics["resource_usage"] = evaluate_resource_usage(rollouts)
     return metrics
+
+
+def _set_f1(gt_items: list[str], pred_items: list[str]) -> tuple[float, float, float]:
+    gt = set(gt_items)
+    pred = set(pred_items)
+    tp = len(gt & pred)
+    fp = len(pred - gt)
+    fn = len(gt - pred)
+    precision = tp / (tp + fp) if tp + fp else 1.0 if not pred and not gt else 0.0
+    recall = tp / (tp + fn) if tp + fn else 1.0 if not pred and not gt else 0.0
+    return precision, recall, _f1(tp, fp, fn)
+
+
+def evaluate_surveillance_rollouts(
+    trajectories: list[Trajectory],
+    rollouts: list[TrajectoryRollout],
+) -> dict[str, Any]:
+    trajectory_by_id = {trajectory.trajectory_id: trajectory for trajectory in trajectories}
+    total_steps = 0
+    global_action_correct = 0
+    priority_correct = 0
+    exact_suspected_match = 0
+    exact_alert_match = 0
+    suspected_f1_total = 0.0
+    alerts_f1_total = 0.0
+    alerts_precision_total = 0.0
+    alerts_recall_total = 0.0
+    first_alert_timing_pairs: list[tuple[int | None, int | None]] = []
+
+    for rollout in rollouts:
+        trajectory = trajectory_by_id[rollout.trajectory_id]
+        gt_first_alert_hour = None
+        pred_first_alert_hour = None
+        for checkpoint, step in zip(trajectory.checkpoints, rollout.steps):
+            total_steps += 1
+            gt = checkpoint.surveillance_labels or {}
+            pred = step.predicted_surveillance or {}
+            gt_action = gt.get("global_action")
+            pred_action = pred.get("global_action")
+            if gt_action == pred_action:
+                global_action_correct += 1
+            gt_priority = gt.get("priority")
+            pred_priority = pred.get("priority")
+            if gt_priority == pred_priority:
+                priority_correct += 1
+
+            gt_suspected = gt.get("suspected_conditions") or []
+            pred_suspected = pred.get("suspected_conditions") or []
+            gt_alerts = gt.get("alerts") or []
+            pred_alerts = pred.get("alerts") or []
+
+            if set(gt_suspected) == set(pred_suspected):
+                exact_suspected_match += 1
+            if set(gt_alerts) == set(pred_alerts):
+                exact_alert_match += 1
+
+            _, _, suspected_f1 = _set_f1(gt_suspected, pred_suspected)
+            alert_precision, alert_recall, alert_f1 = _set_f1(gt_alerts, pred_alerts)
+            suspected_f1_total += suspected_f1
+            alerts_f1_total += alert_f1
+            alerts_precision_total += alert_precision
+            alerts_recall_total += alert_recall
+
+            if gt_first_alert_hour is None and gt_alerts:
+                gt_first_alert_hour = checkpoint.t_hour
+            if pred_first_alert_hour is None and pred_alerts:
+                pred_first_alert_hour = checkpoint.t_hour
+
+        first_alert_timing_pairs.append((gt_first_alert_hour, pred_first_alert_hour))
+
+    timing_errors = [
+        pred - gt
+        for gt, pred in first_alert_timing_pairs
+        if gt is not None and pred is not None
+    ]
+    false_early_alerts = sum(
+        1
+        for gt, pred in first_alert_timing_pairs
+        if gt is not None and pred is not None and pred < gt
+    )
+    missed_alert_trajectories = sum(1 for gt, pred in first_alert_timing_pairs if gt is not None and pred is None)
+
+    return {
+        "task_name": "general_icu_surveillance",
+        "step_level": {
+            "global_action_accuracy": round(global_action_correct / total_steps, 4) if total_steps else 0.0,
+            "priority_accuracy": round(priority_correct / total_steps, 4) if total_steps else 0.0,
+            "suspected_conditions_exact_match": round(exact_suspected_match / total_steps, 4) if total_steps else 0.0,
+            "alerts_exact_match": round(exact_alert_match / total_steps, 4) if total_steps else 0.0,
+            "suspected_conditions_macro_f1": round(suspected_f1_total / total_steps, 4) if total_steps else 0.0,
+            "alerts_macro_precision": round(alerts_precision_total / total_steps, 4) if total_steps else 0.0,
+            "alerts_macro_recall": round(alerts_recall_total / total_steps, 4) if total_steps else 0.0,
+            "alerts_macro_f1": round(alerts_f1_total / total_steps, 4) if total_steps else 0.0,
+        },
+        "timing": {
+            "first_alert_mean_error_hours": round(sum(timing_errors) / len(timing_errors), 4) if timing_errors else None,
+            "first_alert_mean_abs_error_hours": round(sum(abs(err) for err in timing_errors) / len(timing_errors), 4)
+            if timing_errors
+            else None,
+            "false_early_alert_trajectories": false_early_alerts,
+            "missed_alert_trajectories": missed_alert_trajectories,
+        },
+    }
 
 
 def evaluate_single_task_rollouts(
@@ -1336,8 +1465,23 @@ def _build_rolling_history_entry(
     checkpoint: Any,
     step_index: int,
     tool_outputs: list[dict[str, Any]],
+    predicted_surveillance: dict[str, Any] | None = None,
 ) -> dict[str, Any] | None:
     task_name = trajectory.primary_task_name()
+    if task_name == "general_icu_surveillance":
+        summary = (predicted_surveillance or {}).get("checkpoint_summary")
+        if not summary:
+            suspected = ", ".join((predicted_surveillance or {}).get("suspected_conditions") or []) or "none"
+            alerts = ", ".join((predicted_surveillance or {}).get("alerts") or []) or "none"
+            global_action = (predicted_surveillance or {}).get("global_action") or checkpoint.state_label or "continue_monitoring"
+            priority = (predicted_surveillance or {}).get("priority") or "low"
+            summary = f"action={global_action}; suspects={suspected}; alerts={alerts}; priority={priority}"
+        return {
+            "task_name": task_name,
+            "step_index": step_index,
+            "t_hour": checkpoint.t_hour,
+            "summary": summary,
+        }
     infection = _compact_infection_history(
         _latest_step_tool_output(tool_outputs, "has_suspected_infection")
     ) or {

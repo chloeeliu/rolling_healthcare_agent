@@ -13,6 +13,8 @@ from .schemas import (
     CODE_EXEC_TOOL_NAME,
     SHARED_TOOLBOX_TOOL_NAMES,
     SQL_EXEC_TOOL_NAME,
+    SURVEILLANCE_GLOBAL_ACTIONS,
+    SURVEILLANCE_PRIORITY_LEVELS,
     TASK_LABEL_SPACES,
     ActionDecision,
     ToolCall,
@@ -113,6 +115,10 @@ def _resolved_task_names(step_input: dict[str, Any]) -> list[str]:
 
 def _single_task_name(step_input: dict[str, Any]) -> str:
     return _resolved_task_names(step_input)[0]
+
+
+def _is_surveillance_step(step_input: dict[str, Any]) -> bool:
+    return _single_task_name(step_input) == "general_icu_surveillance"
 
 
 def _is_toolbox_protocol(step_input: dict[str, Any]) -> bool:
@@ -835,6 +841,89 @@ def _build_zeroshot_python_messages(
     ]
 
 
+def _build_surveillance_zeroshot_python_messages(
+    step_input: dict[str, Any],
+    history: list[dict[str, Any]],
+) -> list[dict[str, str]]:
+    stay_id = int(step_input["stay_id"])
+    t_hour = int(step_input["t_hour"])
+    max_interactions = int(step_input.get("max_step_interactions") or 6)
+    exec_calls_used = _zeroshot_exec_calls_used(history)
+    remaining_exec_calls = max(0, max_interactions - exec_calls_used)
+    rolling_history = step_input.get("rolling_history") or []
+    session_helpers = [
+        "search_guidelines(keyword='')",
+        "get_guideline(name)",
+        "search_functions(keyword='')",
+        "get_function_info(name)",
+        "load_function(name)",
+        "query_db(sql, params=None)",
+    ]
+    system_prompt = (
+        "You are a general ICU rolling surveillance agent operating in a checkpoint-scoped DuckDB Python session.\n"
+        "This is a rolling monitoring task, not a forecasting task.\n"
+        "At each checkpoint, visible tables already contain only data available by that checkpoint.\n"
+        "You may either execute exactly one short Python snippet or return one final surveillance decision.\n"
+        "The Python session persists within the current checkpoint only.\n"
+        "Do not output reasoning outside the required JSON fields.\n"
+        "Return exactly one response and nothing else.\n\n"
+        "Decision semantics:\n"
+        "- suspected_conditions means clinically meaningful concern that should keep monitoring focused on that condition family.\n"
+        "- alerts means higher-acuity or higher-confidence states that justify escalation now.\n"
+        "- global_action must be exactly one of: continue_monitoring, escalate.\n"
+        "- priority must be exactly one of: low, medium, high.\n"
+        "- checkpoint_summary must be a very short summary for the next checkpoint, ideally under 20 words.\n\n"
+        "Available session helpers inside Python:\n"
+        "- search_guidelines / get_guideline for lightweight filename-based guideline retrieval.\n"
+        "- search_functions / get_function_info / load_function for discovering the autoformalized function library.\n"
+        "- query_db for checkpoint-scoped SQL queries.\n"
+        "- The full function library is not prelisted; discover relevant functions yourself.\n\n"
+        "Python execution contract:\n"
+        "- Use query_db(sql, params=None) for database access.\n"
+        "- Use the search_* and load_* helpers directly from the session when needed.\n"
+        "- Preloaded variables: stay_id, subject_id, hadm_id, visible_until, pd, np, datetime, timedelta.\n"
+        "- Set RESULT before the code ends and/or print concise findings.\n"
+        "- Keep snippets short and focused.\n"
+        "- Do not open database connections directly.\n\n"
+        "Final decision JSON contract:\n"
+        '{'
+        '"global_action":"continue_monitoring|escalate",'
+        '"suspected_conditions":["..."],'
+        '"alerts":["..."],'
+        '"priority":"low|medium|high",'
+        '"recommended_next_tools":["..."],'
+        '"rationale":"...",'
+        '"checkpoint_summary":"..."'
+        '}\n'
+        "- recommended_next_tools should name the next likely session helper or function to inspect, not external tools.\n"
+        "- suspected_conditions and alerts must be arrays; use [] when empty.\n"
+        "- If no action-level state is active, return continue_monitoring with empty alerts.\n"
+    )
+    if remaining_exec_calls > 0:
+        system_prompt += f"\nYou have {remaining_exec_calls} Python execution(s) remaining before you must commit to a final surveillance decision."
+    else:
+        system_prompt += "\nYou have no Python executions remaining. The next response must be a final surveillance decision."
+
+    user_payload = {
+        "step_input": {
+            "trajectory_id": step_input["trajectory_id"],
+            "stay_id": stay_id,
+            "step_index": step_input["step_index"],
+            "t_hour": t_hour,
+            "task_name": "general_icu_surveillance",
+        },
+        "tool_backend": step_input.get("tool_backend"),
+        "session_helpers": session_helpers,
+        "remaining_python_executions": remaining_exec_calls,
+        "rolling_history": rolling_history[-5:],
+        "history": _summarize_zeroshot_history(history),
+    }
+    return [
+        {"role": "system", "content": system_prompt},
+        {"role": "user", "content": json.dumps(user_payload, indent=2)},
+    ]
+
+
 def _build_zeroshot_repair_messages(
     step_input: dict[str, Any],
     history: list[dict[str, Any]],
@@ -895,6 +984,34 @@ def _build_zeroshot_python_repair_messages(
         repair_hint = (
             "Your previous reply was invalid. Respond again with JSON only and no extra text. "
             'You must now return a final action such as {"action":"infection_suspect"}.'
+        )
+    messages.append({"role": "user", "content": repair_hint})
+    return messages
+
+
+def _build_surveillance_zeroshot_python_repair_messages(
+    step_input: dict[str, Any],
+    history: list[dict[str, Any]],
+    bad_output: str,
+) -> list[dict[str, str]]:
+    messages = _build_surveillance_zeroshot_python_messages(step_input, history)
+    messages.append({"role": "assistant", "content": bad_output})
+    remaining_code_calls = max(
+        0,
+        int(step_input.get("max_step_interactions") or 6) - _zeroshot_exec_calls_used(history),
+    )
+    if remaining_code_calls > 0:
+        repair_hint = (
+            "Your previous reply was invalid, incomplete, or too long. Respond again with exactly one response and no extra text. "
+            "If you need execution, return only one short CLOSED fenced Python block. "
+            "If you are ready to decide, return only one JSON object with exactly these keys: "
+            "global_action, suspected_conditions, alerts, priority, recommended_next_tools, rationale, checkpoint_summary."
+        )
+    else:
+        repair_hint = (
+            "Your previous reply was invalid. Respond again with JSON only and no extra text. "
+            "You must now return a final surveillance decision with keys: "
+            "global_action, suspected_conditions, alerts, priority, recommended_next_tools, rationale, checkpoint_summary."
         )
     messages.append({"role": "user", "content": repair_hint})
     return messages
@@ -1091,6 +1208,54 @@ def _coerce_zeroshot_output(
     if not isinstance(code, str) or not code.strip():
         raise ValueError("python_code must be a non-empty string.")
     return ToolCall(tool_name=CODE_EXEC_TOOL_NAME, arguments={"code": code})
+
+
+def _coerce_surveillance_output(payload: dict[str, Any]) -> ActionDecision:
+    required = {
+        "global_action",
+        "suspected_conditions",
+        "alerts",
+        "priority",
+        "recommended_next_tools",
+        "rationale",
+        "checkpoint_summary",
+    }
+    missing = sorted(required - set(payload))
+    if missing:
+        raise ValueError(f"Missing surveillance decision keys: {missing}")
+    global_action = payload["global_action"]
+    if global_action not in SURVEILLANCE_GLOBAL_ACTIONS:
+        raise ValueError(f"Invalid global_action: {global_action}")
+    priority = payload["priority"]
+    if priority not in SURVEILLANCE_PRIORITY_LEVELS:
+        raise ValueError(f"Invalid priority: {priority}")
+    suspected_conditions = payload["suspected_conditions"]
+    alerts = payload["alerts"]
+    recommended_next_tools = payload["recommended_next_tools"]
+    if not isinstance(suspected_conditions, list) or not all(isinstance(item, str) for item in suspected_conditions):
+        raise ValueError("suspected_conditions must be a list of strings.")
+    if not isinstance(alerts, list) or not all(isinstance(item, str) for item in alerts):
+        raise ValueError("alerts must be a list of strings.")
+    if not isinstance(recommended_next_tools, list) or not all(isinstance(item, str) for item in recommended_next_tools):
+        raise ValueError("recommended_next_tools must be a list of strings.")
+    rationale = payload["rationale"]
+    checkpoint_summary = payload["checkpoint_summary"]
+    if not isinstance(rationale, str):
+        raise ValueError("rationale must be a string.")
+    if not isinstance(checkpoint_summary, str):
+        raise ValueError("checkpoint_summary must be a string.")
+    return ActionDecision(
+        action=global_action,
+        surveillance={
+            "global_action": global_action,
+            "suspected_conditions": suspected_conditions,
+            "alerts": alerts,
+            "priority": priority,
+            "recommended_next_tools": recommended_next_tools,
+            "rationale": rationale,
+            "checkpoint_summary": checkpoint_summary,
+        },
+    )
 
 
 def _normalize_toolbox_response(
@@ -1615,6 +1780,8 @@ class QwenChatAgent:
         step_input: dict[str, Any],
         history: list[dict[str, Any]],
     ) -> ToolCall | ActionDecision:
+        if _is_surveillance_step(step_input):
+            return self._next_surveillance_zeroshot_python_response(step_input, history)
         allowed_actions = _label_space_for_task(step_input, "sepsis")
         context = {
             "trajectory_id": step_input["trajectory_id"],
@@ -1695,4 +1862,76 @@ class QwenChatAgent:
             if isinstance(response, ToolCall):
                 raise ValueError("Zero-shot python agent must return a final action after code budget is exhausted.")
 
+        return response
+
+    def _next_surveillance_zeroshot_python_response(
+        self,
+        step_input: dict[str, Any],
+        history: list[dict[str, Any]],
+    ) -> ToolCall | ActionDecision:
+        context = {
+            "trajectory_id": step_input["trajectory_id"],
+            "stay_id": int(step_input["stay_id"]),
+            "step_index": int(step_input["step_index"]),
+            "t_hour": int(step_input["t_hour"]),
+        }
+        messages = _build_surveillance_zeroshot_python_messages(step_input, history)
+        content = self._generate_with_metrics(messages)
+        if self.trace_callback is not None:
+            self.trace_callback({"event_type": "model_output_raw", **context, "output": content})
+        try:
+            code = _extract_python_code_block(content, allow_open=False)
+            if code is not None:
+                response = _compile_zeroshot_python_response(
+                    ToolCall(tool_name=CODE_EXEC_TOOL_NAME, arguments={"code": code})
+                )
+            else:
+                response = _coerce_surveillance_output(_extract_json_object(content))
+        except (ValueError, json.JSONDecodeError, SyntaxError):
+            original_max_tokens = self.client.max_new_tokens
+            repair_messages = _build_surveillance_zeroshot_python_repair_messages(
+                step_input,
+                history,
+                content,
+            )
+            self.client.max_new_tokens = self.repair_max_new_tokens
+            try:
+                repaired = self._generate_with_metrics(repair_messages)
+            finally:
+                self.client.max_new_tokens = original_max_tokens
+            if self.trace_callback is not None:
+                self.trace_callback({"event_type": "model_output_repair", **context, "output": repaired})
+            code = _extract_python_code_block(repaired, allow_open=False)
+            if code is not None:
+                response = _compile_zeroshot_python_response(
+                    ToolCall(tool_name=CODE_EXEC_TOOL_NAME, arguments={"code": code})
+                )
+            else:
+                response = _coerce_surveillance_output(_extract_json_object(repaired))
+
+        remaining_code_calls = max(
+            0,
+            int(step_input.get("max_step_interactions") or 6) - _zeroshot_exec_calls_used(history),
+        )
+        if remaining_code_calls == 0 and isinstance(response, ToolCall):
+            original_max_tokens = self.client.max_new_tokens
+            repair_messages = _build_surveillance_zeroshot_python_repair_messages(
+                step_input,
+                history,
+                content,
+            )
+            self.client.max_new_tokens = self.repair_max_new_tokens
+            try:
+                repaired = self._generate_with_metrics(repair_messages)
+            finally:
+                self.client.max_new_tokens = original_max_tokens
+            if self.trace_callback is not None:
+                self.trace_callback(
+                    {
+                        "event_type": "model_output_repair_final_decision",
+                        **context,
+                        "output": repaired,
+                    }
+                )
+            response = _coerce_surveillance_output(_extract_json_object(repaired))
         return response

@@ -1,0 +1,11 @@
+General ICU surveillance benchmark guidance.
+
+- This is a rolling monitoring task at the current checkpoint, not a future prediction task.
+- Use only data visible up to the current t_hour.
+- Start broad, then narrow: check likely active organ-support or deterioration families before committing to alerts.
+- suspected_conditions means clinically meaningful concern that should stay on the monitoring list.
+- alerts means high-acuity or high-confidence states that justify escalation now.
+- global_action should be continue_monitoring when no current alert-level state is active and escalate when one or more alert-level states are active.
+- priority should usually be low for no active alerts, medium for important suspect states or a single moderate alert, and high for severe or multi-system alert states.
+- Use guideline search to clarify condition thresholds and use function search to discover relevant autoformalized concepts.
+- Keep checkpoint_summary very short so it can be reused as rolling memory at the next checkpoint.

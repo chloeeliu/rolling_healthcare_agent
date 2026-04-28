@@ -854,6 +854,9 @@ def build_tool_runtime(
     db_path: str | None = None,
     concepts: str | Path | None = None,
     autoformalized_library: str | Path | None = None,
+    guidelines_dir: str | Path | None = None,
+    functions_dir: str | Path | None = None,
+    zeroshot_session_profile: str = "raw",
 ) -> ToolRuntime:
     if tool_backend == "official":
         if db_path:
@@ -879,7 +882,12 @@ def build_tool_runtime(
             raise SystemExit("Zero-shot python backend requires --db-path")
         from .zeroshot_python import ZeroShotPythonDuckDBRuntime
 
-        return ZeroShotPythonDuckDBRuntime(db_path=db_path)
+        return ZeroShotPythonDuckDBRuntime(
+            db_path=db_path,
+            guidelines_dir=guidelines_dir,
+            functions_dir=functions_dir,
+            session_profile=zeroshot_session_profile,
+        )
 
     if tool_backend in {"zeroshot_sql", "zeroshot_raw"}:
         if not db_path:

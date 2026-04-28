@@ -1,0 +1,7 @@
+ICU sepsis surveillance guidance.
+
+- Sepsis is infection plus clinically important organ dysfunction.
+- Treat sepsis as more than infection alone; look for dysfunction signals such as SOFA change, vasopressors, lactate elevation, renal injury, respiratory failure, or altered mental status.
+- suspected_conditions may include sepsis when infection is plausible and organ dysfunction is emerging.
+- alerts should be reserved for stronger sepsis states, especially when official Sepsis-3 style evidence is satisfied or shock physiology is present.
+- Search terms that may help: sepsis, suspicion_of_infection, sofa, lactate, vasopressor, septic shock.

@@ -41,7 +41,14 @@ class _PythonSession:
 
 
 class ZeroShotPythonDuckDBRuntime:
-    def __init__(self, db_path: str | Path) -> None:
+    def __init__(
+        self,
+        db_path: str | Path,
+        *,
+        guidelines_dir: str | Path | None = None,
+        functions_dir: str | Path | None = None,
+        session_profile: str = "raw",
+    ) -> None:
         try:
             import duckdb
         except ImportError as exc:
@@ -54,6 +61,9 @@ class ZeroShotPythonDuckDBRuntime:
         self.duckdb = duckdb
         self.pd = pd
         self.db_path = str(db_path)
+        self.guidelines_dir = str(guidelines_dir) if guidelines_dir is not None else None
+        self.functions_dir = str(functions_dir) if functions_dir is not None else None
+        self.session_profile = session_profile
         self.connection = duckdb.connect(self.db_path, read_only=True)
         self._validate_required_tables()
         self._sessions: dict[str, _PythonSession] = {}
@@ -94,6 +104,7 @@ class ZeroShotPythonDuckDBRuntime:
         )
 
     def _create_session(self, context: _StayContext) -> DuckDBCodeSession:
+        allowed_relations = set(ALLOWED_RAW_RELATIONS) if self.session_profile == "raw" else None
         return DuckDBCodeSession(
             db_path=self.db_path,
             subject_id=context.subject_id,
@@ -101,7 +112,9 @@ class ZeroShotPythonDuckDBRuntime:
             stay_id=context.stay_id,
             visible_until=context.visible_until,
             time_bounded_views=True,
-            allowed_relations=set(ALLOWED_RAW_RELATIONS),
+            allowed_relations=allowed_relations,
+            guidelines_dir=self.guidelines_dir,
+            functions_dir=self.functions_dir,
         )
 
     def start_step_session(self, *, stay_id: int, t_hour: int) -> str:

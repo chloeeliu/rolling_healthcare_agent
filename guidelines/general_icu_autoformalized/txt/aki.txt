@@ -1,0 +1,8 @@
+ICU acute kidney injury surveillance guidance.
+
+- Monitor creatinine trajectory, urine output, KDIGO staging, and renal support.
+- Stage 1 AKI is usually a suspect-level renal deterioration state.
+- Stage 2 or stage 3 AKI is usually alert-level because it is more severe and actionable.
+- Oliguria and severe oliguria can strengthen concern even before advanced creatinine criteria are met.
+- Active CRRT indicates severe renal support.
+- Search terms that may help: aki, kdigo, creatinine, urine output, crrt.

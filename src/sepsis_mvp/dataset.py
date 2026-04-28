@@ -144,6 +144,8 @@ def load_dataset_auto(
         with dataset_path.open() as handle:
             reader = csv.DictReader(handle)
             first_row = next(reader)
+        if "global_action" in first_row and "suspected_conditions" in first_row and "alerts" in first_row:
+            return load_general_surveillance_csv_dataset(dataset_path).trajectories
         if first_row.get("task_name") == "infection_only":
             return load_single_task_csv_dataset(dataset_path, task_name="infection_only").trajectories
         if "sepsis_label" in first_row:
@@ -183,6 +185,15 @@ def _parse_bool(value: str | None) -> bool | None:
     if normalized in {"", "null", "none", "nan"}:
         return None
     return normalized == "true" or normalized == "1"
+
+
+def _parse_pipe_list(value: str | None) -> list[str]:
+    if value is None:
+        return []
+    value = value.strip()
+    if value.lower() in {"", "null", "none", "nan"}:
+        return []
+    return [item for item in value.split("|") if item]
 
 
 def _trajectory_skip_reason(rows: list[dict[str, str]]) -> str | None:
@@ -349,6 +360,71 @@ def load_multitask_csv_dataset(path: str | Path) -> CSVLoadResult:
                 task_names=["sepsis", "aki", "respiratory_support"],
                 tool_names=list(MULTITASK_TOOL_NAMES),
                 label_spaces={task: labels[:] for task, labels in TASK_LABEL_SPACES.items()},
+            )
+        )
+
+    return CSVLoadResult(
+        trajectories=trajectories,
+        included_trajectories=len(trajectories),
+        skipped_trajectories=0,
+        skipped_reasons={},
+    )
+
+
+def load_general_surveillance_csv_dataset(path: str | Path) -> CSVLoadResult:
+    grouped_rows: dict[str, list[dict[str, str]]] = defaultdict(list)
+    with Path(path).open() as handle:
+        reader = csv.DictReader(handle)
+        for row in reader:
+            grouped_rows[row["trajectory_id"]].append(row)
+
+    trajectories: list[Trajectory] = []
+    for trajectory_id, rows in sorted(grouped_rows.items()):
+        rows.sort(key=lambda row: int(row["t_hour"]))
+        first = rows[0]
+        checkpoints = []
+        for row in rows:
+            checkpoint_summary = row.get("checkpoint_summary")
+            surveillance_labels = {
+                "global_action": row["global_action"],
+                "suspected_conditions": _parse_pipe_list(row.get("suspected_conditions")),
+                "alerts": _parse_pipe_list(row.get("alerts")),
+                "priority": row.get("priority") or None,
+                "recommended_next_tools": _parse_pipe_list(row.get("recommended_next_tools")),
+                "rationale": row.get("rationale") or None,
+                "checkpoint_summary": checkpoint_summary or None,
+            }
+            checkpoints.append(
+                Checkpoint(
+                    t_hour=int(row["t_hour"]),
+                    state_label=row["global_action"],
+                    surveillance_labels=surveillance_labels,
+                    checkpoint_time=row.get("checkpoint_time") or None,
+                    terminal=_parse_bool(row.get("terminal")),
+                )
+            )
+
+        step_hours = checkpoints[1].t_hour - checkpoints[0].t_hour if len(checkpoints) > 1 else 4
+        horizon_hours = checkpoints[-1].t_hour
+        trajectories.append(
+            Trajectory(
+                trajectory_id=trajectory_id,
+                stay_id=int(first["stay_id"]),
+                subject_id=int(first["subject_id"]),
+                hadm_id=int(first["hadm_id"]),
+                anchor="icu_intime",
+                step_hours=step_hours,
+                horizon_hours=horizon_hours,
+                transitions={},
+                checkpoints=checkpoints,
+                icu_intime=first.get("icu_intime") or None,
+                icu_outtime=first.get("icu_outtime") or None,
+                icu_los_hours=_parse_optional_float(first.get("icu_los_hours")),
+                task_name="general_icu_surveillance",
+                task_variant="surveillance_v1",
+                task_names=["general_icu_surveillance"],
+                tool_names=[],
+                label_spaces={},
             )
         )
 

@@ -1,0 +1,7 @@
+ICU coagulopathy surveillance guidance.
+
+- Monitor INR and related coagulation abnormalities as a hematologic surveillance family.
+- Mild abnormality may support suspect-level concern.
+- More severe INR elevation is alert-level because it may reflect meaningful coagulopathy or bleeding risk.
+- Coagulopathy should be interpreted with sepsis, liver dysfunction, shock, and procedure context when available.
+- Search terms that may help: coagulation, INR, liver, sepsis.

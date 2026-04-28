@@ -1,0 +1,8 @@
+ICU hemodynamic and shock surveillance guidance.
+
+- Monitor vasoactive support, lactate, blood pressure, and evidence of hypoperfusion together.
+- Any vasoactive support suggests important hemodynamic instability.
+- Multi-agent or high-intensity vasoactive support is a stronger alert-level state.
+- Shock or hypoperfusion concern rises when hypotension, vasopressors, and lactate elevation cluster together.
+- Septic shock is a sepsis-linked shock state and should generally escalate.
+- Search terms that may help: vasoactive_agent, norepinephrine, vasopressin, lactate, vitalsign, shock.

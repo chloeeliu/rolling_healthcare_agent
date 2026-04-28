@@ -92,7 +92,7 @@ Design reference:
 
 ## Scope of the current package
 
-This package now covers the cohort and checkpoint-ground-truth design layers, but not the final exported checkpoint label table.
+This package now covers the cohort, checkpoint-ground-truth, and runnable benchmark-input layers.
 
 What is included:
 
@@ -102,11 +102,18 @@ What is included:
 - source feasibility analysis aligned to the autoformalized functions
 - checkpoint decision registry
 - onset-timing analysis for the checkpoint decision catalog
+- full checkpoint truth over the finalized `LOS >= 48h` cohort
+- a soft-balanced `2,000`-stay benchmark subset
+- a directly runnable CSV input for the surveillance pipeline:
+  - `benchmark_2k_checkpoint_truth.csv`
 
-What is intentionally deferred:
+What remains intentionally deferred:
 
-- final MIMIC-derived SQL decision builders
-- full checkpoint decision labels
-- scoring metadata for `suspected_conditions` and `alerts`
+- deeper pipeline scoring outputs beyond the current ground-truth table
+- optional benchmark extensions such as stronger CRRT interval reconstruction
+- future alternate benchmark subsets or split variants
 
-Those belong in the next dataset-build phase.
+Runnable benchmark references:
+
+- [general_icu_surveillance_dataset_design_2026-04-25.md](/Users/chloe/Documents/New project/docs/surveilance/general_icu_surveillance_dataset_design_2026-04-25.md)
+- [general_icu_surveillance_pipeline_runbook_2026-04-27.md](/Users/chloe/Documents/New project/docs/surveilance/general_icu_surveillance_pipeline_runbook_2026-04-27.md)

@@ -197,7 +197,8 @@ The final agent output at each checkpoint should remain structured, for example:
   "alerts": ["sepsis_alert", "aki_stage3_alert"],
   "priority": "low | medium | high",
   "recommended_next_tools": ["search_functions('lactate')", "search_functions('vaso')"],
-  "rationale": "..."
+  "rationale": "...",
+  "checkpoint_summary": "short rolling memory summary"
 }
 ```
 
@@ -253,6 +254,34 @@ That is large enough to feel like real ICU monitoring, but still manageable for 
 ### Hematologic / coagulation family
 
 24. `coagulopathy_inr_ge_2`
+
+## Runnable Pipeline Status
+
+The design is now implemented in a minimally curated runnable form.
+
+What is already wired:
+
+- the finalized `2,000`-stay benchmark subset
+- direct CSV loading for surveillance trajectories from:
+  - [benchmark_2k_checkpoint_truth.csv](/Users/chloe/Documents/New project/dataset/surveilance/benchmark_2k_checkpoint_truth.csv)
+- the checkpoint-scoped DuckDB Python session backend
+- lightweight guideline retrieval through `.txt` files in:
+  - [guidelines/general_icu_autoformalized/txt](/Users/chloe/Documents/New project/guidelines/general_icu_autoformalized/txt)
+- function discovery and loading from:
+  - [autoformalized_library/functions](/Users/chloe/Documents/New project/autoformalized_library/functions)
+- rolling short-summary memory between checkpoints
+- surveillance-specific evaluation for action, condition-set, alert-set, and timing metrics
+
+What remains intentionally minimal:
+
+- no benchmark-side disease-specific helper wrappers
+- no preselected function shortlist shown to the agent
+- no benchmark-side retrieval reranking
+- no condition-specific prompt tuning
+
+The runnable operator notes now live in:
+
+- [general_icu_surveillance_pipeline_runbook_2026-04-27.md](/Users/chloe/Documents/New project/docs/surveilance/general_icu_surveillance_pipeline_runbook_2026-04-27.md)
 
 ## Why this decision space is the right size
 

@@ -1,0 +1,7 @@
+ICU neurologic surveillance guidance.
+
+- Use GCS trend and current impairment severity as the main neurologic monitoring signal.
+- Moderate impairment can remain a suspect state when the patient is stable.
+- Severe impairment, especially GCS 8 or below, is usually alert-level because it is clinically actionable and often tied to airway or neurologic risk.
+- Interpret neurologic data carefully in context because sedation and intubation can confound bedside scores.
+- Search terms that may help: gcs, first_day_gcs, neuro.

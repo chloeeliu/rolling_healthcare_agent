@@ -1,0 +1,7 @@
+ICU hyperlactatemia surveillance guidance.
+
+- Lactate is a hypoperfusion and metabolic stress marker; trend and magnitude both matter.
+- Mild or moderate elevation can support suspect-level concern for shock, sepsis, or other critical illness.
+- Severe hyperlactatemia is more alert-level, especially when paired with vasopressor use or acidemia.
+- Lactate should often be interpreted jointly with hemodynamic and infection evidence rather than in isolation.
+- Search terms that may help: bg, lactate, shock, sepsis.

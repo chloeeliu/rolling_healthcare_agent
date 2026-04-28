@@ -1,0 +1,7 @@
+ICU acidemia surveillance guidance.
+
+- Monitor pH severity and its clinical context.
+- Mild acidemia may support suspect-level concern when the patient is otherwise stable.
+- Severe acidemia is usually alert-level because it reflects more dangerous physiologic derangement.
+- Interpret pH with related signals such as lactate, ventilation, renal failure, and shock.
+- Search terms that may help: bg, pH, acidemia, lactate, ventilation, aki.

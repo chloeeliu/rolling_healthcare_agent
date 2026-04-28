@@ -1,0 +1,7 @@
+ICU respiratory surveillance guidance.
+
+- Monitor respiratory support intensity and gas-exchange failure separately.
+- HFNC or noninvasive ventilation often represent a suspect or moderate support-escalation state.
+- Invasive mechanical ventilation is usually alert-level because it reflects major support escalation.
+- Severe hypoxemia, especially very low PF ratio, should increase priority and may justify escalation even if support state is unchanged.
+- Search terms that may help: ventilation, invasive vent, HFNC, NIV, bg, PF ratio.

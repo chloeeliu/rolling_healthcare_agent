@@ -46,12 +46,14 @@ TASK_NAMES = (
     "infection_only",
     "aki",
     "respiratory_support",
+    "general_icu_surveillance",
 )
 
 TASK_MODES = (
     "auto",
     "single",
     "multitask",
+    "surveillance",
 )
 
 TOOL_BACKENDS = (
@@ -60,6 +62,17 @@ TOOL_BACKENDS = (
     "zeroshot_python",
     "zeroshot_sql",
     "zeroshot_raw",
+)
+
+SURVEILLANCE_GLOBAL_ACTIONS = (
+    "continue_monitoring",
+    "escalate",
+)
+
+SURVEILLANCE_PRIORITY_LEVELS = (
+    "low",
+    "medium",
+    "high",
 )
 
 CODE_EXEC_TOOL_NAME = "run_python"
@@ -138,6 +151,7 @@ class Checkpoint:
     t_hour: int
     state_label: str | None = None
     task_labels: dict[str, str] | None = None
+    surveillance_labels: dict[str, Any] | None = None
     checkpoint_time: str | None = None
     terminal: bool | None = None
     terminal_by_task: dict[str, bool] | None = None
@@ -275,6 +289,7 @@ class ToolCall:
 class ActionDecision:
     action: str | None = None
     task_actions: dict[str, str] | None = None
+    surveillance: dict[str, Any] | None = None
 
 
 @dataclass(slots=True)
@@ -285,6 +300,8 @@ class StepRecord:
     predicted_action: str | None = None
     gt_task_actions: dict[str, str] | None = None
     predicted_task_actions: dict[str, str] | None = None
+    gt_surveillance: dict[str, Any] | None = None
+    predicted_surveillance: dict[str, Any] | None = None
     tool_calls: list[dict[str, Any]] = field(default_factory=list)
     tool_outputs: list[dict[str, Any]] = field(default_factory=list)
     resource_usage: dict[str, Any] = field(default_factory=dict)

@@ -59,6 +59,23 @@ def _default_guideline_path_for_run(*, task_name: str, tool_backend: str) -> str
     return None
 
 
+def _default_guidelines_dir_for_run(*, task_name: str, tool_backend: str) -> str | None:
+    if tool_backend != "zeroshot_python":
+        return None
+    if task_name == "general_icu_surveillance":
+        return "guidelines/general_icu_autoformalized/txt"
+    return None
+
+
+def _default_functions_dir_for_run(*, task_name: str, autoformalized_library: str) -> str | None:
+    if task_name != "general_icu_surveillance":
+        return None
+    library_root = Path(autoformalized_library or "autoformalized_library")
+    if not library_root.is_absolute():
+        library_root = Path.cwd() / library_root
+    return str(library_root / "functions")
+
+
 def _rollout_from_dict(payload: dict) -> TrajectoryRollout:
     return TrajectoryRollout(
         trajectory_id=payload["trajectory_id"],
@@ -159,14 +176,17 @@ def run_command(args: argparse.Namespace) -> int:
     if args.tool_backend == "zeroshot_python":
         if args.agent != "qwen":
             raise SystemExit("Zero-shot python backend currently requires --agent qwen.")
-        unsupported = [
-            trajectory.trajectory_id
-            for trajectory in all_target_trajectories
-            if trajectory.is_multitask() or trajectory.primary_task_name() != "sepsis"
-        ]
+        unsupported = []
+        for trajectory in all_target_trajectories:
+            task_name = trajectory.primary_task_name()
+            if trajectory.is_multitask():
+                unsupported.append(trajectory.trajectory_id)
+                continue
+            if task_name not in {"sepsis", "general_icu_surveillance"}:
+                unsupported.append(trajectory.trajectory_id)
         if unsupported:
             raise SystemExit(
-                "Zero-shot python backend currently supports only the single-task sepsis dataset. "
+                "Zero-shot python backend currently supports only the single-task sepsis or general ICU surveillance datasets. "
                 f"First unsupported trajectories: {unsupported[:5]}"
             )
 
@@ -229,6 +249,22 @@ def run_command(args: argparse.Namespace) -> int:
             db_path=args.db_path,
             concepts=args.concepts,
             autoformalized_library=args.autoformalized_library,
+            guidelines_dir=args.guidelines_dir
+            or _default_guidelines_dir_for_run(
+                task_name=trajectories[0].primary_task_name(),
+                tool_backend=args.tool_backend,
+            ),
+            functions_dir=args.functions_dir
+            or _default_functions_dir_for_run(
+                task_name=trajectories[0].primary_task_name(),
+                autoformalized_library=args.autoformalized_library,
+            ),
+            zeroshot_session_profile=(
+                "surveillance"
+                if args.zeroshot_session_profile == "auto"
+                and trajectories[0].primary_task_name() == "general_icu_surveillance"
+                else ("raw" if args.zeroshot_session_profile == "auto" else args.zeroshot_session_profile)
+            ),
         )
 
         events_sink = JsonlSink(args.events_output)
@@ -352,10 +388,14 @@ def build_parser() -> argparse.ArgumentParser:
     run_parser = subparsers.add_parser("run", help="Run rollouts and evaluate the agent.")
     run_parser.add_argument("--concepts", help="Path to concept-table JSON.")
     run_parser.add_argument("--db-path", help="Path to MIMIC DuckDB for live concept-tool queries.")
-    run_parser.add_argument("--dataset", required=True, help="Path to trajectory dataset JSON.")
+    run_parser.add_argument(
+        "--dataset",
+        required=True,
+        help="Path to trajectory dataset JSON, or the surveillance checkpoint CSV benchmark package.",
+    )
     run_parser.add_argument(
         "--task-mode",
-        choices=["auto", "single", "multitask"],
+        choices=["auto", "single", "multitask", "surveillance"],
         default="auto",
         help="Validate the dataset against a requested task mode, or infer automatically.",
     )
@@ -386,6 +426,22 @@ def build_parser() -> argparse.ArgumentParser:
         "--zeroshot-guideline",
         default=None,
         help="Optional path to the zero-shot guidance YAML. If omitted, a task-specific default is chosen.",
+    )
+    run_parser.add_argument(
+        "--guidelines-dir",
+        default=None,
+        help="Optional directory of .txt guideline files exposed to the DuckDB code session.",
+    )
+    run_parser.add_argument(
+        "--functions-dir",
+        default=None,
+        help="Optional directory of autoformalized .py functions exposed to the DuckDB code session.",
+    )
+    run_parser.add_argument(
+        "--zeroshot-session-profile",
+        choices=["auto", "raw", "surveillance"],
+        default="auto",
+        help="Choose whether the DuckDB code session exposes only raw tables or the broader surveillance session with derived tables and retrieval helpers.",
     )
     run_parser.add_argument(
         "--include-out-of-scope",

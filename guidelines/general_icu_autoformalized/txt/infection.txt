@@ -1,0 +1,6 @@
+ICU infection surveillance guidance.
+
+- Focus on microbiology, antibiotic exposure, cultures, fever pattern, and other evidence of active infection.
+- suspected_conditions may include infection when there is meaningful concern from cultures, antibiotics, or compatible clinical evidence even if sepsis is not established.
+- Stronger infection states should be separated from sepsis; infection alone does not always justify escalation.
+- Search terms that may help: infection, suspicion_of_infection, antibiotic, microbiology, cultures.
