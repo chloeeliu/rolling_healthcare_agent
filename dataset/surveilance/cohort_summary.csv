@@ -1,5 +1,0 @@
-split,eligible_stays,checkpoint_rows,min_los_hours,mean_los_hours,median_los_hours,max_los_hours
-train,32654,424502,48.0,149.3,94.0,5433.67
-dev,6934,90142,48.0,150.19,94.61,3068.84
-test,6749,87737,48.0,147.84,93.6,3264.7
-all,46337,602381,48.0,149.22,94.02,5433.67
