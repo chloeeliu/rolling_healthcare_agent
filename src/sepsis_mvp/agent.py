@@ -257,7 +257,7 @@ def _toolbox_evidence_requirements(task_names: list[str], step_input: dict[str, 
 
 
 def _latest_relevant_history(step_input: dict[str, Any], task_name: str) -> dict[str, Any]:
-    rolling_history = step_input.get("rolling_history") or []
+    rolling_history = step_input.get("rolling_history") or {}
     for item in reversed(rolling_history):
         if item.get("task_name") in {task_name, "multitask"}:
             return item
@@ -936,7 +936,10 @@ def _build_surveillance_zeroshot_python_messages(
         "tool_backend": step_input.get("tool_backend"),
         "session_helpers": session_helpers,
         "remaining_python_executions": remaining_exec_calls,
-        "rolling_history": rolling_history[-5:],
+        "rolling_history": {
+            str(index): summary
+            for index, summary in sorted(rolling_history.items(), key=lambda item: int(item[0]) if isinstance(item[0], str) else int(item[0]))
+        },
         "history": _summarize_zeroshot_history(history),
     }
     return [

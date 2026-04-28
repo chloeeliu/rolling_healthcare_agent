@@ -78,7 +78,11 @@ class BenchmarkEnvironment:
         )
 
         available_tools = self._available_tools_for_protocol(trajectory)
-        rolling_history: list[dict[str, Any]] = []
+        rolling_history: list[dict[str, Any]] | dict[int, str]
+        if self._is_surveillance_trajectory(trajectory):
+            rolling_history = {}
+        else:
+            rolling_history = []
         use_rolling_history = (
             self.protocol in {"rolling_with_history", "rolling_toolbox_with_history"}
             and (self.tool_backend != "zeroshot_python" or self._is_surveillance_trajectory(trajectory))
@@ -87,11 +91,14 @@ class BenchmarkEnvironment:
         for step_index, checkpoint in enumerate(trajectory.checkpoints):
             step_started = time.perf_counter()
             instruction = self._instruction_for_trajectory(trajectory)
-            step_rolling_history = (
-                list(rolling_history)
-                if use_rolling_history
-                else []
-            )
+            if use_rolling_history:
+                step_rolling_history = (
+                    dict(rolling_history)
+                    if self._is_surveillance_trajectory(trajectory)
+                    else list(rolling_history)
+                )
+            else:
+                step_rolling_history = {} if self._is_surveillance_trajectory(trajectory) else []
             step_max_interactions = self._max_step_interactions_for_protocol(available_tools)
             step_input = AgentStepInput(
                 trajectory_id=trajectory.trajectory_id,
@@ -288,7 +295,10 @@ class BenchmarkEnvironment:
                 history_entry is not None
                 and use_rolling_history
             ):
-                rolling_history.append(history_entry)
+                if self._is_surveillance_trajectory(trajectory):
+                    rolling_history[step_index] = history_entry["summary"]
+                else:
+                    rolling_history.append(history_entry)
 
         rollout = TrajectoryRollout(
             trajectory_id=trajectory.trajectory_id,

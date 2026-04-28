@@ -273,7 +273,7 @@ class AgentStepInput:
     tool_backend: str | None = None
     max_step_interactions: int | None = None
     protocol: str | None = None
-    rolling_history: list[dict[str, Any]] | None = None
+    rolling_history: Any | None = None
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)

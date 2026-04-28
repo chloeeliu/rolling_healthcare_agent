@@ -23,7 +23,7 @@ The runnable path is:
 5. let the agent decide whether to search guidelines, inspect functions, load functions, or query tables
 6. collect one final structured surveillance decision at each checkpoint
 7. call a separate summarizer LLM to write one short checkpoint summary
-8. append that summary into rolling history
+8. append that summary into a dictionary keyed by `step_index`
 9. score predictions against the checkpoint ground truth
 
 ## Inputs
@@ -141,6 +141,8 @@ The decision model sees:
   - `load_function`
   - `query_db`
 - the most recent rolling summaries only
+- cross-step summary memory as a simple dictionary:
+  - `{"0": "...", "1": "...", ...}`
 - within-checkpoint code/query history for the current checkpoint only
 
 The key system instructions are:
@@ -188,9 +190,7 @@ Example checkpoint:
 - `stay_id = 30004144`
 - `t_hour = 24`
 - rolling history:
-  - `index = 0, summary = t=0 stable; no active alerts`
-  - `index = 1, summary = t=4 monitor infection; action=continue_monitoring`
-  - `index = 2, summary = t=8 renal concern emerging`
+  - `{"0": "t=0 stable; no active alerts", "1": "t=4 monitor infection; action=continue_monitoring", "2": "t=8 renal concern emerging"}`
 
 The decision model receives only:
 
@@ -248,7 +248,7 @@ At `t_hour = 28`, the decision model sees:
 - the new checkpoint visibility window
 - the same retrieval helpers
 - the recent summaries, now including:
-  - `index = 3, summary = Sepsis alert at 24h; escalate for infection plus organ dysfunction.`
+  - `{"0": "...", "1": "...", "2": "...", "3": "Sepsis alert at 24h; escalate for infection plus organ dysfunction."}`
 
 The session is fresh for `t=28`, but the memory state carries forward through summaries.
 

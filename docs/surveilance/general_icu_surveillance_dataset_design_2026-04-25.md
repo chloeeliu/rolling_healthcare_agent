@@ -86,18 +86,17 @@ At each checkpoint:
 1. the agent works on the current `t_hour`
 2. the decision model returns the final surveillance decision
 3. a separate summarizer LLM call writes a very short checkpoint summary
-4. that summary is appended to rolling history
+4. that summary is appended to a dictionary keyed by `step_index`
 
 At the next checkpoint, the agent should receive only:
 
 - current `t_hour`
 - currently available tools
-- the most recent `N` short summaries
+- the summary dictionary from earlier steps
 
 Example:
 
-- `index = 0, summary = infection considered; loaded suspicion_of_infection; no clear alert yet`
-- `index = 1, summary = respiratory support escalated; loaded ventilation; continue monitoring for sepsis and shock`
+- `{0: "infection considered; no clear alert yet", 1: "respiratory support escalated; continue monitoring for sepsis and shock"}`
 
 Important design rule:
 
