@@ -212,6 +212,33 @@ class BenchmarkEnvironment:
                     self.tool_runtime.close_step_session(step_session_id)
 
             if self._is_surveillance_trajectory(trajectory):
+                if predicted_surveillance is None:
+                    predicted_surveillance = {
+                        "global_action": predicted_action or "continue_monitoring",
+                        "suspected_conditions": [],
+                        "alerts": [],
+                        "priority": "low",
+                        "recommended_next_tools": [],
+                        "rationale": "",
+                    }
+                checkpoint_summary = _generate_surveillance_checkpoint_summary(
+                    agent=agent,
+                    step_input=step_input.to_dict(),
+                    history=history,
+                    predicted_surveillance=predicted_surveillance,
+                )
+                predicted_surveillance["checkpoint_summary"] = checkpoint_summary
+                _merge_agent_response_metrics(step_resource_usage, _pop_agent_response_metrics(agent))
+                self._emit(
+                    {
+                        "event_type": "checkpoint_summary",
+                        "trajectory_id": trajectory.trajectory_id,
+                        "stay_id": trajectory.stay_id,
+                        "step_index": step_index,
+                        "t_hour": checkpoint.t_hour,
+                        "checkpoint_summary": checkpoint_summary,
+                    }
+                )
                 predicted_action = (predicted_surveillance or {}).get("global_action", predicted_action)
             elif not trajectory.is_multitask():
                 if (
@@ -326,7 +353,7 @@ class BenchmarkEnvironment:
             return (
                 "Use the checkpoint-scoped DuckDB session to gather evidence if needed. "
                 "Then return one final surveillance decision with global_action, suspected_conditions, alerts, priority, "
-                "recommended_next_tools, rationale, and checkpoint_summary."
+                "recommended_next_tools, and rationale."
             )
         if trajectory.is_multitask():
             return "Use tools if needed. Then output one decision for each monitored task."
@@ -1577,3 +1604,39 @@ def _build_rolling_history_entry(
             "contextual_tools": contextual,
         }
     return None
+
+
+def _fallback_surveillance_checkpoint_summary(
+    step_input: dict[str, Any],
+    predicted_surveillance: dict[str, Any],
+) -> str:
+    alerts = ", ".join(predicted_surveillance.get("alerts") or []) or "none"
+    suspected = ", ".join(predicted_surveillance.get("suspected_conditions") or []) or "none"
+    action = predicted_surveillance.get("global_action") or "continue_monitoring"
+    priority = predicted_surveillance.get("priority") or "low"
+    if alerts != "none":
+        return f"t={int(step_input['t_hour'])}: alerts={alerts}; priority={priority}"
+    if suspected != "none":
+        return f"t={int(step_input['t_hour'])}: monitor {suspected}; action={action}"
+    return f"t={int(step_input['t_hour'])}: stable; action={action}; priority={priority}"
+
+
+def _generate_surveillance_checkpoint_summary(
+    *,
+    agent: Agent,
+    step_input: dict[str, Any],
+    history: list[dict[str, Any]],
+    predicted_surveillance: dict[str, Any],
+) -> str:
+    if hasattr(agent, "summarize_checkpoint"):
+        try:
+            summary = agent.summarize_checkpoint(
+                step_input=step_input,
+                history=history,
+                decision=predicted_surveillance,
+            )
+            if isinstance(summary, str) and summary.strip():
+                return summary.strip()
+        except Exception:
+            pass
+    return _fallback_surveillance_checkpoint_summary(step_input, predicted_surveillance)

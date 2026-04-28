@@ -30,6 +30,15 @@ class Agent(Protocol):
     ) -> ToolCall | ActionDecision:
         ...
 
+    def summarize_checkpoint(
+        self,
+        *,
+        step_input: dict[str, Any],
+        history: list[dict[str, Any]],
+        decision: dict[str, Any],
+    ) -> str:
+        ...
+
 
 def _is_multitask_step(step_input: dict[str, Any]) -> bool:
     task_names = step_input.get("task_names") or []
@@ -867,12 +876,25 @@ def _build_surveillance_zeroshot_python_messages(
         "The Python session persists within the current checkpoint only.\n"
         "Do not output reasoning outside the required JSON fields.\n"
         "Return exactly one response and nothing else.\n\n"
+        "Monitored surveillance families:\n"
+        "- infection and sepsis\n"
+        "- renal injury and urine-output failure, including CRRT when relevant\n"
+        "- respiratory support escalation and hypoxemia\n"
+        "- hemodynamic instability, vasoactive support, and shock\n"
+        "- neurologic deterioration\n"
+        "- metabolic failure, including lactate elevation and acidemia\n"
+        "- coagulation abnormality\n\n"
         "Decision semantics:\n"
         "- suspected_conditions means clinically meaningful concern that should keep monitoring focused on that condition family.\n"
         "- alerts means higher-acuity or higher-confidence states that justify escalation now.\n"
         "- global_action must be exactly one of: continue_monitoring, escalate.\n"
         "- priority must be exactly one of: low, medium, high.\n"
-        "- checkpoint_summary must be a very short summary for the next checkpoint, ideally under 20 words.\n\n"
+        "- Do not generate the rolling memory summary here; a separate summarizer call will write that summary after your decision.\n\n"
+        "Preferred tool-use order:\n"
+        "- First, search guideline files when you need condition definitions or surveillance criteria.\n"
+        "- Second, search the autoformalized function library for relevant reusable patient-state functions.\n"
+        "- Third, inspect and load the most relevant function files before deciding.\n"
+        "- Use query_db when direct evidence inspection is needed inside the current checkpoint-scoped session.\n\n"
         "Available session helpers inside Python:\n"
         "- search_guidelines / get_guideline for lightweight filename-based guideline retrieval.\n"
         "- search_functions / get_function_info / load_function for discovering the autoformalized function library.\n"
@@ -892,8 +914,7 @@ def _build_surveillance_zeroshot_python_messages(
         '"alerts":["..."],'
         '"priority":"low|medium|high",'
         '"recommended_next_tools":["..."],'
-        '"rationale":"...",'
-        '"checkpoint_summary":"..."'
+        '"rationale":"..."'
         '}\n'
         "- recommended_next_tools should name the next likely session helper or function to inspect, not external tools.\n"
         "- suspected_conditions and alerts must be arrays; use [] when empty.\n"
@@ -1005,16 +1026,51 @@ def _build_surveillance_zeroshot_python_repair_messages(
             "Your previous reply was invalid, incomplete, or too long. Respond again with exactly one response and no extra text. "
             "If you need execution, return only one short CLOSED fenced Python block. "
             "If you are ready to decide, return only one JSON object with exactly these keys: "
-            "global_action, suspected_conditions, alerts, priority, recommended_next_tools, rationale, checkpoint_summary."
+            "global_action, suspected_conditions, alerts, priority, recommended_next_tools, rationale."
         )
     else:
         repair_hint = (
             "Your previous reply was invalid. Respond again with JSON only and no extra text. "
             "You must now return a final surveillance decision with keys: "
-            "global_action, suspected_conditions, alerts, priority, recommended_next_tools, rationale, checkpoint_summary."
+            "global_action, suspected_conditions, alerts, priority, recommended_next_tools, rationale."
         )
     messages.append({"role": "user", "content": repair_hint})
     return messages
+
+
+def _build_surveillance_summary_messages(
+    *,
+    step_input: dict[str, Any],
+    decision: dict[str, Any],
+    history: list[dict[str, Any]],
+) -> list[dict[str, str]]:
+    summary_history = _summarize_zeroshot_history(history)[-4:]
+    system_prompt = (
+        "You write the rolling memory summary for a general ICU surveillance benchmark.\n"
+        "This is a separate summarizer step after the surveillance decision is already final.\n"
+        "Write one very short summary for the next checkpoint.\n"
+        "Requirements:\n"
+        "- under 20 words when possible\n"
+        "- mention only the key active surveillance state or change\n"
+        "- do not restate the full rationale\n"
+        "- do not include markdown or extra commentary\n"
+        "- return exactly one JSON object: {\"checkpoint_summary\":\"...\"}\n"
+    )
+    user_payload = {
+        "step_input": {
+            "trajectory_id": step_input["trajectory_id"],
+            "stay_id": int(step_input["stay_id"]),
+            "step_index": int(step_input["step_index"]),
+            "t_hour": int(step_input["t_hour"]),
+            "task_name": "general_icu_surveillance",
+        },
+        "final_decision": decision,
+        "current_checkpoint_tool_history": summary_history,
+    }
+    return [
+        {"role": "system", "content": system_prompt},
+        {"role": "user", "content": json.dumps(user_payload, indent=2)},
+    ]
 
 
 def _sanitize_model_text(text: str) -> str:
@@ -1218,7 +1274,6 @@ def _coerce_surveillance_output(payload: dict[str, Any]) -> ActionDecision:
         "priority",
         "recommended_next_tools",
         "rationale",
-        "checkpoint_summary",
     }
     missing = sorted(required - set(payload))
     if missing:
@@ -1239,11 +1294,11 @@ def _coerce_surveillance_output(payload: dict[str, Any]) -> ActionDecision:
     if not isinstance(recommended_next_tools, list) or not all(isinstance(item, str) for item in recommended_next_tools):
         raise ValueError("recommended_next_tools must be a list of strings.")
     rationale = payload["rationale"]
-    checkpoint_summary = payload["checkpoint_summary"]
     if not isinstance(rationale, str):
         raise ValueError("rationale must be a string.")
-    if not isinstance(checkpoint_summary, str):
-        raise ValueError("checkpoint_summary must be a string.")
+    checkpoint_summary = payload.get("checkpoint_summary")
+    if checkpoint_summary is not None and not isinstance(checkpoint_summary, str):
+        raise ValueError("checkpoint_summary must be a string when provided.")
     return ActionDecision(
         action=global_action,
         surveillance={
@@ -1256,6 +1311,16 @@ def _coerce_surveillance_output(payload: dict[str, Any]) -> ActionDecision:
             "checkpoint_summary": checkpoint_summary,
         },
     )
+
+
+def _coerce_checkpoint_summary_output(payload: dict[str, Any]) -> str:
+    summary = payload.get("checkpoint_summary")
+    if not isinstance(summary, str):
+        raise ValueError("checkpoint_summary must be a string.")
+    summary = summary.strip()
+    if not summary:
+        raise ValueError("checkpoint_summary must be non-empty.")
+    return summary
 
 
 def _normalize_toolbox_response(
@@ -1284,6 +1349,22 @@ def _normalize_toolbox_response(
 class HeuristicAgent:
     sofa_alert_threshold: int = 2
     aki_alert_threshold: int = 2
+
+    def summarize_checkpoint(
+        self,
+        *,
+        step_input: dict[str, Any],
+        history: list[dict[str, Any]],
+        decision: dict[str, Any],
+    ) -> str:
+        alerts = decision.get("alerts") or []
+        suspected = decision.get("suspected_conditions") or []
+        priority = decision.get("priority") or "low"
+        if alerts:
+            return f"Alerts active: {', '.join(alerts[:2])}; priority={priority}"
+        if suspected:
+            return f"Monitor {', '.join(suspected[:2])}; priority={priority}"
+        return f"No active alerts at t={int(step_input['t_hour'])}; priority={priority}"
 
     def next_response(
         self,
@@ -1617,6 +1698,52 @@ class QwenChatAgent:
         metrics = dict(self._last_response_metrics)
         self._last_response_metrics = {}
         return metrics
+
+    def summarize_checkpoint(
+        self,
+        *,
+        step_input: dict[str, Any],
+        history: list[dict[str, Any]],
+        decision: dict[str, Any],
+    ) -> str:
+        self._reset_last_response_metrics()
+        context = {
+            "trajectory_id": step_input["trajectory_id"],
+            "stay_id": int(step_input["stay_id"]),
+            "step_index": int(step_input["step_index"]),
+            "t_hour": int(step_input["t_hour"]),
+        }
+        messages = _build_surveillance_summary_messages(
+            step_input=step_input,
+            decision=decision,
+            history=history,
+        )
+        content = self._generate_with_metrics(messages)
+        if self.trace_callback is not None:
+            self.trace_callback({"event_type": "model_output_summary_raw", **context, "output": content})
+        try:
+            return _coerce_checkpoint_summary_output(_extract_json_object(content))
+        except (ValueError, json.JSONDecodeError):
+            original_max_tokens = self.client.max_new_tokens
+            repair_messages = list(messages)
+            repair_messages.append({"role": "assistant", "content": content})
+            repair_messages.append(
+                {
+                    "role": "user",
+                    "content": (
+                        "Your previous reply was invalid. Respond again with JSON only and no extra text. "
+                        'Return exactly {"checkpoint_summary":"..."} with a very short summary.'
+                    ),
+                }
+            )
+            self.client.max_new_tokens = min(self.repair_max_new_tokens or 240, 200)
+            try:
+                repaired = self._generate_with_metrics(repair_messages)
+            finally:
+                self.client.max_new_tokens = original_max_tokens
+            if self.trace_callback is not None:
+                self.trace_callback({"event_type": "model_output_summary_repair", **context, "output": repaired})
+            return _coerce_checkpoint_summary_output(_extract_json_object(repaired))
 
     def next_response(
         self,

@@ -84,8 +84,9 @@ The benchmark memory should also stay minimal.
 At each checkpoint:
 
 1. the agent works on the current `t_hour`
-2. after its reasoning step, the LLM writes a very short checkpoint summary
-3. that summary is appended to rolling history
+2. the decision model returns the final surveillance decision
+3. a separate summarizer LLM call writes a very short checkpoint summary
+4. that summary is appended to rolling history
 
 At the next checkpoint, the agent should receive only:
 
@@ -177,6 +178,12 @@ Recommended minimal wording:
 
 - `suspected_conditions` means clinically meaningful concern that should keep monitoring focused on that condition family
 - `alerts` means high-acuity or high-confidence states that justify escalation now
+- the prompt should explicitly name the monitored surveillance families so the task scope is clear
+- the prompt should state a preferred tool-use order:
+  - search guidelines first for definitions
+  - search functions next for reusable logic
+  - inspect and load relevant functions before deciding
+  - use `query_db` when direct checkpoint evidence inspection is needed
 
 That is enough to anchor the decision interface while still requiring the agent to search guidelines for condition-specific detail.
 
@@ -188,7 +195,7 @@ It should use a larger ICU surveillance decision catalog, but still keep the out
 
 ## Recommended output shape
 
-The final agent output at each checkpoint should remain structured, for example:
+The final decision output at each checkpoint should remain structured, for example:
 
 ```json
 {
@@ -197,12 +204,19 @@ The final agent output at each checkpoint should remain structured, for example:
   "alerts": ["sepsis_alert", "aki_stage3_alert"],
   "priority": "low | medium | high",
   "recommended_next_tools": ["search_functions('lactate')", "search_functions('vaso')"],
-  "rationale": "...",
+  "rationale": "..."
+}
+```
+
+Then a second summarizer call writes:
+
+```json
+{
   "checkpoint_summary": "short rolling memory summary"
 }
 ```
 
-The benchmark should score the structured fields, not just the free-text rationale.
+The benchmark should score the structured decision fields, not just the free-text rationale.
 
 ## Recommended decision catalog
 
@@ -270,6 +284,7 @@ What is already wired:
 - function discovery and loading from:
   - [autoformalized_library/functions](/Users/chloe/Documents/New project/autoformalized_library/functions)
 - rolling short-summary memory between checkpoints
+- a separate post-decision summarizer call for memory writing
 - surveillance-specific evaluation for action, condition-set, alert-set, and timing metrics
 
 What remains intentionally minimal:
