@@ -328,3 +328,156 @@ So the main conclusion after the follow-up run is:
   - missing current-step evidence is uncertainty, not reassurance
   - absence of retrieved evidence is not evidence of patient normality
   - when memory does not settle a disease family, the next move should be retrieval rather than a final negative decision
+
+## Second Follow-Up Run After Prompt Revision (`remove_next_v2`)
+
+Second follow-up artifacts:
+
+- [result/surveillance_30b_remove_next_v2](/Users/chloe/Documents/New project/result/surveillance_30b_remove_next_v2)
+- [eval.json](/Users/chloe/Documents/New project/result/surveillance_30b_remove_next_v2/eval.json)
+- [trajectories.jsonl](/Users/chloe/Documents/New project/result/surveillance_30b_remove_next_v2/trajectories.jsonl)
+- [events.jsonl](/Users/chloe/Documents/New project/result/surveillance_30b_remove_next_v2/events.jsonl)
+
+### What improved
+
+This run shows the first meaningful behavioral change in the `session_tools` series:
+
+- `5` trajectories
+- `65` steps
+- `64` tool calls
+- `194` total model calls
+
+So the agent finally stopped bypassing the tool interface entirely.
+
+The actual tool usage pattern was:
+
+- `search_functions`: `51`
+- `get_function_info`: `13`
+
+This is important because it shows the revised prompt did change the agent's behavior:
+
+- it now initiates retrieval
+- it now inspects candidate library files
+- it no longer collapses immediately to a zero-tool run
+
+### What did not improve
+
+Despite nonzero tool use, the surveillance predictions still collapsed to an all-negative policy:
+
+- predicted `global_action = continue_monitoring` on all `65 / 65` steps
+- predicted `priority = low` on all `65 / 65` steps
+- predicted `suspected_conditions = []` on all steps
+- predicted `alerts = []` on all steps
+- `missed_alert_trajectories = 5`
+- `suspected_conditions_macro_f1 = 0.0`
+- `alerts_macro_f1 = 0.0`
+
+So this run still failed as a benchmark attempt, even though the failure mechanism changed.
+
+### New dominant failure mode
+
+The new dominant failure mode is:
+
+- **retrieval initiation without patient-state execution**
+
+The model now starts the tool pipeline, but stops too early.
+
+Typical step pattern:
+
+1. call `search_functions("sofa")` or another broad keyword
+2. sometimes call `get_function_info(...)`
+3. do **not** call `load_function(...)`
+4. do **not** call `call_function(...)`
+5. still finalize with `continue_monitoring`, no conditions, and no alerts
+
+This means the model is now willing to discover the library, but it still does not cross the boundary into actually gathering checkpoint-specific patient evidence.
+
+### What this means clinically
+
+In this benchmark, `search_functions(...)` and `get_function_info(...)` are not patient evidence.
+
+They only answer questions like:
+
+- what concepts exist in the library
+- what a candidate function appears to do
+- which entrypoints might be useful
+
+They do **not** answer:
+
+- whether this patient currently has sepsis
+- whether this patient is ventilated at this checkpoint
+- whether lactate, pH, urine output, or vasoactive state are abnormal now
+
+So a final negative clinical judgment after only function discovery is still unsupported.
+
+### Representative bad case
+
+Trajectory:
+
+- `mimiciv_stay_30004144`
+
+Representative progression:
+
+- at `t=4`, GT already has `infection_suspected`
+- at `t=12`, GT already has `sepsis_alert`
+- later checkpoints include `aki_stage2` and `resp_support_invasive_vent`
+
+Observed model behavior:
+
+- repeated `search_functions(...)`
+- occasional `get_function_info(...)`
+- no function execution
+- repeated rationale patterns such as:
+  - “No current checkpoint evidence is available...”
+  - “Further evaluation requires retrieval of current patient data...”
+- final prediction still remained:
+  - `continue_monitoring`
+  - no suspected conditions
+  - no alerts
+  - low priority
+
+So this run improved from “no tool use at all” to “tool discovery without evidence closure,” but still failed on the actual surveillance task.
+
+### Comparative interpretation across the three runs
+
+The three runs now show a clear progression:
+
+1. `surveillance_30b`
+- zero tool use
+- unsupported claims of normality
+
+2. `surveillance_30b_remove_next`
+- still zero tool use
+- cleaner schema, but same all-negative shortcut
+
+3. `surveillance_30b_remove_next_v2`
+- nonzero tool use
+- retrieval begins
+- but the model still stops after search/inspection and does not execute patient-state functions
+
+So the failure has shifted from:
+
+- **no retrieval**
+
+to:
+
+- **incomplete retrieval pipeline usage**
+
+That is real progress, but it is not yet enough for benchmark success.
+
+### Updated benchmark-facing conclusion
+
+This run suggests the core remaining prompt problem is not merely “use tools.”
+
+The unresolved issue is more specific:
+
+- the model still does not clearly distinguish:
+  - function discovery
+  - from patient-state evidence acquisition
+
+The benchmark-facing prompt therefore needs to communicate one stronger general principle:
+
+- searching the function library or reading function info does not count as patient evidence
+- if a disease family remains unresolved after discovery, the next move should usually be executing a patient-state function before a final negative decision
+
+This remains a prompt/interface issue, not a justification for adding extra scripted decision logic.
