@@ -163,6 +163,23 @@ The key is:
 - transparent SQL definitions
 - versioned and documented
 
+### Selected surveillance families
+
+The benchmark intentionally covers the major ICU monitoring axes rather than only one disease family:
+
+- infection: suspicion and stronger microbiology-supported infection evidence
+- sepsis: Sepsis-3 onset
+- renal: AKI staging, oliguria, severe oliguria/anuria, and CRRT
+- respiratory: HFNC/NIV, invasive ventilation, and PF-ratio hypoxemia
+- hemodynamic: any vasoactive support, multi-agent support, septic shock, and shock with hypoperfusion
+- neurologic: moderate and severe GCS impairment
+- metabolic: lactate elevation and acidemia
+- coagulation: INR-based coagulopathy
+
+The detailed disease-by-disease rationale and checkpoint label criteria are documented in:
+
+- [checkpoint_ground_truth_curation_2026-04-25.md](/Users/chloe/Documents/New project/docs/surveilance/checkpoint_ground_truth_curation_2026-04-25.md)
+
 ## Cohort Design
 
 Use the existing surveillance cohort foundation:

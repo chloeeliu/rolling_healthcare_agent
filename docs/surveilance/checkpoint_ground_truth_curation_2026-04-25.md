@@ -466,6 +466,403 @@ This checkpoint scheme is better than pure ever-positive labels because it prese
 
 That is the right level of realism for ICU surveillance.
 
+## Task-by-Task Rationale and Label Criteria
+
+This section explains, one by one, why each selected surveillance head is included in the benchmark and how it is labeled at the checkpoint level.
+
+The selection principles are consistent across the registry:
+
+- the head should represent a clinically meaningful ICU monitoring state
+- the head should matter for escalation or focused follow-up
+- the head should be definable from `mimiciv_derived` tables or a very small transparent extension
+- the head should add coverage, overlap, or temporal complexity rather than duplicate another label exactly
+
+### Infection family
+
+#### `infection_suspected`
+
+Why we selected it:
+
+- infection suspicion is one of the most common and important early ICU monitoring problems
+- it is the natural precursor state for sepsis reasoning
+- it gives the benchmark an episode-level state that should be remembered longitudinally after onset
+
+Checkpoint label criterion:
+
+- source: `mimiciv_derived.suspicion_of_infection`
+- active at checkpoint `t` if `first suspected_infection_time <= t`
+- persistence style: persistent episode
+
+#### `infection_confirmed_or_strongly_supported`
+
+Why we selected it:
+
+- this distinguishes weaker infection suspicion from stronger microbiology-supported infection evidence
+- it makes the infection family more clinically granular without requiring diagnosis codes
+- it is useful for cases where infection evidence strengthens over time
+
+Checkpoint label criterion:
+
+- source: `suspicion_of_infection.positive_culture`
+- active at checkpoint `t` if `first positive culture_time <= t`
+- persistence style: persistent episode
+
+### Sepsis family
+
+#### `sepsis_alert`
+
+Why we selected it:
+
+- sepsis is one of the central ICU surveillance syndromes and a core benchmark target
+- it naturally composes multiple upstream clinical signals rather than a single raw measurement
+- it creates a strong longitudinal memory requirement because later checkpoints should preserve that sepsis onset already occurred
+
+Checkpoint label criterion:
+
+- source: `mimiciv_derived.sepsis3`
+- active at checkpoint `t` if `first Sepsis-3 onset <= t`
+- persistence style: persistent episode
+
+### Renal family
+
+#### `aki_stage1`
+
+Why we selected it:
+
+- stage 1 AKI is a common early renal warning state
+- it gives the benchmark a suspect-level renal state rather than only severe kidney injury
+- it is useful for testing whether the agent can maintain worst-so-far injury memory across checkpoints
+
+Checkpoint label criterion:
+
+- source: `mimiciv_derived.kdigo_stages`
+- active at checkpoint `t` if `max aki_stage_smoothed up to checkpoint >= 1`
+- persistence style: cumulative max stage
+
+#### `aki_stage2`
+
+Why we selected it:
+
+- stage 2 AKI is a clear alert-level renal deterioration state
+- it is common enough to support robust evaluation
+- it is clinically distinct from mild AKI and often changes management urgency
+
+Checkpoint label criterion:
+
+- source: `mimiciv_derived.kdigo_stages`
+- active at checkpoint `t` if `max aki_stage_smoothed up to checkpoint >= 2`
+- persistence style: cumulative max stage
+
+#### `aki_stage3`
+
+Why we selected it:
+
+- stage 3 AKI is one of the key severe alert heads in the benchmark
+- it helps ensure the released subset contains meaningful high-acuity renal cases
+- it is also a strong test of delayed deterioration, because many cases become stage 3 later in the 48-hour window
+
+Checkpoint label criterion:
+
+- source: `mimiciv_derived.kdigo_stages`
+- active at checkpoint `t` if `max aki_stage_smoothed up to checkpoint >= 3`
+- persistence style: cumulative max stage
+
+#### `oliguria_6h`
+
+Why we selected it:
+
+- urine-output decline is a classic ICU surveillance signal that often precedes or complements creatinine-based AKI
+- it adds short-horizon rolling-window difficulty to the renal family
+- it captures a dynamic physiologic state rather than a cumulative diagnosis
+
+Checkpoint label criterion:
+
+- source: `mimiciv_derived.urine_output_rate`
+- active if the most recent urine-output row `<= t` has `uo_tm_6hr >= 6` and `uo_mlkghr_6hr < 0.5`
+- persistence style: rolling-window current state
+- recency window: `6h`
+
+#### `severe_oliguria_or_anuria`
+
+Why we selected it:
+
+- this provides an alert-level urine-output failure state beyond mild oliguria
+- it increases renal severity resolution without relying only on KDIGO stage
+- it contributes delayed and fluctuating patterns that are different from persistent AKI labels
+
+Checkpoint label criterion:
+
+- source: small extension over `urine_output_rate`
+- active if the most recent urine-output row `<= t` satisfies the severe 12-hour or 24-hour oliguria / anuria threshold
+- persistence style: rolling-window current state
+- recency window: `24h`
+
+#### `crrt_active`
+
+Why we selected it:
+
+- CRRT is a high-acuity renal support state that is clinically meaningful even when numerically rare
+- it helps distinguish severe renal injury from active organ support
+- it adds intervention-based interval semantics to the renal family
+
+Checkpoint label criterion:
+
+- source: `mimiciv_derived.crrt`
+- active if CRRT mode is active at checkpoint `t`
+- persistence style: active interval
+
+### Respiratory family
+
+#### `resp_support_hfnc_or_niv`
+
+Why we selected it:
+
+- this captures intermediate respiratory support escalation before intubation
+- it adds a suspect-level respiratory state that is treatment-based rather than diagnosis-based
+- it helps represent non-trivial respiratory monitoring trajectories that are less severe than invasive ventilation
+
+Checkpoint label criterion:
+
+- source: `mimiciv_derived.ventilation`
+- active if `ventilation_status` in `HFNC` or `NonInvasiveVent` overlaps checkpoint `t`
+- persistence style: active interval
+
+#### `resp_support_invasive_vent`
+
+Why we selected it:
+
+- invasive ventilation is one of the most important ICU alert-level support states
+- it is common, high-acuity, and strongly associated with multi-family overlap
+- it is a natural respiratory alert for benchmark scoring
+
+Checkpoint label criterion:
+
+- source: `mimiciv_derived.ventilation`
+- active if `ventilation_status` in `InvasiveVent` or `Tracheostomy` overlaps checkpoint `t`
+- persistence style: active interval
+
+#### `hypoxemia_pf_lt_200`
+
+Why we selected it:
+
+- PF ratio under 200 is a clinically meaningful oxygenation abnormality that often coexists with respiratory support escalation
+- it introduces recent-measurement semantics rather than pure intervention semantics
+- it allows respiratory surveillance to include physiology, not only support devices
+
+Checkpoint label criterion:
+
+- source: `mimiciv_derived.bg`
+- active if the most recent PF-ratio measurement within the trailing window is `< 200`
+- persistence style: recent measurement with TTL
+- recency window: `12h`
+
+#### `hypoxemia_pf_lt_100`
+
+Why we selected it:
+
+- PF ratio under 100 represents a severe alert-level oxygenation failure state
+- it is thinner than invasive ventilation and therefore useful for rare-alert enrichment
+- it helps separate very severe hypoxemia from more general respiratory support exposure
+
+Checkpoint label criterion:
+
+- source: `mimiciv_derived.bg`
+- active if the most recent PF-ratio measurement within the trailing window is `< 100`
+- persistence style: recent measurement with TTL
+- recency window: `12h`
+
+### Hemodynamic family
+
+#### `vasoactive_support_any`
+
+Why we selected it:
+
+- any vasoactive support is a strong signal of hemodynamic instability even before more severe shock criteria are met
+- it gives the benchmark a suspect-level support state that is highly actionable
+- it also serves as a key component for septic-shock-like composite heads
+
+Checkpoint label criterion:
+
+- source: `mimiciv_derived.vasoactive_agent`
+- active if any vasoactive or inotrope interval overlaps checkpoint `t`
+- persistence style: active interval
+
+#### `vasoactive_multi_agent_or_high_intensity`
+
+Why we selected it:
+
+- this is an alert-level escalation beyond single-agent support
+- it captures a more severe hemodynamic support pattern than `vasoactive_support_any`
+- it improves the benchmark's ability to represent severe circulatory failure
+
+Checkpoint label criterion:
+
+- source: small extension over `vasoactive_agent`
+- current implementation activates when two or more vasoactive agents are active at checkpoint `t`
+- persistence style: active interval
+
+#### `septic_shock_alert`
+
+Why we selected it:
+
+- septic shock is a canonical ICU high-acuity syndrome that should be represented separately from sepsis alone
+- it forces the benchmark to evaluate cross-family composition: infection/sepsis, hemodynamic support, and metabolic evidence
+- it is a core alert head for the enriched benchmark subset
+
+Checkpoint label criterion:
+
+- source: small extension over `sepsis3 + vasoactive_agent + bg`
+- active if:
+  - `sepsis_alert` is active
+  - `vasoactive_support_any` is active
+  - recent lactate is `>= 2`
+- persistence style: composite current state
+- recency window for lactate: `12h`
+
+#### `shock_hypoperfusion_alert`
+
+Why we selected it:
+
+- this represents a more severe shock-with-hypoperfusion state than `septic_shock_alert`
+- it is clinically valuable because it sharpens high-acuity hemodynamic failure beyond sepsis plus pressor exposure alone
+- it is an intentionally thinner alert head that stresses difficult benchmark cases
+
+Checkpoint label criterion:
+
+- source: small extension over `sepsis3 + vasoactive_agent + bg`
+- active if:
+  - `sepsis_alert` is active
+  - `vasoactive_support_any` is active
+  - recent lactate is `>= 4`
+- persistence style: composite current state
+- recency window for lactate: `12h`
+
+### Neurologic family
+
+#### `gcs_moderate_impairment_9_12`
+
+Why we selected it:
+
+- moderate GCS impairment is a common neurologic surveillance state that is less severe than coma-level deterioration
+- it gives the benchmark a suspect-level neurologic head with rapid temporal turnover
+- it broadens the benchmark beyond infection, renal, and respiratory-heavy cases
+
+Checkpoint label criterion:
+
+- source: `mimiciv_derived.gcs`
+- active if the most recent GCS within the trailing window is `9-12`
+- persistence style: recent measurement with TTL
+- recency window: `8h`
+
+#### `gcs_severe_impairment_le_8`
+
+Why we selected it:
+
+- GCS `<= 8` is a clinically meaningful alert-level neurologic deterioration state
+- it is one of the key thinner severe heads in the 2k subset
+- it adds a non-lab, non-pressor, non-renal severe phenotype to the benchmark
+
+Checkpoint label criterion:
+
+- source: `mimiciv_derived.gcs`
+- active if the most recent GCS within the trailing window is `<= 8`
+- persistence style: recent measurement with TTL
+- recency window: `8h`
+
+### Metabolic family
+
+#### `hyperlactatemia_ge_2`
+
+Why we selected it:
+
+- lactate elevation is a common ICU metabolic warning signal and an important component of shock reasoning
+- it gives the benchmark a suspect-level metabolic state with short recency semantics
+- it is also useful as a compositional building block for hemodynamic alert heads
+
+Checkpoint label criterion:
+
+- source: `mimiciv_derived.bg`
+- active if the most recent lactate within the trailing window is `>= 2`
+- persistence style: recent measurement with TTL
+- recency window: `12h`
+
+#### `severe_hyperlactatemia_ge_4`
+
+Why we selected it:
+
+- lactate `>= 4` is a clinically important severe metabolic derangement
+- it increases severity resolution within the metabolic family
+- it also supports the more severe hypoperfusion composite state
+
+Checkpoint label criterion:
+
+- source: `mimiciv_derived.bg`
+- active if the most recent lactate within the trailing window is `>= 4`
+- persistence style: recent measurement with TTL
+- recency window: `12h`
+
+#### `acidemia_ph_lt_7_30`
+
+Why we selected it:
+
+- mild-to-moderate acidemia is a broad ICU metabolic warning state
+- it complements lactate by capturing acid-base failure more directly
+- it adds another recent-measurement head with potentially reversible dynamics
+
+Checkpoint label criterion:
+
+- source: `mimiciv_derived.bg`
+- active if the most recent pH within the trailing window is `< 7.30`
+- persistence style: recent measurement with TTL
+- recency window: `12h`
+
+#### `severe_acidemia_ph_le_7_20`
+
+Why we selected it:
+
+- severe acidemia is one of the key high-acuity alert heads in the benchmark
+- it is clinically meaningful across multiple etiologies, not only infection
+- it increases coverage of severe metabolic failure cases that may be relatively uncommon but important
+
+Checkpoint label criterion:
+
+- source: `mimiciv_derived.bg`
+- active if the most recent pH within the trailing window is `<= 7.20`
+- persistence style: recent measurement with TTL
+- recency window: `12h`
+
+### Coagulation family
+
+#### `coagulopathy_inr_ge_1_5`
+
+Why we selected it:
+
+- INR elevation gives the benchmark a hematologic/coagulation surveillance axis that is otherwise absent from the major organ-failure heads
+- it contributes meaningful breadth beyond sepsis, renal, respiratory, and hemodynamic states
+- it works well as a suspect-level coagulation abnormality
+
+Checkpoint label criterion:
+
+- source: `mimiciv_derived.coagulation`
+- active if the most recent INR within the trailing window is `>= 1.5`
+- persistence style: recent measurement with TTL
+- recency window: `24h`
+
+#### `coagulopathy_inr_ge_2`
+
+Why we selected it:
+
+- INR `>= 2` is a cleaner alert-level coagulopathy state
+- it is severe enough to matter clinically but common enough to support evaluation
+- it ensures the benchmark covers major coagulation abnormality rather than only mild lab drift
+
+Checkpoint label criterion:
+
+- source: `mimiciv_derived.coagulation`
+- active if the most recent INR within the trailing window is `>= 2.0`
+- persistence style: recent measurement with TTL
+- recency window: `24h`
+
 ## Onset Timing Evidence
 
 The onset-timing audit is:
