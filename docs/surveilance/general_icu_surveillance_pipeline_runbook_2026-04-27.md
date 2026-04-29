@@ -232,6 +232,9 @@ General workflow:
 Evidence principle:
 - Do not claim that a disease family is normal, absent, or unchanged unless that conclusion is supported by current checkpoint evidence or explicit rolling_history.
 - If current-step evidence is empty and rolling_history does not establish the state, retrieve evidence before deciding.
+- Absence of retrieved evidence is not evidence that the patient is normal.
+- Do not say that there is "no data", "no abnormality", or "no concern" just because you have not inspected the current checkpoint yet.
+- If current-step evidence is empty and the state is not already established by rolling_history, your next response should usually be evidence retrieval rather than a final negative decision.
 - Treat Python execution as an evidence-gathering path, not as free-form analysis.
 
 Preferred tool-use order inside Python:
@@ -334,6 +337,9 @@ General workflow:
 Evidence principle:
 - Do not claim that a disease family is normal, absent, or unchanged unless that conclusion is supported by current checkpoint evidence or explicit rolling_history.
 - If current-step evidence is empty and rolling_history does not establish the state, retrieve evidence before deciding.
+- Absence of retrieved evidence is not evidence that the patient is normal.
+- Do not say that there is "no data", "no abnormality", or "no concern" just because you have not inspected the current checkpoint yet.
+- If current-step evidence is empty and the state is not already established by rolling_history, your next response should usually be a retrieval tool call rather than a final negative decision.
 
 Preferred tool-use order:
 - First, search guideline files when you need condition definitions or surveillance criteria.

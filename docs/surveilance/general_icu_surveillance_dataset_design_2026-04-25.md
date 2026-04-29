@@ -213,6 +213,8 @@ Recommended minimal wording:
   - in Python-session mode, use `query_db` when direct checkpoint evidence inspection is needed
 - the prompt should include one general evidence principle:
   - do not claim that a disease family is normal, absent, or unchanged unless supported by current checkpoint evidence or explicit rolling memory
+  - absence of retrieved evidence is not evidence of patient normality
+  - if memory does not settle a family and current-step evidence is empty, the next move should usually be retrieval rather than a final negative decision
 
 That is enough to anchor the decision interface while still requiring the agent to search guidelines for condition-specific detail.
 

@@ -256,3 +256,75 @@ Additional benchmark-facing improvement ideas that remain consistent with the no
 - tighten the prompt to make it harder to claim normality without evidence
 - keep summary memory short and factual, so unsupported reassurance is not amplified
 - compare future reruns against this failure pattern to see whether tool use becomes nonzero and family-level recall improves
+
+## Follow-Up Run After Removing `recommended_next_tools`
+
+Follow-up artifacts:
+
+- [result/surveillance_30b_remove_next](/Users/chloe/Documents/New project/result/surveillance_30b_remove_next)
+- [eval.json](/Users/chloe/Documents/New project/result/surveillance_30b_remove_next/eval.json)
+- [trajectories.jsonl](/Users/chloe/Documents/New project/result/surveillance_30b_remove_next/trajectories.jsonl)
+- [events.jsonl](/Users/chloe/Documents/New project/result/surveillance_30b_remove_next/events.jsonl)
+
+### What improved
+
+- the output schema was cleaner
+- the model no longer used `recommended_next_tools` as a way to defer action
+- headline metrics improved somewhat on the small sample:
+  - `global_action_accuracy = 0.4103`
+  - `priority_accuracy = 0.4103`
+  - `suspected_conditions_exact_match = 0.2051`
+  - `alerts_exact_match = 0.4103`
+
+### What did not improve
+
+The central failure mode remained unchanged:
+
+- `3` trajectories
+- `39` steps
+- `0` tool calls
+- predicted `global_action = continue_monitoring` on all `39 / 39` steps
+- predicted `priority = low` on all `39 / 39` steps
+- predicted `suspected_conditions = []` on all steps
+- predicted `alerts = []` on all steps
+- `missed_alert_trajectories = 3`
+
+So the model still did not use the session-tools interface.
+
+### Updated qualitative failure pattern
+
+After removing `recommended_next_tools`, the model stopped saying “I should search later,” but it still took the same shortcut:
+
+- treat lack of retrieved evidence as if there were no clinical evidence in the patient
+- finalize immediately
+- reinforce that unsupported negative belief through summary memory
+
+In the follow-up run, the rationales shifted from:
+
+- “all monitored parameters are normal”
+
+to:
+
+- “no clinical data or evidence is available”
+- “no new clinical indicators are available”
+
+This is actually a cleaner diagnostic signal.
+
+It shows the root problem is not merely deferred tool use.
+The deeper issue is:
+
+- the model still interprets **not having looked yet** as if it had already confirmed a negative patient state
+
+### Comparative conclusion
+
+Removing `recommended_next_tools` was still the right benchmark change.
+
+It removed one lazy outlet, but it did **not** by itself cause evidence retrieval to happen.
+
+So the main conclusion after the follow-up run is:
+
+- schema cleanup alone is insufficient
+- the prompt must state more directly that:
+  - missing current-step evidence is uncertainty, not reassurance
+  - absence of retrieved evidence is not evidence of patient normality
+  - when memory does not settle a disease family, the next move should be retrieval rather than a final negative decision
