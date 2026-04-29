@@ -228,6 +228,209 @@ Recommended TTLs:
 - `12h` for blood-gas-based states
 - `24h` for INR-based states
 
+## This Is Not A Uniform One-Time-Trigger Benchmark
+
+An important clarification for dataset users is that the surveillance benchmark does **not** use one single step-level ground-truth rule for every disease or ICU state.
+
+It is **not** a simple benchmark where:
+
+- a condition turns positive once
+- then stays positive forever
+- and the same persistence rule is reused for every head
+
+Instead, the step-level ground truth is intentionally **disease-dependent**.
+
+The reason is clinical rather than purely technical:
+
+- some ICU concepts are episode-level syndromes
+- some are cumulative injury stages
+- some are current support states
+- some are recent physiologic abnormalities
+- and some are composite high-acuity states that should be recomputed at every checkpoint
+
+So the benchmark uses different checkpoint semantics for different disease families because the underlying clinical states behave differently.
+
+### Family-by-family interpretation
+
+#### Infection family
+
+Decisions:
+
+- `infection_suspected`
+- `infection_confirmed_or_strongly_supported`
+
+Recommended step-level semantics:
+
+- treat these as **persistent episode** states
+- once the first qualifying infection evidence is visible, the state remains active for the rest of the `0-48h` benchmark window
+
+Why:
+
+- suspicion of infection is an episode-level state rather than a short-lived vital-sign state
+- once infection evidence has appeared, the benchmark should preserve that fact longitudinally
+
+#### Sepsis family
+
+Decision:
+
+- `sepsis_alert`
+
+Recommended step-level semantics:
+
+- treat this as a **persistent episode** state
+- once Sepsis-3 onset is visible, it remains active for the rest of the benchmark window
+
+Why:
+
+- this benchmark is testing whether the agent detects that sepsis has occurred during the ICU course
+- a later checkpoint should still remember that alert-level sepsis was already reached
+
+Important distinction:
+
+- `sepsis_alert` is persistent
+- but shock-like derivatives of sepsis are **not** necessarily persistent
+
+#### Renal family
+
+Decisions:
+
+- `aki_stage1`
+- `aki_stage2`
+- `aki_stage3`
+- `oliguria_6h`
+- `severe_oliguria_or_anuria`
+- `crrt_active`
+
+Recommended step-level semantics:
+
+- `aki_stage1/2/3` use **cumulative max stage**
+- `oliguria_6h` and `severe_oliguria_or_anuria` use **rolling-window current state**
+- `crrt_active` uses **active interval**
+
+Why:
+
+- AKI stage should reflect the worst injury attained so far, not just the latest row
+- oliguria is a short-horizon dynamic physiologic state and should expire when the rolling window no longer supports it
+- CRRT is an active therapy and should only count while it overlaps the checkpoint
+
+So the renal family intentionally mixes three different persistence styles.
+
+#### Respiratory family
+
+Decisions:
+
+- `resp_support_hfnc_or_niv`
+- `resp_support_invasive_vent`
+- `hypoxemia_pf_lt_200`
+- `hypoxemia_pf_lt_100`
+
+Recommended step-level semantics:
+
+- support decisions use **active interval**
+- PF-ratio decisions use **recent measurement with TTL**
+
+Why:
+
+- mechanical or non-invasive support is only clinically active while the support is actually on
+- hypoxemia is a recent physiologic state, not an episode-level once-positive label
+
+So the respiratory family is explicitly **not** modeled as one-time-trigger.
+
+#### Hemodynamic family
+
+Decisions:
+
+- `vasoactive_support_any`
+- `vasoactive_multi_agent_or_high_intensity`
+- `septic_shock_alert`
+- `shock_hypoperfusion_alert`
+
+Recommended step-level semantics:
+
+- vasoactive-support decisions use **active interval**
+- shock-alert decisions use **composite current state**
+
+Why:
+
+- vasopressor exposure should only count while the therapy is active
+- shock states are best represented as current high-acuity combinations of sepsis, support, and metabolic evidence
+- these states should be recomputed each checkpoint rather than turned on forever after a single early event
+
+This is one of the clearest examples of why a naive one-time-trigger rule would be clinically misleading.
+
+#### Neurologic family
+
+Decisions:
+
+- `gcs_moderate_impairment_9_12`
+- `gcs_severe_impairment_le_8`
+
+Recommended step-level semantics:
+
+- use **recent measurement with TTL**
+
+Why:
+
+- neurologic status can change quickly over time
+- the benchmark should reflect the most recent observed impairment, not a permanent flag from an earlier low GCS
+
+#### Metabolic family
+
+Decisions:
+
+- `hyperlactatemia_ge_2`
+- `severe_hyperlactatemia_ge_4`
+- `acidemia_ph_lt_7_30`
+- `severe_acidemia_ph_le_7_20`
+
+Recommended step-level semantics:
+
+- use **recent measurement with TTL**
+
+Why:
+
+- lactate and pH are classic dynamic physiologic measurements
+- they should remain active only while recent evidence supports them
+
+#### Coagulation family
+
+Decisions:
+
+- `coagulopathy_inr_ge_1_5`
+- `coagulopathy_inr_ge_2`
+
+Recommended step-level semantics:
+
+- use **recent measurement with TTL**
+
+Why:
+
+- INR abnormalities are lab-based current states, although less volatile than blood-gas heads
+- they should not be treated as permanent once-onset diagnoses in this benchmark
+
+### Practical summary
+
+At the step level, the benchmark uses different semantics because different ICU conditions have different clinical meanings.
+
+The intended interpretation is:
+
+- infection and sepsis: **once-onset, then persist**
+- AKI stage: **worst stage attained so far**
+- support therapies: **active only while currently on**
+- labs and physiologic abnormalities: **active only while recently supported by evidence**
+- shock-like composite states: **recomputed at every checkpoint**
+
+This is deliberate.
+
+It makes the benchmark closer to real ICU surveillance, where the agent must reason over:
+
+- event memory
+- cumulative injury
+- current treatment state
+- and recent physiologic state
+
+rather than over a single uniform trigger rule.
+
 ## Composite Current States
 
 Some alert heads should be recomputed from component states at every checkpoint rather than treated as once-on episode flags.

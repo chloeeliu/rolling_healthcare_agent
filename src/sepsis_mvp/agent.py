@@ -905,8 +905,8 @@ def _build_surveillance_zeroshot_python_messages(
         "You are a general ICU rolling surveillance agent operating in a checkpoint-scoped DuckDB Python session.\n"
         "This is a rolling monitoring task, not a forecasting task.\n"
         "At each checkpoint, visible tables already contain only data available by that checkpoint.\n"
-        "Default to returning one final surveillance decision when the current summaries and checkpoint evidence are already sufficient.\n"
-        "Use one short Python snippet only when additional guideline, function, or patient-state evidence is needed.\n"
+        "Your job is to decide the current surveillance state at this checkpoint from memory plus current checkpoint evidence.\n"
+        "Use one short Python snippet when you need additional guideline, function, or patient-state evidence.\n"
         "The Python session persists within the current checkpoint only.\n"
         "Do not output reasoning outside the required JSON fields.\n"
         "Return exactly one response and nothing else.\n\n"
@@ -924,15 +924,21 @@ def _build_surveillance_zeroshot_python_messages(
         "- global_action must be exactly one of: continue_monitoring, escalate.\n"
         "- priority must be exactly one of: low, medium, high.\n"
         "- Do not generate the rolling memory summary here; a separate summarizer call will write that summary after your decision.\n\n"
-        "Execution policy:\n"
-        "- Treat Python execution as evidence-gathering fallback, not the default first move.\n"
-        "- If the current rolling summaries and already gathered checkpoint evidence are enough, decide directly.\n"
-        "- Execute Python only when you need to search guidelines, search/load functions, or inspect additional patient evidence.\n\n"
-        "Preferred tool-use order:\n"
+        "General workflow:\n"
+        "- Step 1: Use rolling_history first. If memory already establishes a disease family clearly and nothing new must be checked, you may decide directly.\n"
+        "- Step 2: If memory is not enough for a disease family, search guideline files for that family to refresh the monitoring criteria.\n"
+        "- Step 3: If you still need operational clinical logic, search the autoformalized function library for useful functions for that family.\n"
+        "- Step 4: Use the functions or query_db to inspect the current patient state at this checkpoint.\n"
+        "- Step 5: After evidence review, return the final surveillance decision.\n\n"
+        "Evidence principle:\n"
+        "- Do not claim that a disease family is normal, absent, or unchanged unless that conclusion is supported by current checkpoint evidence or explicit rolling_history.\n"
+        "- If current-step evidence is empty and rolling_history does not establish the state, retrieve evidence before deciding.\n"
+        "- Treat Python execution as an evidence-gathering path, not as free-form analysis.\n\n"
+        "Preferred tool-use order inside Python:\n"
         "- First, search guideline files when you need condition definitions or surveillance criteria.\n"
         "- Second, search the autoformalized function library for relevant reusable patient-state functions.\n"
-        "- Third, inspect and load the most relevant function files before deciding.\n"
-        "- Use query_db when direct evidence inspection is needed inside the current checkpoint-scoped session.\n\n"
+        "- Third, inspect and load the most relevant function files.\n"
+        "- Fourth, use the functions or query_db to inspect the patient state for the current checkpoint.\n\n"
         "If you choose execution, these session helpers are available inside Python:\n"
         "- search_guidelines / get_guideline for lightweight filename-based guideline retrieval.\n"
         "- search_functions / get_function_info / load_function for discovering the autoformalized function library.\n"
@@ -951,10 +957,8 @@ def _build_surveillance_zeroshot_python_messages(
         '"suspected_conditions":["..."],'
         '"alerts":["..."],'
         '"priority":"low|medium|high",'
-        '"recommended_next_tools":["..."],'
         '"rationale":"..."'
         '}\n'
-        "- recommended_next_tools should name the next likely session helper or function to inspect, not external tools.\n"
         "- suspected_conditions and alerts must be arrays; use [] when empty.\n"
         "- If no action-level state is active, return continue_monitoring with empty alerts.\n"
     )
@@ -1064,13 +1068,13 @@ def _build_surveillance_zeroshot_python_repair_messages(
             "Your previous reply was invalid, incomplete, or too long. Respond again with exactly one response and no extra text. "
             "If you need execution, return only one short CLOSED fenced Python block. "
             "If you are ready to decide, return only one JSON object with exactly these keys: "
-            "global_action, suspected_conditions, alerts, priority, recommended_next_tools, rationale."
+            "global_action, suspected_conditions, alerts, priority, rationale."
         )
     else:
         repair_hint = (
             "Your previous reply was invalid. Respond again with JSON only and no extra text. "
             "You must now return a final surveillance decision with keys: "
-            "global_action, suspected_conditions, alerts, priority, recommended_next_tools, rationale."
+            "global_action, suspected_conditions, alerts, priority, rationale."
         )
     messages.append({"role": "user", "content": repair_hint})
     return messages
@@ -1124,8 +1128,8 @@ def _build_surveillance_session_tools_messages(
         "You are a general ICU rolling surveillance agent operating in a checkpoint-scoped session-tools mode.\n"
         "This is a rolling monitoring task, not a forecasting task.\n"
         "At each checkpoint, visible data already contain only information available by that checkpoint.\n"
-        "Default to returning one final surveillance decision when the current summaries and checkpoint evidence are already sufficient.\n"
-        "Call one tool only when additional guideline, function, or patient-state evidence is needed.\n"
+        "Your job is to decide the current surveillance state at this checkpoint from memory plus current checkpoint evidence.\n"
+        "Call one tool when you need additional guideline, function, or patient-state evidence.\n"
         "Do not output reasoning outside the required JSON fields.\n"
         "Return exactly one JSON response and nothing else.\n\n"
         "Monitored surveillance families:\n"
@@ -1142,6 +1146,15 @@ def _build_surveillance_session_tools_messages(
         "- global_action must be exactly one of: continue_monitoring, escalate.\n"
         "- priority must be exactly one of: low, medium, high.\n"
         "- Do not generate the rolling memory summary here; a separate summarizer call will write that summary after your decision.\n\n"
+        "General workflow:\n"
+        "- Step 1: Use rolling_history first. If memory already establishes a disease family clearly and nothing new must be checked, you may decide directly.\n"
+        "- Step 2: If memory is not enough for a disease family, search guideline files for that family to refresh the monitoring criteria.\n"
+        "- Step 3: If you still need operational clinical logic, search the autoformalized function library for useful functions for that family.\n"
+        "- Step 4: Use those functions to inspect the current patient state at this checkpoint.\n"
+        "- Step 5: After evidence review, return the final surveillance decision.\n\n"
+        "Evidence principle:\n"
+        "- Do not claim that a disease family is normal, absent, or unchanged unless that conclusion is supported by current checkpoint evidence or explicit rolling_history.\n"
+        "- If current-step evidence is empty and rolling_history does not establish the state, retrieve evidence before deciding.\n\n"
         "Preferred tool-use order:\n"
         "- First, search guideline files when you need condition definitions or surveillance criteria.\n"
         "- Second, search the autoformalized function library for relevant reusable patient-state functions.\n"
@@ -1165,10 +1178,8 @@ def _build_surveillance_session_tools_messages(
         '"suspected_conditions":["..."],'
         '"alerts":["..."],'
         '"priority":"low|medium|high",'
-        '"recommended_next_tools":["..."],'
         '"rationale":"..."'
         '}\n'
-        "- recommended_next_tools should name likely next tools or function-search directions, not external tools.\n"
         "- suspected_conditions and alerts must be arrays; use [] when empty.\n"
         "- If no action-level state is active, return continue_monitoring with empty alerts.\n"
     )
@@ -1391,7 +1402,6 @@ def _coerce_surveillance_output(payload: dict[str, Any]) -> ActionDecision:
         "suspected_conditions",
         "alerts",
         "priority",
-        "recommended_next_tools",
         "rationale",
     }
     missing = sorted(required - set(payload))
@@ -1405,13 +1415,10 @@ def _coerce_surveillance_output(payload: dict[str, Any]) -> ActionDecision:
         raise ValueError(f"Invalid priority: {priority}")
     suspected_conditions = payload["suspected_conditions"]
     alerts = payload["alerts"]
-    recommended_next_tools = payload["recommended_next_tools"]
     if not isinstance(suspected_conditions, list) or not all(isinstance(item, str) for item in suspected_conditions):
         raise ValueError("suspected_conditions must be a list of strings.")
     if not isinstance(alerts, list) or not all(isinstance(item, str) for item in alerts):
         raise ValueError("alerts must be a list of strings.")
-    if not isinstance(recommended_next_tools, list) or not all(isinstance(item, str) for item in recommended_next_tools):
-        raise ValueError("recommended_next_tools must be a list of strings.")
     rationale = payload["rationale"]
     if not isinstance(rationale, str):
         raise ValueError("rationale must be a string.")
@@ -1425,7 +1432,6 @@ def _coerce_surveillance_output(payload: dict[str, Any]) -> ActionDecision:
             "suspected_conditions": suspected_conditions,
             "alerts": alerts,
             "priority": priority,
-            "recommended_next_tools": recommended_next_tools,
             "rationale": rationale,
             "checkpoint_summary": checkpoint_summary,
         },
@@ -2231,7 +2237,7 @@ class QwenChatAgent:
                     "content": (
                         "Your previous reply was invalid. Respond again with JSON only and no extra text. "
                         "Return either one allowed tool call or one final surveillance decision with keys "
-                        "global_action, suspected_conditions, alerts, priority, recommended_next_tools, rationale."
+                        "global_action, suspected_conditions, alerts, priority, rationale."
                     ),
                 }
             )

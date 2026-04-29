@@ -99,6 +99,21 @@ Implemented examples:
 - GCS, PF ratio, lactate, pH, INR, and urine-output decisions use recency TTLs
 - `septic_shock_alert` and `shock_hypoperfusion_alert` are recomputed from component states at every checkpoint
 
+Important clarification:
+
+- this is **not** a uniform one-time-trigger benchmark
+- the step-level ground truth intentionally varies across disease families
+
+In practice:
+
+- infection and sepsis are episode-style persistent states once they begin
+- AKI uses worst-stage-attained-so-far semantics
+- support therapies such as ventilation, vasoactives, and CRRT are current interval states
+- labs and physiologic abnormalities such as GCS, PF ratio, lactate, pH, INR, and oliguria are recent-evidence states with TTLs
+- shock-like states are recomputed each checkpoint from their component conditions
+
+This varied semantics is part of the benchmark design, not a temporary implementation detail.
+
 ## Benchmark Subset Sampling Policy Implemented
 
 The implemented benchmark sampler follows the three-layer plan:

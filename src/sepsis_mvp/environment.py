@@ -229,7 +229,6 @@ class BenchmarkEnvironment:
                         "suspected_conditions": [],
                         "alerts": [],
                         "priority": "low",
-                        "recommended_next_tools": [],
                         "rationale": "",
                     }
                 checkpoint_summary = _generate_surveillance_checkpoint_summary(
@@ -371,12 +370,12 @@ class BenchmarkEnvironment:
                     "Use the checkpoint-scoped session tools to gather evidence if needed. "
                     "Search guidelines or function files first, then inspect or call relevant functions. "
                     "Then return one final surveillance decision with global_action, suspected_conditions, alerts, priority, "
-                    "recommended_next_tools, and rationale."
+                    "and rationale."
                 )
             return (
                 "Use the checkpoint-scoped DuckDB session to gather evidence if needed. "
                 "Then return one final surveillance decision with global_action, suspected_conditions, alerts, priority, "
-                "recommended_next_tools, and rationale."
+                "and rationale."
             )
         if trajectory.is_multitask():
             return "Use tools if needed. Then output one decision for each monitored task."

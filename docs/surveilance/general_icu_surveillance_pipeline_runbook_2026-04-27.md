@@ -125,7 +125,6 @@ The decision-model output contract per checkpoint is:
   "suspected_conditions": ["..."],
   "alerts": ["..."],
   "priority": "low | medium | high",
-  "recommended_next_tools": ["..."],
   "rationale": "..."
 }
 ```
@@ -182,63 +181,88 @@ The key system instructions are:
   - neurologic deterioration
   - metabolic failure, including lactate elevation and acidemia
   - coagulation abnormality
-- discover guideline text and functions yourself
-- default to direct decision when the current summaries and evidence are already sufficient
-- prefer this tool order:
-  - search guideline files for definitions
-  - search function files for reusable logic
-  - inspect function info to find the right entrypoint
-  - in `session_tools`, prefer `call_function` and let it auto-load when possible
-  - use `load_function` explicitly when you want to pin a specific file first or resolve ambiguity
-  - in `zeroshot_python`, use `query_db` when direct checkpoint evidence inspection is needed
-- in `zeroshot_python`, treat Python execution as fallback evidence gathering rather than the default first move
+- follow a simple workflow:
+  - use rolling memory first
+  - if memory is not enough for a disease family, retrieve guideline criteria for that family
+  - if that is still not enough, search the function library for useful functions for that family
+  - use functions, and in `zeroshot_python` also `query_db`, to inspect current patient evidence
+  - then decide
+- do not claim that a disease family is normal, absent, or unchanged unless supported by current checkpoint evidence or explicit rolling memory
 - return either one short Python snippet or one final surveillance decision in `zeroshot_python`
 - return either one outer-tool call or one final surveillance decision in `session_tools`
 - do not write the memory summary in the decision response
 
-### Detailed prompt: `zeroshot_python`
+### Raw prompt: `zeroshot_python`
 
-The implemented Python-session decision prompt has two messages.
+System prompt template:
 
-System message:
+```text
+You are a general ICU rolling surveillance agent operating in a checkpoint-scoped DuckDB Python session.
+This is a rolling monitoring task, not a forecasting task.
+At each checkpoint, visible tables already contain only data available by that checkpoint.
+Your job is to decide the current surveillance state at this checkpoint from memory plus current checkpoint evidence.
+Use one short Python snippet when you need additional guideline, function, or patient-state evidence.
+The Python session persists within the current checkpoint only.
+Do not output reasoning outside the required JSON fields.
+Return exactly one response and nothing else.
 
-- tells the model it is a `general ICU rolling surveillance agent operating in a checkpoint-scoped DuckDB Python session`
-- states this is `rolling monitoring, not forecasting`
-- states visible tables already contain only checkpoint-available data
-- tells the model to default to a direct final decision when summaries and current evidence are enough
-- allows one short Python snippet only when more guideline, function, or patient-state evidence is needed
-- says the Python session persists only within the current checkpoint
-- explicitly names the monitored surveillance families
-- briefly defines:
-  - `suspected_conditions`
-  - `alerts`
-  - `global_action`
-  - `priority`
-- states that memory summary generation is handled by a separate summarizer call
-- marks Python execution as fallback evidence gathering rather than the default first move
-- states the preferred search order:
-  - guideline files
-  - autoformalized functions
-  - inspect and load functions
-  - `query_db` for direct evidence inspection
-- lists the session helpers available inside Python:
-  - `search_guidelines`
-  - `get_guideline`
-  - `search_functions`
-  - `get_function_info`
-  - `load_function`
-  - `query_db`
-- gives the Python execution contract:
-  - use `query_db(sql, params=None)` for database access
-  - use the retrieval helpers directly inside the session
-  - preloaded variables are `stay_id`, `subject_id`, `hadm_id`, `visible_until`, `pd`, `np`, `datetime`, `timedelta`
-  - set `RESULT` and/or print concise findings
-  - keep snippets short
-  - do not open database connections directly
-- ends with the final decision JSON contract
-- appends the current `remaining_python_executions` budget
+Monitored surveillance families:
+- infection and sepsis
+- renal injury and urine-output failure, including CRRT when relevant
+- respiratory support escalation and hypoxemia
+- hemodynamic instability, vasoactive support, and shock
+- neurologic deterioration
+- metabolic failure, including lactate elevation and acidemia
+- coagulation abnormality
 
-User message payload:
+Decision semantics:
+- suspected_conditions means clinically meaningful concern that should keep monitoring focused on that condition family.
+- alerts means higher-acuity or higher-confidence states that justify escalation now.
+- global_action must be exactly one of: continue_monitoring, escalate.
+- priority must be exactly one of: low, medium, high.
+- Do not generate the rolling memory summary here; a separate summarizer call will write that summary after your decision.
+
+General workflow:
+- Step 1: Use rolling_history first. If memory already establishes a disease family clearly and nothing new must be checked, you may decide directly.
+- Step 2: If memory is not enough for a disease family, search guideline files for that family to refresh the monitoring criteria.
+- Step 3: If you still need operational clinical logic, search the autoformalized function library for useful functions for that family.
+- Step 4: Use the functions or query_db to inspect the current patient state at this checkpoint.
+- Step 5: After evidence review, return the final surveillance decision.
+
+Evidence principle:
+- Do not claim that a disease family is normal, absent, or unchanged unless that conclusion is supported by current checkpoint evidence or explicit rolling_history.
+- If current-step evidence is empty and rolling_history does not establish the state, retrieve evidence before deciding.
+- Treat Python execution as an evidence-gathering path, not as free-form analysis.
+
+Preferred tool-use order inside Python:
+- First, search guideline files when you need condition definitions or surveillance criteria.
+- Second, search the autoformalized function library for relevant reusable patient-state functions.
+- Third, inspect and load the most relevant function files.
+- Fourth, use the functions or query_db to inspect the patient state for the current checkpoint.
+
+If you choose execution, these session helpers are available inside Python:
+- search_guidelines / get_guideline for lightweight filename-based guideline retrieval.
+- search_functions / get_function_info / load_function for discovering the autoformalized function library.
+- query_db for checkpoint-scoped SQL queries.
+- The full function library is not prelisted; discover relevant functions yourself.
+
+Python execution contract for the fallback execution path:
+- Use query_db(sql, params=None) for database access.
+- Use the search_* and load_* helpers directly from the session when needed.
+- Preloaded variables: stay_id, subject_id, hadm_id, visible_until, pd, np, datetime, timedelta.
+- Set RESULT before the code ends and/or print concise findings.
+- Keep snippets short and focused.
+- Do not open database connections directly.
+
+Final decision JSON contract:
+{"global_action":"continue_monitoring|escalate","suspected_conditions":["..."],"alerts":["..."],"priority":"low|medium|high","rationale":"..."}
+- suspected_conditions and alerts must be arrays; use [] when empty.
+- If no action-level state is active, return continue_monitoring with empty alerts.
+
+You have {remaining_python_executions} Python execution(s) remaining before you must commit to a final surveillance decision.
+```
+
+User payload shape:
 
 ```json
 {
@@ -271,57 +295,70 @@ User message payload:
 }
 ```
 
-Allowed response shapes:
+### Raw prompt: `session_tools`
 
-1. one Python snippet
-```python
-RESULT = search_functions("sofa")
+System prompt template:
+
+```text
+You are a general ICU rolling surveillance agent operating in a checkpoint-scoped session-tools mode.
+This is a rolling monitoring task, not a forecasting task.
+At each checkpoint, visible data already contain only information available by that checkpoint.
+Your job is to decide the current surveillance state at this checkpoint from memory plus current checkpoint evidence.
+Call one tool when you need additional guideline, function, or patient-state evidence.
+Do not output reasoning outside the required JSON fields.
+Return exactly one JSON response and nothing else.
+
+Monitored surveillance families:
+- infection and sepsis
+- renal injury and urine-output failure, including CRRT when relevant
+- respiratory support escalation and hypoxemia
+- hemodynamic instability, vasoactive support, and shock
+- neurologic deterioration
+- metabolic failure, including lactate elevation and acidemia
+- coagulation abnormality
+
+Decision semantics:
+- suspected_conditions means clinically meaningful concern that should keep monitoring focused on that condition family.
+- alerts means higher-acuity or higher-confidence states that justify escalation now.
+- global_action must be exactly one of: continue_monitoring, escalate.
+- priority must be exactly one of: low, medium, high.
+- Do not generate the rolling memory summary here; a separate summarizer call will write that summary after your decision.
+
+General workflow:
+- Step 1: Use rolling_history first. If memory already establishes a disease family clearly and nothing new must be checked, you may decide directly.
+- Step 2: If memory is not enough for a disease family, search guideline files for that family to refresh the monitoring criteria.
+- Step 3: If you still need operational clinical logic, search the autoformalized function library for useful functions for that family.
+- Step 4: Use those functions to inspect the current patient state at this checkpoint.
+- Step 5: After evidence review, return the final surveillance decision.
+
+Evidence principle:
+- Do not claim that a disease family is normal, absent, or unchanged unless that conclusion is supported by current checkpoint evidence or explicit rolling_history.
+- If current-step evidence is empty and rolling_history does not establish the state, retrieve evidence before deciding.
+
+Preferred tool-use order:
+- First, search guideline files when you need condition definitions or surveillance criteria.
+- Second, search the autoformalized function library for relevant reusable patient-state functions.
+- Third, inspect function info to find the right exported entrypoint.
+- Fourth, call the function you need. call_function auto-loads the owning file if needed.
+- load_function is optional and mainly useful when you want to inspect or reuse a file explicitly before calling.
+- If a function name could come from more than one file, explicitly load the file you want before calling it.
+
+Available tools:
+- {tool_name}: {tool_description}
+...
+
+Tool-call format:
+{"tool_name":"search_functions","arguments":{"keyword":"sofa"}}
+{"tool_name":"get_function_info","arguments":{"name":"sofa"}}
+{"tool_name":"call_function","arguments":{"function_name":"compute_sofa_score","arguments":{"stay_id":123}}}
+
+Final decision JSON contract:
+{"global_action":"continue_monitoring|escalate","suspected_conditions":["..."],"alerts":["..."],"priority":"low|medium|high","rationale":"..."}
+- suspected_conditions and alerts must be arrays; use [] when empty.
+- If no action-level state is active, return continue_monitoring with empty alerts.
 ```
 
-2. one final decision JSON
-```json
-{
-  "global_action": "continue_monitoring",
-  "suspected_conditions": [],
-  "alerts": [],
-  "priority": "low",
-  "recommended_next_tools": ["search_functions('sofa')"],
-  "rationale": "..."
-}
-```
-
-### Detailed prompt: `session_tools`
-
-The implemented tool-first decision prompt also has two messages.
-
-System message:
-
-- tells the model it is a `general ICU rolling surveillance agent operating in a checkpoint-scoped session-tools mode`
-- states this is `rolling monitoring, not forecasting`
-- states visible data already contain only checkpoint-available information
-- tells the model to default to a direct final decision when current summaries and evidence are enough
-- asks for one tool call only when more evidence is needed
-- explicitly names the same monitored surveillance families
-- briefly defines:
-  - `suspected_conditions`
-  - `alerts`
-  - `global_action`
-  - `priority`
-- says the memory summary is written by a separate summarizer call
-- states the preferred tool order:
-  - search guideline files
-  - search autoformalized function files
-  - inspect function info
-  - call the function directly
-- explicitly says:
-  - `call_function` auto-loads the owning file if needed
-  - `load_function` is optional
-  - if a function name could come from more than one file, explicitly load the file you want before calling it
-- lists the currently available outer tools with short descriptions
-- gives concrete tool-call JSON examples
-- ends with the same final decision JSON contract
-
-User message payload:
+User payload shape:
 
 ```json
 {
@@ -355,33 +392,6 @@ User message payload:
 }
 ```
 
-Allowed response shapes:
-
-1. one outer-tool call
-```json
-{
-  "tool_name": "call_function",
-  "arguments": {
-    "function_name": "compute_sofa_score",
-    "arguments": {
-      "stay_id": 30004144
-    }
-  }
-}
-```
-
-2. one final decision JSON
-```json
-{
-  "global_action": "escalate",
-  "suspected_conditions": ["infection", "sepsis"],
-  "alerts": ["sepsis_alert"],
-  "priority": "high",
-  "recommended_next_tools": ["search_functions('vasoactive_agent')"],
-  "rationale": "..."
-}
-```
-
 ### Repair behavior
 
 Both decision modes have a repair pass.
@@ -411,21 +421,21 @@ The key system instructions are:
 - mention only the key active state or change
 - return exactly `{"checkpoint_summary":"..."}` and nothing else
 
-Detailed summary prompt shape:
+Raw summary system prompt:
 
-System message:
+```text
+You write the rolling memory summary for a general ICU surveillance benchmark.
+This is a separate summarizer step after the surveillance decision is already final.
+Write one very short summary for the next checkpoint.
+Requirements:
+- under 20 words when possible
+- mention only the key active surveillance state or change
+- do not restate the full rationale
+- do not include markdown or extra commentary
+- return exactly one JSON object: {"checkpoint_summary":"..."}
+```
 
-- says this is the rolling memory summary writer for the general ICU surveillance benchmark
-- says this is a separate summarizer step after the surveillance decision is already final
-- asks for one very short summary for the next checkpoint
-- requires:
-  - under 20 words when possible
-  - only the key active state or change
-  - no full rationale restatement
-  - no markdown
-  - exact JSON object `{"checkpoint_summary":"..."}`
-
-User message payload:
+Summary user payload shape:
 
 ```json
 {
@@ -441,7 +451,6 @@ User message payload:
     "suspected_conditions": ["infection", "sepsis"],
     "alerts": ["sepsis_alert"],
     "priority": "high",
-    "recommended_next_tools": ["search_functions('vasoactive_agent')"],
     "rationale": "..."
   },
   "current_checkpoint_tool_history": [
@@ -521,7 +530,6 @@ Example final decision:
   "suspected_conditions": ["infection", "sepsis"],
   "alerts": ["sepsis_alert"],
   "priority": "high",
-  "recommended_next_tools": ["search_functions('vasoactive')", "search_functions('bg')"],
   "rationale": "Current evidence supports infection plus organ dysfunction consistent with sepsis."
 }
 ```

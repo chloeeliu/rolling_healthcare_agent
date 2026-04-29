@@ -198,6 +198,12 @@ Recommended minimal wording:
 - `suspected_conditions` means clinically meaningful concern that should keep monitoring focused on that condition family
 - `alerts` means high-acuity or high-confidence states that justify escalation now
 - the prompt should explicitly name the monitored surveillance families so the task scope is clear
+- the prompt should present a simple workflow:
+  - first use rolling memory
+  - if memory is not enough for a disease family, search guideline criteria for that family
+  - if that is still not enough, search the function library for useful functions for that family
+  - use functions, and in Python-session mode also `query_db`, to inspect current patient evidence
+  - then decide monitor vs suspect vs alert
 - the prompt should state a preferred tool-use order:
   - search guidelines first for definitions
   - search functions next for reusable logic
@@ -205,7 +211,8 @@ Recommended minimal wording:
   - in tool-first mode, call functions directly and let `call_function` auto-load when possible
   - use `load_function` explicitly when you want to pin a particular file or resolve ambiguity
   - in Python-session mode, use `query_db` when direct checkpoint evidence inspection is needed
-- the prompt should make clear that Python execution is a fallback evidence-gathering path in the Python-session mode, not the default first move
+- the prompt should include one general evidence principle:
+  - do not claim that a disease family is normal, absent, or unchanged unless supported by current checkpoint evidence or explicit rolling memory
 
 That is enough to anchor the decision interface while still requiring the agent to search guidelines for condition-specific detail.
 
@@ -294,7 +301,6 @@ The final decision output at each checkpoint should remain structured, for examp
   "suspected_conditions": ["infection", "aki_stage1", "resp_support_hfnc_niv"],
   "alerts": ["sepsis_alert", "aki_stage3_alert"],
   "priority": "low | medium | high",
-  "recommended_next_tools": ["search_functions('lactate')", "search_functions('vaso')"],
   "rationale": "..."
 }
 ```
