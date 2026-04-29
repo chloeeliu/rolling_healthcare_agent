@@ -228,6 +228,148 @@ Recommended TTLs:
 - `12h` for blood-gas-based states
 - `24h` for INR-based states
 
+### How to read the paper temporal-semantics figure
+
+The paper version of this section uses a schematic figure to explain that the benchmark does **not** apply one single temporal rule to every label.
+
+Important note:
+
+- this figure is illustrative rather than cohort-averaged
+- it is not showing one real patient trajectory
+- it is showing the intended checkpoint semantics for each state type
+
+Read the figure from top to bottom.
+
+#### Panel 1: persistent episode
+
+- example shown: `sepsis_alert`
+- y-axis states are `off` and `on`
+- once the state turns on, it stays on for the rest of the benchmark window
+
+How to interpret it:
+
+- if Sepsis-3 first becomes visible at hour `12`, then checkpoints `12, 16, 20, ..., 48` all remain positive
+- later checkpoints do not “forget” that sepsis occurred
+
+This panel represents:
+
+- `infection_suspected`
+- `infection_confirmed_or_strongly_supported`
+- `sepsis_alert`
+
+#### Panel 2: cumulative max stage
+
+- example shown: AKI stage moving from `0` to `1` to `2` to `3`
+- y-axis is ordinal stage, not binary on/off
+- once a worse stage is reached, the benchmark keeps the highest stage attained so far
+
+How to interpret it:
+
+- if AKI reaches stage `2` at hour `16`, then checkpoint `20` still exposes stage `2` even if the latest row later looks less severe
+- if stage `3` is reached at hour `24`, then all later checkpoints expose stage `3`
+
+This panel represents:
+
+- `aki_stage1`
+- `aki_stage2`
+- `aki_stage3`
+
+The key idea is:
+
+- AKI is not treated as “current latest creatinine only”
+- it is treated as a remembered worst-so-far injury state
+
+#### Panel 3: active interval
+
+- example shown: support turns on, later turns off, and can turn on again
+- y-axis states are `off` and `on`
+- positivity depends on whether the support interval overlaps the current checkpoint
+
+How to interpret it:
+
+- if invasive ventilation or vasoactive support is active from `12h` to `24h`, then checkpoints inside that interval are positive
+- once the support ends, later checkpoints become negative again unless a new support interval begins
+
+This panel represents:
+
+- `resp_support_hfnc_or_niv`
+- `resp_support_invasive_vent`
+- `vasoactive_support_any`
+- `vasoactive_multi_agent_or_high_intensity`
+- `crrt_active`
+
+The key idea is:
+
+- support therapies are current treatment states, not permanent once-on labels
+
+#### Panel 4: recent measurement + TTL
+
+- example shown: an abnormal lab or physiologic value turns the state on, but it later expires if no newer supporting evidence arrives
+- y-axis states are `off` and `on`
+- positivity is based on the most recent relevant measurement within a task-specific trailing window
+
+How to interpret it:
+
+- a lactate abnormality can be active at hour `12`
+- if no newer abnormal lactate is seen and the `12h` TTL expires, the state turns off again
+- later, a new abnormal measurement can turn it back on
+
+This panel represents:
+
+- `oliguria_6h`
+- `severe_oliguria_or_anuria`
+- `hypoxemia_pf_lt_200`
+- `hypoxemia_pf_lt_100`
+- `gcs_moderate_impairment_9_12`
+- `gcs_severe_impairment_le_8`
+- `hyperlactatemia_ge_2`
+- `severe_hyperlactatemia_ge_4`
+- `acidemia_ph_lt_7_30`
+- `severe_acidemia_ph_le_7_20`
+- `coagulopathy_inr_ge_1_5`
+- `coagulopathy_inr_ge_2`
+
+The key idea is:
+
+- these are recent physiologic states, not episode-level states
+- the benchmark intentionally allows them to appear, expire, and reappear
+
+#### Panel 5: composite current state
+
+- example shown: septic shock becomes positive only when multiple component states are simultaneously active
+- y-axis states are `off` and `on`
+- the label is recomputed independently at every checkpoint from its components
+
+How to interpret it:
+
+- even if `sepsis_alert` persists, `septic_shock_alert` only stays positive when the support and metabolic components are also active
+- if vasoactive support stops or the recent lactate evidence expires, the composite shock label turns off
+
+This panel represents:
+
+- `septic_shock_alert`
+- `shock_hypoperfusion_alert`
+
+The key idea is:
+
+- composite heads depend on conjunction across families
+- they are neither permanent episode states nor simple single-measurement states
+
+### What this figure is trying to prove
+
+The figure is meant to make three benchmark properties visually obvious:
+
+1. this is a real longitudinal benchmark, not a repeated static QA task
+2. different disease families require different temporal reasoning operations
+3. the agent must jointly reason about:
+   - remembered past events
+   - worst-so-far injury
+   - current support exposure
+   - recent physiologic evidence
+   - and cross-family recomputation
+
+That mixed temporal structure is one of the main sources of difficulty in the surveillance benchmark.
+
 ## This Is Not A Uniform One-Time-Trigger Benchmark
 
 An important clarification for dataset users is that the surveillance benchmark does **not** use one single step-level ground-truth rule for every disease or ICU state.

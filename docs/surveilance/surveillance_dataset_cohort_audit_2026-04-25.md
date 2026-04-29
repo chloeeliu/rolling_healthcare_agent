@@ -127,6 +127,75 @@ This is the main empirical reason the cohort is suitable for general ICU surveil
 - many stays activate multiple simultaneous monitoring problems
 - the decision problem is naturally multitask and overlapping
 
+### How to read the paper coverage / overlap figure
+
+The paper version of this cohort analysis combines two views that answer different questions.
+
+#### Left panel: coverage histogram with cumulative line
+
+This panel should be read from left to right.
+
+- the x-axis is the number of active core surveillance families by `24h`
+- the blue bars show the percent of ICU stays in each bucket
+- the red line shows cumulative coverage
+
+What it means:
+
+- the bar at `0` shows the fraction of stays with no active core family by `24h`
+- the bar at `1` shows stays with exactly one active family
+- the bar at `2` shows stays with exactly two active families
+- and so on through `10`
+
+Why the red cumulative line matters:
+
+- at `0`, it tells you how many stays are covered if you include only the trivial-negative bucket
+- at `1`, it tells you how many stays have `<= 1` active family
+- more importantly for benchmark interpretation, `100 - bar(0)` gives the fraction of stays with at least one active family
+
+So the key reading is:
+
+- only `8.51%` of stays are at `0`
+- therefore `91.49%` of stays have at least one active family by `24h`
+- `79.96%` have at least two
+- `65.10%` have at least three
+
+This is the main evidence that the benchmark is not mostly made of empty or trivial trajectories.
+
+#### Right panel: representative overlap-pattern heatmap
+
+This panel should be read row by row.
+
+- each column is one of the ten core surveillance families:
+  - `Infect`
+  - `Sepsis`
+  - `AKI2/3`
+  - `Olig`
+  - `Resp`
+  - `Vaso`
+  - `GCS≤8`
+  - `Lac≥4`
+  - `pH≤7.2`
+  - `INR≥2`
+- each row is one common non-empty binary overlap pattern
+- a dark blue cell with `1` means that family is active in that pattern
+- a pale cell with `0` means that family is not active in that pattern
+- the y-axis label on each row is the percentage of cohort stays in that exact pattern
+
+How to interpret a row:
+
+- the row `1 1 1 1 1 1 0 0 0 0` means the patient has concurrent infection, sepsis, AKI stage `2/3`, oliguria, respiratory support, and vasoactive support by `24h`, but not the four thinner severe families on the right
+- the row `1 1 0 0 0 0 0 0 0 0` means infection plus sepsis without the other core families
+- the row `0 0 1 1 0 0 0 0 0 0` means AKI stage `2/3` with oliguria but no infection/sepsis/support families in that pattern
+
+What the panel is trying to show:
+
+- the benchmark is not dominated by one single disease family
+- many common patterns contain multiple concurrent organ-system problems
+- infection and sepsis often co-occur with renal, respiratory, and hemodynamic families
+- there is still heterogeneity, because some rows are renal-heavy, some support-heavy, and some thinner severe families remain absent
+
+In short, the left panel shows how many families are active; the right panel shows which families tend to co-occur.
+
 ## ICU Unit Breadth
 
 The final cohort is not concentrated in a single ICU type.
