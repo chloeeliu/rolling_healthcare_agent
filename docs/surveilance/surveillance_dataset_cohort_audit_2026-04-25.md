@@ -165,6 +165,12 @@ This is the main evidence that the benchmark is not mostly made of empty or triv
 
 This panel should be read row by row.
 
+The most important point is:
+
+- this is **not** a disease-by-disease correlation matrix
+- it is a **top-pattern matrix**
+- each row is one exact multi-disease combination that appears frequently in the cohort
+
 - each column is one of the ten core surveillance families:
   - `Infect`
   - `Sepsis`
@@ -195,6 +201,167 @@ What the panel is trying to show:
 - there is still heterogeneity, because some rows are renal-heavy, some support-heavy, and some thinner severe families remain absent
 
 In short, the left panel shows how many families are active; the right panel shows which families tend to co-occur.
+
+If this panel feels unintuitive, that reaction is reasonable.
+
+Why it can feel confusing:
+
+- most readers expect a heatmap with disease on both axes
+- but this panel instead uses diseases on the x-axis and exact binary patterns on the y-axis
+- so it is closer to a “frequent itemset summary” than a standard overlap matrix
+
+What it is good for:
+
+- showing that the benchmark contains common multi-family patterns, not just isolated single-family positives
+- showing which exact combinations dominate the cohort
+
+What it is not good for:
+
+- quickly reading pairwise overlap between two disease families
+- comparing family A vs family B in the usual heatmap sense
+
+### Raw pairwise overlap heatmap
+
+For a more direct view, the paper assets now also include:
+
+- [surveillance_pairwise_overlap_raw.pdf](/Users/chloe/Documents/New project/_NeurIPS__HealthcareAgent/figures/surveillance_pairwise_overlap_raw.pdf)
+- [derived_core_pairwise_overlap_24h.csv](/Users/chloe/Documents/New project/dataset/surveilance/derived_core_pairwise_overlap_24h.csv)
+
+This is the more standard disease-by-disease overlap view.
+
+How to read it:
+
+- both the x-axis and y-axis are the same ten core surveillance families
+- each cell is the percentage of `LOS >= 48h` ICU stays in which **both** families are active by `24h`
+- the diagonal is the marginal prevalence of each family by `24h`
+- the matrix is symmetric:
+  - overlap(A, B) = overlap(B, A)
+
+So, for example:
+
+- `Infect` with `Sepsis` = `51.23%`
+  - this means `51.23%` of all ICU stays have both infection-family activity and Sepsis-3 alert by `24h`
+- `AKI2/3` with `Olig` = `25.37%`
+  - this means about one quarter of stays have both moderate/severe AKI and oliguria by `24h`
+- `Resp` with `Vaso` = `11.64%`
+  - this means respiratory support and vasoactive support co-occur in about one in nine stays
+
+Important interpretation note:
+
+- this is a **raw overlap** matrix, not a normalized association matrix
+- high values can happen either because:
+  - both families are individually common
+  - or because they are strongly linked
+- for example, `Infect` and `Sepsis` are high partly because sepsis is often a subset of infection-like trajectories
+
+So the raw heatmap is best for answering:
+
+- “How often do these two families appear together in the cohort?”
+
+but not necessarily:
+
+- “How surprisingly associated are these two families after adjusting for base prevalence?”
+
+### What the two overlap views do together
+
+The two overlap views answer different questions:
+
+- the representative-pattern figure answers:
+  - “What are the most common exact multi-family configurations?”
+- the raw pairwise heatmap answers:
+  - “How often does family A co-occur with family B?”
+
+Using both is the clearest way to show that the longitudinal benchmark is:
+
+- broadly covered
+- genuinely overlapping
+- and not reducible to one isolated disease at a time
+
+### Family-level coverage figure
+
+For an even more direct coverage view, the paper assets now also include:
+
+- [surveillance_family_coverage.pdf](/Users/chloe/Documents/New project/_NeurIPS__HealthcareAgent/figures/surveillance_family_coverage.pdf)
+- [core_family_prevalence_24h.csv](/Users/chloe/Documents/New project/dataset/surveilance/core_family_prevalence_24h.csv)
+- [core_family_greedy_union_24h.csv](/Users/chloe/Documents/New project/dataset/surveilance/core_family_greedy_union_24h.csv)
+
+This figure answers two simple questions:
+
+1. how many ICU stays are touched by each surveillance family individually?
+2. how quickly do we cover most stays if we add families one by one?
+
+#### Left panel: per-family coverage
+
+This panel is a standard prevalence chart.
+
+- each bar is one family
+- the value is the percent of `LOS >= 48h` ICU stays with that family active by `24h`
+
+Current values are:
+
+- `Renal`: `71.64%`
+- `Infect`: `64.51%`
+- `Sepsis`: `51.23%`
+- `Resp`: `37.48%`
+- `Coagulation`: `24.34%`
+- `Hemodynamic`: `20.44%`
+- `Metabolic`: `14.20%`
+- `Neuro`: `5.93%`
+
+Important interpretation note:
+
+- this is family-level coverage, not one individual alert head
+- for example, `Renal` is high because it combines:
+  - AKI stage `1/2/3`
+  - oliguria
+  - severe oliguria / anuria
+  - CRRT
+
+So this panel should be read as:
+
+- “how many stays require monitoring in this broad organ-system family?”
+
+not:
+
+- “how many stays have one single narrow renal diagnosis?”
+
+#### Right panel: cumulative stay coverage
+
+This panel uses a greedy set-cover style ordering.
+
+Meaning:
+
+- at each step, we add the family that covers the largest number of currently uncovered stays
+- the y-axis shows the cumulative percent of ICU stays covered by at least one selected family
+
+Current greedy sequence is:
+
+1. `Renal` -> `71.64%`
+2. `Infect` -> `87.44%`
+3. `Resp` -> `89.36%`
+4. `Coagulation` -> `90.28%`
+5. `Neuro` -> `90.96%`
+6. `Hemodynamic` -> `91.36%`
+7. `Metabolic` -> `91.51%`
+8. `Sepsis` -> `91.51%`
+
+What this means:
+
+- one family alone already covers a large majority of stays
+- two families already cover `87.44%`
+- after adding the first three broad families, coverage is already `89.36%`
+- all eight families together cover essentially the same “any family active” population we reported earlier: about `91.5%`
+
+Why `Sepsis` is last in the greedy order:
+
+- not because sepsis is unimportant
+- but because many sepsis-positive stays are already covered by broader families such as infection and renal/respiratory/hemodynamic activity
+
+So this panel is useful for making one specific point:
+
+- the benchmark families are not a narrow hand-picked slice
+- a small number of clinically central monitoring families already cover most ICU stays
+- the remaining families add thinner but still important alert structure rather than driving the bulk of coverage alone
 
 ## ICU Unit Breadth
 

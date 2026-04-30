@@ -107,6 +107,28 @@ The surveillance path now has two runnable backends:
 - `zeroshot_python`
 - `session_tools`
 
+The `session_tools` surveillance prompt now also has two text-managed versions:
+
+- `v0`
+  - preserves the original discovery-style prompt
+  - still tells the model to search guideline files and search the function library
+- `v1_guided`
+  - embeds the surveillance guideline digest and a compact patient-state function catalog directly in the system prompt
+  - removes discovery from the interaction loop
+  - exposes only `call_function` to the model in this prompt version
+
+Prompt files live under:
+
+- [src/sepsis_mvp/prompt_text/surveillance/session_tools_v0_system.txt](/Users/chloe/Documents/New project/src/sepsis_mvp/prompt_text/surveillance/session_tools_v0_system.txt)
+- [src/sepsis_mvp/prompt_text/surveillance/session_tools_v1_guided_system.txt](/Users/chloe/Documents/New project/src/sepsis_mvp/prompt_text/surveillance/session_tools_v1_guided_system.txt)
+- [src/sepsis_mvp/prompt_text/surveillance/session_tools_v1_guideline_digest.txt](/Users/chloe/Documents/New project/src/sepsis_mvp/prompt_text/surveillance/session_tools_v1_guideline_digest.txt)
+- [src/sepsis_mvp/prompt_text/surveillance/session_tools_v1_function_catalog.txt](/Users/chloe/Documents/New project/src/sepsis_mvp/prompt_text/surveillance/session_tools_v1_function_catalog.txt)
+
+The active version is selected with:
+
+- `--surveillance-prompt-version v0`
+- `--surveillance-prompt-version v1_guided`
+
 Important clarification:
 
 - the runnable surveillance benchmark still does **not** use the older structured `autoformalized` backend as the primary agent interface

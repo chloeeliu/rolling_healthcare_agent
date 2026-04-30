@@ -1,0 +1,42 @@
+All functions below are callable through:
+{"tool_name":"call_function","arguments":{"function_name":"FUNCTION_NAME","arguments":{"stay_id":123}}}
+
+- get_suspicion_of_infection(stay_id)
+  Purpose: infection evidence timing and supporting antibiotic / culture logic for this stay.
+  Use for: infection and sepsis family assessment.
+
+- compute_sofa_score(stay_id)
+  Purpose: SOFA total score plus organ-system component details.
+  Use for: organ dysfunction severity, especially sepsis escalation.
+
+- kdigo_stages(stay_id)
+  Purpose: KDIGO AKI staging summary for this stay.
+  Use for: AKI stage 1/2/3 reasoning.
+
+- get_urine_output_rate(stay_id)
+  Purpose: urine output rate and rolling urine-output context.
+  Use for: oliguria and severe oliguria/anuria reasoning.
+
+- ventilation_info(stay_id)
+  Purpose: respiratory support and ventilation-related status for this stay.
+  Use for: HFNC/NIV, invasive ventilation, respiratory support escalation.
+
+- get_vasoactive_agent_info(stay_id)
+  Purpose: vasoactive infusion exposure for this stay.
+  Use for: any vasoactive support, multi-agent support, and shock-related reasoning.
+
+- gcs(stay_id)
+  Purpose: Glasgow Coma Scale observations for this stay.
+  Use for: moderate or severe neurologic impairment.
+
+- get_blood_gas_info(stay_id)
+  Purpose: blood gas, lactate, pH, PF ratio, and related physiologic context.
+  Use for: hypoxemia, hyperlactatemia, acidemia, and shock support.
+
+- get_coagulation(stay_id)
+  Purpose: INR and related coagulation labs for this stay.
+  Use for: coagulopathy reasoning.
+
+- get_crrt_info(stay_id)
+  Purpose: CRRT support information for this stay.
+  Use for: active renal replacement support.

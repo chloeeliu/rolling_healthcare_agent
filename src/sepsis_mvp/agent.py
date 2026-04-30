@@ -113,6 +113,9 @@ CLINICAL_GUIDANCE = {
     ],
 }
 
+SURVEILLANCE_PROMPT_DIR = Path(__file__).resolve().parent / "prompt_text" / "surveillance"
+DEFAULT_SURVEILLANCE_SESSION_TOOLS_PROMPT_VERSION = "v1_guided"
+
 AKI_NON_MONOTONIC_GUIDANCE = [
     "Predict the current visible AKI state at this checkpoint rather than the first AKI onset.",
     "Use current_aki_state_label from query_kdigo_stage as the primary benchmark-facing state field.",
@@ -121,6 +124,73 @@ AKI_NON_MONOTONIC_GUIDANCE = [
     "Do not use latest_aki_stage when it conflicts with latest_aki_stage_smoothed.",
     "Use the latest visible KDIGO stage summary for the checkpoint, not the historical maximum alone.",
 ]
+
+
+def _load_surveillance_prompt_text(filename: str) -> str:
+    path = SURVEILLANCE_PROMPT_DIR / filename
+    return path.read_text().strip()
+
+
+def _surveillance_session_tools_prompt_version(version: str | None) -> str:
+    resolved = (
+        version
+        or os.environ.get("SURVEILLANCE_SESSION_TOOLS_PROMPT_VERSION")
+        or DEFAULT_SURVEILLANCE_SESSION_TOOLS_PROMPT_VERSION
+    )
+    if resolved not in {"v0", "v1_guided"}:
+        raise ValueError(f"Unsupported surveillance session-tools prompt version: {resolved}")
+    return resolved
+
+
+def _surveillance_session_tools_allowed_tools(
+    available_tools: list[str],
+    *,
+    prompt_version: str,
+) -> list[str]:
+    if prompt_version == "v1_guided":
+        return [tool_name for tool_name in available_tools if tool_name == "call_function"]
+    return list(available_tools)
+
+
+def _render_surveillance_session_tools_prompt(
+    *,
+    prompt_version: str,
+    available_tools: list[str],
+) -> str:
+    if prompt_version == "v0":
+        template = _load_surveillance_prompt_text("session_tools_v0_system.txt")
+        tool_examples = (
+            '{"tool_name":"search_functions","arguments":{"keyword":"sofa"}}\n'
+            '{"tool_name":"get_function_info","arguments":{"name":"sofa"}}\n'
+            '{"tool_name":"call_function","arguments":{"function_name":"compute_sofa_score","arguments":{"stay_id":123}}}'
+        )
+        available_tool_lines = "\n".join(
+            f"- {tool_name}: {TOOL_DESCRIPTIONS.get(tool_name, tool_name)}" for tool_name in available_tools
+        )
+        return (
+            template.replace("{{AVAILABLE_TOOLS}}", available_tool_lines)
+            .replace("{{TOOL_CALL_EXAMPLES}}", tool_examples)
+            .strip()
+        )
+
+    template = _load_surveillance_prompt_text("session_tools_v1_guided_system.txt")
+    guideline_digest = _load_surveillance_prompt_text("session_tools_v1_guideline_digest.txt")
+    function_catalog = _load_surveillance_prompt_text("session_tools_v1_function_catalog.txt")
+    available_tool_lines = "\n".join(
+        f"- {tool_name}: {TOOL_DESCRIPTIONS.get(tool_name, tool_name)}" for tool_name in available_tools
+    )
+    tool_examples = (
+        '{"tool_name":"call_function","arguments":{"function_name":"get_suspicion_of_infection","arguments":{"stay_id":123}}}\n'
+        '{"tool_name":"call_function","arguments":{"function_name":"compute_sofa_score","arguments":{"stay_id":123}}}\n'
+        '{"tool_name":"call_function","arguments":{"function_name":"get_blood_gas_info","arguments":{"stay_id":123}}}'
+    )
+    return (
+        template.replace("{{GUIDELINE_DIGEST}}", guideline_digest)
+        .replace("{{FUNCTION_CATALOG}}", function_catalog)
+        .replace("{{AVAILABLE_TOOLS}}", available_tool_lines)
+        .replace("{{TOOL_CALL_EXAMPLES}}", tool_examples)
+        .strip()
+    )
 
 
 def _resolved_task_names(step_input: dict[str, Any]) -> list[str]:
@@ -1122,72 +1192,16 @@ def _build_surveillance_session_tools_messages(
     step_input: dict[str, Any],
     history: list[dict[str, Any]],
     available_tools: list[str],
+    *,
+    prompt_version: str,
 ) -> list[dict[str, str]]:
     stay_id = int(step_input["stay_id"])
     t_hour = int(step_input["t_hour"])
     rolling_history = _normalize_surveillance_summary_history(step_input.get("rolling_history"))
     executed = _summarize_history(history)
-    system_prompt = (
-        "You are a general ICU rolling surveillance agent operating in a checkpoint-scoped session-tools mode.\n"
-        "This is a rolling monitoring task, not a forecasting task.\n"
-        "At each checkpoint, visible data already contain only information available by that checkpoint.\n"
-        "Your job is to decide the current surveillance state at this checkpoint from memory plus current checkpoint evidence.\n"
-        "Call one tool when you need additional guideline, function, or patient-state evidence.\n"
-        "Do not output reasoning outside the required JSON fields.\n"
-        "Return exactly one JSON response and nothing else.\n\n"
-        "Monitored surveillance families:\n"
-        "- infection and sepsis\n"
-        "- renal injury and urine-output failure, including CRRT when relevant\n"
-        "- respiratory support escalation and hypoxemia\n"
-        "- hemodynamic instability, vasoactive support, and shock\n"
-        "- neurologic deterioration\n"
-        "- metabolic failure, including lactate elevation and acidemia\n"
-        "- coagulation abnormality\n\n"
-        "Decision semantics:\n"
-        "- suspected_conditions means clinically meaningful concern that should keep monitoring focused on that condition family.\n"
-        "- alerts means higher-acuity or higher-confidence states that justify escalation now.\n"
-        "- global_action must be exactly one of: continue_monitoring, escalate.\n"
-        "- priority must be exactly one of: low, medium, high.\n"
-        "- Do not generate the rolling memory summary here; a separate summarizer call will write that summary after your decision.\n\n"
-        "General workflow:\n"
-        "- Step 1: Use rolling_history first. If memory already establishes a disease family clearly and nothing new must be checked, you may decide directly.\n"
-        "- Step 2: If memory is not enough for a disease family, search guideline files for that family to refresh the monitoring criteria.\n"
-        "- Step 3: If you still need operational clinical logic, search the autoformalized function library for useful functions for that family.\n"
-        "- Step 4: Use those functions to inspect the current patient state at this checkpoint.\n"
-        "- Step 5: After evidence review, return the final surveillance decision.\n\n"
-        "Evidence principle:\n"
-        "- Do not claim that a disease family is normal, absent, or unchanged unless that conclusion is supported by current checkpoint evidence or explicit rolling_history.\n"
-        "- If current-step evidence is empty and rolling_history does not establish the state, retrieve evidence before deciding.\n\n"
-        "- Absence of retrieved evidence is not evidence that the patient is normal.\n"
-        "- Do not say that there is 'no data', 'no abnormality', or 'no concern' just because you have not inspected the current checkpoint yet.\n"
-        "- If current-step evidence is empty and the state is not already established by rolling_history, your next response should usually be a retrieval tool call rather than a final negative decision.\n\n"
-        "Preferred tool-use order:\n"
-        "- First, search guideline files when you need condition definitions or surveillance criteria.\n"
-        "- Second, search the autoformalized function library for relevant reusable patient-state functions.\n"
-        "- Third, inspect function info to find the right exported entrypoint.\n"
-        "- Fourth, call the function you need. call_function auto-loads the owning file if needed.\n"
-        "- load_function is optional and mainly useful when you want to inspect or reuse a file explicitly before calling.\n"
-        "- If a function name could come from more than one file, explicitly load the file you want before calling it.\n\n"
-        "Available tools:\n"
-    )
-    for tool_name in available_tools:
-        system_prompt += f"- {tool_name}: {TOOL_DESCRIPTIONS.get(tool_name, tool_name)}\n"
-    system_prompt += (
-        "\n"
-        "Tool-call format:\n"
-        '{"tool_name":"search_functions","arguments":{"keyword":"sofa"}}\n'
-        '{"tool_name":"get_function_info","arguments":{"name":"sofa"}}\n'
-        '{"tool_name":"call_function","arguments":{"function_name":"compute_sofa_score","arguments":{"stay_id":123}}}\n\n'
-        "Final decision JSON contract:\n"
-        '{'
-        '"global_action":"continue_monitoring|escalate",'
-        '"suspected_conditions":["..."],'
-        '"alerts":["..."],'
-        '"priority":"low|medium|high",'
-        '"rationale":"..."'
-        '}\n'
-        "- suspected_conditions and alerts must be arrays; use [] when empty.\n"
-        "- If no action-level state is active, return continue_monitoring with empty alerts.\n"
+    system_prompt = _render_surveillance_session_tools_prompt(
+        prompt_version=prompt_version,
+        available_tools=available_tools,
     )
     user_payload = {
         "step_input": {
@@ -1198,6 +1212,7 @@ def _build_surveillance_session_tools_messages(
             "task_name": "general_icu_surveillance",
         },
         "tool_backend": step_input.get("tool_backend"),
+        "surveillance_prompt_version": prompt_version,
         "available_tools": available_tools,
         "already_called_tools": executed["tool_calls"],
         "tool_results_by_name": executed["tool_results"],
@@ -1797,6 +1812,7 @@ class QwenChatAgent:
     max_new_tokens: int = 250
     repair_max_new_tokens: int | None = None
     zeroshot_guideline_path: str | None = None
+    surveillance_session_tools_prompt_version: str | None = None
     trace_callback: Callable[[dict[str, Any]], None] | None = field(default=None, repr=False)
     client: LocalQwenChat = field(init=False, repr=False)
     zeroshot_guideline_text: str = field(init=False, repr=False)
@@ -1812,6 +1828,9 @@ class QwenChatAgent:
         if self.repair_max_new_tokens is None:
             self.repair_max_new_tokens = max(240, min(self.max_new_tokens, 800))
         self.zeroshot_guideline_text = _load_zeroshot_guideline_text(self.zeroshot_guideline_path)
+        self.surveillance_session_tools_prompt_version = _surveillance_session_tools_prompt_version(
+            self.surveillance_session_tools_prompt_version
+        )
 
     def _reset_last_response_metrics(self) -> None:
         self._last_response_metrics = {
@@ -2224,14 +2243,24 @@ class QwenChatAgent:
             "step_index": int(step_input["step_index"]),
             "t_hour": int(step_input["t_hour"]),
         }
-        messages = _build_surveillance_session_tools_messages(step_input, history, available_tools)
+        prompt_version = _surveillance_session_tools_prompt_version(self.surveillance_session_tools_prompt_version)
+        effective_available_tools = _surveillance_session_tools_allowed_tools(
+            available_tools,
+            prompt_version=prompt_version,
+        )
+        messages = _build_surveillance_session_tools_messages(
+            step_input,
+            history,
+            effective_available_tools,
+            prompt_version=prompt_version,
+        )
         content = self._generate_with_metrics(messages)
         if self.trace_callback is not None:
             self.trace_callback({"event_type": "model_output_raw", **context, "output": content})
         try:
             response = _coerce_surveillance_tool_or_decision(
                 _extract_json_object(content),
-                available_tools=available_tools,
+                available_tools=effective_available_tools,
             )
         except (ValueError, json.JSONDecodeError):
             original_max_tokens = self.client.max_new_tokens
@@ -2256,6 +2285,6 @@ class QwenChatAgent:
                 self.trace_callback({"event_type": "model_output_repair", **context, "output": repaired})
             response = _coerce_surveillance_tool_or_decision(
                 _extract_json_object(repaired),
-                available_tools=available_tools,
+                available_tools=effective_available_tools,
             )
         return response

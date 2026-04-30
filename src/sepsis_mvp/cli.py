@@ -306,6 +306,7 @@ def run_command(args: argparse.Namespace) -> int:
                 max_new_tokens=args.max_new_tokens,
                 repair_max_new_tokens=args.repair_max_new_tokens,
                 zeroshot_guideline_path=zeroshot_guideline_path,
+                surveillance_session_tools_prompt_version=args.surveillance_prompt_version,
                 trace_callback=events_sink.write,
             )
 
@@ -449,6 +450,16 @@ def build_parser() -> argparse.ArgumentParser:
         "--functions-dir",
         default=None,
         help="Optional directory of autoformalized .py functions exposed to the DuckDB code session.",
+    )
+    run_parser.add_argument(
+        "--surveillance-prompt-version",
+        choices=["v0", "v1_guided"],
+        default="v1_guided",
+        help=(
+            "Session-tools surveillance prompt version. "
+            "v0 keeps the original search/discovery-style prompt; "
+            "v1_guided embeds the guideline digest and function catalog and exposes only call_function."
+        ),
     )
     run_parser.add_argument(
         "--zeroshot-session-profile",

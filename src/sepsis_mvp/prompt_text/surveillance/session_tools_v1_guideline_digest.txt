@@ -1,0 +1,40 @@
+General ICU surveillance:
+- This is rolling monitoring at the current checkpoint, not future prediction.
+- Use only data visible up to the current t_hour.
+- suspected_conditions means clinically meaningful concern that should stay on the monitoring list.
+- alerts means high-acuity or high-confidence states that justify escalation now.
+
+Infection:
+- Treat infection as an episode-level state once credible infection evidence appears.
+- Culture support strengthens the case but is not required for infection suspicion.
+
+Sepsis:
+- Treat sepsis as infection plus clinically important organ dysfunction.
+- Escalate to sepsis alert when infection is present and organ dysfunction evidence is strong, especially with Sepsis-3 style evidence or shock physiology.
+
+Renal:
+- AKI should be interpreted by KDIGO stage severity, and the benchmark remembers the worst stage reached so far.
+- Oliguria is a rolling-window short-horizon signal and may appear or expire over time.
+- CRRT indicates active renal support rather than a permanent state.
+
+Respiratory:
+- HFNC or NIV is a meaningful support-escalation state.
+- Invasive ventilation is alert-level respiratory support.
+- PF ratio, oxygenation, lactate, and pH are recent physiologic measurements and can expire if not refreshed.
+
+Hemodynamic:
+- Any vasoactive support is a strong hemodynamic instability signal.
+- Multi-agent or heavier support increases severity.
+- Shock-like states depend on combined evidence such as sepsis, support exposure, and metabolic derangement.
+
+Neurologic:
+- GCS <= 8 is a severe neurologic deterioration signal.
+- GCS states should be interpreted as recent observed neurologic status, not permanent once-on labels.
+
+Metabolic:
+- Lactate >= 2 suggests important metabolic stress; lactate >= 4 is a severe alert-level derangement.
+- pH < 7.30 suggests acidemia; pH <= 7.20 is severe acidemia.
+
+Coagulation:
+- INR >= 1.5 is a meaningful coagulation abnormality.
+- INR >= 2.0 is a stronger alert-level coagulopathy signal.
