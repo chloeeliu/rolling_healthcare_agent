@@ -140,6 +140,50 @@ def _normalize_task_actions(task_actions: dict[str, Any]) -> dict[str, Any]:
     return normalized
 
 
+def _compact_tool_payload(tool_name: str, payload: dict[str, Any]) -> dict[str, Any]:
+    if tool_name == "query_suspicion_of_infection":
+        evidence = payload.get("evidence") or []
+        return {
+            key: value
+            for key, value in {
+                "stay_id": payload.get("stay_id"),
+                "t_hour": payload.get("t_hour"),
+                "has_suspected_infection": payload.get("has_suspected_infection"),
+                "first_visible_suspected_infection_hour": payload.get("first_visible_suspected_infection_hour"),
+                "first_visible_suspected_infection_time": payload.get("first_visible_suspected_infection_time"),
+                "evidence_count": len(evidence),
+                "evidence": evidence[:3],
+            }.items()
+            if value is not None
+        }
+    if tool_name == "query_sofa":
+        return {
+            "stay_id": payload.get("stay_id"),
+            "t_hour": payload.get("t_hour"),
+            "latest_visible_hr": payload.get("latest_visible_hr"),
+            "latest_sofa_24hours": payload.get("latest_sofa_24hours"),
+            "max_sofa_24hours_so_far": payload.get("max_sofa_24hours_so_far"),
+            "latest_components": payload.get("latest_components") or {},
+        }
+    return payload
+
+
+def _compact_interaction_history(history: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    compacted: list[dict[str, Any]] = []
+    for item in history:
+        if item["type"] == "tool_output":
+            compacted.append(
+                {
+                    "type": item["type"],
+                    "tool_name": item["tool_name"],
+                    "payload": _compact_tool_payload(item["tool_name"], item.get("payload") or {}),
+                }
+            )
+        else:
+            compacted.append(item)
+    return compacted
+
+
 def _summarize_history(history: list[dict[str, Any]]) -> dict[str, Any]:
     tool_results = {}
     tool_calls = []
@@ -147,7 +191,7 @@ def _summarize_history(history: list[dict[str, Any]]) -> dict[str, Any]:
         if item["type"] == "tool_call":
             tool_calls.append(item["tool_name"])
         elif item["type"] == "tool_output":
-            tool_results[item["tool_name"]] = item["payload"]
+            tool_results[item["tool_name"]] = _compact_tool_payload(item["tool_name"], item["payload"])
     return {"tool_calls": tool_calls, "tool_results": tool_results}
 
 
@@ -205,6 +249,7 @@ def _toolbox_evidence_requirements(task_names: list[str], step_input: dict[str, 
         requirements.extend(
             [
                 "Do not return infection_suspect unless suspected infection is explicitly supported by a current tool result or by an earlier positive rolling_history entry.",
+                "Suspected infection and SOFA alert evidence are jointly necessary for trigger_sepsis_alert.",
                 "Do not return trigger_sepsis_alert unless suspected infection is explicitly supported and SOFA alert evidence is explicitly supported by a current tool result or by earlier rolling_history.",
                 "If no earlier checkpoint explicitly established infection, query_suspicion_of_infection before making a positive sepsis decision.",
                 "If no earlier checkpoint explicitly established SOFA alert evidence, query_sofa before making trigger_sepsis_alert.",
@@ -528,7 +573,7 @@ def _build_toolbox_messages(
         "already_called_tools": executed["tool_calls"],
         "tool_results_by_name": executed["tool_results"],
         "rolling_history": rolling_history,
-        "history": history,
+        "history": _compact_interaction_history(history),
     }
     return [
         {"role": "system", "content": system_prompt},
@@ -1280,6 +1325,24 @@ def _normalize_toolbox_response(
     )
 
 
+def _coerce_toolbox_output(
+    payload: dict[str, Any],
+    *,
+    step_input: dict[str, Any],
+    available_tools: list[str],
+) -> ToolCall | ActionDecision:
+    if "action" in payload and payload["action"] in available_tools:
+        return ToolCall(
+            tool_name=payload["action"],
+            arguments={"stay_id": int(step_input["stay_id"]), "t_hour": int(step_input["t_hour"])},
+        )
+    return _normalize_toolbox_response(
+        _coerce_agent_output(payload),
+        step_input=step_input,
+        available_tools=available_tools,
+    )
+
+
 @dataclass(slots=True)
 class HeuristicAgent:
     sofa_alert_threshold: int = 2
@@ -1460,7 +1523,8 @@ class LocalQwenChat:
 
         allow_cpu = os.environ.get("QWEN_ALLOW_CPU", "0") == "1"
         if torch.cuda.is_available():
-            device_map = "auto"
+            cuda_device = os.environ.get("QWEN_CUDA_DEVICE", "0")
+            device_map = {"": f"cuda:{cuda_device}"}
             dtype = torch.float16
         elif getattr(torch.backends, "mps", None) and torch.backends.mps.is_available():
             device_map = {"": "mps"}
@@ -1673,8 +1737,8 @@ class QwenChatAgent:
         if self.trace_callback is not None:
             self.trace_callback({"event_type": "model_output_raw", **context, "output": content})
         try:
-            response = _normalize_toolbox_response(
-                _coerce_agent_output(_extract_json_object(content)),
+            response = _coerce_toolbox_output(
+                _extract_json_object(content),
                 step_input=step_input,
                 available_tools=available_tools,
             )
@@ -1688,8 +1752,8 @@ class QwenChatAgent:
                 self.client.max_new_tokens = original_max_tokens
             if self.trace_callback is not None:
                 self.trace_callback({"event_type": "model_output_repair", **context, "output": repaired})
-            response = _normalize_toolbox_response(
-                _coerce_agent_output(_extract_json_object(repaired)),
+            response = _coerce_toolbox_output(
+                _extract_json_object(repaired),
                 step_input=step_input,
                 available_tools=available_tools,
             )

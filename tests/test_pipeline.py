@@ -28,6 +28,12 @@ from sepsis_mvp.dataset import (
     save_trajectories,
 )
 from sepsis_mvp.environment import BenchmarkEnvironment, evaluate_rollouts
+from sepsis_mvp.prompt_baseline import (
+    PromptCardRuleAgent,
+    build_patient_checkpoint_card,
+    run_prompt_card_baseline,
+)
+from sepsis_mvp.rl_reward import score_sepsis_rollout, score_sepsis_rollouts
 from sepsis_mvp.schemas import (
     CODE_EXEC_TOOL_NAME,
     SQL_EXEC_TOOL_NAME,
@@ -47,6 +53,24 @@ SAMPLE = ROOT / "data" / "sample_concepts.json"
 
 
 class PipelineTest(unittest.TestCase):
+    def _two_step_sepsis_trajectory(self):
+        return Trajectory(
+            trajectory_id="mimiciv_stay_1",
+            stay_id=30,
+            subject_id=10,
+            hadm_id=20,
+            anchor="icu_intime",
+            step_hours=4,
+            horizon_hours=4,
+            transitions={"infection_start_hour": 0, "sepsis_start_hour": 4},
+            checkpoints=[
+                Checkpoint(t_hour=0, state_label="infection_suspect"),
+                Checkpoint(t_hour=4, state_label="trigger_sepsis_alert"),
+            ],
+            task_name="sepsis",
+            label_spaces={"sepsis": ["keep_monitoring", "infection_suspect", "trigger_sepsis_alert"]},
+        )
+
     def _multitask_step_input(self):
         return {
             "trajectory_id": "mimiciv_stay_1",
@@ -237,6 +261,69 @@ class PipelineTest(unittest.TestCase):
             "query_kdigo_stage",
             "query_ventilation_status",
         ])
+
+    def test_prompt_card_baseline_represents_intermediate_infection_state(self):
+        trajectory = self._two_step_sepsis_trajectory()
+        infection_output = {
+            "stay_id": 30,
+            "t_hour": 0,
+            "has_suspected_infection": True,
+            "first_visible_suspected_infection_hour": 0,
+            "first_visible_suspected_infection_time": "2150-01-01T00:00:00",
+            "evidence": [{"antibiotic": "cefepime", "culture_time": "2150-01-01T01:00:00"}],
+        }
+        sofa_output = {
+            "stay_id": 30,
+            "t_hour": 0,
+            "latest_visible_hr": 0,
+            "latest_sofa_24hours": 1,
+            "max_sofa_24hours_so_far": 1,
+            "latest_components": {"renal_24hours": 1},
+        }
+        card = build_patient_checkpoint_card(
+            trajectory=trajectory,
+            step_index=0,
+            infection_output=infection_output,
+            sofa_output=sofa_output,
+            rolling_history=[],
+        )
+        self.assertEqual(card["current_checkpoint_summary"]["infection"]["suspected_infection"], "visible")
+        self.assertFalse(card["current_checkpoint_summary"]["sofa"]["alert_level_sofa_visible"])
+        action, _stats = PromptCardRuleAgent().decide(card)
+        self.assertEqual(action.action, "infection_suspect")
+
+    def test_prompt_card_baseline_rollout_uses_no_visible_tool_calls(self):
+        class FakeRuntime:
+            def execute(self, tool_name, arguments):
+                t_hour = arguments["t_hour"]
+                if tool_name == "query_suspicion_of_infection":
+                    return {
+                        "stay_id": 30,
+                        "t_hour": t_hour,
+                        "has_suspected_infection": True,
+                        "first_visible_suspected_infection_hour": 0,
+                        "evidence": [{"antibiotic": "cefepime"}],
+                    }
+                if tool_name == "query_sofa":
+                    return {
+                        "stay_id": 30,
+                        "t_hour": t_hour,
+                        "latest_visible_hr": t_hour,
+                        "latest_sofa_24hours": 1 if t_hour == 0 else 2,
+                        "max_sofa_24hours_so_far": 1 if t_hour == 0 else 2,
+                        "latest_components": {},
+                    }
+                raise ValueError(tool_name)
+
+        trajectory = self._two_step_sepsis_trajectory()
+        rollouts, metrics = run_prompt_card_baseline(
+            trajectories=[trajectory],
+            tool_runtime=FakeRuntime(),
+            agent=PromptCardRuleAgent(),
+        )
+        self.assertEqual([step.predicted_action for step in rollouts[0].steps], ["infection_suspect", "trigger_sepsis_alert"])
+        self.assertEqual([step.tool_calls for step in rollouts[0].steps], [[], []])
+        self.assertEqual(metrics["step_level"]["accuracy"], 1.0)
 
     def test_toolbox_prompt_supports_multitask(self):
         step_input = self._multitask_step_input() | {
@@ -1281,6 +1368,49 @@ class PipelineTest(unittest.TestCase):
         resource_usage = metrics["resource_usage"]
         self.assertEqual(resource_usage["totals"]["total_tokens"], 0)
         self.assertEqual(resource_usage["totals"]["step_runtime_sec"], 0.0)
+
+    def test_rl_reward_scores_intermediate_state_and_necessary_sofa_call(self):
+        trajectory = self._two_step_sepsis_trajectory()
+        rollout = TrajectoryRollout(
+            trajectory_id=trajectory.trajectory_id,
+            stay_id=trajectory.stay_id,
+            steps=[
+                StepRecord(
+                    step_index=0,
+                    t_hour=0,
+                    gt_action="infection_suspect",
+                    predicted_action="infection_suspect",
+                    tool_calls=[
+                        {"tool_name": "query_suspicion_of_infection", "arguments": {"stay_id": 30, "t_hour": 0}}
+                    ],
+                    tool_outputs=[
+                        {"stay_id": 30, "t_hour": 0, "has_suspected_infection": True, "evidence": [{"antibiotic": "cefepime"}]}
+                    ],
+                ),
+                StepRecord(
+                    step_index=1,
+                    t_hour=4,
+                    gt_action="trigger_sepsis_alert",
+                    predicted_action="trigger_sepsis_alert",
+                    tool_calls=[
+                        {"tool_name": "query_sofa", "arguments": {"stay_id": 30, "t_hour": 4}}
+                    ],
+                    tool_outputs=[
+                        {"stay_id": 30, "t_hour": 4, "latest_sofa_24hours": 2, "max_sofa_24hours_so_far": 2}
+                    ],
+                ),
+            ],
+            first_predicted_infection_hour=0,
+            first_predicted_alert_hour=4,
+            first_predicted_task_hours={"sepsis": {"infection_suspect": 0, "trigger_sepsis_alert": 4}},
+        )
+        score = score_sepsis_rollout(trajectory, rollout)
+        self.assertGreater(score["trajectory_reward"], 1.0)
+        self.assertEqual(score["counters"]["necessary_infection_covered"], 1)
+        self.assertEqual(score["counters"]["necessary_sofa_covered"], 1)
+        aggregate = score_sepsis_rollouts([trajectory], [rollout])
+        self.assertEqual(aggregate["num_trajectories"], 1)
+        self.assertEqual(aggregate["aggregate_counters"]["necessary_sofa_covered"], 1)
 
     def test_evaluation_reports_resource_usage_from_step_records(self):
         trajectory = Trajectory(

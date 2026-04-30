@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import time
 from pathlib import Path
 
@@ -12,6 +13,8 @@ from .dataset import (
     save_trajectories,
 )
 from .environment import BenchmarkEnvironment, evaluate_rollouts, rollout_to_dicts
+from .prompt_baseline import PromptCardQwenAgent, PromptCardRuleAgent, run_prompt_card_baseline
+from .rl_reward import score_sepsis_rollouts
 from .schemas import StepRecord, TrajectoryRollout
 from .tools import build_tool_runtime
 
@@ -249,21 +252,25 @@ def run_command(args: argparse.Namespace) -> int:
             db_path=args.db_path,
             concepts=args.concepts,
             autoformalized_library=args.autoformalized_library,
-            guidelines_dir=args.guidelines_dir
+            guidelines_dir=getattr(args, "guidelines_dir", None)
             or _default_guidelines_dir_for_run(
                 task_name=trajectories[0].primary_task_name(),
                 tool_backend=args.tool_backend,
             ),
-            functions_dir=args.functions_dir
+            functions_dir=getattr(args, "functions_dir", None)
             or _default_functions_dir_for_run(
                 task_name=trajectories[0].primary_task_name(),
                 autoformalized_library=args.autoformalized_library,
             ),
             zeroshot_session_profile=(
                 "surveillance"
-                if args.zeroshot_session_profile == "auto"
+                if getattr(args, "zeroshot_session_profile", "auto") == "auto"
                 and trajectories[0].primary_task_name() == "general_icu_surveillance"
-                else ("raw" if args.zeroshot_session_profile == "auto" else args.zeroshot_session_profile)
+                else (
+                    "raw"
+                    if getattr(args, "zeroshot_session_profile", "auto") == "auto"
+                    else getattr(args, "zeroshot_session_profile", "auto")
+                )
             ),
         )
 
@@ -361,6 +368,94 @@ def run_command(args: argparse.Namespace) -> int:
     if args.evaluation_output:
         Path(args.evaluation_output).write_text(json.dumps(evaluation_summary, indent=2, default=_json_default))
     print(json.dumps(evaluation_summary, indent=2, default=_json_default))
+    return 0
+
+
+def run_prompt_baseline_command(args: argparse.Namespace) -> int:
+    args.tool_backend = _normalize_tool_backend(args.tool_backend)
+    if args.tool_backend not in {"official", "autoformalized"}:
+        raise SystemExit("Prompt-card baseline supports only official or autoformalized derived-tool backends.")
+    trajectories = load_dataset_auto(args.dataset, strict_mvp=not args.include_out_of_scope)
+    if args.sample_size is not None:
+        trajectories = trajectories[: args.sample_size]
+    unsupported = [
+        trajectory.trajectory_id
+        for trajectory in trajectories
+        if trajectory.is_multitask() or trajectory.primary_task_name() != "sepsis"
+    ]
+    if unsupported:
+        raise SystemExit(
+            "Prompt-card baseline currently supports only single-task sepsis trajectories. "
+            f"First unsupported trajectories: {unsupported[:5]}"
+        )
+
+    runtime = build_tool_runtime(
+        tool_backend=args.tool_backend,
+        db_path=args.db_path,
+        concepts=args.concepts,
+        autoformalized_library=args.autoformalized_library,
+    )
+    events_sink = JsonlSink(args.events_output)
+    if args.agent == "qwen":
+        os.environ.setdefault("CUDA_VISIBLE_DEVICES", args.cuda_visible_devices)
+        agent = PromptCardQwenAgent(
+            model=args.model,
+            temperature=args.temperature,
+            top_p=args.top_p,
+            max_new_tokens=args.max_new_tokens,
+            trace_callback=events_sink.write,
+        )
+    else:
+        agent = PromptCardRuleAgent()
+
+    rollouts, evaluation = run_prompt_card_baseline(
+        trajectories=trajectories,
+        tool_runtime=runtime,
+        agent=agent,
+        event_callback=events_sink.write,
+    )
+    evaluation_summary = {
+        "task_mode": "single",
+        "protocol": "prompt_card",
+        "tool_backend": args.tool_backend,
+        "dataset": args.dataset,
+        "num_trajectories": len(trajectories),
+        "sample_size": args.sample_size,
+        "agent": args.agent,
+        "model": args.model if args.agent == "qwen" else None,
+        "metrics": evaluation,
+        "notes": {
+            "visible_tool_calls": 0,
+            "hidden_card_tool_calls_per_step": 2,
+            "baseline_limitation": (
+                "The prompt-only baseline receives compact evidence cards and must infer the intermediate "
+                "infection_suspect state without interactive tools."
+            ),
+            "gpu_policy": "Qwen loading is constrained to one CUDA device by default.",
+        },
+    }
+    if args.rollouts_output:
+        Path(args.rollouts_output).parent.mkdir(parents=True, exist_ok=True)
+        Path(args.rollouts_output).write_text(json.dumps(rollout_to_dicts(rollouts), indent=2, default=_json_default))
+    _write_canonical_trajectory_output(args.trajectory_output, rollouts)
+    if args.evaluation_output:
+        Path(args.evaluation_output).parent.mkdir(parents=True, exist_ok=True)
+        Path(args.evaluation_output).write_text(json.dumps(evaluation_summary, indent=2, default=_json_default))
+    print(json.dumps(evaluation_summary, indent=2, default=_json_default))
+    return 0
+
+
+def score_rollouts_command(args: argparse.Namespace) -> int:
+    trajectories = load_dataset_auto(args.dataset, strict_mvp=not args.include_out_of_scope)
+    raw = json.loads(Path(args.rollouts).read_text())
+    if not isinstance(raw, list):
+        raise SystemExit(f"Expected JSON list rollouts file: {args.rollouts}")
+    rollouts = [_rollout_from_dict(item) for item in raw]
+    scores = score_sepsis_rollouts(trajectories, rollouts)
+    if args.output:
+        Path(args.output).parent.mkdir(parents=True, exist_ok=True)
+        Path(args.output).write_text(json.dumps(scores, indent=2, default=_json_default))
+    print(json.dumps(scores, indent=2, default=_json_default))
     return 0
 
 
@@ -473,6 +568,60 @@ def build_parser() -> argparse.ArgumentParser:
     run_parser.add_argument("--events-output", help="Optional JSONL file for per-tool-call/per-step events.")
     run_parser.add_argument("--trajectory-output", help="Optional JSONL file for per-stay completed rollouts.")
     run_parser.set_defaults(func=run_command)
+
+    prompt_parser = subparsers.add_parser(
+        "run-prompt-baseline",
+        help="Run the direct prompt-card sepsis baseline without visible tool calls.",
+    )
+    prompt_parser.add_argument("--concepts", help="Path to concept-table JSON.")
+    prompt_parser.add_argument("--db-path", help="Path to MIMIC DuckDB for hidden prompt-card evidence extraction.")
+    prompt_parser.add_argument("--dataset", required=True, help="Path to single-task sepsis trajectory dataset.")
+    prompt_parser.add_argument(
+        "--tool-backend",
+        choices=["official", "autoformalized"],
+        default="official",
+        help="Derived backend used only to build the hidden prompt-card evidence.",
+    )
+    prompt_parser.add_argument(
+        "--autoformalized-library",
+        default="autoformalized_library",
+        help="Path to the autoformalized function library root when using --tool-backend autoformalized.",
+    )
+    prompt_parser.add_argument(
+        "--include-out-of-scope",
+        action="store_true",
+        help="Keep trajectories that fall outside the strict 3-action MVP contract when using CSV input.",
+    )
+    prompt_parser.add_argument("--agent", choices=["qwen", "rule"], default="qwen")
+    prompt_parser.add_argument("--model", default="Qwen/Qwen3.5-9B", help="Local HF model name/path for Qwen.")
+    prompt_parser.add_argument("--temperature", type=float, default=0.0)
+    prompt_parser.add_argument("--top-p", type=float, default=0.95)
+    prompt_parser.add_argument("--max-new-tokens", type=int, default=160)
+    prompt_parser.add_argument("--sample-size", type=int, help="Run only the first N trajectories.")
+    prompt_parser.add_argument(
+        "--cuda-visible-devices",
+        default="0",
+        help="Default CUDA_VISIBLE_DEVICES value for Qwen prompt baseline; keeps runs to one GPU by default.",
+    )
+    prompt_parser.add_argument("--rollouts-output", help="Optional path to save rollout logs.")
+    prompt_parser.add_argument("--evaluation-output", help="Optional path to save the final evaluation summary JSON.")
+    prompt_parser.add_argument("--events-output", help="Optional JSONL file for prompt-card events.")
+    prompt_parser.add_argument("--trajectory-output", help="Optional JSONL file for per-stay completed rollouts.")
+    prompt_parser.set_defaults(func=run_prompt_baseline_command)
+
+    score_parser = subparsers.add_parser(
+        "score-rollouts",
+        help="Score saved single-task sepsis rollouts with the RL reward function.",
+    )
+    score_parser.add_argument("--dataset", required=True, help="Path to the trajectory dataset used by the rollouts.")
+    score_parser.add_argument("--rollouts", required=True, help="Path to rollout JSON list.")
+    score_parser.add_argument("--output", help="Optional path to save reward scores.")
+    score_parser.add_argument(
+        "--include-out-of-scope",
+        action="store_true",
+        help="Keep trajectories that fall outside the strict 3-action MVP contract when using CSV input.",
+    )
+    score_parser.set_defaults(func=score_rollouts_command)
 
     return parser
 
