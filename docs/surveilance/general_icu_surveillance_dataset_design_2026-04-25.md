@@ -188,6 +188,13 @@ Use the existing surveillance cohort foundation:
 - subject-level deterministic train/dev/test split
 - checkpoint grid every `4` hours from `0` to `48`
 
+Companion horizon variant:
+
+- we also maintain a convenience `24h` truncated release over the same sampled benchmark stays
+- this shortens the trajectory to checkpoints `0, 4, ..., 24`
+- it is useful for faster debugging and shorter benchmark runs
+- but it is not the primary benchmark horizon, because it removes many delayed `24-48h` escalations and weakens the rare-alert enrichment selected on by-`48h` features
+
 Why this cohort still makes sense:
 
 - enough room for rolling deterioration and delayed transitions

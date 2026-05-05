@@ -170,6 +170,93 @@ Interpretation:
 - the high-acuity heads are common enough to support meaningful evaluation
 - the optional `HFNC/NIV` head remains somewhat thinner than the original aspirational floor, but still has enough support to be usable
 
+## Companion `24h` Truncated Release
+
+We also generated a companion `24h` version of the benchmark package over the **same** `2,000` sampled stays:
+
+- [benchmark_2k_checkpoint_truth_24h.csv](/Users/chloe/Documents/New project/dataset/surveilance/benchmark_2k_checkpoint_truth_24h.csv)
+- [benchmark_2k_summary_24h.csv](/Users/chloe/Documents/New project/dataset/surveilance/benchmark_2k_summary_24h.csv)
+- [benchmark_2k_horizon_comparison.csv](/Users/chloe/Documents/New project/dataset/surveilance/benchmark_2k_horizon_comparison.csv)
+
+This is a truncated horizon variant, not a newly re-sampled benchmark.
+
+Headline shape:
+
+- `48h` package: `26,000` checkpoint rows, `13` checkpoints per stay
+- `24h` package: `14,000` checkpoint rows, `7` checkpoints per stay
+
+So moving from `48h` to `24h` cuts the rollout length by about half while keeping the stay set fixed.
+
+## Effect of Changing the Horizon from `48h` to `24h`
+
+The horizon change does **not** affect the cohort identity:
+
+- still `2,000` stays
+- still the same `400` dev and `1,600` test stays
+- still the same soft-balanced sampling layers
+
+What changes is the amount of visible longitudinal evidence.
+
+At the stay level:
+
+- stays with any escalation drop from `1,883` to `1,795` (`94.15%` -> `89.75%`)
+- this is a modest drop in positive-stay coverage (`-88` stays, `-4.7%`)
+
+At the checkpoint level:
+
+- escalate rows drop from `20,114` to `9,469`
+- checkpoint escalation prevalence drops from `77.36%` to `67.64%`
+
+This is a much larger checkpoint-level reduction because the later half of the trajectory contains many persistent or newly triggered alert states.
+
+### Which heads are most affected
+
+The horizon truncation mostly removes heads that often begin or intensify in the `24-48h` window.
+
+Largest stay-level drops in the released `2,000`-stay package:
+
+- `aki_stage3`: `325` -> `158` (`-51.4%`)
+- `crrt_active`: `128` -> `82` (`-35.9%`)
+- `gcs_severe_impairment_le_8`: `128` -> `86` (`-32.8%`)
+- `aki_stage2`: `1,319` -> `970` (`-26.5%`)
+- `hypoxemia_pf_lt_100`: `246` -> `199` (`-19.1%`)
+- `vasoactive_multi_agent_or_high_intensity`: `285` -> `241` (`-15.4%`)
+
+More modest drops:
+
+- `sepsis_alert`: `1,314` -> `1,273` (`-3.1%`)
+- `septic_shock_alert`: `350` -> `328` (`-6.3%`)
+- `shock_hypoperfusion_alert`: `280` -> `253` (`-9.6%`)
+- `resp_support_invasive_vent`: `1,082` -> `1,031` (`-4.7%`)
+- `severe_hyperlactatemia_ge_4`: `312` -> `289` (`-7.4%`)
+- `severe_acidemia_ph_le_7_20`: `212` -> `188` (`-11.3%`)
+- `coagulopathy_inr_ge_2`: `240` -> `212` (`-11.7%`)
+
+Interpretation:
+
+- early infection and sepsis burden is already visible by `24h`, so those heads are relatively stable
+- severe renal progression, CRRT exposure, and some neurologic / respiratory severe alerts are meaningfully delayed, so they thin out much more when the horizon is truncated
+
+### Why this matters for evaluation
+
+The `24h` package is attractive because it is cheaper and faster:
+
+- fewer checkpoints
+- fewer model calls
+- shorter histories
+
+But it is also easier in a specific way:
+
+- it removes much of the delayed `24-48h` escalation behavior
+- it reduces persistence-driven alert density in the second half of each stay
+- it weakens some of the rare-alert enrichment that was originally selected using by-`48h` features
+
+In other words:
+
+- the `48h` package is the main longitudinal benchmark
+- the `24h` package is a convenience variant for shorter experiments, ablations, and faster debugging
+- if we ever wanted a *primary* `24h` benchmark, we should re-sample a dedicated subset using by-`24h` enrichment targets rather than simply truncating the existing `48h` release
+
 ## Sample Character
 
 The final benchmark package preserves the intended layer behavior:
@@ -218,6 +305,18 @@ It preserves:
 - metabolic co-occurrence
 
 which are all important ICU realism signals.
+
+### 4. The companion `24h` package is truncated, not rebalanced
+
+The new `24h` export is intentionally the same stay set with fewer checkpoints.
+
+That is the right first convenience release because it preserves direct comparability with the primary `48h` package.
+
+But it also means:
+
+- delayed `24-48h` alerts are removed rather than replaced
+- some rare severe heads become much thinner
+- the alert-enrichment layer is less saturated at `24h` than it is by `48h`
 
 ## Recommended Next Step
 
