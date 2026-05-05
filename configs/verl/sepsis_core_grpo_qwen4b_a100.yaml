@@ -19,6 +19,7 @@ data:
   val_batch_size: 4
   max_prompt_length: 4096
   max_response_length: 512
+  filter_overlong_prompts: false
 
 custom_reward_function:
   path: src/sepsis_mvp/verl_reward.py

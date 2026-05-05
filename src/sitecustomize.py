@@ -1,9 +1,11 @@
 from __future__ import annotations
 
 import builtins
+import importlib.metadata
 from typing import Any
 
 _original_import = builtins.__import__
+_original_metadata_version = importlib.metadata.version
 _patched_sglang_http_server = False
 
 
@@ -37,3 +39,15 @@ def _import_with_sglang_compat(name: str, globals=None, locals=None, fromlist=()
 
 
 builtins.__import__ = _import_with_sglang_compat
+
+
+def _metadata_version_with_sglang_alias(distribution_name: str) -> str:
+    if distribution_name == "sgl-kernel":
+        try:
+            return _original_metadata_version("sglang-kernel")
+        except importlib.metadata.PackageNotFoundError:
+            pass
+    return _original_metadata_version(distribution_name)
+
+
+importlib.metadata.version = _metadata_version_with_sglang_alias
