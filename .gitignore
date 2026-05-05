@@ -1,8 +1,8 @@
 __pycache__/
 *.py[cod]
+*.csv
 
 /rolling_monitor_dataset
 /result
-/dataset
 /_NeurIPS__HealthcareAgent
 .vendor/dataset/surveilance/checkpoint_truth_all.csv
