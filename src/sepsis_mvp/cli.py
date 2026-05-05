@@ -7,12 +7,20 @@ import time
 from pathlib import Path
 
 from .agent import HeuristicAgent, QwenChatAgent
+from .agent import _build_toolbox_messages
 from .dataset import (
     build_dataset,
     load_dataset_auto,
     save_trajectories,
 )
-from .environment import BenchmarkEnvironment, evaluate_rollouts, rollout_to_dicts
+from .environment import (
+    BenchmarkEnvironment,
+    _build_rolling_history_entry,
+    _empty_toolbox_state,
+    _update_toolbox_state_from_output,
+    evaluate_rollouts,
+    rollout_to_dicts,
+)
 from .prompt_baseline import PromptCardQwenAgent, PromptCardRuleAgent, run_prompt_card_baseline
 from .rl_reward import score_sepsis_rollouts
 from .schemas import StepRecord, TrajectoryRollout
@@ -144,6 +152,165 @@ def _load_existing_rollouts(
     return list(existing_by_id.values()), sources
 
 
+def _load_split_ids(split_path: str | None, split_name: str | None) -> set[str] | None:
+    if not split_path:
+        return None
+    payload = json.loads(Path(split_path).read_text())
+    if split_name is None:
+        raise SystemExit("--split-name is required when --split is provided")
+    if split_name not in payload:
+        raise SystemExit(f"Split '{split_name}' not found in {split_path}. Available: {sorted(payload)}")
+    ids = payload[split_name]
+    if not isinstance(ids, list):
+        raise SystemExit(f"Split '{split_name}' in {split_path} must be a list of trajectory IDs")
+    return set(str(item) for item in ids)
+
+
+def _filter_trajectories_by_split(trajectories, split_path: str | None, split_name: str | None):
+    split_ids = _load_split_ids(split_path, split_name)
+    if split_ids is None:
+        return trajectories
+    filtered = [trajectory for trajectory in trajectories if trajectory.trajectory_id in split_ids]
+    if not filtered:
+        raise SystemExit(f"Split '{split_name}' selected zero trajectories from dataset")
+    return filtered
+
+
+def make_split_command(args: argparse.Namespace) -> int:
+    trajectories = load_dataset_auto(args.dataset, strict_mvp=not args.include_out_of_scope)
+    ids = [trajectory.trajectory_id for trajectory in trajectories]
+    rng = __import__("random").Random(args.seed)
+    rng.shuffle(ids)
+    total_requested = args.train_size + args.val_size + args.test_size
+    if total_requested > len(ids):
+        raise SystemExit(f"Requested {total_requested} split items but dataset has only {len(ids)} trajectories")
+    split = {
+        "train": ids[: args.train_size],
+        "val": ids[args.train_size : args.train_size + args.val_size],
+        "test": ids[args.train_size + args.val_size : total_requested],
+        "metadata": {
+            "dataset": args.dataset,
+            "seed": args.seed,
+            "num_trajectories": len(ids),
+            "train_size": args.train_size,
+            "val_size": args.val_size,
+            "test_size": args.test_size,
+        },
+    }
+    Path(args.output).parent.mkdir(parents=True, exist_ok=True)
+    Path(args.output).write_text(json.dumps(split, indent=2))
+    print(json.dumps(split["metadata"], indent=2))
+    return 0
+
+
+def _completion_json(payload: dict) -> str:
+    return json.dumps(payload, separators=(",", ":"))
+
+
+def _sft_record(messages: list[dict[str, str]], completion: dict, metadata: dict[str, object]) -> dict:
+    return {
+        "messages": [*messages, {"role": "assistant", "content": _completion_json(completion)}],
+        "prompt_messages": messages,
+        "completion": _completion_json(completion),
+        "metadata": metadata,
+    }
+
+
+def export_sft_traces_command(args: argparse.Namespace) -> int:
+    args.tool_backend = _normalize_tool_backend(args.tool_backend)
+    if args.tool_backend != "official":
+        raise SystemExit("export-sft-traces currently supports only --tool-backend official")
+    trajectories = load_dataset_auto(args.dataset, strict_mvp=not args.include_out_of_scope)
+    trajectories = _filter_trajectories_by_split(trajectories, args.split, args.split_name)
+    unsupported = [
+        trajectory.trajectory_id
+        for trajectory in trajectories
+        if trajectory.is_multitask() or trajectory.primary_task_name() != "sepsis"
+    ]
+    if unsupported:
+        raise SystemExit(f"export-sft-traces supports only single-task sepsis. First unsupported: {unsupported[:5]}")
+    runtime = build_tool_runtime(tool_backend=args.tool_backend, db_path=args.db_path)
+    records: list[dict] = []
+    for trajectory in trajectories:
+        rolling_history: list[dict] = []
+        state = _empty_toolbox_state()
+        available_tools = ["query_suspicion_of_infection", "query_sofa"] if args.tool_scope == "sepsis_core" else None
+        if available_tools is None:
+            from .schemas import SHARED_TOOLBOX_TOOL_NAMES
+
+            available_tools = list(SHARED_TOOLBOX_TOOL_NAMES)
+        for step_index, checkpoint in enumerate(trajectory.checkpoints):
+            step_input = {
+                "trajectory_id": trajectory.trajectory_id,
+                "stay_id": trajectory.stay_id,
+                "step_index": step_index,
+                "t_hour": checkpoint.t_hour,
+                "available_tools": available_tools,
+                "instruction": "Use tools if needed. Then output exactly one action for task 'sepsis'.",
+                "task_names": ["sepsis"],
+                "label_spaces": trajectory.label_spaces or {"sepsis": ["keep_monitoring", "infection_suspect", "trigger_sepsis_alert"]},
+                "task_mode": "single",
+                "tool_backend": args.tool_backend,
+                "max_step_interactions": 3 if args.tool_scope == "sepsis_core" else 6,
+                "protocol": "rolling_toolbox_with_history",
+                "rolling_history": list(rolling_history),
+            }
+            history: list[dict] = []
+            tool_outputs: list[dict] = []
+            if not state["infection_positive"]:
+                messages = _build_toolbox_messages(step_input, history, available_tools)
+                call = {
+                    "tool_name": "query_suspicion_of_infection",
+                    "arguments": {"stay_id": trajectory.stay_id, "t_hour": checkpoint.t_hour},
+                }
+                records.append(_sft_record(messages, call, {
+                    "trajectory_id": trajectory.trajectory_id,
+                    "step_index": step_index,
+                    "stage": "query_infection",
+                }))
+                output = runtime.execute(call["tool_name"], call["arguments"])
+                history.append({"type": "tool_call", "tool_name": call["tool_name"], "payload": call})
+                history.append({"type": "tool_output", "tool_name": call["tool_name"], "payload": output})
+                tool_outputs.append(output)
+                _update_toolbox_state_from_output(state, call["tool_name"], output)
+            if state["infection_positive"] and not state["sofa_alert"]:
+                messages = _build_toolbox_messages(step_input, history, available_tools)
+                call = {
+                    "tool_name": "query_sofa",
+                    "arguments": {"stay_id": trajectory.stay_id, "t_hour": checkpoint.t_hour},
+                }
+                records.append(_sft_record(messages, call, {
+                    "trajectory_id": trajectory.trajectory_id,
+                    "step_index": step_index,
+                    "stage": "query_sofa",
+                }))
+                output = runtime.execute(call["tool_name"], call["arguments"])
+                history.append({"type": "tool_call", "tool_name": call["tool_name"], "payload": call})
+                history.append({"type": "tool_output", "tool_name": call["tool_name"], "payload": output})
+                tool_outputs.append(output)
+                _update_toolbox_state_from_output(state, call["tool_name"], output)
+            final_action = checkpoint.state_label or "keep_monitoring"
+            messages = _build_toolbox_messages(step_input, history, available_tools)
+            records.append(_sft_record(messages, {"action": final_action}, {
+                "trajectory_id": trajectory.trajectory_id,
+                "step_index": step_index,
+                "stage": "final_action",
+            }))
+            history_entry = _build_rolling_history_entry(
+                trajectory=trajectory,
+                checkpoint=checkpoint,
+                step_index=step_index,
+                tool_outputs=tool_outputs,
+            )
+            if history_entry is not None:
+                rolling_history.append(history_entry)
+    output_path = Path(args.output)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    output_path.write_text("".join(json.dumps(record, default=_json_default) + "\n" for record in records))
+    print(json.dumps({"output": str(output_path), "records": len(records), "trajectories": len(trajectories)}, indent=2))
+    return 0
+
+
 def build_dataset_command(args: argparse.Namespace) -> int:
     if args.rolling_csv:
         trajectories = load_dataset_auto(args.rolling_csv, strict_mvp=not args.include_out_of_scope)
@@ -172,6 +339,11 @@ def build_dataset_command(args: argparse.Namespace) -> int:
 def run_command(args: argparse.Namespace) -> int:
     args.tool_backend = _normalize_tool_backend(args.tool_backend)
     trajectories = load_dataset_auto(args.dataset, strict_mvp=not args.include_out_of_scope)
+    trajectories = _filter_trajectories_by_split(
+        trajectories,
+        getattr(args, "split", None),
+        getattr(args, "split_name", None),
+    )
     if args.sample_size is not None:
         trajectories = trajectories[: args.sample_size]
     all_target_trajectories = list(trajectories)
@@ -281,6 +453,7 @@ def run_command(args: argparse.Namespace) -> int:
             runtime,
             event_callback=events_sink.write,
             tool_backend=args.tool_backend,
+            tool_scope=getattr(args, "tool_scope", "shared"),
             task_mode=args.task_mode,
             protocol=args.protocol,
         )
@@ -295,6 +468,7 @@ def run_command(args: argparse.Namespace) -> int:
                 )
             agent = QwenChatAgent(
                 model=args.model,
+                adapter=getattr(args, "adapter", None),
                 temperature=args.temperature,
                 top_p=args.top_p,
                 max_new_tokens=args.max_new_tokens,
@@ -352,7 +526,10 @@ def run_command(args: argparse.Namespace) -> int:
         "task_mode": args.task_mode,
         "protocol": args.protocol,
         "tool_backend": args.tool_backend,
+        "tool_scope": getattr(args, "tool_scope", "shared"),
         "dataset": args.dataset,
+        "split": getattr(args, "split", None),
+        "split_name": getattr(args, "split_name", None),
         "num_trajectories": total_target,
         "sample_size": args.sample_size,
         "agent": args.agent,
@@ -376,6 +553,11 @@ def run_prompt_baseline_command(args: argparse.Namespace) -> int:
     if args.tool_backend not in {"official", "autoformalized"}:
         raise SystemExit("Prompt-card baseline supports only official or autoformalized derived-tool backends.")
     trajectories = load_dataset_auto(args.dataset, strict_mvp=not args.include_out_of_scope)
+    trajectories = _filter_trajectories_by_split(
+        trajectories,
+        getattr(args, "split", None),
+        getattr(args, "split_name", None),
+    )
     if args.sample_size is not None:
         trajectories = trajectories[: args.sample_size]
     unsupported = [
@@ -447,6 +629,11 @@ def run_prompt_baseline_command(args: argparse.Namespace) -> int:
 
 def score_rollouts_command(args: argparse.Namespace) -> int:
     trajectories = load_dataset_auto(args.dataset, strict_mvp=not args.include_out_of_scope)
+    trajectories = _filter_trajectories_by_split(
+        trajectories,
+        getattr(args, "split", None),
+        getattr(args, "split_name", None),
+    )
     raw = json.loads(Path(args.rollouts).read_text())
     if not isinstance(raw, list):
         raise SystemExit(f"Expected JSON list rollouts file: {args.rollouts}")
@@ -479,6 +666,20 @@ def build_parser() -> argparse.ArgumentParser:
     build_parser.add_argument("--sample-size", type=int, help="Keep only the first N trajectories.")
     build_parser.add_argument("--seed", type=int, default=7)
     build_parser.set_defaults(func=build_dataset_command)
+
+    split_parser = subparsers.add_parser("make-split", help="Create a stay-level train/validation/test split.")
+    split_parser.add_argument("--dataset", required=True, help="Path to trajectory dataset JSON or CSV.")
+    split_parser.add_argument("--output", required=True, help="Path to write split JSON.")
+    split_parser.add_argument("--train-size", type=int, required=True)
+    split_parser.add_argument("--val-size", type=int, required=True)
+    split_parser.add_argument("--test-size", type=int, required=True)
+    split_parser.add_argument("--seed", type=int, default=7)
+    split_parser.add_argument(
+        "--include-out-of-scope",
+        action="store_true",
+        help="Keep trajectories that fall outside the strict 3-action MVP contract when using CSV input.",
+    )
+    split_parser.set_defaults(func=make_split_command)
 
     run_parser = subparsers.add_parser("run", help="Run rollouts and evaluate the agent.")
     run_parser.add_argument("--concepts", help="Path to concept-table JSON.")
@@ -543,8 +744,17 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Keep trajectories that fall outside the strict 3-action MVP contract when using CSV input.",
     )
+    run_parser.add_argument("--split", help="Optional split JSON from make-split.")
+    run_parser.add_argument("--split-name", choices=["train", "val", "test"], help="Split name to run.")
     run_parser.add_argument("--agent", choices=["heuristic", "qwen"], default="heuristic")
     run_parser.add_argument("--model", default="Qwen/Qwen3.5-9B", help="Local HF model name/path for Qwen.")
+    run_parser.add_argument("--adapter", help="Optional PEFT/LoRA adapter path for Qwen evaluation.")
+    run_parser.add_argument(
+        "--tool-scope",
+        choices=["shared", "sepsis_core"],
+        default="shared",
+        help="Toolbox scope for rolling_toolbox_with_history. sepsis_core exposes only infection and SOFA for single-task sepsis.",
+    )
     run_parser.add_argument("--temperature", type=float, default=0.0)
     run_parser.add_argument("--top-p", type=float, default=0.95)
     run_parser.add_argument("--max-new-tokens", type=int, default=250)
@@ -592,6 +802,8 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Keep trajectories that fall outside the strict 3-action MVP contract when using CSV input.",
     )
+    prompt_parser.add_argument("--split", help="Optional split JSON from make-split.")
+    prompt_parser.add_argument("--split-name", choices=["train", "val", "test"], help="Split name to run.")
     prompt_parser.add_argument("--agent", choices=["qwen", "rule"], default="qwen")
     prompt_parser.add_argument("--model", default="Qwen/Qwen3.5-9B", help="Local HF model name/path for Qwen.")
     prompt_parser.add_argument("--temperature", type=float, default=0.0)
@@ -616,12 +828,42 @@ def build_parser() -> argparse.ArgumentParser:
     score_parser.add_argument("--dataset", required=True, help="Path to the trajectory dataset used by the rollouts.")
     score_parser.add_argument("--rollouts", required=True, help="Path to rollout JSON list.")
     score_parser.add_argument("--output", help="Optional path to save reward scores.")
+    score_parser.add_argument("--split", help="Optional split JSON from make-split.")
+    score_parser.add_argument("--split-name", choices=["train", "val", "test"], help="Split name to score.")
     score_parser.add_argument(
         "--include-out-of-scope",
         action="store_true",
         help="Keep trajectories that fall outside the strict 3-action MVP contract when using CSV input.",
     )
     score_parser.set_defaults(func=score_rollouts_command)
+
+    sft_export_parser = subparsers.add_parser(
+        "export-sft-traces",
+        help="Export oracle chat traces for optional sepsis tool-call SFT warm start.",
+    )
+    sft_export_parser.add_argument("--db-path", required=True, help="Path to MIMIC DuckDB.")
+    sft_export_parser.add_argument("--dataset", required=True, help="Path to single-task sepsis trajectory dataset.")
+    sft_export_parser.add_argument("--split", help="Optional split JSON from make-split.")
+    sft_export_parser.add_argument("--split-name", choices=["train", "val", "test"], help="Split name to export.")
+    sft_export_parser.add_argument(
+        "--tool-backend",
+        choices=["official"],
+        default="official",
+        help="Tool backend for oracle traces.",
+    )
+    sft_export_parser.add_argument(
+        "--tool-scope",
+        choices=["sepsis_core", "shared"],
+        default="sepsis_core",
+        help="Tool scope to expose in generated prompts.",
+    )
+    sft_export_parser.add_argument(
+        "--include-out-of-scope",
+        action="store_true",
+        help="Keep trajectories that fall outside the strict 3-action MVP contract when using CSV input.",
+    )
+    sft_export_parser.add_argument("--output", required=True, help="Path to write JSONL SFT traces.")
+    sft_export_parser.set_defaults(func=export_sft_traces_command)
 
     return parser
 

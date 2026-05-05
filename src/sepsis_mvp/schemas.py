@@ -97,6 +97,11 @@ SHARED_TOOLBOX_TOOL_NAMES = [
     "query_invasive_line",
 ]
 
+SEPSIS_CORE_TOOL_NAMES = [
+    "query_suspicion_of_infection",
+    "query_sofa",
+]
+
 SEPSIS_TOOLBOX_TOOL_NAMES = list(SHARED_TOOLBOX_TOOL_NAMES)
 
 MULTITASK_TOOL_NAMES = [

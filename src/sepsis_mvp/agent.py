@@ -1504,6 +1504,7 @@ class HeuristicAgent:
 @dataclass(slots=True)
 class LocalQwenChat:
     model_ref: str = "Qwen/Qwen3.5-9B"
+    adapter_ref: str | None = None
     temperature: float = 0.0
     top_p: float = 0.95
     max_new_tokens: int = 250
@@ -1560,6 +1561,16 @@ class LocalQwenChat:
             revision=revision,
             local_files_only=offline,
         )
+        if self.adapter_ref:
+            try:
+                from peft import PeftModel
+            except ImportError as exc:
+                raise RuntimeError("Loading a LoRA adapter requires the 'peft' package to be installed.") from exc
+            self.model = PeftModel.from_pretrained(
+                self.model,
+                self.adapter_ref,
+                is_trainable=False,
+            )
         self.model.eval()
 
     @property
@@ -1628,6 +1639,7 @@ def _load_zeroshot_guideline_text(path: str | None) -> str:
 @dataclass(slots=True)
 class QwenChatAgent:
     model: str = "Qwen/Qwen3.5-9B"
+    adapter: str | None = None
     temperature: float = 0.0
     top_p: float = 0.95
     max_new_tokens: int = 250
@@ -1641,6 +1653,7 @@ class QwenChatAgent:
     def __post_init__(self) -> None:
         self.client = LocalQwenChat(
             model_ref=self.model,
+            adapter_ref=self.adapter,
             temperature=self.temperature,
             top_p=self.top_p,
             max_new_tokens=self.max_new_tokens,

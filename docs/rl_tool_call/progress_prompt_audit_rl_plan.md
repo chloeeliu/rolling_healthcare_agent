@@ -612,6 +612,14 @@ Report:
 
 ## Immediate Next Implementation Tasks
 
+Current readiness:
+
+- Existing code can reproduce prompt-driven tool-calling and reward-policy proxy runs.
+- Existing code can score saved rollouts with the RL reward function.
+- Existing code can now create splits, export SFT traces, train a LoRA SFT warm start, run lightweight grouped policy-gradient RL on exported tool-call states, and evaluate a trained LoRA adapter on held-out stays.
+- The lightweight trainer is not the final solution. Full online `verl` Agent Loop + GRPO over live multi-turn tool episodes is the target path and is documented in `verl_final_solution.md`.
+- See `training_readiness.md` for exact existing CLI and `verl_final_solution.md` for the final training architecture.
+
 1. Add a prompt-state analyzer that derives:
    - `current_or_prior_infection_positive`
    - `current_or_prior_sofa_assessed`

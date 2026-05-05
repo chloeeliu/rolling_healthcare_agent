@@ -11,6 +11,7 @@ from .schemas import (
     AgentStepInput,
     CODE_EXEC_TOOL_NAME,
     SHARED_TOOLBOX_TOOL_NAMES,
+    SEPSIS_CORE_TOOL_NAMES,
     SQL_EXEC_TOOL_NAME,
     TASK_BASELINE_ACTION,
     TASK_LABEL_SPACES,
@@ -35,6 +36,7 @@ class BenchmarkEnvironment:
         max_tool_calls_per_step: int = 4,
         event_callback: Any | None = None,
         tool_backend: str = "official",
+        tool_scope: str = "shared",
         task_mode: str = "auto",
         protocol: str = "rolling_no_history",
     ) -> None:
@@ -43,6 +45,7 @@ class BenchmarkEnvironment:
         self.max_tool_calls_per_step = max_tool_calls_per_step
         self.event_callback = event_callback
         self.tool_backend = tool_backend
+        self.tool_scope = tool_scope
         self.task_mode = task_mode
         if protocol not in self.SUPPORTED_PROTOCOLS:
             raise ValueError(
@@ -313,6 +316,8 @@ class BenchmarkEnvironment:
                 return [SQL_EXEC_TOOL_NAME]
             return [CODE_EXEC_TOOL_NAME]
         if self.protocol == "rolling_toolbox_with_history":
+            if self.tool_scope == "sepsis_core" and trajectory.primary_task_name() == "sepsis" and not trajectory.is_multitask():
+                return list(SEPSIS_CORE_TOOL_NAMES)
             return list(SHARED_TOOLBOX_TOOL_NAMES)
         return trajectory.resolved_tool_names()
 

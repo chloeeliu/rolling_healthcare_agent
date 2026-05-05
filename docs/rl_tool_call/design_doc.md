@@ -11,11 +11,24 @@ Implemented so far:
 - offline RL reward scorer for saved sepsis rollouts
 - single-GPU default for local Qwen loading
 
+Implemented after the initial baseline/proxy pass:
+
+- train/validation/test split CLI
+- sepsis core tool-scope CLI
+- SFT warm start export
+- LoRA SFT entrypoint
+- lightweight grouped policy-gradient RL entrypoint
+- LoRA checkpoint evaluation CLI
+
 Not implemented yet:
 
 - verl environment adapter
-- SFT warm start export
-- PPO/GRPO training loop
+- full online PPO/GRPO training loop over live multi-turn episodes
+
+Current readiness note:
+
+- The benchmark, official tools, rollout runner, prompt-tool baseline, reward-policy proxy, and offline reward scorer are ready.
+- Lightweight LoRA RL training is ready only as a smoke/ablation run. The final target is `verl` Agent Loop + GRPO. See `verl_final_solution.md` for the paper-quality training plan.
 
 Database target:
 
