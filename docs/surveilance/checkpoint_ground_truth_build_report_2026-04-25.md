@@ -82,6 +82,53 @@ Headline shape:
 - `1,600` test stays
 - `26,000` checkpoint rows plus header in the subset export
 
+## Which artifact is needed for what?
+
+It is important to distinguish between:
+
+- the artifact needed to **run** the benchmark
+- the artifacts needed to **reproduce and audit** how the benchmark was built
+
+### Runtime benchmark input
+
+For the primary `48h` release, the runnable benchmark input is:
+
+- [benchmark_2k_checkpoint_truth.csv](/Users/chloe/Documents/New project/dataset/surveilance/benchmark_2k_checkpoint_truth.csv)
+
+This file is sufficient for agent evaluation because it already contains:
+
+- the selected stays
+- the split assignment
+- the checkpoint times
+- the step-level benchmark labels
+- the exposed output fields used for scoring
+
+So if a reader only wants to evaluate an agent, this is the only dataset CSV they need.
+
+### Reproducibility and audit artifacts
+
+The other files serve different purposes:
+
+- [checkpoint_truth_all.csv](/Users/chloe/Documents/New project/dataset/surveilance/checkpoint_truth_all.csv)
+  - full cohort checkpoint truth before subset selection
+- [benchmark_stay_sampling_features.csv](/Users/chloe/Documents/New project/dataset/surveilance/benchmark_stay_sampling_features.csv)
+  - held-out stay-level selection features used for soft-balanced sampling
+- [benchmark_2k_manifest.csv](/Users/chloe/Documents/New project/dataset/surveilance/benchmark_2k_manifest.csv)
+  - canonical membership list of the final `2,000` selected stays
+- [benchmark_2k_summary.csv](/Users/chloe/Documents/New project/dataset/surveilance/benchmark_2k_summary.csv)
+  - compact audit table summarizing the released subset
+
+These files are not required for inference-time use, but they are important for:
+
+- reconstructing the subset-generation pipeline
+- verifying the soft-balanced sampling policy
+- auditing the rare-alert coverage and layer composition of the released package
+
+In short:
+
+- `benchmark_2k_checkpoint_truth.csv` is the benchmark itself
+- the other files explain where it came from
+
 ## Checkpoint Truth Semantics Implemented
 
 The build follows the four checkpoint state types from the design doc:

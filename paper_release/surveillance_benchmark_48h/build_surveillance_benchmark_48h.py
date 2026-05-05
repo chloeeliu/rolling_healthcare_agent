@@ -5,8 +5,8 @@ import json
 from pathlib import Path
 
 
-REPO_ROOT = Path(__file__).resolve().parents[1]
-SQL_TEMPLATE_DIR = REPO_ROOT / "dataset" / "surveilance"
+PACKAGE_ROOT = Path(__file__).resolve().parent
+SQL_TEMPLATE_DIR = PACKAGE_ROOT / "sql_templates"
 
 FINAL_ONLY_PIPELINE: list[tuple[str, str]] = [
     ("checkpoint_truth_sql.sql", "checkpoint_truth_all"),
@@ -82,10 +82,7 @@ def _write_metadata(output_dir: Path, db_path: Path) -> None:
         "generated_file": FINAL_OUTPUT_NAME,
         "pipeline_views": [view_name for _, view_name in FINAL_ONLY_PIPELINE],
         "sql_dependencies": [sql_name for sql_name, _ in FINAL_ONLY_PIPELINE] + [FINAL_SQL_NAME],
-        "note": (
-            "This script writes only the final 48h benchmark CSV. "
-            "Intermediate tables are materialized as temporary DuckDB views in memory and are not written to disk."
-        ),
+        "note": "This script writes only the final 48h benchmark CSV. Intermediate tables are temporary in-memory DuckDB views.",
     }
     (output_dir / "build_metadata.json").write_text(json.dumps(metadata, indent=2) + "\n")
 
@@ -99,9 +96,7 @@ def build_final_benchmark_48h(db_path: Path, output_dir: Path, *, force: bool = 
     output_dir.mkdir(parents=True, exist_ok=True)
     output_csv = output_dir / FINAL_OUTPUT_NAME
     if output_csv.exists() and not force:
-        raise FileExistsError(
-            f"{output_csv} already exists. Use --force to overwrite."
-        )
+        raise FileExistsError(f"{output_csv} already exists. Use --force to overwrite.")
 
     con = duckdb.connect(str(db_path), read_only=True)
     try:
@@ -124,24 +119,16 @@ def build_final_benchmark_48h(db_path: Path, output_dir: Path, *, force: bool = 
         con.close()
 
     _write_metadata(output_dir, db_path)
-    print(
-        f"[build_surveillance_benchmark_48h] Wrote {output_csv} "
-        f"({_row_count(output_csv)} rows)."
-    )
+    print(f"[build_surveillance_benchmark_48h] Wrote {output_csv} ({_row_count(output_csv)} rows).")
     print("[build_surveillance_benchmark_48h] Done.")
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(
-        description=(
-            "Build only the final 48-hour 2k ICU surveillance benchmark CSV from a local MIMIC-IV DuckDB database."
-        )
+        description="Build only the final 48-hour 2k ICU surveillance benchmark CSV."
     )
     parser.add_argument("--db-path", help="Path to mimic4_dk.db.")
-    parser.add_argument(
-        "--mimic-root",
-        help="Path to a MIMIC-IV project root; the script will search for mimic4_dk.db under it.",
-    )
+    parser.add_argument("--mimic-root", help="Path to a MIMIC-IV project root; the script will search for mimic4_dk.db.")
     parser.add_argument("--output-dir", required=True, help="Directory for the generated benchmark CSV.")
     parser.add_argument("--force", action="store_true", help="Overwrite an existing benchmark CSV.")
     args = parser.parse_args()

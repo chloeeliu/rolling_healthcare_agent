@@ -171,6 +171,188 @@ Runnable interfaces:
 - `session_tools`
   - tool-first mode with outer tools `search_guidelines`, `get_guideline`, `search_functions`, `get_function_info`, `load_function`, and `call_function`
 
+## Which CSV is actually needed to run the benchmark?
+
+For **inference-time benchmark evaluation**, the answer is simple:
+
+- [benchmark_2k_checkpoint_truth.csv](/Users/chloe/Documents/New project/dataset/surveilance/benchmark_2k_checkpoint_truth.csv)
+
+is the only required dataset artifact for the primary `48h` release.
+
+It already contains:
+
+- the selected `2,000` stays
+- the split assignment
+- the checkpoint grid
+- the step-level ground truth labels
+- the exposed benchmark outputs such as `suspected_conditions`, `alerts`, `global_action`, and `priority`
+
+So if a user only wants to:
+
+- load the benchmark
+- run an agent
+- score predictions against ground truth
+
+then `benchmark_2k_checkpoint_truth.csv` is sufficient.
+
+The companion `24h` release works the same way:
+
+- [benchmark_2k_checkpoint_truth_24h.csv](/Users/chloe/Documents/New project/dataset/surveilance/benchmark_2k_checkpoint_truth_24h.csv)
+
+is sufficient for running the truncated benchmark.
+
+## Why keep the other generated CSVs?
+
+The short answer is:
+
+- they are not needed for benchmark *inference*
+- they are needed for benchmark *construction, audit, and reproducibility*
+
+### 1. `checkpoint_truth_all.csv`
+
+Role:
+
+- full checkpoint-level ground truth over the entire eligible `LOS >= 48h` cohort
+
+Why it exists:
+
+- the final `2,000` benchmark is a subset of a much larger audited cohort
+- we first compute checkpoint labels for all eligible ICU stays
+- then derive held-out stay-level features from that full table
+- then sample the final `2,000` stays
+
+Why it is not redundant:
+
+- without it, there is no transparent record of the full source population from which the `2,000`-stay benchmark was sampled
+- it is the bridge between the ground-truth SQL and the final released subset
+
+In other words:
+
+- `checkpoint_truth_all.csv` is needed to reproduce the benchmark selection process
+- but not needed to *run* the released benchmark
+
+### 2. `benchmark_stay_sampling_features.csv`
+
+Role:
+
+- stay-level feature table computed from the full held-out cohort
+
+Why it exists:
+
+- the benchmark subset is not a random sample
+- it is soft-balanced using:
+  - unit group
+  - complexity bucket
+  - onset profile
+  - rare-alert grouping
+  - low-signal flags
+
+Those quantities are not present directly in `benchmark_2k_checkpoint_truth.csv`.
+
+Why it is not redundant:
+
+- it documents *why* a stay entered the benchmark
+- it makes the subset-construction policy inspectable and reproducible
+- it lets others regenerate the same `2,000`-stay manifest from the full held-out cohort
+
+So:
+
+- this file is a benchmark-selection artifact, not a benchmark-runtime artifact
+
+### 3. `benchmark_2k_manifest.csv`
+
+Role:
+
+- canonical list of the final selected `2,000` benchmark stays
+
+Why it exists:
+
+- it is the exact subset definition
+- `benchmark_2k_checkpoint_truth.csv` is produced by joining this manifest with the full checkpoint truth
+
+Why it is not redundant:
+
+- it gives a clean stay-level description of the released benchmark package
+- it lets others verify the benchmark identity without reading the full checkpoint table
+- it separates "which stays belong to the benchmark" from "what are the checkpoint labels for those stays"
+
+So:
+
+- the manifest is the benchmark membership file
+- the checkpoint-truth CSV is the fully expanded runtime table
+
+### 4. `benchmark_2k_summary.csv`
+
+Role:
+
+- compact audit table summarizing the final subset by split and sampling layer
+
+Why it exists:
+
+- it shows the layer balance:
+  - `core_diversity`
+  - `alert_enrichment`
+  - `low_signal`
+- and it gives fast sanity checks for:
+  - alert coverage
+  - rare-head support
+  - complexity distribution
+
+Why it is not redundant:
+
+- it is much easier to inspect than recomputing summary statistics from the full checkpoint table
+- it documents that the final benchmark actually satisfies the intended sampling design
+
+So:
+
+- this file is purely an audit / reporting artifact
+- it is not required for loading or evaluating the benchmark
+
+## Practical takeaway
+
+There are two different use cases:
+
+### A. Running the benchmark
+
+Needed:
+
+- `benchmark_2k_checkpoint_truth.csv`
+
+Optional:
+
+- `benchmark_2k_checkpoint_truth_24h.csv`
+
+Nothing else is required.
+
+### B. Rebuilding or auditing the benchmark
+
+Needed:
+
+- `checkpoint_truth_all.csv`
+- `benchmark_stay_sampling_features.csv`
+- `benchmark_2k_manifest.csv`
+- `benchmark_2k_summary.csv`
+
+These files make the benchmark generation process transparent and reproducible.
+
+## Why the builder still writes the intermediate CSVs
+
+The standalone builder scripts currently write all of these artifacts because the benchmark is intended to be:
+
+- runnable
+- reproducible
+- inspectable
+
+If the goal were only to produce a single runtime file, the builder could be made more minimal.
+But for paper release, the current behavior is preferable because it preserves:
+
+- the full cohort-level truth table
+- the subset-selection features
+- the exact subset manifest
+- the final summary used in the docs
+
+This makes the benchmark package much easier to audit and defend.
+
 ## Standalone benchmark builder
 
 For paper release and reproducibility, the repo now includes a standalone script that rebuilds the surveillance benchmark package from a local MIMIC-IV DuckDB database:
@@ -235,13 +417,26 @@ python scripts/build_surveillance_benchmark_48h.py \
   --output-dir /path/to/output/surveilance_benchmark_48h
 ```
 
-This smaller script builds only:
+This smaller script writes only:
 
-- `checkpoint_truth_all.csv`
-- `benchmark_stay_sampling_features.csv`
-- `benchmark_2k_manifest.csv`
 - `benchmark_2k_checkpoint_truth.csv`
-- `benchmark_2k_summary.csv`
+
+It does **not** write any intermediate CSVs.
+
+Instead, it computes the intermediate benchmark-construction stages as temporary in-memory DuckDB views:
+
+- `checkpoint_truth_all`
+- `benchmark_stay_sampling_features`
+- `benchmark_2k_manifest`
+
+and then directly exports the final benchmark CSV.
+
+For transparency, it still writes:
+
+- `sql/`
+  - rendered SQL snapshots used for the run
+- `build_metadata.json`
+  - a compact record of the build inputs and SQL dependencies
 
 ### File dependencies for the minimal `48h` builder
 
