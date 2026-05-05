@@ -1,0 +1,43 @@
+[2026-05-05 14:14:32,298 I 1251152 1251152] (raylet) main.cc:279: Setting cluster ID to: e5821c367b689bc2ba57fd5656cfef161b22431604531be1e0f4d402
+[2026-05-05 14:14:32,621 I 1251152 1251152] (raylet) main.cc:548: Per-worker process group cleanup is DISABLED, subreaper is DISABLED
+[2026-05-05 14:14:32,621 I 1251152 1251152] (raylet) main.cc:685: Setting node ID node_id=575866834b216c103725e0d58d8de6c128a0e8db3968758efe0d4086
+[2026-05-05 14:14:32,622 I 1251152 1251152] (raylet) store_runner.cc:50: Allowing the Plasma store to use up to 200GB of memory.
+[2026-05-05 14:14:32,622 I 1251152 1251152] (raylet) store_runner.cc:66: Starting object store with directory /dev/shm, fallback /home/chloeliu/rolling_healthcare_agent/.r/session_2026-05-05_14-13-26_449224_1174733, and huge page support disabled
+[2026-05-05 14:14:32,622 I 1251152 1251847] (raylet) dlmalloc.cc:324: Setting dlmalloc config: plasma_directory=/dev/shm, fallback_directory=/home/chloeliu/rolling_healthcare_agent/.r/session_2026-05-05_14-13-26_449224_1174733, hugepage_enabled=0, fallback_enabled=1
+[2026-05-05 14:14:32,623 I 1251152 1251847] (raylet) dlmalloc.cc:153: create_and_mmap_buffer(200000012296, /dev/shm/plasmaXXXXXX)
+[2026-05-05 14:14:33,414 E 1251152 1251847] (raylet) logging.cc:118: Unhandled exception: N5boost10wrapexceptINS_6system12system_errorEEE. what(): bind: Operation not permitted [system:1 at external/boost/boost/asio/detail/reactive_socket_service.hpp:161 in function 'bind'] /home/chloeliu/.local/lib/python3.10/site-packages/ray/core/src/ray/raylet/raylet(+0xfcceda) [0x555d22b1eeda] ray::operator<<()
+/home/chloeliu/.local/lib/python3.10/site-packages/ray/core/src/ray/raylet/raylet(+0xfcd97c) [0x555d22b1f97c] ray::RayLog::operator<< <>()
+/home/chloeliu/.local/lib/python3.10/site-packages/ray/core/src/ray/raylet/raylet(+0x22e04b) [0x555d21d8004b] ray::TerminateHandler()
+/lib/x86_64-linux-gnu/libstdc++.so.6(+0xae20c) [0x7f134555b20c]
+/lib/x86_64-linux-gnu/libstdc++.so.6(+0xae277) [0x7f134555b277]
+/lib/x86_64-linux-gnu/libstdc++.so.6(+0xae4d8) [0x7f134555b4d8]
+/home/chloeliu/.local/lib/python3.10/site-packages/ray/core/src/ray/raylet/raylet(+0x1ccfa1) [0x555d21d1efa1] boost::throw_exception<>()
+/home/chloeliu/.local/lib/python3.10/site-packages/ray/core/src/ray/raylet/raylet(+0xf9afeb) [0x555d22aecfeb] boost::asio::detail::do_throw_error()
+/home/chloeliu/.local/lib/python3.10/site-packages/ray/core/src/ray/raylet/raylet(+0x27a5c2) [0x555d21dcc5c2] _ZN5boost4asio21basic_socket_acceptorINS0_7generic15stream_protocolENS0_15any_io_executorEEC1I23instrumented_io_contextEERT_RKNS2_14basic_endpointIS3_EEbNS0_10constraintIXsrSt14is_convertibleIS9_RNS0_17execution_contextEE5valueEiE4typeE
+/home/chloeliu/.local/lib/python3.10/site-packages/ray/core/src/ray/raylet/raylet(+0x41fee5) [0x555d21f71ee5] plasma::PlasmaStore::PlasmaStore()
+/home/chloeliu/.local/lib/python3.10/site-packages/ray/core/src/ray/raylet/raylet(+0x417570) [0x555d21f69570] plasma::PlasmaStoreRunner::Start()
+/home/chloeliu/.local/lib/python3.10/site-packages/ray/core/src/ray/raylet/raylet(+0x3bfba5) [0x555d21f11ba5] std::thread::_State_impl<>::_M_run()
+/home/chloeliu/.local/lib/python3.10/site-packages/ray/core/src/ray/raylet/raylet(+0x1017320) [0x555d22b69320] execute_native_thread_routine
+/lib/x86_64-linux-gnu/libc.so.6(+0x94ac3) [0x7f13452f6ac3]
+/lib/x86_64-linux-gnu/libc.so.6(+0x1268d0) [0x7f13453888d0]
+
+[2026-05-05 14:14:33,418 E 1251152 1251847] (raylet) logging.cc:125: Stack trace: 
+ /home/chloeliu/.local/lib/python3.10/site-packages/ray/core/src/ray/raylet/raylet(+0xfcceda) [0x555d22b1eeda] ray::operator<<()
+/home/chloeliu/.local/lib/python3.10/site-packages/ray/core/src/ray/raylet/raylet(+0xfcd97c) [0x555d22b1f97c] ray::RayLog::operator<< <>()
+/home/chloeliu/.local/lib/python3.10/site-packages/ray/core/src/ray/raylet/raylet(+0xfcff38) [0x555d22b21f38] ray::TerminateHandler()
+/lib/x86_64-linux-gnu/libstdc++.so.6(+0xae20c) [0x7f134555b20c]
+/lib/x86_64-linux-gnu/libstdc++.so.6(+0xae277) [0x7f134555b277]
+/lib/x86_64-linux-gnu/libstdc++.so.6(+0xae4d8) [0x7f134555b4d8]
+/home/chloeliu/.local/lib/python3.10/site-packages/ray/core/src/ray/raylet/raylet(+0x1ccfa1) [0x555d21d1efa1] boost::throw_exception<>()
+/home/chloeliu/.local/lib/python3.10/site-packages/ray/core/src/ray/raylet/raylet(+0xf9afeb) [0x555d22aecfeb] boost::asio::detail::do_throw_error()
+/home/chloeliu/.local/lib/python3.10/site-packages/ray/core/src/ray/raylet/raylet(+0x27a5c2) [0x555d21dcc5c2] _ZN5boost4asio21basic_socket_acceptorINS0_7generic15stream_protocolENS0_15any_io_executorEEC1I23instrumented_io_contextEERT_RKNS2_14basic_endpointIS3_EEbNS0_10constraintIXsrSt14is_convertibleIS9_RNS0_17execution_contextEE5valueEiE4typeE
+/home/chloeliu/.local/lib/python3.10/site-packages/ray/core/src/ray/raylet/raylet(+0x41fee5) [0x555d21f71ee5] plasma::PlasmaStore::PlasmaStore()
+/home/chloeliu/.local/lib/python3.10/site-packages/ray/core/src/ray/raylet/raylet(+0x417570) [0x555d21f69570] plasma::PlasmaStoreRunner::Start()
+/home/chloeliu/.local/lib/python3.10/site-packages/ray/core/src/ray/raylet/raylet(+0x3bfba5) [0x555d21f11ba5] std::thread::_State_impl<>::_M_run()
+/home/chloeliu/.local/lib/python3.10/site-packages/ray/core/src/ray/raylet/raylet(+0x1017320) [0x555d22b69320] execute_native_thread_routine
+/lib/x86_64-linux-gnu/libc.so.6(+0x94ac3) [0x7f13452f6ac3]
+/lib/x86_64-linux-gnu/libc.so.6(+0x1268d0) [0x7f13453888d0]
+
+[2026-05-05 14:14:33,418 E 1251152 1251847] (raylet) logging.cc:474: *** SIGABRT received at time=1778008473 on cpu 13 ***
+[2026-05-05 14:14:33,418 E 1251152 1251847] (raylet) logging.cc:474: PC: @     0x7f13452f89fc  (unknown)  pthread_kill
+[2026-05-05 14:14:33,418 E 1251152 1251847] (raylet) logging.cc:474:     @     0x7f13452a4520  (unknown)  (unknown)

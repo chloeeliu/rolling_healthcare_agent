@@ -1,0 +1,23 @@
+Process NodeHead-0:
+Traceback (most recent call last):
+  File "/usr/lib/python3.10/multiprocessing/process.py", line 314, in _bootstrap
+    self.run()
+  File "/usr/lib/python3.10/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/home/chloeliu/.local/lib/python3.10/site-packages/ray/dashboard/subprocesses/module.py", line 289, in run_module
+    loop.run_until_complete(task)
+  File "/usr/lib/python3.10/asyncio/base_events.py", line 649, in run_until_complete
+    return future.result()
+  File "/home/chloeliu/.local/lib/python3.10/site-packages/ray/dashboard/subprocesses/module.py", line 228, in run_module_inner
+    raise e
+  File "/home/chloeliu/.local/lib/python3.10/site-packages/ray/dashboard/subprocesses/module.py", line 222, in run_module_inner
+    await module.run()
+  File "/home/chloeliu/.local/lib/python3.10/site-packages/ray/dashboard/modules/node/node_head.py", line 753, in run
+    await super().run()
+  File "/home/chloeliu/.local/lib/python3.10/site-packages/ray/dashboard/subprocesses/module.py", line 143, in run
+    await site.start()
+  File "/home/chloeliu/.local/lib/python3.10/site-packages/aiohttp/web_runner.py", line 162, in start
+    self._server = await loop.create_unix_server(
+  File "/usr/lib/python3.10/asyncio/unix_events.py", line 307, in create_unix_server
+    sock.bind(path)
+PermissionError: [Errno 1] Operation not permitted

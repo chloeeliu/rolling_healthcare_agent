@@ -1,0 +1,44 @@
+2026-05-05 14:13:31,632	INFO utils.py:307 -- Get all modules by type: DashboardHeadModule
+2026-05-05 14:13:32,862	INFO utils.py:340 -- Available modules: [<class 'ray.dashboard.modules.usage_stats.usage_stats_head.UsageStatsHead'>]
+2026-05-05 14:13:32,862	INFO head.py:244 -- DashboardHeadModules to load: None.
+2026-05-05 14:13:32,862	INFO head.py:247 -- Loading DashboardHeadModule: <class 'ray.dashboard.modules.usage_stats.usage_stats_head.UsageStatsHead'>.
+2026-05-05 14:13:32,862	INFO head.py:251 -- Loaded 1 dashboard head modules: [<ray.dashboard.modules.usage_stats.usage_stats_head.UsageStatsHead object at 0x7f90ff56ff70>].
+2026-05-05 14:13:32,862	INFO utils.py:307 -- Get all modules by type: SubprocessModule
+2026-05-05 14:13:32,866	INFO utils.py:340 -- Available modules: [<class 'ray.dashboard.modules.metrics.metrics_head.MetricsHead'>, <class 'ray.dashboard.modules.data.data_head.DataHead'>, <class 'ray.dashboard.modules.event.event_head.EventHead'>, <class 'ray.dashboard.modules.job.job_head.JobHead'>, <class 'ray.dashboard.modules.node.node_head.NodeHead'>, <class 'ray.dashboard.modules.reporter.reporter_head.ReportHead'>, <class 'ray.dashboard.modules.serve.serve_head.ServeHead'>, <class 'ray.dashboard.modules.state.state_head.StateHead'>, <class 'ray.dashboard.modules.train.train_head.TrainHead'>]
+2026-05-05 14:13:32,867	INFO head.py:301 -- Loading SubprocessModule: <class 'ray.dashboard.modules.metrics.metrics_head.MetricsHead'>.
+2026-05-05 14:13:32,867	INFO head.py:301 -- Loading SubprocessModule: <class 'ray.dashboard.modules.data.data_head.DataHead'>.
+2026-05-05 14:13:32,867	INFO head.py:301 -- Loading SubprocessModule: <class 'ray.dashboard.modules.event.event_head.EventHead'>.
+2026-05-05 14:13:32,867	INFO head.py:301 -- Loading SubprocessModule: <class 'ray.dashboard.modules.job.job_head.JobHead'>.
+2026-05-05 14:13:32,867	INFO head.py:301 -- Loading SubprocessModule: <class 'ray.dashboard.modules.node.node_head.NodeHead'>.
+2026-05-05 14:13:32,867	INFO head.py:301 -- Loading SubprocessModule: <class 'ray.dashboard.modules.reporter.reporter_head.ReportHead'>.
+2026-05-05 14:13:32,867	INFO head.py:301 -- Loading SubprocessModule: <class 'ray.dashboard.modules.serve.serve_head.ServeHead'>.
+2026-05-05 14:13:32,867	INFO head.py:301 -- Loading SubprocessModule: <class 'ray.dashboard.modules.state.state_head.StateHead'>.
+2026-05-05 14:13:32,868	INFO head.py:301 -- Loading SubprocessModule: <class 'ray.dashboard.modules.train.train_head.TrainHead'>.
+2026-05-05 14:13:32,868	INFO head.py:305 -- Loaded 9 subprocess modules: [<ray.dashboard.subprocesses.handle.SubprocessModuleHandle object at 0x7f90e8071f60>, <ray.dashboard.subprocesses.handle.SubprocessModuleHandle object at 0x7f90e7e3ac50>, <ray.dashboard.subprocesses.handle.SubprocessModuleHandle object at 0x7f90e81919c0>, <ray.dashboard.subprocesses.handle.SubprocessModuleHandle object at 0x7f90e7e59930>, <ray.dashboard.subprocesses.handle.SubprocessModuleHandle object at 0x7f90e7e598a0>, <ray.dashboard.subprocesses.handle.SubprocessModuleHandle object at 0x7f90e7e58970>, <ray.dashboard.subprocesses.handle.SubprocessModuleHandle object at 0x7f90e7e5a0e0>, <ray.dashboard.subprocesses.handle.SubprocessModuleHandle object at 0x7f90e7e5a0b0>, <ray.dashboard.subprocesses.handle.SubprocessModuleHandle object at 0x7f90e7e5a080>].
+2026-05-05 14:13:35,123	ERROR dashboard.py:326 -- The dashboard on node instgpu-05.cs.wisc.edu failed with the following error:
+Traceback (most recent call last):
+  File "/home/chloeliu/.local/lib/python3.10/site-packages/ray/dashboard/subprocesses/handle.py", line 144, in wait_for_module_ready
+    self.parent_conn.recv()
+  File "/usr/lib/python3.10/multiprocessing/connection.py", line 250, in recv
+    buf = self._recv_bytes()
+  File "/usr/lib/python3.10/multiprocessing/connection.py", line 414, in _recv_bytes
+    buf = self._recv(4)
+  File "/usr/lib/python3.10/multiprocessing/connection.py", line 383, in _recv
+    raise EOFError
+EOFError
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/chloeliu/.local/lib/python3.10/site-packages/ray/dashboard/dashboard.py", line 315, in <module>
+    loop.run_until_complete(dashboard.run())
+  File "/usr/lib/python3.10/asyncio/base_events.py", line 649, in run_until_complete
+    return future.result()
+  File "/home/chloeliu/.local/lib/python3.10/site-packages/ray/dashboard/dashboard.py", line 107, in run
+    await self.dashboard_head.run()
+  File "/home/chloeliu/.local/lib/python3.10/site-packages/ray/dashboard/head.py", line 414, in run
+    handle.wait_for_module_ready()
+  File "/home/chloeliu/.local/lib/python3.10/site-packages/ray/dashboard/subprocesses/handle.py", line 146, in wait_for_module_ready
+    raise RuntimeError(
+RuntimeError: Module MetricsHead failed to start. Received EOF from pipe.
+

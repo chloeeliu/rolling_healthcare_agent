@@ -7,6 +7,24 @@ from uuid import uuid4
 from .tools import build_tool_runtime
 
 
+def _patch_sglang_http_server_launch() -> None:
+    """Keep verl 0.7.1 compatible with newer sglang 0.5.10 HTTP internals."""
+    try:
+        from sglang.srt.entrypoints import engine, http_server
+    except Exception:
+        return
+    if hasattr(http_server, "_launch_subprocesses"):
+        return
+
+    def _launch_subprocesses(*args: Any, **kwargs: Any):
+        return engine.Engine._launch_subprocesses(*args, **kwargs)
+
+    http_server._launch_subprocesses = _launch_subprocesses
+
+
+_patch_sglang_http_server_launch()
+
+
 def _load_agent_loop_types():
     try:
         from verl.experimental.agent_loop.agent_loop import AgentLoopBase, AgentLoopOutput, register

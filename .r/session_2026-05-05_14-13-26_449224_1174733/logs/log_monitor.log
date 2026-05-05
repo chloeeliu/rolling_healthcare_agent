@@ -1,0 +1,4 @@
+2026-05-05 14:14:31,798	INFO log_monitor.py:168 -- Starting log monitor with [max open files=200], [is_autoscaler_v2=False]
+2026-05-05 14:14:31,799	INFO log_monitor.py:290 -- Beginning to track file monitor.log
+2026-05-05 14:14:31,799	INFO log_monitor.py:290 -- Beginning to track file gcs_server.err
+2026-05-05 14:14:32,303	INFO log_monitor.py:290 -- Beginning to track file raylet.err

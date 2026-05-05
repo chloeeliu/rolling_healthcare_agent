@@ -1,5 +1,10 @@
-# Final RL training stack for verl Agent Loop + GRPO.
-# Pins match the smoke-tested stack used for the sepsis Agent Loop path.
+# Final A100 RL training stack for verl Agent Loop + GRPO.
+#
+# Install on the GPU training machine with:
+#   python3 -m pip install -r requirements-verl.txt
+#
+# This is the direct-RL path. SFT is optional for this project and is not
+# required by scripts/run_verl_grpo_a100.sh.
 
 -r requirements-training.txt
 numpy>=1.26,<2.0

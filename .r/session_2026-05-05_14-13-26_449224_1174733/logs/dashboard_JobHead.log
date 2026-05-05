@@ -1,0 +1,16 @@
+2026-05-05 14:13:33,960	INFO module.py:210 -- Starting module JobHead with incarnation 0 and config SubprocessModuleConfig(cluster_id_hex='e5821c367b689bc2ba57fd5656cfef161b22431604531be1e0f4d402', gcs_address='128.105.37.249:41401', session_name='session_2026-05-05_14-13-26_449224_1174733', temp_dir='/home/chloeliu/rolling_healthcare_agent/.r', session_dir='/home/chloeliu/rolling_healthcare_agent/.r/session_2026-05-05_14-13-26_449224_1174733', logging_level=20, logging_format='%(asctime)s\t%(levelname)s %(filename)s:%(lineno)s -- %(message)s', log_dir='/home/chloeliu/rolling_healthcare_agent/.r/session_2026-05-05_14-13-26_449224_1174733/logs', logging_filename='dashboard.log', logging_rotate_bytes=536870912, logging_rotate_backup_count=5, socket_dir='/home/chloeliu/rolling_healthcare_agent/.r/session_2026-05-05_14-13-26_449224_1174733/sockets')
+2026-05-05 14:13:33,966	WARNING __init__.py:160 -- DeprecationWarning: `ray.ray_constants.DASHBOARD_CLIENT_MAX_SIZE` is a private attribute and access will be removed in a future Ray version.
+2026-05-05 14:13:34,544	INFO module.py:142 -- Started aiohttp server over /home/chloeliu/rolling_healthcare_agent/.r/session_2026-05-05_14-13-26_449224_1174733/sockets/dash_JobHead.
+2026-05-05 14:13:34,544	ERROR module.py:227 -- Error creating module JobHead
+Traceback (most recent call last):
+  File "/home/chloeliu/.local/lib/python3.10/site-packages/ray/dashboard/subprocesses/module.py", line 222, in run_module_inner
+    await module.run()
+  File "/home/chloeliu/.local/lib/python3.10/site-packages/ray/dashboard/modules/job/job_head.py", line 759, in run
+    await super().run()
+  File "/home/chloeliu/.local/lib/python3.10/site-packages/ray/dashboard/subprocesses/module.py", line 143, in run
+    await site.start()
+  File "/home/chloeliu/.local/lib/python3.10/site-packages/aiohttp/web_runner.py", line 162, in start
+    self._server = await loop.create_unix_server(
+  File "/usr/lib/python3.10/asyncio/unix_events.py", line 307, in create_unix_server
+    sock.bind(path)
+PermissionError: [Errno 1] Operation not permitted

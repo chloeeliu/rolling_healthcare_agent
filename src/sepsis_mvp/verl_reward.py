@@ -3,7 +3,10 @@ from __future__ import annotations
 import json
 from typing import Any
 
-from .schemas import SEPSIS_ACTIONS
+try:
+    from .schemas import SEPSIS_ACTIONS
+except ImportError:
+    from sepsis_mvp.schemas import SEPSIS_ACTIONS
 
 
 VALID_TOOLS = {"query_suspicion_of_infection", "query_sofa"}

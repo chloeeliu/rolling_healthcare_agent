@@ -1,0 +1,36 @@
+2026-05-05 14:13:31,322	INFO monitor.py:715 -- Starting monitor using ray installation: /home/chloeliu/.local/lib/python3.10/site-packages/ray/__init__.py
+2026-05-05 14:13:31,322	INFO monitor.py:716 -- Ray version: 2.55.1
+2026-05-05 14:13:31,323	INFO monitor.py:717 -- Ray commit: 237c2455ebb1ea15a32dd9e1fdeb2d617badc37f
+2026-05-05 14:13:31,323	INFO monitor.py:718 -- Monitor started with command: ['/home/chloeliu/.local/lib/python3.10/site-packages/ray/autoscaler/_private/monitor.py', '--logs-dir=/home/chloeliu/rolling_healthcare_agent/.r/session_2026-05-05_14-13-26_449224_1174733/logs', '--logging-rotate-bytes=536870912', '--logging-rotate-backup-count=5', '--gcs-address=128.105.37.249:41401', '--stdout-filepath=/home/chloeliu/rolling_healthcare_agent/.r/session_2026-05-05_14-13-26_449224_1174733/logs/monitor.out', '--stderr-filepath=/home/chloeliu/rolling_healthcare_agent/.r/session_2026-05-05_14-13-26_449224_1174733/logs/monitor.err', '--monitor-ip=128.105.37.249']
+2026-05-05 14:13:31,354	INFO monitor.py:161 -- session_name: session_2026-05-05_14-13-26_449224_1174733
+2026-05-05 14:13:31,376	INFO monitor.py:193 -- Starting autoscaler metrics server on port 44217
+2026-05-05 14:13:31,386	INFO monitor.py:218 -- Monitor: Started
+2026-05-05 14:13:31,411	INFO autoscaler.py:280 -- disable_node_updaters:False
+2026-05-05 14:13:31,411	INFO autoscaler.py:289 -- disable_launch_config_check:True
+2026-05-05 14:13:31,411	INFO autoscaler.py:301 -- foreground_node_launch:False
+2026-05-05 14:13:31,411	INFO autoscaler.py:311 -- worker_liveness_check:True
+2026-05-05 14:13:31,427	INFO autoscaler.py:361 -- StandardAutoscaler: {'cluster_name': 'default', 'max_workers': 0, 'upscaling_speed': 1.0, 'docker': {}, 'idle_timeout_minutes': 0, 'provider': {'type': 'readonly', 'use_node_id_as_ip': True, 'disable_launch_config_check': True}, 'auth': {}, 'available_node_types': {'ray.head.default': {'resources': {}, 'node_config': {}, 'max_workers': 0}}, 'head_node_type': 'ray.head.default', 'file_mounts': {}, 'cluster_synced_files': [], 'file_mounts_sync_continuously': False, 'rsync_exclude': [], 'rsync_filter': [], 'initialization_commands': [], 'setup_commands': [], 'head_setup_commands': [], 'worker_setup_commands': [], 'head_start_ray_commands': [], 'worker_start_ray_commands': []}
+2026-05-05 14:13:31,429	INFO monitor.py:393 -- Autoscaler has not yet received load metrics. Waiting.
+2026-05-05 14:13:36,435	INFO monitor.py:393 -- Autoscaler has not yet received load metrics. Waiting.
+2026-05-05 14:13:41,439	INFO monitor.py:393 -- Autoscaler has not yet received load metrics. Waiting.
+2026-05-05 14:13:46,443	INFO monitor.py:393 -- Autoscaler has not yet received load metrics. Waiting.
+2026-05-05 14:13:51,447	INFO monitor.py:393 -- Autoscaler has not yet received load metrics. Waiting.
+2026-05-05 14:13:56,451	INFO monitor.py:393 -- Autoscaler has not yet received load metrics. Waiting.
+2026-05-05 14:14:01,456	INFO monitor.py:393 -- Autoscaler has not yet received load metrics. Waiting.
+2026-05-05 14:14:06,463	INFO monitor.py:393 -- Autoscaler has not yet received load metrics. Waiting.
+2026-05-05 14:14:11,470	INFO monitor.py:393 -- Autoscaler has not yet received load metrics. Waiting.
+2026-05-05 14:14:16,475	INFO monitor.py:393 -- Autoscaler has not yet received load metrics. Waiting.
+2026-05-05 14:14:21,481	INFO monitor.py:393 -- Autoscaler has not yet received load metrics. Waiting.
+2026-05-05 14:14:26,489	INFO monitor.py:393 -- Autoscaler has not yet received load metrics. Waiting.
+2026-05-05 14:14:31,495	INFO monitor.py:393 -- Autoscaler has not yet received load metrics. Waiting.
+2026-05-05 14:14:36,499	INFO monitor.py:393 -- Autoscaler has not yet received load metrics. Waiting.
+2026-05-05 14:14:41,509	INFO monitor.py:393 -- Autoscaler has not yet received load metrics. Waiting.
+2026-05-05 14:14:46,515	INFO monitor.py:393 -- Autoscaler has not yet received load metrics. Waiting.
+2026-05-05 14:14:51,521	INFO monitor.py:393 -- Autoscaler has not yet received load metrics. Waiting.
+2026-05-05 14:14:56,528	INFO monitor.py:393 -- Autoscaler has not yet received load metrics. Waiting.
+2026-05-05 14:15:01,535	INFO monitor.py:393 -- Autoscaler has not yet received load metrics. Waiting.
+2026-05-05 14:15:06,543	INFO monitor.py:393 -- Autoscaler has not yet received load metrics. Waiting.
+2026-05-05 14:15:11,547	INFO monitor.py:393 -- Autoscaler has not yet received load metrics. Waiting.
+2026-05-05 14:15:16,554	INFO monitor.py:393 -- Autoscaler has not yet received load metrics. Waiting.
+2026-05-05 14:15:21,560	INFO monitor.py:393 -- Autoscaler has not yet received load metrics. Waiting.
+2026-05-05 14:15:26,568	INFO monitor.py:393 -- Autoscaler has not yet received load metrics. Waiting.
