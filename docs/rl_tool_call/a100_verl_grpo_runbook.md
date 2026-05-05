@@ -27,6 +27,7 @@ Use a clean Python environment on the A100 machine, then install:
 
 ```bash
 python3 -m pip install -r requirements-verl.txt
+python3 -m pip install --no-deps --force-reinstall torchao==0.17.0
 ```
 
 The pinned stack is centered on:
@@ -37,8 +38,9 @@ The pinned stack is centered on:
 - `torchao==0.17.0`
 - `pyarrow==24.0.0`
 
-`torchao==0.17.0` is intentional. Earlier local testing reached LoRA injection
-only after using this newer torchao version.
+`sglang==0.5.10.post1` declares `torchao==0.9.0`, so `torchao==0.17.0` must be
+installed as a post-install override. Earlier local testing reached LoRA
+injection only after using this newer torchao version.
 
 ## One-Command Smoke
 

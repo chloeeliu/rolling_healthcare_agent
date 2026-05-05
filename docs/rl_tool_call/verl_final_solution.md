@@ -145,6 +145,7 @@ Install final training stack on the A100 machine:
 
 ```bash
 python3 -m pip install -r requirements-verl.txt
+python3 -m pip install --no-deps --force-reinstall torchao==0.17.0
 ```
 
 The current pinned stack is centered on `verl==0.7.1`, `ray==2.55.1`, `sglang==0.5.10.post1`, `trl==0.9.6`, and `torchao==0.17.0`. `sglang` declares an older `torchao` pin, but PEFT LoRA injection requires the newer `torchao`; the local smoke reached LoRA injection only after upgrading `torchao`.
