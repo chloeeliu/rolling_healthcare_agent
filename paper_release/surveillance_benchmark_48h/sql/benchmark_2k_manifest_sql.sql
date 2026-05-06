@@ -1,6 +1,6 @@
 WITH features AS (
   SELECT *
-  FROM read_csv_auto('{{BENCHMARK_STAY_SAMPLING_FEATURES_CSV}}', header = true)
+  FROM read_csv_auto('/Users/chloe/Documents/New project/paper_release/surveillance_benchmark_48h/benchmark_stay_sampling_features.csv', header = true)
 ),
 layer_targets AS (
   SELECT 'dev' AS split, 'core_diversity' AS sampling_layer, 240 AS target_n
@@ -150,4 +150,4 @@ SELECT
   aki_stage2_by48h,
   resp_support_invasive_vent_by48h
 FROM selected
-ORDER BY split, sampling_layer, stratum_key, stay_id;
+ORDER BY split, sampling_layer, stratum_key, stay_id

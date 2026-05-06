@@ -2,11 +2,11 @@ WITH manifest AS (
   SELECT
     split,
     stay_id
-  FROM read_csv_auto('/Users/chloe/Documents/New project/dataset/surveilance/benchmark_2k_manifest.csv', header = true)
+  FROM read_csv_auto('{{BENCHMARK_2K_MANIFEST_CSV}}', header = true)
 ),
 truth AS (
   SELECT *
-  FROM read_csv_auto('/Users/chloe/Documents/New project/dataset/surveilance/checkpoint_truth_all.csv', header = true)
+  FROM read_csv_auto('{{CHECKPOINT_TRUTH_ALL_CSV}}', header = true)
 )
 SELECT t.*
 FROM truth t

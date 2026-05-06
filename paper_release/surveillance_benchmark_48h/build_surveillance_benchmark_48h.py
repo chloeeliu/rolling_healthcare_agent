@@ -8,14 +8,12 @@ from pathlib import Path
 PACKAGE_ROOT = Path(__file__).resolve().parent
 SQL_TEMPLATE_DIR = PACKAGE_ROOT / "sql_templates"
 
-FINAL_ONLY_PIPELINE: list[tuple[str, str]] = [
-    ("checkpoint_truth_sql.sql", "checkpoint_truth_all"),
-    ("benchmark_stay_sampling_features_sql.sql", "benchmark_stay_sampling_features"),
-    ("benchmark_2k_manifest_sql.sql", "benchmark_2k_manifest"),
+PIPELINE_48H: list[tuple[str, str]] = [
+    ("checkpoint_truth_sql.sql", "checkpoint_truth_all.csv"),
+    ("benchmark_stay_sampling_features_sql.sql", "benchmark_stay_sampling_features.csv"),
+    ("benchmark_2k_manifest_sql.sql", "benchmark_2k_manifest.csv"),
+    ("benchmark_2k_checkpoint_truth_sql.sql", "benchmark_2k_checkpoint_truth.csv"),
 ]
-
-FINAL_SQL_NAME = "benchmark_2k_checkpoint_truth_sql.sql"
-FINAL_OUTPUT_NAME = "benchmark_2k_checkpoint_truth.csv"
 
 
 def _strip_sql(sql: str) -> str:
@@ -52,16 +50,17 @@ def _template_sql(sql_name: str) -> str:
     return (SQL_TEMPLATE_DIR / sql_name).read_text()
 
 
-def _replace_csv_dependency(sql: str, csv_name: str, replacement: str) -> str:
-    absolute = str(SQL_TEMPLATE_DIR / csv_name)
-    needle = f"read_csv_auto('{absolute}', header = true)"
-    return sql.replace(needle, replacement)
-
-
-def _render_view_sql(sql_name: str, replacements: dict[str, str]) -> str:
+def _render_sql(sql_name: str, output_dir: Path) -> str:
     sql = _template_sql(sql_name)
-    for csv_name, relation_name in replacements.items():
-        sql = _replace_csv_dependency(sql, csv_name, relation_name)
+    replacements = {
+        "{{CHECKPOINT_TRUTH_ALL_CSV}}": str((output_dir / "checkpoint_truth_all.csv").resolve()),
+        "{{BENCHMARK_STAY_SAMPLING_FEATURES_CSV}}": str(
+            (output_dir / "benchmark_stay_sampling_features.csv").resolve()
+        ),
+        "{{BENCHMARK_2K_MANIFEST_CSV}}": str((output_dir / "benchmark_2k_manifest.csv").resolve()),
+    }
+    for placeholder, target in replacements.items():
+        sql = sql.replace(placeholder, target)
     return _strip_sql(sql)
 
 
@@ -79,63 +78,78 @@ def _write_sql_snapshot(output_dir: Path, sql_name: str, sql_text: str) -> None:
 def _write_metadata(output_dir: Path, db_path: Path) -> None:
     metadata = {
         "db_path": str(db_path),
-        "generated_file": FINAL_OUTPUT_NAME,
-        "pipeline_views": [view_name for _, view_name in FINAL_ONLY_PIPELINE],
-        "sql_dependencies": [sql_name for sql_name, _ in FINAL_ONLY_PIPELINE] + [FINAL_SQL_NAME],
-        "note": "This script writes only the final 48h benchmark CSV. Intermediate tables are temporary in-memory DuckDB views.",
+        "generated_files": [csv_name for _, csv_name in PIPELINE_48H],
+        "primary_benchmark_csv": "benchmark_2k_checkpoint_truth.csv",
+        "note": (
+            "This script writes the final 48h benchmark CSV and its three intermediate CSVs "
+            "inside the chosen output directory. No external intermediate CSVs are required."
+        ),
     }
     (output_dir / "build_metadata.json").write_text(json.dumps(metadata, indent=2) + "\n")
 
 
-def build_final_benchmark_48h(db_path: Path, output_dir: Path, *, force: bool = False) -> None:
+def build_benchmark_48h(db_path: Path, output_dir: Path, *, force: bool = False) -> None:
     try:
         import duckdb
     except ImportError as exc:
         raise RuntimeError("This script requires the 'duckdb' Python package.") from exc
 
     output_dir.mkdir(parents=True, exist_ok=True)
-    output_csv = output_dir / FINAL_OUTPUT_NAME
-    if output_csv.exists() and not force:
-        raise FileExistsError(f"{output_csv} already exists. Use --force to overwrite.")
+
+    expected_outputs = [output_dir / csv_name for _, csv_name in PIPELINE_48H]
+    if not force:
+        existing = [p for p in expected_outputs if p.exists()]
+        if existing:
+            names = ", ".join(p.name for p in existing[:5])
+            raise FileExistsError(
+                f"Output directory {output_dir} already contains generated files ({names}...). "
+                "Use --force to overwrite."
+            )
 
     con = duckdb.connect(str(db_path), read_only=True)
     try:
-        replacements: dict[str, str] = {}
-        for sql_name, view_name in FINAL_ONLY_PIPELINE:
-            rendered_sql = _render_view_sql(sql_name, replacements)
+        for sql_name, csv_name in PIPELINE_48H:
+            rendered_sql = _render_sql(sql_name, output_dir)
             _write_sql_snapshot(output_dir, sql_name, rendered_sql)
-            print(f"[build_surveillance_benchmark_48h] Creating temp view {view_name} from {sql_name} ...")
-            con.execute(f"CREATE OR REPLACE TEMP VIEW {view_name} AS {rendered_sql}")
-            replacements[f"{view_name}.csv"] = view_name
-
-        final_sql = _render_view_sql(FINAL_SQL_NAME, replacements)
-        _write_sql_snapshot(output_dir, FINAL_SQL_NAME, final_sql)
-        if output_csv.exists():
-            output_csv.unlink()
-        escaped = str(output_csv).replace("'", "''")
-        print(f"[build_surveillance_benchmark_48h] Writing {FINAL_OUTPUT_NAME} ...")
-        con.execute(f"COPY ({final_sql}) TO '{escaped}' (HEADER, DELIMITER ',')")
+            output_csv = output_dir / csv_name
+            if output_csv.exists():
+                output_csv.unlink()
+            escaped = str(output_csv).replace("'", "''")
+            print(f"[build_surveillance_benchmark_48h] Building {csv_name} from {sql_name} ...")
+            con.execute(f"COPY ({rendered_sql}) TO '{escaped}' (HEADER, DELIMITER ',')")
+            print(
+                f"[build_surveillance_benchmark_48h] Wrote {output_csv} "
+                f"({_row_count(output_csv)} rows)."
+            )
     finally:
         con.close()
 
     _write_metadata(output_dir, db_path)
-    print(f"[build_surveillance_benchmark_48h] Wrote {output_csv} ({_row_count(output_csv)} rows).")
     print("[build_surveillance_benchmark_48h] Done.")
+    print(
+        f"[build_surveillance_benchmark_48h] Primary output: "
+        f"{output_dir / 'benchmark_2k_checkpoint_truth.csv'}"
+    )
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(
-        description="Build only the final 48-hour 2k ICU surveillance benchmark CSV."
+        description=(
+            "Build the primary 48-hour 2k ICU surveillance benchmark package into a local output directory."
+        )
     )
     parser.add_argument("--db-path", help="Path to mimic4_dk.db.")
-    parser.add_argument("--mimic-root", help="Path to a MIMIC-IV project root; the script will search for mimic4_dk.db.")
-    parser.add_argument("--output-dir", required=True, help="Directory for the generated benchmark CSV.")
-    parser.add_argument("--force", action="store_true", help="Overwrite an existing benchmark CSV.")
+    parser.add_argument(
+        "--mimic-root",
+        help="Path to a MIMIC-IV project root; the script will search for mimic4_dk.db under it.",
+    )
+    parser.add_argument("--output-dir", required=True, help="Directory for the generated benchmark package.")
+    parser.add_argument("--force", action="store_true", help="Overwrite existing generated outputs.")
     args = parser.parse_args()
 
     db_path = _resolve_db_path(args.db_path, args.mimic_root)
     output_dir = Path(args.output_dir).expanduser().resolve()
-    build_final_benchmark_48h(db_path, output_dir, force=args.force)
+    build_benchmark_48h(db_path, output_dir, force=args.force)
 
 
 if __name__ == "__main__":

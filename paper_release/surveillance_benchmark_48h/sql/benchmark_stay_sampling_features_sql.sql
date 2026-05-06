@@ -1,6 +1,6 @@
 WITH truth AS (
   SELECT *
-  FROM read_csv_auto('{{CHECKPOINT_TRUTH_ALL_CSV}}', header = true)
+  FROM read_csv_auto('/Users/chloe/Documents/New project/paper_release/surveillance_benchmark_48h/checkpoint_truth_all.csv', header = true)
 ),
 heldout AS (
   SELECT *
@@ -195,4 +195,4 @@ SELECT
     ELSE 'core_diversity'
   END AS sampling_layer
 FROM features
-ORDER BY split, stay_id;
+ORDER BY split, stay_id

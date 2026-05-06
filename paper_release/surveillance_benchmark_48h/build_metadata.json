@@ -1,0 +1,11 @@
+{
+  "db_path": "/Users/chloe/Desktop/healthcare/mimic-iv-3.1/buildmimic/duckdb/mimic4_dk.db",
+  "generated_files": [
+    "checkpoint_truth_all.csv",
+    "benchmark_stay_sampling_features.csv",
+    "benchmark_2k_manifest.csv",
+    "benchmark_2k_checkpoint_truth.csv"
+  ],
+  "primary_benchmark_csv": "benchmark_2k_checkpoint_truth.csv",
+  "note": "This script writes the final 48h benchmark CSV and its three intermediate CSVs inside the chosen output directory. No external intermediate CSVs are required."
+}
