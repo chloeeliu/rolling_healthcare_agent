@@ -7,4 +7,5 @@ Start here:
 - `training_readiness.md`: concrete readiness check, existing CLI, proposed training CLI, and why SFT is optional.
 - `verl_final_solution.md`: final target architecture using verl Agent Loop + GRPO for paper-quality RL fine-tuning.
 - `a100_verl_grpo_runbook.md`: copy-paste A100 install, smoke, full direct-GRPO, and evaluation commands.
+- `final_report.md`: concise final report with measured baseline/proxy results and estimated GRPO outcome ranges.
 - `../../data/rl_tool_call/full_run_summary.md`: concise full-run metrics and reproduction commands.
