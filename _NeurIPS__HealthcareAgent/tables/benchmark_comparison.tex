@@ -1,0 +1,38 @@
+\begin{table}[t]
+\centering
+\caption{Comparison of EHR benchmarks relevant to clinical reasoning and agentic evaluation.
+\textbf{Code Gen.}: requires generating executable code or SQL.
+\textbf{Scale} ($>$10K): $>$10{,}000 QA instances.
+\textbf{Agentic}: supports iterative agent loop with execution feedback.
+\textbf{Compositional}: explicitly tests multi-hop reasoning over dependent clinical concepts.
+\textbf{Longitudinal}: evaluates reasoning over patient state as it evolves over time.}
+\label{tab:benchmark_comparison}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{lccccc}
+\toprule
+\textbf{Benchmark} &
+\textbf{Code Gen.} &
+\textbf{Scale ($>$10K)} &
+\textbf{Agentic} &
+\textbf{Compositional} &
+\textbf{Longitudinal} \\
+\midrule
+MIMICSQL~\cite{wang2020treqs}          & \cmark & \cmark & \xmark & \xmark & \xmark \\
+EHRSQL~\cite{lee2022ehrsql}            & \cmark & \xmark & \xmark & \xmark & \xmark \\
+DrugEHRQA~\cite{bardhan-etal-2022-drugehrqa} & \cmark & \cmark & \xmark & \xmark & \xmark \\
+EHRXQA~\cite{bae2023ehrxqa}            & \cmark & \xmark & \xmark & \xmark & \xmark \\
+EHR-SeqSQL~\cite{bae2024ehrseqsql}    & \cmark & \xmark & \cmark & \xmark & \xmark \\
+EHRNoteQA~\cite{kim2024ehrnoteqa}     & \xmark & \xmark & \xmark & \xmark & \xmark \\
+EHRAgent~\cite{shi2024ehragent}       & \cmark & \xmark & \cmark & \xmark & \xmark \\
+MedAgentGym~\cite{xu2025medagentgym}  & \cmark & \cmark & \cmark & \xmark & \xmark \\
+MedAgentBench~\cite{kim2025medagentbench} & \xmark & \xmark & \cmark & \xmark & \xmark \\
+AgentClinic~\cite{schmidgall2024agentclinic} & \xmark & \xmark & \cmark & \xmark & \xmark \\
+EHRStruct~\cite{zhang2025ehrstruct}   & \cmark & \xmark & \xmark & \xmark & \xmark \\
+AgentEHR~\cite{liao2026agentehr}      & \xmark & \cmark & \cmark & \xmark & \xmark \\
+EHRSHOT~\cite{wornow2023ehrshot}      & \xmark & \cmark & \xmark & \xmark & \xmark \\
+\midrule
+\textbf{\ours{} (ours)} & \cmark & \cmark & \cmark & \cmark & \cmark \\
+\bottomrule
+\end{tabular}%
+}
+\end{table}

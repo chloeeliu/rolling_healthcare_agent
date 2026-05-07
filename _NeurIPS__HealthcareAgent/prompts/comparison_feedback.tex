@@ -1,0 +1,27 @@
+\begin{figure*}[h]
+    \begin{AIbox}{QA Accuracy Feedback Prompt}
+
+\begin{quote}
+\ttfamily
+\tiny
+\vspace{2mm}
+
+QA ACCURACY: \{qa\_accuracy\} (need >\{match\_threshold\})
+
+\{details\}
+
+Your function is evaluated by how well its output helps answer clinical
+questions about suspected infection. Revise your function to produce more
+clinically useful and informative output.
+
+Test your revised function first, then submit a new self-contained code
+block (all imports, helpers, function def) assigning FINAL\_FUNCTION.
+Do NOT include test calls or print statements in that block.
+
+\end{quote}
+
+\end{AIbox}
+    \caption{Feedback prompt sent to the agent when QA accuracy falls below the required threshold. Template variables \{qa\_accuracy\}, \{match\_threshold\}, and \{details\} are filled with the actual evaluation results and per-question failure details.}
+    \label{prompts:comparison_feedback}
+
+\end{figure*}

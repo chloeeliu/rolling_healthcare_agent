@@ -1,0 +1,31 @@
+\begin{figure*}[h]
+    \begin{AIbox}{QA Evaluation User Prompt}
+
+\begin{quote}
+\ttfamily
+\tiny
+\vspace{2mm}
+
+Session tools:
+- `query\_db(sql)' --- duckdb SQL query $\rightarrow$ pandas DataFrame
+- `search\_functions(keyword="")' --- list available concept functions by name
+- `load\_function(name)' --- load a concept function into the session
+- `get\_function\_info(name)' --- view a function's signature and docstring
+- `search\_guidelines(keyword="")' / `get\_guideline(name)' --- clinical guidelines
+
+Concept functions relevant to this task are available --- use `search\_functions()' to discover them and `load\_function(name)' to load what you need. You should always check first to see if there are any useful functions for you to use.
+\{func\_info\}
+Patient: subject\_id=\{subject\_id\}, hadm\_id=\{hadm\_id\}, stay\_id=\{stay\_id\}
+
+\{qa\_question\}
+
+Use the available functions and/or `query\_db' to answer, then reply with: \{verdict\_format\}
+For numerical questions, include as much decimal precision as possible.
+
+\end{quote}
+
+\end{AIbox}
+    \caption{User prompt for the QA evaluation agent. Template variables are filled at runtime: \{func\_info\} provides signatures of relevant concept functions, \{subject\_id\}/\{hadm\_id\}/\{stay\_id\} identify the target patient, \{qa\_question\} is the clinical question, and \{verdict\_format\} specifies the answer format.}
+    \label{prompts:qa_user_prompt}
+
+\end{figure*}

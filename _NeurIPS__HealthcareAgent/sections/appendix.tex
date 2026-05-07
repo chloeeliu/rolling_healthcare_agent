@@ -1,0 +1,156 @@
+%% ============================================================
+%% BENCHMARK CONSTRUCTION DETAILS
+%% ============================================================
+
+\section{Guideline Generation from Medical Literature}
+\label{app:guideline_gen}
+
+For each clinical concept in the dependency graph, we generate a structured natural-language specification by querying PubMed. Given a concept name (e.g., ``acute kidney injury''), we search PubMed for relevant clinical practice guideline articles and systematic reviews, retrieve 3--5 top-ranked results, and extract their abstracts and available full text. An LLM then synthesizes the retrieved literature into a structured specification containing:
+\begin{enumerate}[label=(\roman*),nosep]
+    \item the clinical definition and diagnostic criteria with explicit measurement thresholds (e.g., serum creatinine increase $\geq 0.3$~mg/dL within 48 hours per KDIGO guidelines),
+    \item the required EHR measurements mapped to MIMIC-IV table names and item identifiers,
+    \item severity staging criteria where applicable, and
+    \item temporal windows for event detection.
+\end{enumerate}
+This pipeline produces guideline specifications for $N$ concepts spanning the measurement, scoring, and condition layers of the dependency graph.
+
+\section{Clinical Knowledge Graph Construction}
+\label{app:knowledge_graph}
+
+We construct a directed acyclic dependency graph $\mathcal{G} = (V, E)$ where an edge $(v_i, v_j) \in E$ indicates that concept $v_j$ requires the output of concept $v_i$. The graph is built in three phases.
+
+\textbf{Phase 1: Infrastructure nodes.} We parse SQL definitions from the MIMIC-Code repository, extracting references to upstream derived tables, raw MIMIC-IV tables, and \texttt{itemid} values via regex matching to produce infrastructure nodes (measurements, medications, severity scores, treatments) with exact computational dependencies.
+
+\textbf{Phase 2: Clinical conditions.} We expand the graph by mining frequent ICD-10 diagnosis codes among MIMIC-IV ICU patients, filtering for conditions detectable from structured EHR data, and generating guideline specifications using the pipeline in Appendix~\ref{app:guideline_gen}. Dependencies for each condition are inferred by keyword-matching the specification text against infrastructure node descriptions and entity labels.
+
+\textbf{Phase 3: UMLS expansion.} We map existing nodes to UMLS Concept Unique Identifiers and traverse one-hop Metathesaurus relations, filtering candidates by semantic type and ranking by centrality (the number of seed nodes connecting to each candidate).
+
+The resulting graph contains multiple quality tiers—from infrastructure nodes with exact SQL-parsed dependencies, through conditions with guideline-validated dependencies, to automatically discovered conditions with heuristic dependency assignments—enabling both precise retrieval for core clinical concepts and scalability evaluation across a broad condition library.
+
+%% ============================================================
+%% ALGORITHM DETAILS
+%% ============================================================
+
+\section{Autoformalization Algorithm}
+\label{app:algorithm}
+
+\begin{algorithm}[t]
+\caption{Autoformalize}
+\label{alg:autoformalize}
+\begin{algorithmic}[1]
+\Require QA dataset $\mathcal{Q}$, database $\mathcal{C}$, guidelines $\mathcal{G}$, LLM $\mathcal{M}$, threshold $\tau$, max iterations $T$
+\State $\mathcal{S} \leftarrow \textsc{CodeSession}(\mathcal{C}, \mathcal{G})$; \;
+       $f^* \leftarrow \emptyset$; \; $\alpha^* \leftarrow 0$; \; $\text{mem} \leftarrow []$
+\State $\mathit{msgs} \leftarrow [\textsc{SysPrompt}, \textsc{UserPrompt}(\mathcal{Q})]$
+\For{$t = 1, \dots, T$}
+    \If{context near limit}
+        \State $\mathit{msgs} \leftarrow \textsc{Compress}(\text{mem} \cup \textsc{Summarize}(\mathit{msgs}))$
+    \EndIf
+    \State $r \leftarrow \mathcal{M}(\mathit{msgs})$; \; $\mathit{msgs} \mathrel{+}= [r]$
+    \State $\mathcal{B} \leftarrow \textsc{ExtractCodeBlocks}(r)$; \; \textbf{if} $\mathcal{B}=\emptyset$ \textbf{continue}
+    \State $\mathit{msgs} \mathrel{+}= [\textsc{Execute}(\mathcal{B}, \mathcal{S})]$
+    \If{$\texttt{FINAL\_FUNCTION} \notin \mathit{msgs}[-1]$} \textbf{continue} \EndIf
+    \State $f \leftarrow \mathcal{S}.\text{namespace}[\texttt{FINAL\_FUNCTION}]$
+    \State $\alpha \leftarrow \textsc{QAEval}(f, \mathcal{Q}, \mathcal{C}, \mathcal{M})$
+    \If{$\alpha > \alpha^*$} \; $f^* \leftarrow f$; \; $\alpha^* \leftarrow \alpha$ \EndIf
+    \If{$\alpha \geq \tau$} \textbf{break} \EndIf
+    \State $\mathit{msgs} \mathrel{+}= [\textsc{Feedback}(\alpha, \tau)]$
+\EndFor
+\State \Return $f^*$
+\end{algorithmic}
+\end{algorithm}
+
+\paragraph{Context Compression.}
+Because the ReACT loop may run for up to $T_{\max}$ iterations (default 100) with substantial code and query outputs at each step, the conversation history can exceed the LLM's context window. We address this with a rolling memory mechanism: when the estimated token count exceeds 25{,}000 tokens, the accumulated conversation is summarized by a separate LLM call into a compact memory document retaining key schema facts, the latest function source code, and a record of test results and error fixes. The full conversation history is then replaced by a two-message prompt (system instructions + memory resume). This compression is lossy but preserves the information most critical for continued refinement.
+
+%% ============================================================
+%% PROMPTS
+%% ============================================================
+
+\section{Prompts}
+\label{app:prompts}
+
+\subsection{Autoformalization Agent}
+\input{prompts/system}
+\input{prompts/react_user}
+
+\subsection{Iterative Feedback}
+\input{prompts/comparison_feedback}
+\input{prompts/error_feedback}
+\input{prompts/no_code_feedback}
+
+\subsection{QA Evaluation}
+\input{prompts/qa_system}
+\input{prompts/qa_user}
+
+%% ============================================================
+%% Training Parameters
+%% ============================================================
+
+\section{Training details}
+\label{app:train_details}
+
+\begin{table}[t]
+\centering
+\small
+\begin{tabular}{ll}
+\toprule
+\textbf{Category} & \textbf{Hyperparameter} \\
+\midrule
+
+\multicolumn{2}{c}{\textit{Model}} \\
+Max prompt length & 1024 \\
+Max response length & 16384 \\
+Gradient checkpointing & Enabled \\
+Model dtype & bfloat16 \\
+
+\midrule
+\multicolumn{2}{c}{\textit{Training}} \\
+Algorithm & GRPO \\
+Total epochs & 1 \\
+Train batch size & 8 \\
+PPO mini-batch size & 4 \\
+Actor learning rate & $1 \times 10^{-5}$ \\
+Clip ratio (low) & 0.20 \\
+Clip ratio (high) & 0.28 \\
+Clip ratio constant & 10.0 \\
+Use KL in reward & False \\
+KL coefficient & 0.0 \\
+Use KL loss & False \\
+KL loss coefficient & 0.0 \\
+Dynamic batch size & Enabled \\
+
+\midrule
+\multicolumn{2}{c}{\textit{Rollout / Inference}} \\
+Backend & vLLM (async) \\
+Tensor parallel size & 2 \\
+Responses per prompt (train) & 4 \\
+Responses per prompt (val) & 1 \\
+Temperature (val) & 1.0 \\
+Top-p (val) & 0.6 \\
+Max user turns & 5 \\
+Max assistant turns & 5 \\
+Multi-turn format & Hermes \\
+
+\bottomrule
+\end{tabular}
+\caption{Training and inference hyperparameters for the MIMIC-IV agent using GRPO.}
+\label{tab:hyperparams}
+\end{table}
+
+%% ============================================================
+%% COMPUTE RESOURCES
+%% ============================================================
+
+\section{Compute Resources}
+\label{app:compute}
+
+All inference experiments were run on a \texttt{8xB200 Node}. Inference was served with \texttt{vllm}. Approximate runtimes per experimental condition are as follows:
+
+\begin{itemize}[nosep]
+    \item \textbf{Autoformalization (per concept):} 20 GPU-hours on average for a \texttt{Qwen3.5-27B} model run with efficient parallelization via topological ordering of concepts.
+    \item \textbf{GRPO Finetuning:} \textcolor{red}{[TODO: Z]} GPU-hours total, ran on a subset of the training split (5 questions per concept) for a total of \textcolor{red}{[TODO: Z]} questions.
+    \item \textbf{Zero-shot inference evaluation (56{,}700 QA pairs, one model):} 114 GPU-hours when using \texttt{Qwen3.5-27B} and parallel processing of 4 concepts at a time. Further gain could be made
+\end{itemize}
+
+Total compute across all reported experiments (all models, all baselines) is estimated at \textcolor{red}{[TODO: total]} GPU-hours. No substantial additional compute was used for preliminary or failed experiments beyond the reported runs.

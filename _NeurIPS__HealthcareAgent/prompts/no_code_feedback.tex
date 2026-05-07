@@ -1,0 +1,40 @@
+\begin{figure*}[h]
+    \begin{AIbox}{Structural Feedback Prompts}
+
+\begin{quote}
+\ttfamily
+\tiny
+\vspace{2mm}
+
+\textbf{(a) No code blocks detected:}
+
+No <code> blocks found. Please write code inside <code>...</code> tags to explore the schema and build your function.
+
+\vspace{3mm}
+
+\textbf{(b) No FINAL\_FUNCTION assignment:}
+
+You haven't set FINAL\_FUNCTION yet.
+Once you have tested your function and are confident it works, write a
+single self-contained code block with all imports, helpers, the function
+definition, and `FINAL\_FUNCTION = <your\_func>' at the end.
+Do NOT include test calls or print statements in that block.
+
+\vspace{3mm}
+
+\textbf{(c) Final iteration notice:}
+
+IMPORTANT: This is your FINAL iteration. You MUST produce your best
+FINAL\_FUNCTION now. Write a single self-contained code block containing
+all imports, helpers, the function definition, and
+`FINAL\_FUNCTION = <your\_func>' at the end.
+Do NOT include test calls or print statements in that block.
+Even if you are not fully confident, submit your best attempt now.
+
+\end{quote}
+
+\end{AIbox}
+    \caption{Structural feedback prompts used to enforce agent output format. (a) is sent when the agent responds with no \texttt{<code>} blocks, (b) when the agent has not yet submitted a \texttt{FINAL\_FUNCTION}, and (c) when the maximum iteration budget is reached.}
+    \label{prompts:structural_feedback}
+
+\end{figure*}

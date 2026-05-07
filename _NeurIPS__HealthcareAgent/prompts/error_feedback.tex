@@ -1,0 +1,21 @@
+\begin{figure*}[h]
+    \begin{AIbox}{Error Feedback Prompt}
+
+\begin{quote}
+\ttfamily
+\tiny
+\vspace{2mm}
+
+Evaluating your function raised an error:
+\{traceback\}
+
+Fix the function, test it, then submit a new self-contained code block
+assigning FINAL\_FUNCTION (with all imports and helpers, no test calls).
+
+\end{quote}
+
+\end{AIbox}
+    \caption{Feedback prompt sent to the agent when the submitted function raises a runtime error during evaluation. The full Python traceback is included in \{traceback\}.}
+    \label{prompts:error_feedback}
+
+\end{figure*}

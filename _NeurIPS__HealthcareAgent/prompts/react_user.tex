@@ -1,0 +1,60 @@
+\begin{figure*}[h]
+    \begin{AIbox}{Autoformalization Task Prompt}
+
+\begin{quote}
+\ttfamily
+\tiny
+\vspace{2mm}
+
+YOUR TASK --- build a function for the clinical concept `\{concept\_name\}':
+
+You need to write a Python function that can help answer clinical
+questions about `\{concept\_name\}' for individual patients.
+
+Here are example questions your function will need to support:
+\{sample\_questions\}
+
+APPROACH:
+1. **Search for guidelines** --- call `search\_guidelines()' to see what clinical
+   guidelines are available, then use relevant keywords (e.g.
+   `search\_guidelines("\{concept\_name\}")') to find the most relevant ones.
+   Read each relevant guideline with `get\_guideline(name)' --- these contain
+   clinical definitions, scoring criteria, and implementation details that
+   are essential for getting the logic right.
+2. **Check for reusable functions** --- call `search\_functions()' to see if any
+   previously implemented functions could serve as helpers. Use
+   `get\_function\_info(name)' to inspect their signatures and docstrings,
+   and `load\_function(name)' to import ones you want to reuse.
+3. **Explore the database schema** --- list tables, inspect columns, look up
+   dictionary/lookup tables (d\_labitems, d\_items, d\_icd\_diagnoses, etc.).
+   Run sample queries to understand data formats.
+4. **Write a Python function** --- implement the clinical logic based on what
+   you learned from the guidelines and the database schema.  The function
+   should accept patient identifiers (e.g. subject\_id, hadm\_id, stay\_id)
+   and return information that captures the clinical concept.
+   The output format is flexible --- return whatever best represents the
+   concept (e.g., a value, dict, DataFrame, boolean, list, etc.).
+5. **Test thoroughly** --- call your function with several sample patients
+   and verify the output looks reasonable.  Debug and fix any issues.
+   Do NOT assign FINAL\_FUNCTION until you are confident it works.
+6. **Save it** --- once satisfied, write a single self-contained code block
+   with ALL imports, helpers, function def, and FINAL\_FUNCTION assignment.
+   No test calls or print statements in that final block.
+
+FINAL FUNCTION REQUIREMENTS:
+  - It should return useful clinical information that captures the concept.
+  - The input should involve some patient identifier (e.g. stay\_id)
+  - The output can be any format (scalar, dict, DataFrame, etc.) --- choose
+    whatever best represents the clinical concept.
+  - Use `query\_db(sql)' or `query\_fhir(resource\_type, params)' to look up data.
+  - Have a detailed docstring which explains the expected input and output.
+
+Start by searching for guidelines relevant to `\{concept\_name\}'.
+
+\end{quote}
+
+\end{AIbox}
+    \caption{The task prompt provided to the LLM agent to initiate autoformalization of a clinical concept. Template variables \{concept\_name\} and \{sample\_questions\} are filled at runtime.}
+    \label{prompts:react_user_prompt}
+
+\end{figure*}
