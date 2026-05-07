@@ -329,6 +329,80 @@ Interpretation:
 | `gpt-oss-120b` | `1026/2000` | `0.6317` | `0.5206` |
 | `gemma-4-31B-it` | `1714/2000` | `0.2674` | `0.2409` |
 
+## Structured-State Metric Decomposition
+
+The suspect and alert set metrics need to be interpreted carefully because both include a large number of negative-set checkpoints. That makes the overall exact-match metrics deceptively flat across models.
+
+For the primary `benchmark_2k` release:
+
+- gold suspect set empty rate: `0.1281`
+- gold alert set empty rate: `0.2264`
+
+This means that a model that frequently predicts empty sets can accumulate a non-trivial exact-match score without truly recovering positive disease-state structure.
+
+All decomposition values below were recomputed directly from `benchmark_2k` `rollouts.json` using the same `_set_f1` scorer implemented in [environment.py](/Users/chloe/Documents/New%20project/src/sepsis_mvp/environment.py:422). This keeps the split tables numerically aligned with the official `evaluation.json` step-level metrics.
+
+### Finished Qwen Models: Overall Set Metrics
+
+| Model | `suspect_overall_exact` | `suspect_overall_macro_f1` | `alert_overall_exact` | `alert_overall_macro_f1` | `alert_overall_macro_precision` | `alert_overall_macro_recall` |
+|---|---:|---:|---:|---:|---:|---:|
+| `Qwen3.5-27B` | `0.1239` | `0.1472` | `0.2195` | `0.2423` | `0.2643` | `0.2355` |
+| `Qwen3.5-9B` | `0.1266` | `0.1366` | `0.2213` | `0.2456` | `0.2707` | `0.2380` |
+| `Qwen3.5-4B` | `0.1171` | `0.1396` | `0.2232` | `0.2453` | `0.2647` | `0.2390` |
+
+At first glance these values look very close, especially for `alert_overall_exact`, which clusters around `0.22`.
+
+### Finished Qwen Models: Negative-Set Checkpoints
+
+| Model | `suspect_negative_exact` | `suspect_negative_pred_empty_rate` | `alert_negative_exact` | `alert_negative_pred_empty_rate` |
+|---|---:|---:|---:|---:|
+| `Qwen3.5-27B` | `0.9189` | `0.9189` | `0.9529` | `0.9529` |
+| `Qwen3.5-9B` | `0.9601` | `0.9601` | `0.9647` | `0.9647` |
+| `Qwen3.5-4B` | `0.8766` | `0.8766` | `0.9477` | `0.9477` |
+
+Under the benchmark scorer, empty-empty pairs receive precision `= 1`, recall `= 1`, and F1 `= 1`. As a result, the negative-only exact-match and negative-only F1 values move together; the simpler exact / predicted-empty presentation is therefore sufficient for the negative slice.
+
+These negative-case results explain the clustering:
+
+- almost all exact matches on alert sets come from checkpoints where the gold alert set is empty
+- similarly, a large fraction of suspect-set exactness comes from empty suspect checkpoints
+
+In other words:
+
+- `alert_overall_exact` near `0.22` is largely an empty-alert baseline effect
+- `suspect_overall_exact` near `0.12` is similarly anchored by empty-suspect checkpoints
+
+### Finished Qwen Models: Positive-Set Checkpoints
+
+| Model | `suspect_positive_exact` | `suspect_positive_pred_nonempty_rate` | `suspect_positive_macro_f1` | `alert_positive_exact` | `alert_positive_pred_nonempty_rate` | `alert_positive_macro_f1` | `alert_positive_macro_precision` | `alert_positive_macro_recall` |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|
+| `Qwen3.5-27B` | `0.0071` | `0.1657` | `0.0338` | `0.0049` | `0.3124` | `0.0343` | `0.0628` | `0.0255` |
+| `Qwen3.5-9B` | `0.0041` | `0.0758` | `0.0156` | `0.0038` | `0.2449` | `0.0352` | `0.0676` | `0.0253` |
+| `Qwen3.5-4B` | `0.0055` | `0.2112` | `0.0313` | `0.0112` | `0.2626` | `0.0398` | `0.0648` | `0.0317` |
+
+These positive-only results tell the real story.
+
+Key takeaways:
+
+- true positive-step exact match is near zero for both suspect and alert sets across all finished Qwen models
+- the finished Qwen models remain highly conservative on positive suspect and alert recovery
+- `Qwen3.5-27B` is best on suspect-family recovery overall, but not on positive-only alert exactness
+- `Qwen3.5-4B` is slightly less conservative on positive alert steps, which explains why some alert metrics look marginally better even though it is not stronger overall
+- `Qwen3.5-9B` is the most conservative of the three on positive suspect recovery
+
+### Why Larger Models Do Not Separate Much on `alerts_exact_match`
+
+The lack of separation on `alerts_exact_match` is not evidence that the models are equally strong.
+
+Instead it reflects a structural property of the metric under this benchmark:
+
+1. empty alert sets still make up `22.64%` of checkpoints
+2. the Qwen models predict empty alert sets on `74.77%` to `80.26%` of checkpoints
+3. many gold alert sets are multi-label rather than singleton
+4. exact set match collapses all partial successes to zero
+
+So the larger model does help in broader ways, but `alerts_exact_match` is too dominated by empty-set correctness and multi-label harshness to show that advantage clearly.
+
 ### Main interpretation of `benchmark_2k`
 
 `Qwen3.5-27B` is the best fully completed model.
