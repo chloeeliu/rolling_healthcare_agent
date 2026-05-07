@@ -121,6 +121,37 @@ Artifact provenance note:
 - when `rollouts.json` is available, it is preferred over `trajectories.jsonl` for completion recovery
 - `events.jsonl` is useful for provenance, but not always sufficient to reconstruct missing completed rollouts
 
+## Metric Hierarchy
+
+The report uses the following priority order.
+
+### Core benchmark metrics
+
+- `suspected_conditions_macro_f1`
+- `alerts_macro_f1`
+- `alerts_macro_precision`
+- `alerts_macro_recall`
+- `suspected_conditions_exact_match`
+- `alerts_exact_match`
+
+These are the main structured-state metrics because they directly evaluate whether the model recovered the correct disease-family surveillance state.
+
+### Temporal and patient-level metrics
+
+- `first_alert_mean_abs_error_hours`
+- `false_early_alert_trajectories`
+- `missed_alert_trajectories`
+- `strict_all4_trajectory_rate`
+
+These matter because this is a longitudinal benchmark. A model that is locally plausible but cannot sustain the correct surveillance picture over the full stay is still failing an important part of the task.
+
+### Auxiliary coarse response-layer summaries
+
+- `global_action_accuracy`
+- `priority_accuracy`
+
+These are still useful, but they are secondary because they compress the richer checkpoint state into simplified action and urgency labels.
+
 ## Metric Note
 
 For completed runs, this report uses the saved `evaluation.json` metrics directly.
@@ -139,32 +170,26 @@ In addition to the official metrics, this report also uses one derived strict st
   - `suspected_conditions`
   - `alerts`
 
-This is not the official benchmark metric, but it is a useful indicator of true longitudinal consistency.
+This is not a saved official metric, but it is a useful patient-level longitudinal indicator.
 
-## Why Trajectory Exactness Should Be Auxiliary
+## Why Trajectory-Level Metrics Matter
 
-I do **not** recommend using strict trajectory exactness as the primary headline metric in the benchmark paper.
+Trajectory-level performance is important in this benchmark because the clinical task is not merely to be locally plausible at isolated checkpoints.
 
-Why:
+What we want to know is whether a model can:
 
-- it is extremely brittle: one checkpoint mistake can zero out an otherwise strong stay
-- it mixes many different failure modes into one number
-- it can understate meaningful partial competence on hard longitudinal cases
-- it is better as a stress-test or appendix metric than as the main evidence that the benchmark is challenging
+- maintain the right surveillance state across time
+- trigger alerts at the right point in the stay
+- avoid silently missing whole alerting trajectories
+- stay longitudinally consistent under mixed temporal semantics
 
-So the primary benchmark story should instead emphasize:
-
-- checkpoint-level `global_action_accuracy`
-- checkpoint-level `priority_accuracy`
-- family-level set recovery through `suspected_conditions_macro_f1`
-- family-level alert recovery through `alerts_macro_f1`
-- first-alert timing error and missed-alert trajectories
-
-The strict all-checkpoint stay metric is still useful, but mainly as supporting evidence that the benchmark demands true longitudinal consistency rather than isolated local decisions.
+So while strict exact trajectory correctness is harsh, it is still meaningful. It should not be the only metric, but it belongs in the core interpretation of a rolling surveillance benchmark rather than being treated as a throwaway appendix-only statistic.
 
 ## Metric Definitions
 
 The surveillance metrics are defined in `src/sepsis_mvp/environment.py`.
+
+### Auxiliary coarse summaries
 
 ### `global_action_accuracy`
 
@@ -185,6 +210,8 @@ Interpretation:
 
 - severity calibration
 - stricter than simple action correctness because a model can choose the right action direction but the wrong urgency
+
+### Core structured-state metrics
 
 ### `suspected_conditions_exact_match`
 
@@ -242,6 +269,8 @@ Interpretation:
 
 - best single family-level summary of alert-state reconstruction
 
+### Temporal and patient-level metrics
+
 ### `first_alert_mean_error_hours`
 
 For stays where both the benchmark and the model emitted a first alert, compute:
@@ -280,13 +309,25 @@ Interpretation:
 
 `benchmark_2k` is the main benchmark and should be the primary table in the paper.
 
-| Model | Completed stays | `global_action_accuracy` | `priority_accuracy` | `suspected_conditions_macro_f1` | `alerts_macro_f1` | `alerts_macro_precision` | `alerts_macro_recall` | `suspected_conditions_exact_match` | `alerts_exact_match` | `first_alert_mean_abs_error_hours` | `false_early_alert_trajectories` | `missed_alert_trajectories` |
-|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
-| `Qwen3.5-27B` | `2000/2000` | `0.4577` | `0.4332` | `0.1472` | `0.2423` | `0.2643` | `0.2355` | `0.1239` | `0.2195` | `10.6119` | `37` | `909` |
-| `Qwen3.5-4B` | `2000/2000` | `0.4153` | `0.3993` | `0.1396` | `0.2453` | `0.2647` | `0.2390` | `0.1171` | `0.2232` | `9.5982` | `34` | `982` |
-| `Qwen3.5-9B` | `2000/2000` | `0.4083` | `0.3726` | `0.1366` | `0.2456` | `0.2707` | `0.2380` | `0.1266` | `0.2213` | `12.1627` | `17` | `998` |
-| `gpt-oss-120b` | `1026/2000` | `0.6317` | `0.5206` | `0.2054` | `0.2533` | `0.2759` | `0.2476` | `0.1276` | `0.2123` | `6.8496` | `58` | `209` |
-| `gemma-4-31B-it` | `1714/2000` | `0.2674` | `0.2409` | `0.1344` | `0.2277` | `0.2304` | `0.2269` | `0.1309` | `0.2253` | `22.9554` | `2` | `1455` |
+### Core and Temporal Metrics
+
+| Model | Completed stays | `suspected_conditions_macro_f1` | `alerts_macro_f1` | `alerts_macro_precision` | `alerts_macro_recall` | `suspected_conditions_exact_match` | `alerts_exact_match` | `first_alert_mean_abs_error_hours` | `false_early_alert_trajectories` | `missed_alert_trajectories` | `strict_all4_trajectory_rate` |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| `Qwen3.5-27B` | `2000/2000` | `0.1472` | `0.2423` | `0.2643` | `0.2355` | `0.1239` | `0.2195` | `10.6119` | `37` | `909` | `0.0110` |
+| `Qwen3.5-4B` | `2000/2000` | `0.1396` | `0.2453` | `0.2647` | `0.2390` | `0.1171` | `0.2232` | `9.5982` | `34` | `982` | `0.0090` |
+| `Qwen3.5-9B` | `2000/2000` | `0.1366` | `0.2456` | `0.2707` | `0.2380` | `0.1266` | `0.2213` | `12.1627` | `17` | `998` | `0.0115` |
+| `gpt-oss-120b` | `1026/2000` | `0.2054` | `0.2533` | `0.2759` | `0.2476` | `0.1276` | `0.2123` | `6.8496` | `58` | `209` | `0.0049` |
+| `gemma-4-31B-it` | `1714/2000` | `0.1344` | `0.2277` | `0.2304` | `0.2269` | `0.1309` | `0.2253` | `22.9554` | `2` | `1455` | `0.0117` |
+
+### Auxiliary Coarse Summary Metrics
+
+| Model | Completed stays | `global_action_accuracy` | `priority_accuracy` |
+|---|---:|---:|---:|
+| `Qwen3.5-27B` | `2000/2000` | `0.4577` | `0.4332` |
+| `Qwen3.5-4B` | `2000/2000` | `0.4153` | `0.3993` |
+| `Qwen3.5-9B` | `2000/2000` | `0.4083` | `0.3726` |
+| `gpt-oss-120b` | `1026/2000` | `0.6317` | `0.5206` |
+| `gemma-4-31B-it` | `1714/2000` | `0.2674` | `0.2409` |
 
 ### Main interpretation of `benchmark_2k`
 
@@ -294,9 +335,9 @@ Interpretation:
 
 Why that conclusion is the safest:
 
-- it has the best top-level action control: `0.4577` global action, `0.4332` priority
 - it has the best completed-run disease-state reconstruction on `suspected_conditions_macro_f1`
 - it misses fewer alert trajectories than the smaller completed Qwen variants
+- it keeps the best overall balance between core structured-state quality and patient-level temporal behavior
 - it is based on the full intended `2,000`-stay benchmark rather than a partial sample
 
 At the same time, the full table shows that the benchmark remains hard in a deeper sense:
@@ -305,6 +346,7 @@ At the same time, the full table shows that the benchmark remains hard in a deep
 - alert-family macro F1 remains clustered around `0.23` to `0.25`
 - suspect-family macro F1 remains only `0.14` to `0.15` for the finished Qwen runs
 - exact family-set recovery per checkpoint remains low even when coarse response-layer metrics look moderate
+- strict patient-level exactness remains near zero even for the strongest completed runs
 
 So even when a model is often directionally correct, it still rarely maintains a fully correct longitudinal surveillance state over the whole stay.
 
@@ -312,13 +354,13 @@ So even when a model is often directionally correct, it still rarely maintains a
 
 The partial `gpt-oss-120b` run is the most interesting incomplete result.
 
-On the `1,026` completed stays, it is substantially stronger than the finished Qwen runs on:
+On the `1,026` completed stays, it is substantially stronger than the finished Qwen runs on several core and temporal metrics:
 
-- `global_action_accuracy`: `0.6317`
-- `priority_accuracy`: `0.5206`
 - `suspected_conditions_macro_f1`: `0.2054`
+- `alerts_macro_f1`: `0.2533`
 - first-alert timing error: `6.85h`
 - missed alert trajectories: `209 / 967`
+- and, secondarily, on the coarse summaries `global_action_accuracy` and `priority_accuracy`
 
 However, two cautions matter:
 
@@ -328,7 +370,7 @@ However, two cautions matter:
 This suggests a specific behavioral profile:
 
 - `gpt-oss-120b` is much more willing to surface non-empty surveillance states and escalate earlier
-- that improves sensitivity and top-level action performance
+- that improves sensitivity and core alert recovery
 - but it does not yet translate into robust checkpoint-by-checkpoint full-state correctness
 
 This is promising, but it is not yet a fully comparable final result.
@@ -337,13 +379,13 @@ This is promising, but it is not yet a fully comparable final result.
 
 Within the completed Qwen family:
 
-- `27B` is clearly best on top-level decision quality
-- `4B` and `9B` slightly edge `27B` on alert macro F1
-- `27B` still has better overall balance because it misses fewer alert trajectories and is stronger on the higher-level decisions that control surveillance behavior
+- `27B` is best on `suspected_conditions_macro_f1`
+- `4B` and `9B` slightly edge `27B` on `alerts_macro_f1`
+- `27B` still has the best overall balance because it misses fewer alert trajectories and is strongest on the richer suspect-family recovery task
 
 This is an important nuance for the paper:
 
-- model scale seems to help most on maintaining the correct monitoring/escalation policy
+- model scale seems to help most on maintaining the richer surveillance picture
 - it does not automatically solve the harder disease-family reconstruction problem
 
 ## Deep Dive: Finished Qwen Models by Temporal Semantics
@@ -523,15 +565,29 @@ The cleanest summary sentence is:
 
 `benchmark_100` is useful for pilot comparison and sanity checking, but it should not replace the `benchmark_2k` story.
 
-| Model | Family | Completed stays | `global_action_accuracy` | `priority_accuracy` | `suspected_conditions_macro_f1` | `alerts_macro_f1` | `alerts_macro_precision` | `alerts_macro_recall` | `suspected_conditions_exact_match` | `alerts_exact_match` | `first_alert_mean_abs_error_hours` | `false_early_alert_trajectories` | `missed_alert_trajectories` |
-|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
-| `gpt-oss-120b` | open-weight | `100/100` | `0.6454` | `0.4792` | `0.2157` | `0.2469` | `0.2694` | `0.2393` | `0.1492` | `0.2031` | `5.15` | `10` | `14` |
-| `Qwen3.5-27B` | open-weight | `100/100` | `0.3869` | `0.3777` | `0.1942` | `0.2425` | `0.2554` | `0.2387` | `0.1831` | `0.2300` | `12.68` | `0` | `53` |
-| `Qwen3.5-4B` | open-weight | `100/100` | `0.3646` | `0.3454` | `0.1854` | `0.2643` | `0.2896` | `0.2571` | `0.1715` | `0.2408` | `11.26` | `1` | `56` |
-| `Qwen3.5-9B` | open-weight | `100/100` recovered from `rollouts.json` | `0.3531` | `0.3231` | `0.1856` | `0.2549` | `0.2777` | `0.2483` | `0.1815` | `0.2338` | `18.81` | `1` | `67` |
-| `gemma-4-31B-it` | open-weight | `100/100` | `0.3069` | `0.2838` | `0.1821` | `0.2434` | `0.2442` | `0.2430` | `0.1762` | `0.2415` | `16.00` | `0` | `81` |
-| `Gemini/gemini-3.1-pro-preview` | closed-source | `24/100` recovered | `0.2564` | `0.2564` | `0.2671` | `0.1959` | `0.1987` | `0.1944` | `0.2564` | `0.1891` | `5.00` | `0` | `19` |
-| `Claude/claude-sonnet-4-6` | closed-source | `28/100` recovered | `0.2060` | `0.2088` | `0.2225` | `0.1758` | `0.1758` | `0.1758` | `0.2170` | `0.1758` | `0.00` on only `3` matched alert cases | `0` | `24` |
+### Core and Temporal Metrics
+
+| Model | Family | Completed stays | `suspected_conditions_macro_f1` | `alerts_macro_f1` | `alerts_macro_precision` | `alerts_macro_recall` | `suspected_conditions_exact_match` | `alerts_exact_match` | `first_alert_mean_abs_error_hours` | `false_early_alert_trajectories` | `missed_alert_trajectories` |
+|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| `gpt-oss-120b` | open-weight | `100/100` | `0.2157` | `0.2469` | `0.2694` | `0.2393` | `0.1492` | `0.2031` | `5.15` | `10` | `14` |
+| `Qwen3.5-27B` | open-weight | `100/100` | `0.1942` | `0.2425` | `0.2554` | `0.2387` | `0.1831` | `0.2300` | `12.68` | `0` | `53` |
+| `Qwen3.5-4B` | open-weight | `100/100` | `0.1854` | `0.2643` | `0.2896` | `0.2571` | `0.1715` | `0.2408` | `11.26` | `1` | `56` |
+| `Qwen3.5-9B` | open-weight | `100/100` recovered from `rollouts.json` | `0.1856` | `0.2549` | `0.2777` | `0.2483` | `0.1815` | `0.2338` | `18.81` | `1` | `67` |
+| `gemma-4-31B-it` | open-weight | `100/100` | `0.1821` | `0.2434` | `0.2442` | `0.2430` | `0.1762` | `0.2415` | `16.00` | `0` | `81` |
+| `Gemini/gemini-3.1-pro-preview` | closed-source | `24/100` recovered | `0.2671` | `0.1959` | `0.1987` | `0.1944` | `0.2564` | `0.1891` | `5.00` | `0` | `19` |
+| `Claude/claude-sonnet-4-6` | closed-source | `28/100` recovered | `0.2225` | `0.1758` | `0.1758` | `0.1758` | `0.2170` | `0.1758` | `0.00` on only `3` matched alert cases | `0` | `24` |
+
+### Auxiliary Coarse Summary Metrics
+
+| Model | Family | Completed stays | `global_action_accuracy` | `priority_accuracy` |
+|---|---|---:|---:|---:|
+| `gpt-oss-120b` | open-weight | `100/100` | `0.6454` | `0.4792` |
+| `Qwen3.5-27B` | open-weight | `100/100` | `0.3869` | `0.3777` |
+| `Qwen3.5-4B` | open-weight | `100/100` | `0.3646` | `0.3454` |
+| `Qwen3.5-9B` | open-weight | `100/100` recovered from `rollouts.json` | `0.3531` | `0.3231` |
+| `gemma-4-31B-it` | open-weight | `100/100` | `0.3069` | `0.2838` |
+| `Gemini/gemini-3.1-pro-preview` | closed-source | `24/100` recovered | `0.2564` | `0.2564` |
+| `Claude/claude-sonnet-4-6` | closed-source | `28/100` recovered | `0.2060` | `0.2088` |
 
 ### How to read the `benchmark_100` results
 
