@@ -7,6 +7,7 @@ Date: 2026-05-06
 This report synthesizes the final rolling-surveillance evaluation artifacts under:
 
 - `result/rolling_eval_autoform/`
+- `result/rolling_eval_zeroshot/`
 
 It is written against the benchmark design and writing guidance in:
 
@@ -23,12 +24,16 @@ The goal is to give a paper-ready, method-aware interpretation of the final resu
 
 ## Executive Summary
 
+- The evaluation now spans two distinct surveillance backends:
+  - `session_tools` autoformalization, where the agent queries the autoformalized function and guideline layer
+  - `zeroshot_python`, where the agent reasons directly over checkpoint-scoped raw MIMIC-IV tables through Python and `query_db`
 - The benchmark output is a structured surveillance decision, not a binary action label alone. The model must return disease/state names through `suspected_conditions` and `alerts`, while `global_action` and `priority` are compressed response-layer summaries derived from that richer state.
-- The benchmark remains difficult even for the strongest available runs. On the primary `benchmark_2k` setting, no fully completed model exceeded `45.77%` `global_action_accuracy` or `43.32%` `priority_accuracy`, and the family-level core metrics remained substantially lower than those coarse summaries.
-- Among the fully completed `2,000`-stay open-weight runs, `Qwen3.5-27B` is the strongest overall model. It is best on `global_action_accuracy`, `priority_accuracy`, and `suspected_conditions_macro_f1`, while also missing fewer alert trajectories than the smaller Qwen variants.
-- `gpt-oss-120b` is the most promising partially completed open-weight run. On the first `1,026` completed trajectories of `benchmark_2k`, it substantially outperforms the finished Qwen runs on global-action and priority accuracy, and it misses far fewer alert trajectories. However, it is still incomplete and should be reported as provisional rather than as the primary headline.
-- The closed-source pilots are not yet publication-grade comparisons. `Claude Sonnet 4.6` and `Gemini 3.1 Pro Preview` only completed `28/100` and `24/100` trajectories respectively before interruption, and both were heavily affected by repeated tool-runtime failures.
-- Across nearly all models, the same pattern appears: models are better at deciding that some monitoring or escalation action is needed than they are at reconstructing the correct full disease-family state over time. This is exactly the difficulty predicted by the benchmark design.
+- The benchmark remains difficult even for the strongest available runs. On the primary autoformalized `benchmark_2k` setting, no fully completed model exceeded `45.77%` `global_action_accuracy` or `43.32%` `priority_accuracy`, and the family-level core metrics remained substantially lower than those coarse summaries.
+- Among the fully completed `2,000`-stay open-weight autoformalized runs, `Qwen3.5-27B` is the strongest overall model. It is best on `global_action_accuracy`, `priority_accuracy`, and `suspected_conditions_macro_f1`, while also missing fewer alert trajectories than the smaller Qwen variants.
+- `gpt-oss-120b` is the most promising partially completed open-weight autoformalized run. On the first `1,026` completed trajectories of `benchmark_2k`, it substantially outperforms the finished Qwen runs on several core and temporal metrics. However, it is still incomplete and should be reported as provisional rather than as the primary headline.
+- The zero-shot raw-table setting tells a different story. On the short `benchmark_100` evaluation, closed-source models are clearly strongest: `Gemini 3.1 Pro Preview` leads suspect-family recovery (`0.4393` macro F1), while `Claude Sonnet 4.6` leads alert-family recovery (`0.4722` macro F1) and first-alert timing (`3.95h` mean absolute error). `GPT-5.4` is intermediate but still comfortably ahead of the open-weight zero-shot runs.
+- For open-weight Qwen models, zero-shot versus autoformalization is not a simple win or loss. Autoformalization generally improves action calibration and alert-family recovery for the smaller Qwen models, especially on active-interval and TTL-style semantics, but `Qwen3.5-27B` retains better raw-table suspect-family recovery and stronger persistent / cumulative semantics under zero-shot. The tradeoff is that the autoformalized `27B` run becomes more conservative and misses many more alerting trajectories.
+- The closed-source comparison must be qualified by backend. In zero-shot `benchmark_100`, the closed-source models are complete and clearly stronger. In autoformalization, the saved closed-source runs are incomplete and tool-error-heavy, so they are not fair leaderboard entries. Across nearly all settings, the core difficulty remains the same: models are better at deciding that some monitoring or escalation action is needed than they are at reconstructing the correct full disease-family state over time.
 
 ## Benchmark Recap
 
@@ -58,6 +63,43 @@ The benchmark intentionally mixes several temporal semantics:
 - recomputed composite states
 
 That mixed temporal structure is central to interpretation. A model can perform reasonably on a top-level action label while still failing to maintain the correct evolving clinical state across families such as infection, sepsis, renal dysfunction, respiratory support, hemodynamics, neurologic impairment, metabolic derangement, and coagulation.
+
+## Experiment Modes
+
+The combined results here come from two surveillance backends that expose very different interfaces to the model.
+
+### `zeroshot_python`
+
+This is the raw-table setting.
+
+Per the runbook, the model receives a checkpoint-scoped Python session with:
+
+- `search_guidelines`
+- `get_guideline`
+- `search_functions`
+- `get_function_info`
+- `load_function`
+- `query_db`
+
+This means the model can directly inspect raw MIMIC-IV evidence through DuckDB queries inside the checkpoint session.
+
+### `session_tools`
+
+This is the autoformalization setting.
+
+Instead of directly calling `query_db`, the model operates through outer tools:
+
+- `search_guidelines`
+- `get_guideline`
+- `search_functions`
+- `get_function_info`
+- `load_function`
+- `call_function`
+
+So the comparison is not merely “prompt A versus prompt B.” It is a comparison between:
+
+- direct raw-table reasoning with Python and ad hoc querying
+- structured access through the formalized surveillance function layer
 
 ## Response-Layer Compression
 
@@ -97,23 +139,33 @@ So a model can achieve a superficially moderate coarse score without truly recov
 
 ## Evaluation Status Audit
 
-Not all runs finished cleanly. This matters for fair reporting.
+Not all runs finished cleanly, and the two backends have very different coverage. This matters for fair reporting.
 
-| Model | Family | `benchmark_100` | `benchmark_2k` | Status note |
-|---|---|---:|---:|---|
-| `Qwen3.5-27B` | open-weight | `100/100` | `2000/2000` | fully completed |
-| `Qwen3.5-9B` | open-weight | `100/100` recovered from `rollouts.json` | `2000/2000` | `benchmark_100` canonical trajectory file was truncated, but saved rollouts cover all `100` stays |
-| `Qwen3.5-4B` | open-weight | `100/100` | `2000/2000` | fully completed |
-| `gemma-4-31B-it` | open-weight | `100/100` | `1714/2000` recovered | `benchmark_2k` incomplete |
-| `gpt-oss-120b` | open-weight | `100/100` | `1026/2000` recovered | `benchmark_2k` interrupted by backend error |
-| `Claude/claude-sonnet-4-6` | closed-source | `28/100` recovered | not run | interrupted |
-| `Gemini/gemini-3.1-pro-preview` | closed-source | `24/100` recovered | not run | interrupted |
+| Mode | Model | Family | `benchmark_100` | `benchmark_2k` | Status note |
+|---|---|---|---:|---:|---|
+| `session_tools` | `Qwen3.5-27B` | open-weight | `100/100` | `2000/2000` | fully completed |
+| `session_tools` | `Qwen3.5-9B` | open-weight | `100/100` recovered from `rollouts.json` | `2000/2000` | `benchmark_100` canonical trajectory file was truncated, but saved rollouts cover all `100` stays |
+| `session_tools` | `Qwen3.5-4B` | open-weight | `100/100` | `2000/2000` | fully completed |
+| `session_tools` | `gpt-oss-120b` | open-weight | `100/100` | `1026/2000` recovered | `benchmark_2k` interrupted by backend error |
+| `session_tools` | `gemma-4-31B-it` | open-weight | `100/100` | `1714/2000` recovered | `benchmark_2k` incomplete |
+| `session_tools` | `Claude/claude-sonnet-4-6` | closed-source | `28/100` recovered | not run | interrupted |
+| `session_tools` | `Gemini/gemini-3.1-pro-preview` | closed-source | `24/100` recovered | not run | interrupted |
+| `zeroshot_python` | `GPT/gpt-5.4` | closed-source | `100/100` | not run | completed short raw-table pilot |
+| `zeroshot_python` | `Claude/claude-sonnet-4-6` | closed-source | `100/100` | not run | completed short raw-table pilot |
+| `zeroshot_python` | `Gemini/gemini-3.1-pro-preview` | closed-source | `100/100` | not run | completed short raw-table pilot |
+| `zeroshot_python` | `Qwen3.5-27B` | open-weight | `100/100` | not run | completed short raw-table pilot |
+| `zeroshot_python` | `Qwen3.5-9B` | open-weight | `100/100` | not run | completed short raw-table pilot |
+| `zeroshot_python` | `Qwen3.5-4B` | open-weight | `100/100` | `394/2000` recovered | only saved partial long raw-table run |
+| `zeroshot_python` | `gpt-oss-120b` | open-weight | `100/100` | not run | completed short raw-table pilot |
+| `zeroshot_python` | `gemma-4-31B-it` | open-weight | `100/100` | not run | completed short raw-table pilot |
 
-Important implication:
+Important implications:
 
-- the only clean, apples-to-apples primary comparison on the full `2,000`-stay benchmark is among the completed Qwen runs
-- `gpt-oss-120b` and `gemma-4-31B-it` are informative but provisional on `benchmark_2k`
-- the closed-source results are pilot evidence only and should not be presented as definitive leaderboard entries
+- the only clean, apples-to-apples primary comparison on the full `2,000`-stay benchmark is still among the completed autoformalized Qwen runs
+- `gpt-oss-120b` and `gemma-4-31B-it` remain informative but provisional on autoformalized `benchmark_2k`
+- the zero-shot raw-table setting currently supports a fair `benchmark_100` comparison across open-weight and closed-source models
+- there is no completed zero-shot `benchmark_2k` leaderboard, so short raw-table performance should not be overgeneralized to the full benchmark
+- the autoformalized closed-source results remain pilot evidence only and should not be presented as definitive leaderboard entries
 
 Artifact provenance note:
 
@@ -305,7 +357,7 @@ Interpretation:
 - trajectory-level alert omission
 - especially important in this benchmark because many models are conservative
 
-## Primary Results: `benchmark_2k`
+## Autoformalization Primary Results: `benchmark_2k`
 
 `benchmark_2k` is the main benchmark and should be the primary table in the paper.
 
@@ -635,7 +687,7 @@ The cleanest summary sentence is:
 
 - the finished Qwen models are strongest on locally observable current support states, weaker on recent TTL states, and weakest by far on persistent, cumulative, and composite semantics that require explicit longitudinal state maintenance or recomputation
 
-## Auxiliary Results: `benchmark_100`
+## Autoformalization Pilot Results: `benchmark_100`
 
 `benchmark_100` is useful for pilot comparison and sanity checking, but it should not replace the `benchmark_2k` story.
 
@@ -688,27 +740,152 @@ So the same gap appears again:
 
 - top-level surveillance action prediction is easier than maintaining the exact full longitudinal surveillance state
 
+## Zero-Shot Raw-Table Results: `benchmark_100`
+
+The zero-shot raw-table setting uses `tool_backend = zeroshot_python`, meaning the model reasons directly over checkpoint-scoped raw MIMIC-IV evidence through Python and `query_db`.
+
+This is a materially different interface from the autoformalized `session_tools` setting, so these results should be interpreted as a comparison across backends rather than a pure prompt ablation.
+
+### Core and Temporal Metrics
+
+| Model | Family | Completed stays | `suspected_conditions_macro_f1` | `alerts_macro_f1` | `alerts_macro_precision` | `alerts_macro_recall` | `suspected_conditions_exact_match` | `alerts_exact_match` | `first_alert_mean_abs_error_hours` | `false_early_alert_trajectories` | `missed_alert_trajectories` | `strict_all4_trajectory_rate` |
+|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| `Gemini/gemini-3.1-pro-preview` | closed-source | `100/100` | `0.4393` | `0.4636` | `0.4788` | `0.4862` | `0.2531` | `0.2423` | `4.6047` | `19` | `8` | `0.0100` |
+| `Claude/claude-sonnet-4-6` | closed-source | `100/100` | `0.3830` | `0.4722` | `0.4657` | `0.5201` | `0.1808` | `0.2338` | `3.9535` | `31` | `8` | `0.0000` |
+| `GPT/gpt-5.4` | closed-source | `100/100` | `0.2561` | `0.3212` | `0.3789` | `0.3022` | `0.1862` | `0.2192` | `7.1045` | `17` | `27` | `0.0100` |
+| `gpt-oss-120b` | open-weight | `100/100` | `0.2564` | `0.2167` | `0.2445` | `0.2084` | `0.1715` | `0.1831` | `11.3333` | `23` | `4` | `0.0000` |
+| `Qwen3.5-27B` | open-weight | `100/100` | `0.2063` | `0.2195` | `0.2304` | `0.2175` | `0.1800` | `0.2062` | `12.0606` | `13` | `28` | `0.0100` |
+| `gemma-4-31B-it` | open-weight | `100/100` | `0.1982` | `0.2632` | `0.3026` | `0.2497` | `0.1646` | `0.2046` | `9.2778` | `12` | `22` | `0.0100` |
+| `Qwen3.5-9B` | open-weight | `100/100` | `0.1847` | `0.2408` | `0.2408` | `0.2408` | `0.1831` | `0.2408` | `20.0000` | `0` | `83` | `0.0200` |
+| `Qwen3.5-4B` | open-weight | `100/100` | `0.1830` | `0.2401` | `0.2408` | `0.2401` | `0.1815` | `0.2385` | `11.5200` | `2` | `69` | `0.0200` |
+
+### Auxiliary Coarse Summary Metrics
+
+| Model | Family | Completed stays | `global_action_accuracy` | `priority_accuracy` |
+|---|---|---:|---:|---:|
+| `Claude/claude-sonnet-4-6` | closed-source | `100/100` | `0.7623` | `0.5677` |
+| `Gemini/gemini-3.1-pro-preview` | closed-source | `100/100` | `0.7254` | `0.5938` |
+| `GPT/gpt-5.4` | closed-source | `100/100` | `0.6654` | `0.5169` |
+| `gemma-4-31B-it` | open-weight | `100/100` | `0.5538` | `0.3792` |
+| `gpt-oss-120b` | open-weight | `100/100` | `0.5315` | `0.4169` |
+| `Qwen3.5-27B` | open-weight | `100/100` | `0.3177` | `0.3108` |
+| `Qwen3.5-4B` | open-weight | `100/100` | `0.2700` | `0.2469` |
+| `Qwen3.5-9B` | open-weight | `100/100` | `0.2492` | `0.2408` |
+
+### Zero-Shot Interpretation
+
+The short raw-table setting supports a clean open-weight versus closed-source comparison because all eight `benchmark_100` runs are complete.
+
+The dominant pattern is clear:
+
+- the closed-source models are dramatically stronger than the open-weight models on raw-table `benchmark_100`
+- closed-source average `suspected_conditions_macro_f1` is `0.3595` versus `0.2057` for open-weight
+- closed-source average `alerts_macro_f1` is `0.4190` versus `0.2361`
+- closed-source average first-alert absolute error is `5.22h` versus `12.84h`
+- closed-source average missed-alert count is `14.3` versus `41.2`
+
+Within the closed-source group:
+
+- `Gemini 3.1 Pro Preview` is best on suspect-family state recovery and exact suspect-set matching
+- `Claude Sonnet 4.6` is best on alert-family macro F1 and first-alert timing, but it is also the most aggressive, with `31` false-early trajectories
+- `GPT-5.4` is clearly weaker than Claude and Gemini on the core structured-state metrics, but still stronger than the open-weight zero-shot runs
+
+Within the open-weight group:
+
+- `gpt-oss-120b` is the strongest suspect-family zero-shot model and misses only `4` alerting trajectories, but it pays for that sensitivity with many false-early trajectories and relatively weak alert-family F1
+- `gemma-4-31B-it` is the strongest open-weight zero-shot model on alert-family F1, but still remains far behind the closed-source leaders
+- the Qwen zero-shot runs are especially unstable: `Qwen3.5-9B` and `Qwen3.5-4B` collapse toward near-always-`continue_monitoring` behavior
+
+### Why Zero-Shot `benchmark_100` Is Not Enough
+
+The zero-shot raw-table setting currently does **not** provide a completed `benchmark_2k` comparison.
+
+The only saved long-run zero-shot artifact is a partial `Qwen3.5-4B` run on `394/2000` stays. That run is a warning sign rather than reassuring evidence:
+
+- `global_action_accuracy = 0.2411`
+- `priority_accuracy = 0.2130`
+- `alerts_macro_f1 = 0.2278`
+- but positive-only `alerts_macro_f1 = 0.0013`
+- and the model predicts `continue_monitoring` on `98.15%` of steps
+
+So the raw-table setting can look much better on short pilot runs than it does under sustained long-horizon evaluation. This is why the paper’s primary benchmark claims should still be anchored in the completed autoformalized `benchmark_2k` results.
+
+## Zero-Shot Versus Autoformalization
+
+The fairest paired comparison is on `benchmark_100`, where the Qwen family completed both backends cleanly.
+
+### Qwen `benchmark_100`: Overall and Positive-Only Comparison
+
+| Model | Mode | `suspected_conditions_macro_f1` | `alerts_macro_f1` | positive-only `suspected_conditions_macro_f1` | positive-only `alerts_macro_f1` | `global_action_accuracy` | `priority_accuracy` | `first_alert_mean_abs_error_hours` | `missed_alert_trajectories` |
+|---|---|---:|---:|---:|---:|---:|---:|---:|---:|
+| `Qwen3.5-27B` | autoformalization | `0.1942` | `0.2425` | `0.0165` | `0.0165` | `0.3869` | `0.3777` | `12.6829` | `53` |
+| `Qwen3.5-27B` | zero-shot | `0.2063` | `0.2195` | `0.0510` | `0.0176` | `0.3177` | `0.3108` | `12.0606` | `28` |
+| `Qwen3.5-9B` | autoformalization | `0.1856` | `0.2549` | `0.0050` | `0.0278` | `0.3531` | `0.3231` | `18.8148` | `67` |
+| `Qwen3.5-9B` | zero-shot | `0.1847` | `0.2408` | `0.0019` | `0.0010` | `0.2492` | `0.2408` | `20.0000` | `83` |
+| `Qwen3.5-4B` | autoformalization | `0.1854` | `0.2643` | `0.0236` | `0.0534` | `0.3646` | `0.3454` | `11.2632` | `56` |
+| `Qwen3.5-4B` | zero-shot | `0.1830` | `0.2401` | `0.0037` | `0.0021` | `0.2700` | `0.2469` | `11.5200` | `69` |
+
+### What Autoformalization Changes
+
+For the Qwen family as a whole on `benchmark_100`, autoformalization changes behavior in a structured way rather than simply shifting all metrics up or down.
+
+What it improves on average:
+
+- `global_action_accuracy`: `0.3682` versus `0.2790`
+- `priority_accuracy`: `0.3487` versus `0.2662`
+- `alerts_macro_f1`: `0.2539` versus `0.2335`
+- positive-only `alerts_macro_f1`: `0.0326` versus `0.0069`
+
+What it does **not** uniformly improve:
+
+- average suspect-family macro F1 is essentially flat to slightly lower
+- average suspect positive-only F1 is slightly lower: `0.0150` versus `0.0189`
+- `Qwen3.5-27B` becomes much more conservative on stay-level alerting, missing `53` trajectories in autoformalization versus `28` in zero-shot
+
+The best interpretation is that autoformalization regularizes smaller Qwen models and helps them recover explicit acute support / alert structure, but can also push the larger Qwen model into a more cautious output regime that under-calls alerts.
+
+### Temporal-Semantic Comparison for Qwen
+
+The semantic split makes that backend tradeoff clearer.
+
+Across the Qwen family on `benchmark_100`:
+
+- autoformalization strongly improves `active_interval` semantics on average: micro F1 `0.1685` versus `0.0125`
+- autoformalization also modestly improves `recent_measurement_ttl`: `0.0533` versus `0.0424`
+- zero-shot is better on average for `persistent_episode`: `0.0169` versus `0.0041`
+- zero-shot is better on average for `cumulative_max_stage`: `0.0242` versus `0.0063`
+- zero-shot is better on `composite_current_state`: `0.0164` versus `0.0000`
+
+This suggests that the autoformalized function layer is particularly helpful for:
+
+- active support intervals
+- recent-measurement states with explicit TTL-like reasoning
+
+But direct raw-table reasoning still allows `Qwen3.5-27B` to recover some persistent, cumulative, and composite structure that the formalized interface currently suppresses.
+
 ## Open-Weight Versus Closed-Source Interpretation
 
-The user requested explicit attention to the difference between open-source/open-weight models and closed-source models. The safest reading is:
+The user requested explicit attention to the difference between open-source/open-weight models and closed-source models. The safest reading now depends on backend.
 
 ### What we can say confidently
 
-- The best completed full-benchmark results currently come from open-weight models, because only open-weight models finished the entire `benchmark_2k` evaluation.
-- The strongest provisional result in the entire folder also comes from an open-weight model, `gpt-oss-120b`, though that run is incomplete.
-- The closed-source pilots in this artifact set do not currently support a fair leaderboard comparison because they were interrupted early and were strongly affected by tool failures.
+- In zero-shot raw-table `benchmark_100`, the closed-source models are clearly stronger than the open-weight models.
+- In autoformalized `benchmark_2k`, the best completed full-benchmark results currently come from open-weight models, because only open-weight models finished the full evaluation.
+- The strongest provisional long-run autoformalized result in the artifact set is still `gpt-oss-120b`, an open-weight model, though that run is incomplete.
+- The autoformalized closed-source runs do not currently support a fair leaderboard comparison because they were interrupted early and were strongly affected by tool failures.
 
 ### What we should not say yet
 
-- We should not claim that open-weight models are inherently better than closed-source models on this benchmark.
-- We should not claim that Claude or Gemini fail the benchmark in a definitive sense, because the saved runs are too partial and too tool-error-heavy.
-- We should not build a main paper figure that directly ranks closed-source and open-weight models together unless the closed-source runs are rerun cleanly to completion.
+- We should not claim that open-weight models are inherently better than closed-source models on this benchmark overall.
+- We should not claim that the zero-shot closed-source ordering will automatically carry over to the full `benchmark_2k` setting, because no completed closed-source long-run artifact exists.
+- We should not claim that Claude or Gemini fail the autoformalized benchmark in a definitive sense, because the saved `session_tools` runs are too partial and too tool-error-heavy.
+- We should not build a single backend-mixed leaderboard that treats zero-shot `benchmark_100` and autoformalized `benchmark_2k` as the same experimental condition.
 
 ### Best paper-ready phrasing
 
 A defensible summary sentence is:
 
-- in the current artifact set, the most reliable completed evidence comes from open-weight models, while the closed-source pilots remain incomplete and should be treated as preliminary
+- in the current artifact set, closed-source models dominate the short zero-shot raw-table pilot, while open-weight models provide the only reliable completed evidence on the full autoformalized `benchmark_2k` benchmark
 
 ## Behavior Patterns That Matter
 
@@ -750,6 +927,14 @@ This under-calling behavior explains the large missed-alert counts:
 - `Qwen3.5-9B`: `998`
 - `gemma-4-31B-it`: `1455` on its partial run
 
+The same pattern appears even more starkly in zero-shot for the smaller Qwen models:
+
+- on raw-table `benchmark_100`, `Qwen3.5-9B` predicts `continue_monitoring` on `98.92%` of steps
+- `Qwen3.5-4B` predicts it on `96.54%`
+- the partial zero-shot `benchmark_2k` `Qwen3.5-4B` run predicts it on `98.15%`
+
+So raw-table zero-shot can collapse into an almost-always-negative policy unless the model is either very strong or given a more structured interface.
+
 ### 3. `gpt-oss-120b` trades conservatism for higher sensitivity
 
 `gpt-oss-120b` behaves differently.
@@ -778,6 +963,20 @@ On `benchmark_2k`, strict all-4 trajectory accuracy is:
 - `1.15%` for `Qwen3.5-9B`
 - `0.49%` for partial `gpt-oss-120b`
 - `1.17%` for partial `gemma-4-31B-it`
+
+### 5. Backend choice changes *which* temporal semantics survive
+
+This is one of the most important new findings from the combined artifact set.
+
+For the Qwen family on `benchmark_100`:
+
+- autoformalization strongly helps `active_interval` and, to a lesser extent, `recent_measurement_ttl`
+- zero-shot helps `Qwen3.5-27B` preserve some `persistent_episode`, `cumulative_max_stage`, and `composite_current_state` structure
+
+This suggests that the formalized tool layer is not merely making the task easier or harder globally. It is reshaping the temporal reasoning burden:
+
+- explicit support-state lookup and TTL-like checks become easier
+- persistent and cumulative cross-checkpoint carry-forward can become more brittle if the model relies too heavily on local tool retrieval and not enough on internal state maintenance
 
 This is the strongest evidence that the benchmark is testing more than isolated local decisions.
 
@@ -835,12 +1034,13 @@ Support:
 
 ### Claim 2
 
-Open-weight models can achieve moderate checkpoint-level surveillance control, but full longitudinal state tracking remains unsolved.
+Backend choice changes model behavior in systematic and semantically meaningful ways.
 
 Support:
 
-- completed Qwen runs reach about `0.41` to `0.46` global-action accuracy on the full benchmark
-- but exact longitudinal correctness remains around `1%`
+- for the Qwen family, autoformalization strongly improves active-interval and alert-family recovery, especially for the smaller models
+- zero-shot preserves more persistent / cumulative reasoning in `Qwen3.5-27B`, but smaller zero-shot Qwens collapse toward near-always-negative behavior
+- the raw-table and autoformalized interfaces are therefore not interchangeable abstractions of the same task
 
 ### Claim 3
 
@@ -850,7 +1050,18 @@ Support:
 
 - Qwen family: more conservative, better calibrated top-level control, but many missed alerts
 - `gpt-oss-120b`: much higher sensitivity and stronger action-level performance, but weaker exact structured-state calibration
-- closed-source pilots: severe conservatism plus heavy tool-runtime fragility in the current saved runs
+- zero-shot closed-source models: much stronger short-horizon structured-state recovery than zero-shot open-weight models
+- autoformalized closed-source pilots: severe runtime fragility in the current saved artifacts
+
+### Claim 4
+
+Short zero-shot success should not be confused with full-benchmark reliability.
+
+Support:
+
+- all eight zero-shot `benchmark_100` runs complete cleanly, but there is no completed zero-shot `benchmark_2k` comparison
+- the only saved long-run zero-shot artifact, `Qwen3.5-4B`, shows extreme conservative collapse despite superficially moderate overall alert metrics
+- the full `benchmark_2k` story therefore still has to be told primarily through the completed autoformalized runs
 
 ## What Should Be Headline Results in the Paper
 
@@ -858,13 +1069,18 @@ Recommended primary headline table:
 
 - the completed `benchmark_2k` runs for `Qwen3.5-27B`, `Qwen3.5-9B`, and `Qwen3.5-4B`
 
+Recommended second main-text table:
+
+- the zero-shot raw-table `benchmark_100` comparison across all completed open-weight and closed-source models
+
 Recommended secondary or appendix table:
 
 - provisional partial `benchmark_2k` runs for `gpt-oss-120b` and `gemma-4-31B-it`
 
 Recommended appendix or pilot note only:
 
-- `benchmark_100` closed-source runs for `Claude` and `Gemini`
+- the interrupted autoformalized `benchmark_100` closed-source pilots for `Claude` and `Gemini`
+- the partial zero-shot `benchmark_2k` `Qwen3.5-4B` run
 
 Recommended headline sentence:
 
@@ -872,28 +1088,34 @@ Recommended headline sentence:
 
 Recommended secondary sentence:
 
-- a partial `gpt-oss-120b` run suggests that stronger action-level surveillance performance may be possible, but the current saved artifact is incomplete and should be treated as provisional
+- on the short raw-table `benchmark_100` pilot, closed-source models substantially outperform open-weight models, but that advantage has not yet been validated on the full `benchmark_2k` benchmark
+
+Recommended third sentence:
+
+- paired Qwen comparisons show that autoformalization changes the task in a structured way: it helps acute support-state and alert-family recovery, but can suppress some persistent and cumulative state tracking
 
 ## Recommended Next Steps
 
 If you want the strongest final paper package from these artifacts, the highest-value next steps are:
 
-1. rerun the closed-source pilots to clean completion before making any open versus closed-source claim
+1. rerun at least one closed-source model on the full autoformalized `benchmark_2k`, because this is the biggest remaining gap in the evidence
 2. rerun `gpt-oss-120b` `benchmark_2k` to completion, because it is the most likely challenger to `Qwen3.5-27B`
-3. fix the repeated callable failures around blood-gas, KDIGO, vasoactive, and GCS helpers, then rerun at least one representative model to quantify how much of the failure is infrastructure versus reasoning
-4. include a strict stay-level longitudinal metric in the analysis appendix, because it communicates the benchmark difficulty much better than step-only metrics
+3. run at least one additional zero-shot `benchmark_2k` model to clean completion, so the raw-table setting can be judged on the primary benchmark rather than only on `benchmark_100`
+4. fix the repeated callable failures around blood-gas, KDIGO, vasoactive, and GCS helpers, then rerun at least one representative autoformalized closed-source model to quantify how much of the failure is infrastructure versus reasoning
+5. include strict stay-level and positive-only structured-state metrics in the analysis appendix, because they communicate the benchmark difficulty much better than step-only overall exact-match scores
 
 ## Final Takeaway
 
 The final artifact set already supports a strong and publishable story.
 
-That story is not merely:
+That story is not merely that some models do better than others.
 
-- some models do better than others
-
-The stronger story is:
+The stronger story is this:
 
 - rolling ICU surveillance with mixed temporal semantics is genuinely hard
+- the full `benchmark_2k` autoformalized results show that even the best completed models remain far from reliable patient-level longitudinal state tracking
+- short raw-table zero-shot pilots can make strong closed-source models look very good, but that success does not yet replace the need for long-run benchmark evidence
+- zero-shot and autoformalization expose different temporal reasoning strengths and weaknesses, which is itself an important scientific finding about how tool interface design shapes longitudinal clinical-state tracking
 - current models can often choose a plausible monitoring or escalation action
 - but they still struggle to maintain the correct structured clinical state over time
 - open-weight models currently provide the strongest completed evidence in this artifact set
