@@ -23,7 +23,7 @@ The goal is to give a paper-ready, method-aware interpretation of the final resu
 
 ## Executive Summary
 
-- The benchmark remains difficult even for the strongest available runs. On the primary `benchmark_2k` setting, no fully completed model exceeded `45.77%` global-action accuracy or `43.32%` priority accuracy, and exact stay-level longitudinal correctness remained near zero.
+- The benchmark remains difficult even for the strongest available runs. On the primary `benchmark_2k` setting, no fully completed model exceeded `45.77%` global-action accuracy or `43.32%` priority accuracy. Family-level state reconstruction also remained modest, and an auxiliary all-checkpoint exact-stay metric stayed near zero.
 - Among the fully completed `2,000`-stay open-weight runs, `Qwen3.5-27B` is the strongest overall model. It is best on `global_action_accuracy`, `priority_accuracy`, and `suspected_conditions_macro_f1`, while also missing fewer alert trajectories than the smaller Qwen variants.
 - `gpt-oss-120b` is the most promising partially completed open-weight run. On the first `1,026` completed trajectories of `benchmark_2k`, it substantially outperforms the finished Qwen runs on global-action and priority accuracy, and it misses far fewer alert trajectories. However, it is still incomplete and should be reported as provisional rather than as the primary headline.
 - The closed-source pilots are not yet publication-grade comparisons. `Claude Sonnet 4.6` and `Gemini 3.1 Pro Preview` only completed `28/100` and `24/100` trajectories respectively before interruption, and both were heavily affected by repeated tool-runtime failures.
@@ -65,7 +65,7 @@ Not all runs finished cleanly. This matters for fair reporting.
 | Model | Family | `benchmark_100` | `benchmark_2k` | Status note |
 |---|---|---:|---:|---|
 | `Qwen3.5-27B` | open-weight | `100/100` | `2000/2000` | fully completed |
-| `Qwen3.5-9B` | open-weight | `65/100` recovered | `2000/2000` | `benchmark_100` artifact incomplete, `benchmark_2k` completed |
+| `Qwen3.5-9B` | open-weight | `100/100` recovered from `rollouts.json` | `2000/2000` | `benchmark_100` canonical trajectory file was truncated, but saved rollouts cover all `100` stays |
 | `Qwen3.5-4B` | open-weight | `100/100` | `2000/2000` | fully completed |
 | `gemma-4-31B-it` | open-weight | `100/100` | `1714/2000` recovered | `benchmark_2k` incomplete |
 | `gpt-oss-120b` | open-weight | `100/100` | `1026/2000` recovered | `benchmark_2k` interrupted by backend error |
@@ -97,6 +97,141 @@ In addition to the official metrics, this report also uses one derived strict st
   - `alerts`
 
 This is not the official benchmark metric, but it is a useful indicator of true longitudinal consistency.
+
+## Why Trajectory Exactness Should Be Auxiliary
+
+I do **not** recommend using strict trajectory exactness as the primary headline metric in the benchmark paper.
+
+Why:
+
+- it is extremely brittle: one checkpoint mistake can zero out an otherwise strong stay
+- it mixes many different failure modes into one number
+- it can understate meaningful partial competence on hard longitudinal cases
+- it is better as a stress-test or appendix metric than as the main evidence that the benchmark is challenging
+
+So the primary benchmark story should instead emphasize:
+
+- checkpoint-level `global_action_accuracy`
+- checkpoint-level `priority_accuracy`
+- family-level set recovery through `suspected_conditions_macro_f1`
+- family-level alert recovery through `alerts_macro_f1`
+- first-alert timing error and missed-alert trajectories
+
+The strict all-checkpoint stay metric is still useful, but mainly as supporting evidence that the benchmark demands true longitudinal consistency rather than isolated local decisions.
+
+## Metric Definitions
+
+The surveillance metrics are defined in `src/sepsis_mvp/environment.py`.
+
+### `global_action_accuracy`
+
+At each checkpoint, the model predicts a top-level surveillance decision.
+This metric is the fraction of checkpoints where that top-level action exactly matches the benchmark label.
+
+Interpretation:
+
+- high values mean the model often gets the overall surveillance posture right
+- this does **not** mean it has reconstructed the correct detailed disease-family state
+
+### `priority_accuracy`
+
+At each checkpoint, the model predicts the urgency level.
+This metric is the fraction of checkpoints where the predicted urgency matches the benchmark label.
+
+Interpretation:
+
+- severity calibration
+- stricter than simple action correctness because a model can choose the right action direction but the wrong urgency
+
+### `suspected_conditions_exact_match`
+
+At each checkpoint, the benchmark exposes a set of active suspect-level family states.
+This metric asks whether the predicted set matches the gold set **exactly**.
+
+Interpretation:
+
+- harsh set-level metric
+- a single extra or missing suspect label makes the whole checkpoint wrong
+
+### `alerts_exact_match`
+
+Same idea as above, but for the alert-level family state set.
+
+Interpretation:
+
+- exact structured alert-state recovery
+- useful, but harsh
+
+### `suspected_conditions_macro_f1`
+
+At each checkpoint, compare the predicted suspect set to the gold suspect set with set-based F1, then average across checkpoints.
+
+Important detail:
+
+- when both the gold and predicted sets are empty, the saved evaluation convention treats precision and recall as `1.0`
+
+Interpretation:
+
+- better than exact match for measuring partial family-state recovery
+- still reflects both misses and spurious extra family labels
+
+### `alerts_macro_precision`
+
+Average set precision for the predicted alert set over checkpoints.
+
+Interpretation:
+
+- of the alert-family labels the model emitted, how many were correct
+
+### `alerts_macro_recall`
+
+Average set recall for the gold alert set over checkpoints.
+
+Interpretation:
+
+- of the alert-family labels that should have been active, how many did the model recover
+
+### `alerts_macro_f1`
+
+The harmonic mean of alert precision and recall at each checkpoint, averaged across checkpoints.
+
+Interpretation:
+
+- best single family-level summary of alert-state reconstruction
+
+### `first_alert_mean_error_hours`
+
+For stays where both the benchmark and the model emitted a first alert, compute:
+
+- predicted first-alert hour minus gold first-alert hour
+
+Then average that signed timing error.
+
+Interpretation:
+
+- negative means early alerts on average
+- positive means late alerts on average
+
+### `first_alert_mean_abs_error_hours`
+
+Average absolute timing error for the first alert.
+
+Interpretation:
+
+- how far off the model is, regardless of direction
+
+### `false_early_alert_trajectories`
+
+Count of stays where the model’s first alert happened earlier than the benchmark’s first alert.
+
+### `missed_alert_trajectories`
+
+Count of stays where the benchmark had at least one alert but the model never emitted an alert.
+
+Interpretation:
+
+- trajectory-level alert omission
+- especially important in this benchmark because many models are conservative
 
 ## Primary Results: `benchmark_2k`
 
@@ -167,6 +302,179 @@ This is an important nuance for the paper:
 - model scale seems to help most on maintaining the correct monitoring/escalation policy
 - it does not automatically solve the harder disease-family reconstruction problem
 
+## Deep Dive: Finished Qwen Models by Temporal Semantics
+
+The most useful additional analysis is to ask how the finished Qwen models behave across the benchmark’s five temporal-semantic state types:
+
+- persistent episode
+- cumulative max stage
+- active interval
+- recent measurement + TTL
+- composite current state
+
+This matters because the benchmark is hard precisely because these state types require different update rules over time.
+
+### High-level pattern
+
+All three finished Qwen models behave much more like **current local detectors** than robust longitudinal state trackers.
+
+They are clearly strongest on:
+
+- `active_interval`
+- then `recent_measurement_ttl`
+
+They are dramatically weaker on:
+
+- `persistent_episode`
+- `cumulative_max_stage`
+- `composite_current_state`
+
+That pattern is exactly what we would expect if the models struggle to remember or recompute clinically persistent state over long horizons.
+
+### Prevalence-aware Qwen semantic slice on `benchmark_2k`
+
+The table below uses a prevalence-aware view:
+
+- `GT+ step rate`: fraction of checkpoints where that semantic state type is truly active
+- `Any pred | GT+`: among positive checkpoints, how often the model predicts any state of that semantic type
+- `Exact on GT+`: among positive checkpoints, how often it gets the semantic-type subset exactly right
+- `Micro F1`: label-level F1 within that semantic-type subset across the full benchmark
+
+#### `Qwen3.5-27B`
+
+| Semantic type | GT+ step rate | Any pred \| GT+ | Exact on GT+ | Micro F1 |
+|---|---:|---:|---:|---:|
+| Persistent episode | `0.7686` | `0.0111` | `0.0036` | `0.0116` |
+| Cumulative max stage | `0.5433` | `0.0120` | `0.0038` | `0.0074` |
+| Active interval | `0.4161` | `0.3135` | `0.0820` | `0.1655` |
+| Recent measurement + TTL | `0.4023` | `0.2173` | `0.0310` | `0.0833` |
+| Composite current state | `0.0938` | `0.0008` | `0.0004` | `0.0008` |
+
+#### `Qwen3.5-9B`
+
+| Semantic type | GT+ step rate | Any pred \| GT+ | Exact on GT+ | Micro F1 |
+|---|---:|---:|---:|---:|
+| Persistent episode | `0.7686` | `0.0077` | `0.0004` | `0.0071` |
+| Cumulative max stage | `0.5433` | `0.0012` | `0.0001` | `0.0001` |
+| Active interval | `0.4161` | `0.2022` | `0.0825` | `0.1638` |
+| Recent measurement + TTL | `0.4023` | `0.1583` | `0.0218` | `0.0592` |
+| Composite current state | `0.0938` | `0.0074` | `0.0029` | `0.0065` |
+
+#### `Qwen3.5-4B`
+
+| Semantic type | GT+ step rate | Any pred \| GT+ | Exact on GT+ | Micro F1 |
+|---|---:|---:|---:|---:|
+| Persistent episode | `0.7686` | `0.0100` | `0.0027` | `0.0124` |
+| Cumulative max stage | `0.5433` | `0.0133` | `0.0033` | `0.0067` |
+| Active interval | `0.4161` | `0.1606` | `0.0666` | `0.1299` |
+| Recent measurement + TTL | `0.4023` | `0.3366` | `0.0514` | `0.1187` |
+| Composite current state | `0.0938` | `0.0406` | `0.0180` | `0.0364` |
+
+### Semantic interpretation
+
+#### 1. Persistent episode states are the biggest blind spot
+
+These should be comparatively easy conceptually once the model has detected onset:
+
+- infection suspicion
+- stronger infection support
+- sepsis alert
+
+But all three Qwen models almost never keep them active when they should be active.
+
+Most strikingly:
+
+- the gold persistent-state subset is active on `76.86%` of checkpoints
+- yet `Qwen3.5-27B` predicts any persistent state on only `1.11%` of those positive checkpoints
+- `Qwen3.5-9B` is even more conservative at `0.77%`
+- `Qwen3.5-4B` is similar at `1.00%`
+
+Interpretation:
+
+- the models are not reliably carrying forward episode-style state once it has begun
+- they behave more like “re-check from scratch” agents than stateful surveillance trackers
+
+#### 2. Cumulative max-stage semantics are also largely missed
+
+For AKI staging, the benchmark asks for worst stage attained so far, not just the current instantaneous value.
+
+Again the Qwen models mostly fail to preserve that cumulative memory:
+
+- the cumulative-stage subset is positive on `54.33%` of checkpoints
+- yet any positive prediction on positive checkpoints is only `1.20%` for `27B`, `0.12%` for `9B`, and `1.33%` for `4B`
+
+Interpretation:
+
+- the Qwen models are not behaving like cumulative-memory trackers for AKI
+- this is strong evidence that cumulative temporal semantics are a real source of difficulty
+
+#### 3. Active intervals are where Qwen does best
+
+The Qwens are much better on states that are active only while support overlaps the checkpoint:
+
+- ventilation support
+- vasoactive support
+- CRRT
+
+Here `Qwen3.5-27B` is the strongest and best balanced:
+
+- `31.35%` any-prediction rate on positive checkpoints
+- `0.1655` micro F1
+
+Interpretation:
+
+- active support therapies may be easier because they are often anchored in clearer current-state signals
+- this is the strongest evidence that the models can use local checkpoint evidence when the semantics are truly current-state
+
+#### 4. Recent-measurement TTL states are partially recoverable, but noisy
+
+These include:
+
+- oliguria
+- PF-ratio hypoxemia
+- GCS impairment
+- lactate
+- acidemia
+- INR coagulopathy
+
+`Qwen3.5-4B` is surprisingly the most willing to emit these TTL-style states:
+
+- `33.66%` any-prediction rate on positive checkpoints
+- best TTL micro F1 among the finished Qwens at `0.1187`
+
+But that comes with more spurious positives.
+
+Interpretation:
+
+- the smaller model is less conservative on short-horizon recent-measurement abnormalities
+- the larger models are more conservative and therefore miss more TTL-positive checkpoints
+
+#### 5. Composite current states are almost never reconstructed
+
+This is the harshest semantic category:
+
+- `septic_shock_alert`
+- `shock_hypoperfusion_alert`
+
+These require recomputing multiple component conditions jointly at each checkpoint.
+
+All finished Qwen models are very weak here:
+
+- `Qwen3.5-27B`: `0.08%` any-prediction rate on positive checkpoints
+- `Qwen3.5-9B`: `0.74%`
+- `Qwen3.5-4B`: `4.06%`
+
+Interpretation:
+
+- recomputed composite states are not being robustly assembled from component evidence
+- this is exactly the kind of multi-rule temporal reasoning the benchmark was designed to stress
+
+### Best concise takeaway on Qwen semantics
+
+The cleanest summary sentence is:
+
+- the finished Qwen models are strongest on locally observable current support states, weaker on recent TTL states, and weakest by far on persistent, cumulative, and composite semantics that require explicit longitudinal state maintenance or recomputation
+
 ## Auxiliary Results: `benchmark_100`
 
 `benchmark_100` is useful for pilot comparison and sanity checking, but it should not replace the `benchmark_2k` story.
@@ -176,7 +484,7 @@ This is an important nuance for the paper:
 | `gpt-oss-120b` | open-weight | `100/100` | `0.6454` | `0.4792` | `0.2157` | `0.2469` | `0.2031` | `5.15` | `0.0000` |
 | `Qwen3.5-27B` | open-weight | `100/100` | `0.3869` | `0.3777` | `0.1942` | `0.2425` | `0.2300` | `12.68` | `0.0200` |
 | `Qwen3.5-4B` | open-weight | `100/100` | `0.3646` | `0.3454` | `0.1854` | `0.2643` | `0.2408` | `11.26` | `0.0200` |
-| `Qwen3.5-9B` | open-weight | `65/100` recovered | `0.3302` | `0.3136` | `0.2039` | `0.2382` | `0.2107` | `19.11` | `0.0308` |
+| `Qwen3.5-9B` | open-weight | `100/100` recovered from `rollouts.json` | `0.3531` | `0.3231` | `0.1856` | `0.2549` | `0.2338` | `18.81` | `0.0200` |
 | `gemma-4-31B-it` | open-weight | `100/100` | `0.3069` | `0.2838` | `0.1821` | `0.2434` | `0.2415` | `16.00` | `0.0200` |
 | `Gemini/gemini-3.1-pro-preview` | closed-source | `24/100` recovered | `0.2564` | `0.2564` | `0.2671` | `0.1959` | `0.1891` | `5.00` | `0.0417` |
 | `Claude/claude-sonnet-4-6` | closed-source | `28/100` recovered | `0.2060` | `0.2088` | `0.2225` | `0.1758` | `0.1758` | `0.00` on only `3` matched alert cases | `0.0357` |
