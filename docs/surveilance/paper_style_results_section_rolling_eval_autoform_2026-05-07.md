@@ -136,9 +136,15 @@ Within the closed-source zero-shot group, the ranking is itself meaningful. `Gem
 
 By contrast, the autoformalized setting does not yet permit a fair open-weight versus closed-source leaderboard claim. The only reliable completed `benchmark_2k` evidence comes from open-weight models, because the autoformalized closed-source runs are incomplete and tool-error-heavy. Thus, the correct claim is backend-specific: closed-source models dominate the short raw-table pilot, while open-weight models currently provide the only completed evidence on the full autoformalized benchmark.
 
+The cost profile of the open-weight zero-shot runs also helps explain some of this spread. After reconstructing the prompt stack from the saved zero-shot prompt template and per-step tool traces, the dominant cost source is not the tool outputs themselves but the repeated instruction scaffold plus checkpoint payload that must be re-sent on every model turn. Tool-output context is still substantial, especially for the larger open-weight models, accounting for roughly `13%` to `18%` of prompt-side cost. `Qwen3.5-27B` is the most expensive overall because it combines a large fixed prompt burden with high completion cost, while `gemma-4-31B-it` spends heavily on prompt-side interaction context but produces very few completion tokens. This suggests that some open-weight zero-shot failures are not simply low-effort shortcuts; several models incur heavy retrieval and control-flow cost without converting that interaction into stronger structured-state recovery.
+
 ![Zero-shot benchmark_100 open vs closed](/Users/chloe/Documents/New project/docs/surveilance/figures/zeroshot_benchmark100_open_vs_closed.png)
 
 Figure 4. Completed zero-shot raw-table `benchmark_100` comparison. Closed-source models cluster in the upper-right, indicating stronger joint suspect- and alert-family recovery than the open-weight zero-shot models.
+
+![Zero-shot benchmark_100 open-weight cost breakdown](/Users/chloe/Documents/New project/docs/surveilance/figures/zeroshot_benchmark100_open_weight_cost_breakdown.png)
+
+Figure 5. Open-weight zero-shot cost decomposition on `benchmark_100`. Each stacked bar reconstructs average tokens per trajectory into fixed instruction scaffold, checkpoint payload plus rolling memory, accumulated Python code history, accumulated tool-output context, summary-writer overhead, estimated repair/retry overhead, and measured completion tokens. The prompt-side split is reconstructed from the saved backend prompt template and per-step tool traces, while the completion segment is directly measured.
 
 ### Table 4 Caption
 
